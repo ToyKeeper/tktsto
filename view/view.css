@@ -1,0 +1,122 @@
+/* view/view.css: outline view stylesheet
+ * Copyright (C) 2025 Selene ToyKeeper
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+html, body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  background: var(--tree-view-bg);
+  color: #ccc;
+  /* font-family: Tahoma, Geneva, sans-serif; */
+  font-size: var(--global-font-size):
+}
+
+/******************** tree view main sections ********************/
+
+#top-bar, #bottom-bar {
+  height: var(--toolbar-height);
+  width: 100%;
+  background: var(--toolbar-bg);
+  color: var(--toolbar-fg);
+  /* box-shadow: 0 1em 1em #000; */
+}
+
+#top-bar {
+  border-bottom: var(--top-toolbar-edge);
+}
+
+#bottom-bar {
+  border-top: var(--bottom-toolbar-edge);
+}
+
+#tree-view {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  background: var(--tree-view-bg);
+}
+
+#node-detail-box {
+  width: 100%;
+  height: var(--node-detail-box-height);
+  overflow-x: wrap;
+  overflow-y: auto;
+  background: var(--node-detail-box-bg);
+  color: var(--node-detail-box-fg);
+  display: none;
+}
+
+
+/******************** scrollbar ********************/
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  border-radius: 0px;
+  padding-left: 2px;
+  background: #1c1b22;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: #68a;
+  -webkit-box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5);
+}
+::-webkit-scrollbar-thumb:window-inactive {
+  background: #567;
+}
+
+
+/******************** top/bottom toolbars / buttons ********************/
+
+#top-bar, #bottom-bar {
+  display: flex;
+  flex-direction: row;
+}
+
+.toolbar .button {
+  display: inline-block;
+  margin: auto;
+  padding: 0.2em 0.5em;
+  border: 1px outset #555;
+  border-radius: 0.5em;
+  background: #444;
+  box-shadow: 0.1em 0.1em 0.1em #000;
+}
+.toolbar .button:hover {
+  background: #555;
+  border: 1px outset #777;
+  box-shadow: 0.2em 0.2em 0.2em #000;
+  color: #fff;
+}
+
+/******************** vars ********************/
+
+:root {
+  /***** globals *****/
+  --global-font-size: 133%;
+  /***** main tree view *****/
+  --tree-view-bg: #1c1b22;
+  --note-loaded-fg: #2c6;
+  --note-unloaded-fg: #498360;
+  --note-title-sep-fg: #49d;
+  --tab-active-fg: #eee;
+  --tab-loaded-fg: #ccc;
+  --tab-unloaded-fg: #9cb7d3;
+  --window-active-fg: #fff;
+  --window-loaded-fg: #8696a7;
+  /***** toolbars *****/
+  --toolbar-height: 2em;
+  --toolbar-bg: #333;
+  --toolbar-fg: #ccc;
+  --top-toolbar-edge: 5px solid #282828;
+  --bottom-toolbar-edge: 5px solid #3c3c3c;
+  /***** node detail box *****/
+  --node-detail-box-height: 30%;
+  --node-detail-box-bg: #333;
+  --node-detail-box-fg: #ccc;
+}
+
