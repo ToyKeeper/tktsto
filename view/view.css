@@ -16,12 +16,24 @@ html, body {
 
 /******************** tree view main sections ********************/
 
-#top-bar, #bottom-bar {
+#top-bar,
+#bottom-bar {
   height: var(--toolbar-height);
   width: 100%;
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
   /* box-shadow: 0 1em 1em #000; */
+}
+
+#status-bar {
+  height: var(--toolbar-height);
+  width: 100%;
+  background: var(--toolbar-bg);
+  color: var(--toolbar-fg);
+}
+#status-text {
+  line-height: var(--toolbar-height);
+  padding-left: 0.5em;
 }
 
 #top-bar {
@@ -92,6 +104,13 @@ html, body {
   box-shadow: 0.2em 0.2em 0.2em #000;
   color: #fff;
 }
+
+/******************** nodes ********************/
+
+#tree-view .cursor {
+  background: #666;
+}
+
 
 /******************** vars ********************/
 
