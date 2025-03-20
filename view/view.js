@@ -138,12 +138,14 @@ class Tree extends Node {
 
     // FIXME: should get new node IDs from TreeStore in bkgd.js
     // This here is just a temporary kludge
-    this.lastNodeID = 0;
+    //this.lastNodeID = 0;
   }
 
-  newNodeID () {
-    this.lastNodeID ++;
-    return this.lastNodeID;
+  async newNodeID () {
+    //this.lastNodeID ++;
+    //return this.lastNodeID;
+    const nextID = await api.runtime.sendMessage({msg: 'bkgd_newNodeID'});
+    return nextID;
   }
 
 }
@@ -181,6 +183,7 @@ class TreeView extends Tree {
 
   init () {
     this.initKeyHandler();
+    this.initBkgdPing();
   }
 
   setStatus (msg) {
@@ -235,7 +238,6 @@ class TreeView extends Tree {
   action_none(event) { }
 
   action_cursorUp(event) {
-    // TODO: scroll cursor into view
     if (! this.cursor) {
       if (this.nodes) {
         this.setCursor(this.nodes[0]);
@@ -249,7 +251,6 @@ class TreeView extends Tree {
   }
 
   action_cursorDown(event) {
-    // TODO: scroll cursor into view
     if (! this.cursor) {
       if (this.nodes) {
         this.setCursor(this.nodes[0]);
@@ -262,10 +263,10 @@ class TreeView extends Tree {
     }
   }
 
-  action_addNode (event) {
+  async action_addNode (event) {
     // create the new node
     const node = new Node(this, this, this.window);
-    const newID = this.newNodeID();
+    const newID = await this.newNodeID();
     node.id = newID;
     // figure out where to put it in the tree
     let newIndex = 0;
@@ -322,6 +323,22 @@ class TreeView extends Tree {
     if (node) node.addCursor();
     this.cursor = node;
     if (node) node.scrollIntoView();
+  }
+
+  initBkgdPing () {
+    this.bkgdPing = setInterval(this.pingBkgd, 10 * 1000);
+  }
+
+  async pingBkgd () {
+    // keep service worker alive
+    // so it won't have to keep reloading the tree from persistent storage
+    const before = Date.now();
+    const response = await api.runtime.sendMessage({ 'msg': 'bkgd_ping' });
+    const after = Date.now();
+    if (! response) { return warn('bkgd ping failed'); }
+    const elapsed = after - before;
+    const oneway = response - before;
+    log(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
   }
 
 }
