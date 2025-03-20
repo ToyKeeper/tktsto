@@ -80,7 +80,7 @@ class Tree {
       if (handler) {
         // actually handle the event
         this.setStatus(`handler: ${handlerName}`);
-        handler(this, event);
+        handler.bind(this)(event);  // equivalent to this.handler(event);
         // unsure if necessary
         event.preventDefault();
         event.stopPropagation();
@@ -91,68 +91,70 @@ class Tree {
     }
   }
 
-  action_cursorUp(_this, event) {
-    if (! _this.cursor) {
-      if (_this.nodes) {
-        _this.setCursor(_this.nodes[0]);
+  action_cursorUp(event) {
+    // TODO: scroll cursor into view
+    if (! this.cursor) {
+      if (this.nodes) {
+        this.setCursor(this.nodes[0]);
       }
       return;
     }
-    let index = _this.cursor.indexOf() - 1;
+    let index = this.cursor.indexOf() - 1;
     if (index >= 0) {
-        _this.setCursor(_this.nodes[index]);
+        this.setCursor(this.nodes[index]);
     }
   }
 
-  action_cursorDown(_this, event) {
-    if (! _this.cursor) {
-      if (_this.nodes) {
-        _this.setCursor(_this.nodes[0]);
+  action_cursorDown(event) {
+    // TODO: scroll cursor into view
+    if (! this.cursor) {
+      if (this.nodes) {
+        this.setCursor(this.nodes[0]);
       }
       return;
     }
-    let index = _this.cursor.indexOf() + 1;
-    if (index < _this.nodes.length) {
-        _this.setCursor(_this.nodes[index]);
+    let index = this.cursor.indexOf() + 1;
+    if (index < this.nodes.length) {
+        this.setCursor(this.nodes[index]);
     }
   }
 
-  action_addNode (_this, event) {
+  action_addNode (event) {
     // create the new node
-    const node = new Node(_this, _this);
+    const node = new Node(this, this);
     // figure out where to put it in the tree
     let newIndex = 0;
-    if (_this.cursor) {
-      newIndex = _this.cursor.indexOf() + 1;
+    if (this.cursor) {
+      newIndex = this.cursor.indexOf() + 1;
     }
-    _this.nodes.splice(newIndex, 0, node);
+    this.nodes.splice(newIndex, 0, node);
     // assign a title
-    const newID = _this.newNodeID();
+    const newID = this.newNodeID();
     node.id = newID;
     node.note = `node ${newID}`;
     node.createDom();
     log(`added ${node.note}`);
-    _this.setCursor(node);
+    this.setCursor(node);
   }
 
-  action_deleteNode(_this, event) {
+  action_deleteNode(event) {
     log('deleteNode');
-    if (_this.nodes.length <= 0) return;
+    if (this.nodes.length <= 0) return;
     let delIndex = 0;
-    if (_this.cursor) {
-      delIndex = _this.cursor.indexOf();
+    if (this.cursor) {
+      delIndex = this.cursor.indexOf();
     }
-    //const node = _this.nodes.splice(_this.nodes.length - 1, 1);
-    const node = _this.nodes.splice(delIndex, 1);
+    //const node = this.nodes.splice(this.nodes.length - 1, 1);
+    const node = this.nodes.splice(delIndex, 1);
     if (node) {
       node[0].del();
     }
-    if (! _this.nodes) _this.setCursor(null);
+    if (! this.nodes) this.setCursor(null);
     else {
-      let newCursor = _this.nodes[
-          Math.max(0, Math.min(_this.nodes.length - 1, delIndex))
+      let newCursor = this.nodes[
+          Math.max(0, Math.min(this.nodes.length - 1, delIndex))
       ];
-      _this.setCursor(newCursor);
+      this.setCursor(newCursor);
     }
   }
 
@@ -165,7 +167,7 @@ class Tree {
     if (this.cursor && (node !== this.cursor)) {
       this.cursor.removeCursor();
     }
-    node.addCursor();
+    if (node) node.addCursor();
     this.cursor = node;
   }
 
