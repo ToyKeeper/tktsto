@@ -109,8 +109,17 @@ html, body {
 
 #tree-view .cursor {
   background: #666;
+  /* TODO: Use a relevant var for the scroll margin */
+  scroll-margin-top: 1em;
+  scroll-margin-bottom: 1em;
 }
 
+/******************** misc ********************/
+
+.hidden {
+  /* add/remove 'hidden' class to hide or show elements */
+  display: none;
+}
 
 /******************** vars ********************/
 

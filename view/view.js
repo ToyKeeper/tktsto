@@ -9,23 +9,161 @@ import { log } from '/common/common.js';
 
 log('/view/view.js running');
 
-class Tree {
+class Node {
+
+  constructor (tree, parent, window) {
+    //this.id = get_next_available_node_id();
+    // placement
+    this.tree = tree;
+    this.parent = parent;
+    // attributes
+    this.note = null;
+    //this.$note = null;  // <span>
+    //this.long_note = null;
+    this.title = null;
+    this.url = null;
+    //this.$url = null;  // <a>
+    this.favicon_url = null;
+    //this.$favicon = null;  // <img>
+    //this.checkbox = false;
+    this.expanded = true;
+    this.loaded = false;
+    this.wasLoaded = false;
+    // children
+    this.nodes = [];
+    // is this Node part of a view?
+    if (window) {
+      this.window = window;
+      // DOM objects
+      this.$ = null;  // outermost element is a <li>
+      this.$row = null;  // <div> for note, title+url, favicon, etc
+      this.$nodes = null;  // <ul>
+    }
+  }
+
+  destroy () {
+    this.del();
+  }
+
+  del () {
+    if (this.window) this.$destroy();
+  }
+
+  indexOf () {
+    if (!this.parent) return 0;
+    if (!this.parent.nodes) return 0;
+    return this.parent.nodes.indexOf(this);
+  }
+
+  $render () {
+    log('Node.$render');
+    if (!this.tree.document) return;
+    const doc = this.tree.document;
+
+    log('Node.$render $');
+    // create outermost node element
+    this.$ = doc.createElement('li');
+    this.$.id = `node${this.id}`;
+    this.$.classList.add('node');
+
+    log('Node.$render $row');
+    // container for node title and details
+    this.$row = doc.createElement('div');
+    this.$row.classList.add('row');
+    // TODO: separate function to render the Node $row
+    this.$row.innerHTML = `<span class="node-note">${this.note}</span> ~ <a class="node-link" href="${this.url}">${this.title}</a>`;
+    this.$.append(this.$row);
+
+    // container for node children
+    log('Node.$render $nodes');
+    this.$nodes = doc.createElement('ul');
+    this.$nodes.classList.add('nodes');
+    this.$nodes.classList.add('hidden');
+
+    // add to parent (nope, nevermind, let the parent do that on its own)
+    // needs a way to specify where to insert the new node
+    //if (!this.parent) return;
+    //if (!this.parent.$nodes) return;
+    //log('Node.$render parent');
+    //this.parent.$nodes.append(this.$);
+  }
+
+  $destroy () {
+    log('$destroy');
+    if (this.$) {
+      log('remove');
+      this.$.remove();
+    }
+  }
+
+  scrollIntoView() {
+    if (this.$row) this.$row.scrollIntoView({
+      behavior: "instant",  // smooth or instant
+      block: "nearest",  // vertical scroll policy, "nearest" or "center"
+      inline: "start"  // horizontal, left
+    });
+  }
+
+  scrollToTop() {
+    if (this.$) this.$.scrollIntoView({
+      behavior: "instant",  // smooth or instant
+      block: "start",  // vertical scroll policy
+      inline: "start"  // horizontal, left
+    });
+  }
+
+  addCursor() {
+    if (! this.$row) return;
+    this.$row.classList.add('cursor');
+  }
+
+  removeCursor() {
+    if (! this.$row) return;
+    this.$row.classList.remove('cursor');
+  }
+
+  // TODO
+  setNote (text) {
+    this.note = text;
+  }
+
+}
+
+class Tree extends Node {
 
   constructor () {
+    super(null, null);
+
+    this.tree = this;
+
+    // FIXME: should get new node IDs from TreeStore in bkgd.js
+    // This here is just a temporary kludge
+    this.lastNodeID = 0;
+  }
+
+  newNodeID () {
+    this.lastNodeID ++;
+    return this.lastNodeID;
+  }
+
+}
+
+class TreeView extends Tree {
+
+  constructor () {
+    super();
+
     this.document = document;
     this.window = window;
     this.$ = this.document.getElementById('tree-view');
     this.$nodes = this.document.createElement('ul');
     this.$nodes.classList.add('root-nodes');
     this.$.append(this.$nodes);
-    // root nodes
-    this.lastNodeID = 0;
-    this.nodes = [];
 
     this.cursor = null;
     // shows info about most recent event
-    this.statusBar = this.document.getElementById('status-bar');
-    this.statusText = this.document.getElementById('status-text');
+    //this.$statusBar = this.document.getElementById('status-bar');
+    this.$statusText = this.document.getElementById('status-text');
     // table mapping keys to actions
     // TODO: let user bind keys
     this.keyBindngs = {
@@ -33,6 +171,7 @@ class Tree {
       'd': 'deleteNode',
       'ArrowUp': 'cursorUp',
       'ArrowDown': 'cursorDown',
+      'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
     };
   }
@@ -45,7 +184,7 @@ class Tree {
   }
 
   setStatus (msg) {
-    this.statusText.textContent = msg;
+    this.$statusText.textContent = msg;
   }
 
   initKeyHandler () {
@@ -64,7 +203,9 @@ class Tree {
     const ctrl = (event.ctrlKey && (event.key != 'Control')) ? 'Ctrl+' : '';
     const alt = (event.altKey && (event.key != 'Alt')) ? 'Alt+' : '';
     const meta = (event.metaKey && (event.key != 'Meta')) ? 'Meta+' : '';
-    const keyName = `${shift}${ctrl}${alt}${meta}${event.key}`;
+    let eventKey = event.key;
+    if (eventKey === ' ') eventKey = 'Space';
+    const keyName = `${shift}${ctrl}${alt}${meta}${eventKey}`;
     this.setStatus(`keydown: ${keyName}`);
     event.processedName = keyName;
     return this.dispatchInputEvent(event);
@@ -90,6 +231,8 @@ class Tree {
       }
     }
   }
+
+  action_none(event) { }
 
   action_cursorUp(event) {
     // TODO: scroll cursor into view
@@ -121,20 +264,34 @@ class Tree {
 
   action_addNode (event) {
     // create the new node
-    const node = new Node(this, this);
+    const node = new Node(this, this, this.window);
+    const newID = this.newNodeID();
+    node.id = newID;
     // figure out where to put it in the tree
     let newIndex = 0;
     if (this.cursor) {
       newIndex = this.cursor.indexOf() + 1;
     }
+    const lengthBefore = this.nodes.length;
     this.nodes.splice(newIndex, 0, node);
     // assign a title
-    const newID = this.newNodeID();
-    node.id = newID;
     node.note = `node ${newID}`;
-    node.createDom();
+    node.$render();
+    // attach new node in the correct location
+    if (this.expanded) {
+      this.$nodes.classList.remove('hidden');
+      if ((lengthBefore === 0) || (newIndex >= lengthBefore)) {
+        this.$nodes.appendChild(node.$);
+      } else {
+        this.$nodes.insertBefore(node.$, this.nodes[newIndex+1].$);
+      }
+    }
     log(`added ${node.note}`);
     this.setCursor(node);
+  }
+
+  // TODO
+  action_addChild (event) {
   }
 
   action_deleteNode(event) {
@@ -158,118 +315,13 @@ class Tree {
     }
   }
 
-  newNodeID () {
-    this.lastNodeID ++;
-    return this.lastNodeID;
-  }
-
   setCursor(node) {
     if (this.cursor && (node !== this.cursor)) {
       this.cursor.removeCursor();
     }
     if (node) node.addCursor();
     this.cursor = node;
-  }
-
-}
-
-class Node {
-
-  constructor (tree, parent) {
-    //this.id = get_next_available_node_id();
-    // placement
-    this.tree = tree;
-    this.parent = parent;
-    this.window = null;
-    // attributes
-    this.note = null;
-    //this.$note = null;  // <span>
-    //this.long_note = null;
-    this.title = null;
-    this.url = null;
-    //this.$url = null;  // <a>
-    this.favicon_url = null;
-    //this.$favicon = null;  // <img>
-    //this.checkbox = false;
-    this.expanded = true;
-    this.loaded = false;
-    this.wasLoaded = false;
-    // children
-    this.nodes = [];
-    // DOM objects
-    this.$ = null;  // outermost element is a <li>
-    this.dom_div = null;  // <div> for note, title+url, favicon, etc
-    this.$nodes = null;  // <ul>
-  }
-
-  destroy () {
-    this.del();
-  }
-
-  del () {
-    this.deleteDom();
-  }
-
-  indexOf () {
-    if (!this.parent) return 0;
-    if (!this.parent.nodes) return 0;
-    return this.parent.nodes.indexOf(this);
-  }
-
-  createDom () {
-    log('createDom');
-    if (!this.tree.document) return;
-    const doc = this.tree.document;
-
-    log('createDom li');
-    // create outermost node element
-    this.$ = doc.createElement('li');
-    //this.$.id = `node${this.id}`;
-    this.$.classList.add('node');
-
-    log('createDom div');
-    // container for node title and details
-    this.dom_div = doc.createElement('div');
-    this.dom_div.classList.add('node-line');
-    this.dom_div.innerHTML = `<span class="node-note">${this.note}</span> ~ <a class="node-link" href="${this.url}">${this.title}</a>`;
-    this.$.append(this.dom_div);
-
-    // container for node children
-    if (this.expanded) {
-      log('createDom ul');
-      this.$nodes = doc.createElement('ul');
-      this.$nodes.classList.add('subnodes');
-    }
-
-    // add to parent
-    // FIXME: needs a way to specify where to insert the new node
-    if (!this.parent) return;
-    if (!this.parent.$nodes) return;
-    log('createDom parent');
-    this.parent.$nodes.append(this.$);
-  }
-
-  deleteDom () {
-    log('deleteDom');
-    if (this.$) {
-      log('remove');
-      this.$.remove();
-    }
-  }
-
-  addCursor() {
-    if (! this.dom_div) return;
-    this.dom_div.classList.add('cursor');
-  }
-
-  removeCursor() {
-    if (! this.dom_div) return;
-    this.dom_div.classList.remove('cursor');
-  }
-
-  // TODO
-  setNote (text) {
-    this.note = text;
+    if (node) node.scrollIntoView();
   }
 
 }
@@ -352,7 +404,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // init when page is ready
 document.addEventListener('DOMContentLoaded', () => {
-  let tree = new Tree();
+  let tree = new TreeView();
   tree.init();
 });
 
