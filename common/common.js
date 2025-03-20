@@ -5,7 +5,19 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-export function log (msg) {
-  console.log(msg);
+export function debug (...args) {
+  console.debug(...args);
+}
+
+export function log (...args) {
+  console.log(...args);
+}
+
+export function warn (...args) {
+  console.warn(...args);
+}
+
+export function error (...args) {
+  console.error(...args);
 }
 
