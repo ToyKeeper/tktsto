@@ -1,0 +1,5 @@
+*~
+*.old
+.*.sw?
+ignore/
+todo.otl
