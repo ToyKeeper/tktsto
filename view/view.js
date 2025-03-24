@@ -10,6 +10,7 @@ import { TreeView } from './treeview.js';
 
 log('/view/view.js running');
 
+
 /*
 document.addEventListener('DOMContentLoaded', () => {
   const treediv = document.getElementById('tree-view');
@@ -86,9 +87,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 */
 
-// init when page is ready
-document.addEventListener('DOMContentLoaded', () => {
+
+function init() {
+  initButtonBars();
+
   let tree = new TreeView();
   tree.init();
+}
+
+
+function initButtonBars () {
+  // when options-btn clicked, open the options page
+  document.querySelector('#options-btn')
+    .addEventListener('click', function() {
+      if (api.runtime.openOptionsPage) {
+        api.runtime.openOptionsPage();
+      } else {
+        window.open(api.runtime.getURL('/options/options.html'));
+      }
+    });
+}
+
+
+// init when page is ready
+document.addEventListener('DOMContentLoaded', () => {
+  init();
 });
 

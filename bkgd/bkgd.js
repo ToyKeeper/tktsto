@@ -9,18 +9,19 @@ import { log, warn } from '/common/common.js';
 import { IDGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
+import { base32encode } from '/common/base32.js';
 
 log('/bkgd/bkgd.js running');
 
 class Bkgd {
 
   constructor () {
-    // TODO: load client name from storage
-    // TODO: detect first run and generate random client name
-    this.idGen = new IDGenerator('tv', 9, 2);
   }
 
-  init () {
+  async init () {
+    await this.initConfig();
+    this.idGen = new IDGenerator(this.clientID, 9, 2);
+
     sidepanel.init();
     this.tree = new TreeStore();
     //this.tree.init();
@@ -39,6 +40,22 @@ class Bkgd {
     //api.runtime.onConnect.addListener( (msg, sender, sendResponse)
     //  => { this.onConnect(msg, sender, sendResponse) }
     //);
+  }
+
+  async initConfig () {
+    // load client name from storage
+    const result = await api.storage.local.get('clientID');
+    if (result.clientID) {
+      this.clientID = result.clientID;
+      log(`clientID: ${this.clientID}`);
+    } else {
+      // detect first run and generate random client name
+      // generate 2-digit base32 string
+      let num = Math.floor(Math.random() * (32**2));
+      this.clientID = base32encode(num, 2);
+      await api.storage.local.set({ 'clientID': this.clientID });
+      log(`rand clientID: ${this.clientID}`);
+    }
   }
 
   onMessage (msg, sender, sendResponse) {
@@ -67,6 +84,12 @@ class Bkgd {
   bkgd_newNodeID (msg, sender, sendResponse) {
     const newID = this.idGen.newID();
     sendResponse(newID);
+  }
+
+  bkgd_setClientID (msg, sender, sendResponse) {
+    // FIXME: strip everything but a-zA-Z0-9
+    this.clientID = msg.clientID;
+    this.idGen.name = this.clientID;
   }
 
 }
