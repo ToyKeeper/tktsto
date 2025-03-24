@@ -8,6 +8,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 import { log, warn } from '/common/common.js';
 import { IDGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
+import { TreeStore } from './treestore.js';
 
 log('/bkgd/bkgd.js running');
 
@@ -21,6 +22,8 @@ class Bkgd {
 
   init () {
     sidepanel.init();
+    this.tree = new TreeStore();
+    //this.tree.init();
     this.initMessageListener();
     this.initConnectListener();
   }
