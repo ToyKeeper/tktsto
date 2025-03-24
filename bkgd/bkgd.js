@@ -6,6 +6,7 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, warn } from '/common/common.js';
+import { IDGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 
 log('/bkgd/bkgd.js running');
@@ -13,7 +14,9 @@ log('/bkgd/bkgd.js running');
 class Bkgd {
 
   constructor () {
-    this.lastNodeID = 0;
+    // TODO: load client name from storage
+    // TODO: detect first run and generate random client name
+    this.idGen = new IDGenerator('tv', 9, 2);
   }
 
   init () {
@@ -59,9 +62,8 @@ class Bkgd {
   }
 
   bkgd_newNodeID (msg, sender, sendResponse) {
-    // FIXME: this needs to come from persistent storage
-    this.lastNodeID ++;
-    sendResponse(this.lastNodeID);
+    const newID = this.idGen.newID();
+    sendResponse(newID);
   }
 
 }
