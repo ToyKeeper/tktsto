@@ -33,11 +33,6 @@ export class Node {
   }
 
   destroy () {
-    this.del();
-  }
-
-  del () {
-    if (this.window) this.$destroy();
   }
 
   indexOf () {
@@ -46,9 +41,34 @@ export class Node {
     return this.parent.nodes.indexOf(this);
   }
 
+  addChild ({
+    id = null,
+    index = 0,
+    note = null,
+    title = null,
+    url = null,
+    favicon_url = null,
+    expanded = true
+  }={}) {
+    const newNode = new this.constructor(this.tree, this);
+    this.nodes.splice(index, 0, newNode);
+    newNode.note = note;
+    newNode.title = title;
+    newNode.url = url;
+    newNode.favicon_url = favicon_url;
+    newNode.expanded = expanded;
+    //if (null === id) { newNodeID.id = await this.newNodeID(); }
+    //else { newNode.id = id; }
+    newNode.id = id;
+    return newNode;
+  }
+
   // TODO
   setNote (text) {
     this.note = text;
+  }
+
+  newNodeID () {  // sub-classes should override this
   }
 
 }  // end class Node

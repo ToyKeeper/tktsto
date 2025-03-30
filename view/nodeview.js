@@ -11,14 +11,30 @@ import { Node } from '/common/node.js';
 
 export class NodeView extends Node {
 
+  // TODO: maybe rename 'window' to avoid conflict with global?
   constructor (tree, parent, window) {
     super(tree, parent);
 
+    // FIXME: should be a window Node, not browser window?
     this.window = window;
+    if (undefined === window) { }  // TODO
     // DOM objects
     this.$ = null;  // outermost element is a <li>
     this.$row = null;  // <div> for note, title+url, favicon, etc
     this.$nodes = null;  // <ul>
+  }
+
+  async newNodeID () {
+    //super.newNodeID();  // unnecessary?
+    const nextID = await api.runtime.sendMessage({msg: 'bkgd_newNodeID'});
+    return nextID;
+  }
+
+  async addChild (...args) {
+    const newNode = super.addChild(...args);
+    newNode.window = this.window;
+    if (! args.id) { newNode.id = await this.newNodeID(); }
+    return newNode;
   }
 
   $render () {

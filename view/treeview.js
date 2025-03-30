@@ -6,6 +6,7 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log } from '/common/common.js';
+import { inputDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
 
 
@@ -35,6 +36,7 @@ export class TreeView extends NodeView {
     this.keyBindngs = {
       'a': 'addNode',
       'd': 'deleteNode',
+      'o': 'addNoteAsNextVisibleRow',
       'ArrowUp': 'cursorUp',
       'ArrowDown': 'cursorDown',
       'Tab': 'none',  // suppress default Tab handling
@@ -51,13 +53,20 @@ export class TreeView extends NodeView {
     // TODO: load the nodes from storage and render them
   }
 
-  async newNodeID () {
-    const nextID = await api.runtime.sendMessage({msg: 'bkgd_newNodeID'});
-    return nextID;
-  }
+  //addChild (...args) {
+  //  return NodeView.addChild(...args);
+  //}
 
   setStatus (msg) {
     this.$statusText.textContent = msg;
+  }
+
+  async inputDialog (...args) {
+    // disable key event handling while dialog is active
+    this.dialogActive = true;
+    const result = await inputDialog(...args);
+    this.dialogActive = false;
+    return result;
   }
 
   initKeyHandler () {
@@ -70,6 +79,8 @@ export class TreeView extends NodeView {
   }
 
   keyHandler (event) {
+    // don't try to handle key events while a dialog is visible
+    if (this.dialogActive) return;
     // calculate a more complete name for this event,
     // then call the keyboard event dispatcher
     const shift = (event.shiftKey && (event.key != 'Shift')) ? 'Shift+' : '';
@@ -133,6 +144,93 @@ export class TreeView extends NodeView {
     }
   }
 
+  async action_addNoteAsNextVisibleRow (event) {
+    // how SHOULD this work?
+    // - prompt for note text (manual add-node is always a note, right?)
+    //   (node edit thing should let user edit the note, and maybe add a 
+    //   checkbox and/or long note?)
+    // - on dialog completed, continue with next steps:
+    //   (can I use a Promise for that, or do I need a separate handler?)
+    // - figure out where to put the new node
+    //   (determine parent and index)
+    //   - empty tree: 1st child of Tree
+    //   - leaf node: add as next sibling
+    //     (configurable option to add as 1st child?)
+    //   - collapsed branch: add as next sibling
+    //   - expanded branch: add as 1st child
+    // - use base Node stuff to create a new node at position P with value V
+    // - base Node stuff notifies other threads
+    // - then render the new node
+    // - ... and other threads add the node too,
+    //   but with the old ID and no broadcast
+    //
+    // types of NodeView.addNode events...
+    // - add note as next visible row
+    // - add note as prev visible row
+    // - add note as 1st child when cursor is on a leaf?
+    //
+
+    // prompt for new note text
+    const result = await this.inputDialog({
+      doc: document,
+      title: 'Add Note',
+      description: 'Enter note text:',
+      value: ''
+    });
+    // abort if user cancelled
+    if ((!result) || ('OK' !== result.button)) return;
+    const noteText = result.value;
+
+    // figure out where to put the new node (determine parent and index)
+    // TODO: move this to its own function
+    // default to first child of this TreeView if no cursor (like, empty tree)
+    let destParent = this;
+    let destIndex = 0;
+    if (this.cursor) {
+      // if leaf node: add as next sibling
+      if (0 === this.cursor.nodes.length) {
+        log('add to leaf');
+        // FIXME:
+        //destParent = this.cursor.parent;
+        //destIndex = this.cursor.indexOf() + 1;
+        destParent = this.cursor;
+        destIndex = 0;
+      }
+      // expanded branch: add as first child
+      else if (this.cursor.expanded) {
+        log('add to expanded branch');
+        destParent = this.cursor;
+        destIndex = 0;
+      }
+      // collapsed branch: add as next sibling
+      else {
+        log('add to collapsed branch');
+        destParent = this.cursor.parent;
+        destIndex = this.cursor.indexOf() + 1;
+      }
+    }
+
+    const lengthBefore = destParent.nodes.length;
+
+    // add a new Node
+    const newNode = await destParent.addChild({index: destIndex, note: noteText});
+    log(destParent.nodes);
+
+    // show it
+    newNode.$render();
+
+    // attach new node in the correct location
+    destParent.$nodes.classList.remove('hidden');
+    if ((lengthBefore === 0) || (destIndex >= lengthBefore)) {
+      destParent.$nodes.appendChild(newNode.$);
+    } else {
+      destParent.$nodes.insertBefore(newNode.$,
+        destParent.nodes[destIndex].$);
+    }
+    log(`added ${newNode.note}`);
+    this.setCursor(newNode);
+  }
+
   async action_addNode (event) {
     // create the new node
     const node = new NodeView(this, this, this.window);
@@ -175,7 +273,7 @@ export class TreeView extends NodeView {
     //const node = this.nodes.splice(this.nodes.length - 1, 1);
     const node = this.nodes.splice(delIndex, 1);
     if (node) {
-      node[0].del();
+      node[0].$destroy();
     }
     if (! this.nodes) this.setCursor(null);
     else {
