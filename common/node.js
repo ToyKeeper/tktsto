@@ -35,10 +35,44 @@ export class Node {
   destroy () {
   }
 
+  deleteSelf () {  //  TODO: rename this, maybe just use destroy ()
+    // root should refuse to delete itself
+    if (this.isRoot()) return;
+    // remove this node from its parent
+    this.parent.nodes.splice(this.indexOf(), 1);
+    // TODO: notify background (in NodeView)
+    // TODO: update ancestor stat info
+  }
+
   indexOf () {
     if (!this.parent) return 0;
     if (!this.parent.nodes) return 0;
     return this.parent.nodes.indexOf(this);
+  }
+
+  isRoot () {
+    // root has no parent, or is its own parent
+    return ((! this.parent) || (this.parent === this));
+  }
+
+  isLeaf () {
+    return (0 === this.nodes.length);
+  }
+
+  hasKids () {
+    return (0 < this.nodes.length);
+  }
+
+  isExpanded () {
+    return this.expanded;
+  }
+
+  isCollapsed () {
+    return (! this.expanded);
+  }
+
+  isVisible () {
+    // TODO
   }
 
   addChild ({
@@ -69,6 +103,72 @@ export class Node {
   }
 
   newNodeID () {  // sub-classes should override this
+  }
+
+  firstSibling () {
+    if (this.isRoot()) return this;
+    return this.parent.nodes[0];
+  }
+
+  lastSibling () {
+    if (this.isRoot()) return this;
+    return this.parent.nodes[this.parent.nodes.length - 1];
+  }
+
+  prevVisibleNode () {
+    // TODO: check if we're visible.  If not, return nearest visible parent
+    // root node has no previous row
+    if (this.isRoot()) return this;
+
+    const myIndex = this.indexOf();
+
+    // if we're the first child, return parent
+    if (0 === myIndex) return this.parent;
+
+    // if prev sibling leaf or collapsed, prev sibling
+    const prevSibling = this.parent.nodes[myIndex - 1];
+    if (prevSibling.isCollapsed() || prevSibling.isLeaf()) return prevSibling;
+
+    // prev sibling expanded with kids
+    // find last visible descendant of prev sibling
+    return prevSibling.lastVisibleDescendant();
+  }
+
+  lastVisibleDescendant () {
+    const lastChild = this.nodes[this.nodes.length - 1];
+    // if leaf or collapsed, this is it
+    if (lastChild.isCollapsed() || lastChild.isLeaf()) return lastChild;
+    // otherwise recurse
+    return lastChild.lastVisibleDescendant();
+  }
+
+  nextVisibleNode () {
+    // TODO: check if we're visible.  If not, return nearest visible parent
+
+    // if we have visible kids, return the first child
+    if (this.hasKids() && this.isExpanded()) return this.nodes[0];
+
+    // otherwise, search without looking at kids
+    const nextNode = this.nextVisibleNodeNoKids();
+    // avoid wrapping from last node to root
+    if (nextNode.isRoot()) return this;
+    // otherwise, assume this is correct
+    return nextNode;
+  }
+
+  nextVisibleNodeNoKids () {
+    // if we're root, there is no next non-child row
+    if (this.isRoot()) return this;
+
+    // if we're not the last child, return next sibling
+    const myIndex = this.indexOf();
+    if (this.parent.nodes.length > (myIndex + 1)) {
+      const nextSibling = this.parent.nodes[myIndex + 1];
+      return nextSibling;
+    }
+
+    // we're the last child, so escalate to the parent
+    return this.parent.nextVisibleNodeNoKids();
   }
 
 }  // end class Node

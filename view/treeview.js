@@ -8,24 +8,37 @@ import { api, isChrome, isFirefox } from '/api.js';
 import { log } from '/common/common.js';
 import { inputDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
+// import { Tree } from '/common/tree.js';
 
 
+//export class TreeView extends NodeView {
 //export class TreeView extends Tree {
-export class TreeView extends NodeView {
+export class TreeView {
 
   constructor () {
-    super(null, null, window);
-
-    this.tree = this;
+    //super(null, null, window);
 
     // TODO: determine whether full view or single-window
 
     this.document = document;
     this.window = window;
+    this.root = new NodeView(this, null, this.window);
+    this.root.parent = this.root;
+    this.root.id = 'root';
+    this.root.note = 'root';
+
     this.$ = this.document.getElementById('tree-view');
-    this.$nodes = this.document.createElement('ul');
-    this.$nodes.classList.add('root-nodes');
-    this.$.append(this.$nodes);
+    this.$ul = this.document.getElementById('tree-root');
+    //this.root.$ = this.$;
+    this.root.$render();
+    this.root.$.classList.add('root-nodes');
+    //this.root.$nodes.classList.remove('hidden');
+    this.$ul.appendChild(this.root.$);
+    //this.$.appendChild(this.root.$row);
+    //this.$.appendChild(this.root.$nodes);
+    //this.$root = this.document.createElement('ul');
+    //this.$root.classList.add('root-nodes');
+    //this.$.append(this.$root);
 
     this.cursor = null;
     // shows info about most recent event
@@ -34,11 +47,22 @@ export class TreeView extends NodeView {
     // table mapping keys to actions
     // TODO: let user bind keys
     this.keyBindngs = {
-      'a': 'addNode',
+      // test
+      //'a': 'addNode',
+      // add / remove nodes
       'd': 'deleteNode',
       'o': 'addNoteAsNextVisibleRow',
+      // cursor movement
       'ArrowUp': 'cursorUp',
       'ArrowDown': 'cursorDown',
+      'ArrowLeft': 'cursorLeft',
+      'ArrowRight': 'cursorRight',
+      'Home': 'cursorHome',
+      'End': 'cursorEnd',
+      // move current node
+      'Shift+ArrowLeft': 'moveNodeLeft',
+      'Shift+ArrowRight': 'moveNodeRight',
+      // misc
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
     };
@@ -116,32 +140,98 @@ export class TreeView extends NodeView {
     }
   }
 
-  action_none(event) { }
+  action_none (event) { }
 
-  action_cursorUp(event) {
-    if (! this.cursor) {
-      if (this.nodes) {
-        this.setCursor(this.nodes[0]);
-      }
-      return;
+  action_cursorUp (event) {
+    if (! this.cursor) return this.setCursor(this.root);
+    // move up one row
+    this.setCursor(this.cursor.prevVisibleNode());
+  }
+
+  action_cursorDown (event) {
+    if (! this.cursor) return this.setCursor(this.root);
+    // move down one row
+    this.setCursor(this.cursor.nextVisibleNode());
+  }
+
+  action_cursorLeft (event) {  // move cursor to parent
+    if (! this.cursor) return this.setCursor(this.root);
+    // ignore if root
+    if (this.cursor.isRoot()) return;
+    // move to parent
+    this.setCursor(this.cursor.parent);
+  }
+
+  action_cursorRight (event) {
+    // expand current node and move cursor to 1st child
+    // default
+    if (! this.cursor) return this.setCursor(this.root);
+
+    // if no kids, do nothing
+    if (this.cursor.isLeaf()) return;
+
+    // expand if necessary
+    if (! this.cursor.isExpanded()) {
+      this.cursor.expanded = true;
+      // TODO: draw freshly-expanded nodes
     }
-    let index = this.cursor.indexOf() - 1;
-    if (index >= 0) {
-        this.setCursor(this.nodes[index]);
+
+    // move to 1st child
+    this.setCursor(this.cursor.nodes[0]);
+  }
+
+  action_cursorHome (event) {
+    if (! this.cursor) return this.setCursor(this.root);
+    // move to first sibling
+    this.setCursor(this.cursor.firstSibling());
+  }
+
+  action_cursorEnd (event) {
+    if (! this.cursor) return this.setCursor(this.root);
+    // move to last sibling
+    this.setCursor(this.cursor.lastSibling());
+  }
+
+  action_cursorPgUp (event) {
+  }
+
+  action_cursorPgDown (event) {
+  }
+
+  action_moveNodeUp (event) {
+  }
+
+  action_moveNodeDown (event) {
+  }
+
+  action_moveNodeRight (event) {
+    // skip no-op cases
+    if (! this.cursor) return;
+    if (this.cursor.isRoot()) return;
+    // if already first child, do nothing
+    if (0 === this.cursor.indexOf()) return;
+
+    // TODO: move this logic to Node class
+    // if prev sibling expanded,
+    // make this node the last child of previous sibling
+    const prevSibling = this.cursor.parent.nodes[this.cursor.indexOf() - 1];
+    if (prevSibling.isExpanded()) {
+      //this.cursor.moveTo(prevSibling, prevSibling.nodes.length);
+    }
+    // elif prev sibling collapsed,
+    // make this node the *first* child of previous sibling
+    // TODO: destination should be configurable
+    else  {
+      // TODO: where should cursor move to?
+      //       new parent, or next row (stay in same place onscreen)?
+      //const newCursor = this.cursor.prevVisibleNode();
+      //const newCursor = this.cursor.nextVisibleNode();
+      //this.cursor.moveTo(prevSibling, 0);
+      //this.setCursor(newCursor);
     }
   }
 
-  action_cursorDown(event) {
-    if (! this.cursor) {
-      if (this.nodes) {
-        this.setCursor(this.nodes[0]);
-      }
-      return;
-    }
-    let index = this.cursor.indexOf() + 1;
-    if (index < this.nodes.length) {
-        this.setCursor(this.nodes[index]);
-    }
+  action_moveNodeLeft (event) {
   }
 
   async action_addNoteAsNextVisibleRow (event) {
@@ -184,17 +274,17 @@ export class TreeView extends NodeView {
     // figure out where to put the new node (determine parent and index)
     // TODO: move this to its own function
     // default to first child of this TreeView if no cursor (like, empty tree)
-    let destParent = this;
+    let destParent = this.root;
     let destIndex = 0;
     if (this.cursor) {
       // if leaf node: add as next sibling
       if (0 === this.cursor.nodes.length) {
         log('add to leaf');
         // FIXME:
-        //destParent = this.cursor.parent;
-        //destIndex = this.cursor.indexOf() + 1;
-        destParent = this.cursor;
-        destIndex = 0;
+        destParent = this.cursor.parent;
+        destIndex = this.cursor.indexOf() + 1;
+        //destParent = this.cursor;
+        //destIndex = 0;
       }
       // expanded branch: add as first child
       else if (this.cursor.expanded) {
@@ -225,39 +315,40 @@ export class TreeView extends NodeView {
       destParent.$nodes.appendChild(newNode.$);
     } else {
       destParent.$nodes.insertBefore(newNode.$,
-        destParent.nodes[destIndex].$);
+        destParent.nodes[destIndex+1].$);
     }
     log(`added ${newNode.note}`);
     this.setCursor(newNode);
   }
 
-  async action_addNode (event) {
-    // create the new node
-    const node = new NodeView(this, this, this.window);
-    const newID = await this.newNodeID();
-    node.id = newID;
-    // figure out where to put it in the tree
-    let newIndex = 0;
-    if (this.cursor) {
-      newIndex = this.cursor.indexOf() + 1;
-    }
-    const lengthBefore = this.nodes.length;
-    this.nodes.splice(newIndex, 0, node);
-    // assign a title
-    node.note = `node ${newID}`;
-    node.$render();
-    // attach new node in the correct location
-    if (this.expanded) {
-      this.$nodes.classList.remove('hidden');
-      if ((lengthBefore === 0) || (newIndex >= lengthBefore)) {
-        this.$nodes.appendChild(node.$);
-      } else {
-        this.$nodes.insertBefore(node.$, this.nodes[newIndex+1].$);
-      }
-    }
-    log(`added ${node.note}`);
-    this.setCursor(node);
-  }
+  //async action_addNode (event) {
+  //  // create the new node
+  //  const node = new NodeView(this, this, this.window);
+  //  const newID = await this.root.newNodeID();
+  //  node.id = newID;
+  //  // figure out where to put it in the tree
+  //  let newIndex = 0;
+  //  if (this.cursor) {
+  //    newIndex = this.cursor.indexOf() + 1;
+  //  }
+  //  const lengthBefore = this.root.nodes.length;
+  //  this.root.nodes.splice(newIndex, 0, node);
+  //  // assign a title
+  //  node.note = `node ${newID}`;
+  //  node.$render();
+  //  // attach new node in the correct location
+  //  if (this.expanded) {
+  //    this.$root.classList.remove('hidden');
+  //    this.root.$nodes.classList.remove('hidden');
+  //    if ((lengthBefore === 0) || (newIndex >= lengthBefore)) {
+  //      this.root.$nodes.appendChild(node.$);
+  //    } else {
+  //      this.root.$nodes.insertBefore(node.$, this.root.nodes[newIndex+1].$);
+  //    }
+  //  }
+  //  log(`added ${node.note}`);
+  //  this.setCursor(node);
+  //}
 
   // TODO
   action_addChild (event) {
@@ -265,30 +356,30 @@ export class TreeView extends NodeView {
 
   action_deleteNode(event) {
     log('deleteNode');
-    if (this.nodes.length <= 0) return;
-    let delIndex = 0;
-    if (this.cursor) {
-      delIndex = this.cursor.indexOf();
-    }
-    //const node = this.nodes.splice(this.nodes.length - 1, 1);
-    const node = this.nodes.splice(delIndex, 1);
-    if (node) {
-      node[0].$destroy();
-    }
-    if (! this.nodes) this.setCursor(null);
-    else {
-      let newCursor = this.nodes[
-          Math.max(0, Math.min(this.nodes.length - 1, delIndex))
-      ];
-      this.setCursor(newCursor);
-    }
+    // abort if nothing to delete
+    if (this.root.nodes.length <= 0) return;
+    if (! this.cursor) return;
+    // never delete root
+    if (this.cursor.isRoot()) return;
+
+    // figure out where to put the cursor after deletion
+    // move to next row when possible
+    let newCursor = this.cursor.nextVisibleNode();
+    // move to prev row if cursor is already on the last row
+    if (newCursor === this.cursor) newCursor = this.cursor.prevVisibleNode();
+
+    // remove this node
+    const toDelete = this.cursor;
+    toDelete.$destroy();
+    toDelete.deleteSelf();
+
+    // update the cursor
+    this.setCursor(newCursor);
   }
 
   setCursor(node) {
-    if (this.cursor && (node !== this.cursor)) {
-      this.cursor.removeCursor();
-    }
-    if (node) node.addCursor();
+    if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
+    if (node        && (node !== this.cursor)) node.addCursor();
     this.cursor = node;
     if (node) node.scrollIntoView();
   }
