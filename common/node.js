@@ -76,6 +76,22 @@ export class Node {
     return true;
   }
 
+  isLoaded () {
+    return this.loaded;
+  }
+
+  countDescendants (filter) {
+    let total = 0;
+    for (const node of this.nodes) {
+      if (filter) {
+        if (filter(node)) total ++;
+      }
+      else total ++;
+      total += node.countDescendants(filter);
+    }
+    return total;
+  }
+
   addChild ({
     id = null,
     index = 0,
@@ -205,6 +221,19 @@ export class Node {
     destParent.insertChild(this, destIndex);
     // TODO: recalculate stats
     // TODO: emit moveTo event
+  }
+
+  toggleExpanded () {
+    // leaf is always expanded
+    if (this.isLeaf()) {
+      this.expanded = true;
+      return;
+    }
+    // otherwise, twiddle the bit
+    this.expanded = (! this.expanded);
+    // TODO? recalculate stats
+    // TODO: emit nodeChanged event
+    //       (complicated though, since expanded may be per browser?)
   }
 
 }  // end class Node

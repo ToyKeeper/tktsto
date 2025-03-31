@@ -434,6 +434,13 @@ export class TreeView {
     this.setCursor(newCursor);
   }
 
+  action_toggleExpanded (event) {
+    log('action_toggleExpanded()');
+    // skip no-op cases
+    if (! this.cursor) return;
+    this.cursor.toggleExpanded();
+  }
+
   setCursor(node) {
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();

@@ -105,13 +105,91 @@ html, body {
   color: #fff;
 }
 
+/******************** lists ********************/
+
+ul {
+  list-style-type: none;
+  display: block;
+  padding: 0;
+  margin: 0;
+  margin-left: 6px;
+}
+
+.nodes {
+  border-left: 2px solid #567;
+  padding-left: 7px;
+}
+
+.cursor-node .nodes {
+  border-left: 2px solid #aad4ee;
+}
+
+/* less padding on top-level items */
+#tree-root {
+  border: none;
+  margin: none;
+  padding: none;
+}
+.root-nodes {
+  padding-left: 0;
+  margin-left: 0;
+}
+.root-nodes > .nodes {
+  margin-left: 2px;
+}
+.root-nodes > .row.expanded {
+  margin-left: -4px;
+}
+
 /******************** nodes ********************/
+
+.row {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/*
+.expanded.row {
+  list-style-position: inside;
+  list-style-type: circle;
+}
+*/
+/* FIXME: let the user configure whether this expansion thingy appears */
+.expanded.row::before {
+  content: "+";
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+  margin-right: -4px;
+  color: #68a;
+  overflow: visible;
+}
+.expanded.row {
+  /* margin-left: -4px; */
+}
+
+.cursor-node .expanded.row::before {
+  color: #aad4ee;
+}
 
 #tree-view .cursor {
   background: #666;
   /* TODO: Use a relevant var for the scroll margin */
   scroll-margin-top: 1em;
   scroll-margin-bottom: 1em;
+}
+
+/* only show stats on collapsed nodes */
+#tree-view .expanded .node-stats {
+  display: none;
+}
+#tree-view .collapsed .node-stats {
+  display: unset;
+}
+
+/* expanded parent nodes have extra padding below */
+.node.expanded {
+  padding-bottom: 3px;
 }
 
 /******************** misc ********************/

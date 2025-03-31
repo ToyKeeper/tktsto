@@ -40,11 +40,11 @@ export class NodeView extends Node {
     if (! this.$) this.$ = doc.createElement('li');
     this.$.id = `node${this.id}`;
     this.$.classList.add('node');
-    if (this.nodes && this.expanded) {
+    if (this.hasKids() && this.isExpanded()) {
       this.$.classList.add('expanded');
       this.$.classList.remove('collapsed', 'leaf');
     }
-    else if (this.nodes && (!this.expanded)) {
+    else if (this.hasKids() && this.isCollapsed()) {
       this.$.classList.add('collapsed');
       this.$.classList.remove('expanded', 'leaf');
     }
@@ -56,9 +56,6 @@ export class NodeView extends Node {
     log('Node.$render $row');
     // container for node title and details
     if (!this.$row) this.$row = doc.createElement('div');
-    this.$row.classList.add('row');
-    // TODO: separate function to render the Node $row
-    //this.$row.innerHTML = `<span class="node-note">${this.note}</span> ~ <a class="node-link" href="${this.url}">${this.title}</a>`;
     this.$renderTitle();
     if (! this.$.contains(this.$row)) this.$.append(this.$row);
 
@@ -67,7 +64,11 @@ export class NodeView extends Node {
     if (! this.$nodes) this.$nodes = doc.createElement('ul');
     if (! this.$.contains(this.$nodes)) this.$.append(this.$nodes);
     this.$nodes.classList.add('nodes');
-    this.$nodes.classList.add('hidden');
+    if (this.isCollapsed()) {
+      this.$nodes.classList.add('hidden');
+    } else {
+      this.$nodes.classList.remove('hidden');
+    }
 
     // add to parent (nope, nevermind, let the parent do that on its own)
     // needs a way to specify where to insert the new node
@@ -86,6 +87,17 @@ export class NodeView extends Node {
   }
 
   $renderTitle () {
+    // reset classes
+    //this.$row.className = 'row';
+    this.$row.classList.add('row');
+    // copy classes from outer element
+    //this.$row.classList.add(...this.$.classList);
+    for (const label of ['leaf', 'expanded', 'collapsed']) {
+      if (this.$.classList.contains(label))
+        this.$row.classList.add(label);
+      else
+        this.$row.classList.remove(label);
+    }
     // is the link loaded in a tab?
     if (this.loaded) this.$row.classList.add('loaded');
     else this.$row.classList.remove('loaded');
@@ -112,15 +124,44 @@ export class NodeView extends Node {
     }
     // node stats
     let statsText = '';
-    if (this.nodes.length > 0) {
-      let openChildren = 0;  //  FIXME: count all open descendants
-      let totalChildren = this.nodes.length;
+    // TODO: unsure if always include stats or only when collapsed
+    //if (this.hasKids() && this.isCollapsed()) {
+    if (this.hasKids()) {
+      //  count all open descendants
+      const openChildren = this.countDescendants(
+        function (node) { return node.isLoaded(); }
+      );
+      const totalChildren = this.countDescendants();
       statsText = `<span class="node-stats">[<span class="node-stat-open">${openChildren}</span> / <span class="node-stat-total">${totalChildren}</span>]</span> `;
     }
     // TODO: favicon
     let faviconText = '';
     // combined output
     this.$row.innerHTML = `${statsText}${faviconText}${mainText}`;
+  }
+
+  $refreshAncestry () {
+    // update displayed info for this node and all its parents
+    this.$render();
+    if (! this.isRoot()) this.parent.$refreshAncestry();
+  }
+
+  $renderChildren () {
+    this.$render();
+    if (this.isExpanded()) {
+      for (const node of this.nodes) {
+        this.$insertChild(node, node.indexOf());
+        node.$renderChildren();
+      }
+    }
+  }
+
+  $destroyChildren () {
+    this.$nodes.classList.add('hidden');
+    for (const node of this.nodes) {
+      node.$destroy();
+      // TODO: unsure if I need to recurse
+    }
   }
 
   async addChild (args) {
@@ -149,6 +190,8 @@ export class NodeView extends Node {
       } else {
         this.$nodes.appendChild(newNode.$);
       }
+      // refresh displayed info
+      this.$refreshAncestry();
     }
 
     return newNode;
@@ -159,6 +202,7 @@ export class NodeView extends Node {
     // if moving to invisible spot, delete render
     if ((! this.isVisible()) || (this.isCollapsed())) {
       node.$destroy();
+      this.$refreshAncestry();
       return;
     }
     // otherwise, render and insert child elements
@@ -171,6 +215,8 @@ export class NodeView extends Node {
     } else {
       this.$nodes.appendChild(node.$);
     }
+    // refresh displayed info
+    this.$refreshAncestry();
   }
 
   scrollIntoView () {
@@ -191,18 +237,23 @@ export class NodeView extends Node {
 
   addCursor () {
     if (! this.$row) return;
+    this.$.classList.add('cursor-node');
     this.$row.classList.add('cursor');
   }
 
   removeCursor () {
     if (! this.$row) return;
+    this.$.classList.remove('cursor-node');
     this.$row.classList.remove('cursor');
   }
 
   moveTo (destParent, destIndex) {
+    const oldParent = this.parent;
     super.moveTo(destParent, destIndex);
 
     destParent.$insertChild(this, destIndex);
+    // refresh old parent if needed
+    if (oldParent != destParent) oldParent.$refreshAncestry();
 
     // TODO: if has cursor and new position hidden,
     // move cursor to nearest visible parent
@@ -213,6 +264,27 @@ export class NodeView extends Node {
       if (this.isLoaded()) {
         // TODO: move tab to new window
       }
+    }
+  }
+
+  toggleExpanded () {
+    const wasExpanded = this.expanded;
+    super.toggleExpanded();
+
+    // if no change, do nothing
+    if (wasExpanded === this.expanded) return;
+
+    // if collapsing, delete subtree and show stats
+    if (wasExpanded) {
+      this.$destroyChildren();
+      // TODO: update + show stats
+      this.$render();
+    }
+    // if expanding, create subtree and hide stats
+    else {
+      this.$renderChildren();
+      // TODO: hide stats
+      this.$render();
     }
   }
 
