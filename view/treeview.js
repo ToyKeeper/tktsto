@@ -222,15 +222,82 @@ export class TreeView {
   }
 
   action_moveNodeUp (event) {
+    log('TreeView.action_moveNodeUp()');
+
+    // if root or 1st child of root, do nothing
+    if (! this.cursor) return;
+    if (this.cursor.isRoot()) return;
+    if (this.cursor.parent.isRoot() && (0 === this.cursor.indexOf())) return;
+
+    // node can be moved up; take position of previous visible row
+    const prevRow = this.cursor.prevVisibleNode();
+    const destParent = prevRow.parent;
+    const destIndex = prevRow.indexOf();
+
+    // move it
+    this.cursor.moveTo(destParent, destIndex);
   }
 
   action_moveNodeDown (event) {
+    log('TreeView.action_moveNodeDown()');
+
+    // if root or 1st child of root, do nothing
+    if (! this.cursor) return;
+    if (this.cursor.isRoot()) return;
+
+    // take position of next visible row outside our own branch, probably
+    const nextRow = this.cursor.nextVisibleNodeNotMyChild();
+    // figure out where to move to
+    let destParent;
+    let destIndex;
+    // if we're the last row in the tree, promote to last child of parent
+    if (nextRow === this.cursor) {
+      if (this.cursor.parent.isRoot()) return;
+      destParent = this.cursor.parent.parent;
+      destIndex = this.cursor.parent.indexOf() + 1;
+    }
+    // if next row is an expanded parent, move before 1st child
+    else if (nextRow.hasKids() && nextRow.isExpanded()) {
+      destParent = nextRow;
+      destIndex = 0;
+    }
+    else {  // take position of next visible row
+      destParent = nextRow.parent;
+      destIndex = nextRow.indexOf() + 1;
+    }
+
+    // move it
+    this.cursor.moveTo(destParent, destIndex);
   }
 
   action_moveNodeUpNoDescend (event) {
+    log('TreeView.action_moveNodeUpNoDescend()');
+
+    // if 1st child of root, do nothing
+    if (! this.cursor) return;
+    if (this.cursor.isRoot()) return;
+    if (this.cursor.parent.isRoot() && (0 === this.cursor.indexOf())) return;
+
+    // node can be moved up
+    let destParent;
+    let destIndex;
+    // if 1st child, take parent's parent and index
+    if (0 === this.cursor.indexOf()) {
+      destParent = this.cursor.parent.parent;
+      destIndex = destParent.indexOf();
+    }
+    // if prev sibling, take its index
+    else {
+      destParent = this.cursor.parent;
+      destIndex = this.cursor.indexOf() - 1;
+    }
+
+    // actually move it
+    this.cursor.moveTo(destParent, destIndex);
   }
 
   action_moveNodeDownNoDescend (event) {
+    // TODO: this one is somewhat more complicated
   }
 
   action_moveNodeRight (event) {
@@ -240,27 +307,40 @@ export class TreeView {
     // if already first child, do nothing
     if (0 === this.cursor.indexOf()) return;
 
-    // TODO: move this logic to Node class
-    // if prev sibling expanded,
-    // make this node the last child of previous sibling
-    const prevSibling = this.cursor.parent.nodes[this.cursor.indexOf() - 1];
-    if (prevSibling.isExpanded()) {
-      //this.cursor.moveTo(prevSibling, prevSibling.nodes.length);
+    // TODO? move this logic to Node class
+    // new parent is previous sibling
+    const destParent = this.cursor.parent.nodes[this.cursor.indexOf() - 1];
+
+    let destIndex;
+    let newCursor = this.cursor;
+    // if destParent expanded, make this node the last child
+    if (destParent.isExpanded()) {
+      destIndex = destParent.nodes.length;
     }
-    // elif prev sibling collapsed,
-    // make this node the *first* child of previous sibling
+    // if new parent collapsed, make this node the *first* child
     // TODO: destination should be configurable
-    else  {
-      // TODO: where should cursor move to?
-      //       new parent, or next row (stay in same place onscreen)?
-      //const newCursor = this.cursor.prevVisibleNode();
-      //const newCursor = this.cursor.nextVisibleNode();
-      //this.cursor.moveTo(prevSibling, 0);
-      //this.setCursor(newCursor);
+    else {
+      destIndex = 0;
+      newCursor = destParent;
+      //newCursor = this.cursor.nextVisibleNode();
     }
+
+    this.cursor.moveTo(destParent, destIndex);
+    this.setCursor(newCursor);
   }
 
   action_moveNodeLeft (event) {
+    // skip no-op cases
+    if (! this.cursor) return;
+    if (this.cursor.isRoot()) return;
+    if (this.cursor.parent.isRoot()) return;
+
+    // become next sibling of parent
+    const destParent = this.cursor.parent.parent;
+    const destIndex = this.cursor.parent.indexOf() + 1;
+
+    // move it
+    this.cursor.moveTo(destParent, destIndex);
   }
 
   async addNoteAsPrevOrNextVisibleRow (position) {

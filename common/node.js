@@ -73,6 +73,7 @@ export class Node {
 
   isVisible () {
     // TODO
+    return true;
   }
 
   addChild ({
@@ -169,6 +170,41 @@ export class Node {
 
     // we're the last child, so escalate to the parent
     return this.parent.nextVisibleNodeNoKids();
+  }
+
+  nextVisibleNodeNotMyChild () {
+    // find next visible node... but exclude our own kids
+    const wasExpanded = this.expanded;
+    this.expanded = false;
+    const result = this.nextVisibleNode();
+    this.expanded = wasExpanded;
+    return result;
+  }
+
+  insertChild (node, index) {
+    if (! node) return;
+    this.nodes.splice(index, 0, node);
+    node.parent = this;
+  }
+
+  moveTo (destParent, destIndex) {
+    // remove
+    const prevParent = this.parent;
+    if (prevParent) {
+      const oldIndex = this.indexOf();
+      if (oldIndex >= 0) {
+        prevParent.nodes.splice(oldIndex, 1);
+        // special case if moving to a later spot in the same parent
+        // because removing an item reduced the indexes after it
+        if ((prevParent === destParent) && (destIndex > oldIndex)) {
+          destIndex -= 1;
+        }
+      }
+    }
+    // ... and add
+    destParent.insertChild(this, destIndex);
+    // TODO: recalculate stats
+    // TODO: emit moveTo event
   }
 
 }  // end class Node

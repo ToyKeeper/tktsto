@@ -30,37 +30,6 @@ export class NodeView extends Node {
     return nextID;
   }
 
-  async addChild (args) {
-    //log('NodeView.addChild():', args);
-    // index is required; assume 1st child if not given
-    if (undefined === args.index) args.index = 0;
-    // save for later
-    const prevNodeAtIndex = this.nodes[args.index];
-
-    // create new Node object
-    const newNode = super.addChild(args);
-    newNode.window = this.window;  // redundant?
-    if (! args.id) { newNode.id = await this.newNodeID(); }
-
-    // display it
-    if (args.render) {
-      //this.expandAndShow();
-      this.$nodes.classList.remove('hidden');
-
-      // show it
-      newNode.$render();
-
-      // attach new node in the correct location
-      if (prevNodeAtIndex) {
-        this.$nodes.insertBefore(newNode.$, prevNodeAtIndex.$);
-      } else {
-        this.$nodes.appendChild(newNode.$);
-      }
-    }
-
-    return newNode;
-  }
-
   $render () {
     log('Node.$render');
     if (!this.tree.document) return;
@@ -86,7 +55,7 @@ export class NodeView extends Node {
 
     log('Node.$render $row');
     // container for node title and details
-    if (!this.Row) this.$row = doc.createElement('div');
+    if (!this.$row) this.$row = doc.createElement('div');
     this.$row.classList.add('row');
     // TODO: separate function to render the Node $row
     //this.$row.innerHTML = `<span class="node-note">${this.note}</span> ~ <a class="node-link" href="${this.url}">${this.title}</a>`;
@@ -116,7 +85,7 @@ export class NodeView extends Node {
     }
   }
 
-  $renderTitle() {
+  $renderTitle () {
     // is the link loaded in a tab?
     if (this.loaded) this.$row.classList.add('loaded');
     else this.$row.classList.remove('loaded');
@@ -154,7 +123,57 @@ export class NodeView extends Node {
     this.$row.innerHTML = `${statsText}${faviconText}${mainText}`;
   }
 
-  scrollIntoView() {
+  async addChild (args) {
+    //log('NodeView.addChild():', args);
+    // index is required; assume 1st child if not given
+    if (undefined === args.index) args.index = 0;
+    // save for later
+    const prevNodeAtIndex = this.nodes[args.index];
+
+    // create new Node object
+    const newNode = super.addChild(args);
+    newNode.window = this.window;  // redundant?
+    if (! args.id) { newNode.id = await this.newNodeID(); }
+
+    // display it
+    if (args.render) {
+      //this.expandAndShow();
+      this.$nodes.classList.remove('hidden');
+
+      // show it
+      newNode.$render();
+
+      // attach new node in the correct location
+      if (prevNodeAtIndex) {
+        this.$nodes.insertBefore(newNode.$, prevNodeAtIndex.$);
+      } else {
+        this.$nodes.appendChild(newNode.$);
+      }
+    }
+
+    return newNode;
+  }
+
+  $insertChild (node, index) {
+    // TODO: update displayed stats?
+    // if moving to invisible spot, delete render
+    if ((! this.isVisible()) || (this.isCollapsed())) {
+      node.$destroy();
+      return;
+    }
+    // otherwise, render and insert child elements
+    node.$render();
+    this.$nodes.classList.remove('hidden');
+    // attach new node in the correct location
+    const prevElementAtIndex = this.$nodes.children[index];
+    if (prevElementAtIndex) {
+      this.$nodes.insertBefore(node.$, prevElementAtIndex);
+    } else {
+      this.$nodes.appendChild(node.$);
+    }
+  }
+
+  scrollIntoView () {
     if (this.$row) this.$row.scrollIntoView({
       behavior: "instant",  // smooth or instant
       block: "nearest",  // vertical scroll policy, "nearest" or "center"
@@ -162,7 +181,7 @@ export class NodeView extends Node {
     });
   }
 
-  scrollToTop() {
+  scrollToTop () {
     if (this.$) this.$.scrollIntoView({
       behavior: "instant",  // smooth or instant
       block: "start",  // vertical scroll policy
@@ -170,14 +189,31 @@ export class NodeView extends Node {
     });
   }
 
-  addCursor() {
+  addCursor () {
     if (! this.$row) return;
     this.$row.classList.add('cursor');
   }
 
-  removeCursor() {
+  removeCursor () {
     if (! this.$row) return;
     this.$row.classList.remove('cursor');
+  }
+
+  moveTo (destParent, destIndex) {
+    super.moveTo(destParent, destIndex);
+
+    destParent.$insertChild(this, destIndex);
+
+    // TODO: if has cursor and new position hidden,
+    // move cursor to nearest visible parent
+
+    if (this.window !== this.parent.window) {
+      // moved to new window
+      this.window = this.parent.window;
+      if (this.isLoaded()) {
+        // TODO: move tab to new window
+      }
+    }
   }
 
 }  // end class NodeView
