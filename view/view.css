@@ -129,6 +129,7 @@ ul {
   border: none;
   margin: none;
   padding: none;
+  margin-right: 5px;
 }
 .root-nodes {
   padding-left: 0;
@@ -146,14 +147,9 @@ ul {
 .row {
   white-space: nowrap;
   overflow: hidden;
+  line-height: 150%;
 }
 
-/*
-.expanded.row {
-  list-style-position: inside;
-  list-style-type: circle;
-}
-*/
 /* FIXME: let the user configure whether this expansion thingy appears */
 .expanded.row::before {
   content: "+";
@@ -172,11 +168,26 @@ ul {
   color: #aad4ee;
 }
 
+.cursor-node.expanded {
+  outline: 1px outset var(--cursor-branch-hl);
+  background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
+  border-radius: var(--cursor-branch-radius);
+  box-shadow: var(--cursor-branch-shadow);
+}
+
 #tree-view .cursor {
-  background: #666;
   /* TODO: Use a relevant var for the scroll margin */
   scroll-margin-top: 1em;
   scroll-margin-bottom: 1em;
+  background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
+  margin: 0px;
+  border-radius: 6px 6px 0px 0px;
+  border-style: none;
+  box-shadow: var(--cursor-shadow);
+}
+
+#tree-view .cursor.leaf, #tree-view .cursor.collapsed {
+  border-radius: 6px;
 }
 
 /* only show stats on collapsed nodes */
@@ -204,6 +215,7 @@ ul {
 :root {
   /***** globals *****/
   --global-font-size: 133%;
+  --shadow-color: #000000c0;
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
   --note-loaded-fg: #2c6;
@@ -214,6 +226,15 @@ ul {
   --tab-unloaded-fg: #9cb7d3;
   --window-active-fg: #fff;
   --window-loaded-fg: #8696a7;
+  /***** cursor *****/
+  --cursor-bg-top: #57b;
+  --cursor-bg-bot: #235;
+  --cursor-shadow: 0.1em 0.1em 0.2em var(--shadow-color);
+  --cursor-branch-hl: #444;
+  --cursor-branch-top: #383838;
+  --cursor-branch-bot: #2c2c2c;
+  --cursor-branch-shadow: 0.15em 0.15em 0.333em var(--shadow-color);
+  --cursor-branch-radius: 6px;
   /***** toolbars *****/
   --toolbar-height: 2em;
   --toolbar-bg: #333;
