@@ -30,10 +30,34 @@ export class NodeView extends Node {
     return nextID;
   }
 
-  async addChild (...args) {
-    const newNode = super.addChild(...args);
-    newNode.window = this.window;
+  async addChild (args) {
+    //log('NodeView.addChild():', args);
+    // index is required; assume 1st child if not given
+    if (undefined === args.index) args.index = 0;
+    // save for later
+    const prevNodeAtIndex = this.nodes[args.index];
+
+    // create new Node object
+    const newNode = super.addChild(args);
+    newNode.window = this.window;  // redundant?
     if (! args.id) { newNode.id = await this.newNodeID(); }
+
+    // display it
+    if (args.render) {
+      //this.expandAndShow();
+      this.$nodes.classList.remove('hidden');
+
+      // show it
+      newNode.$render();
+
+      // attach new node in the correct location
+      if (prevNodeAtIndex) {
+        this.$nodes.insertBefore(newNode.$, prevNodeAtIndex.$);
+      } else {
+        this.$nodes.appendChild(newNode.$);
+      }
+    }
+
     return newNode;
   }
 

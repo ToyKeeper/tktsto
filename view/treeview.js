@@ -49,19 +49,42 @@ export class TreeView {
     this.keyBindngs = {
       // test
       //'a': 'addNode',
-      // add / remove nodes
+      ///// add / remove nodes
       'd': 'deleteNode',
       'o': 'addNoteAsNextVisibleRow',
-      // cursor movement
+      'Shift+O': 'addNoteAsPrevVisibleRow',
+      ///// edit nodes
+      'Space': 'toggleExpanded',
+      'n': 'editNote',
+      ///// task status
+      //'x': 'toggleTaskDone',
+      //'t': 'taskLeaderKey',
+      ///// search
+      //'/': 'beginSearch',
+      //'Ctrl+f': 'beginSearch',
+      //'Ctrl+g': 'nextSearchResult',
+      ///// cursor movement
       'ArrowUp': 'cursorUp',
       'ArrowDown': 'cursorDown',
       'ArrowLeft': 'cursorLeft',
       'ArrowRight': 'cursorRight',
+      'PageUp': 'cursorPgUp',
+      'PageDown': 'cursorPgDown',
       'Home': 'cursorHome',
       'End': 'cursorEnd',
-      // move current node
+      ///// move current node
+      // move by one visible row, period
+      'Shift+ArrowUp': 'moveNodeUp',
+      'Shift+ArrowDown': 'moveNodeDown',
+      // move by one sibling, never going to a deeper level (but maybe higher)
+      'Shift+PageUp': 'moveNodeUpNoDescend',
+      'Shift+PageDown': 'moveNodeDownNoDescend',
+      // move shallower or deeper
       'Shift+ArrowLeft': 'moveNodeLeft',
       'Shift+ArrowRight': 'moveNodeRight',
+      // move to first / last position
+      'Shift+Home': 'moveNodeHome',
+      'Shift+End': 'moveNodeEnd',
       // misc
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
@@ -204,6 +227,12 @@ export class TreeView {
   action_moveNodeDown (event) {
   }
 
+  action_moveNodeUpNoDescend (event) {
+  }
+
+  action_moveNodeDownNoDescend (event) {
+  }
+
   action_moveNodeRight (event) {
     // skip no-op cases
     if (! this.cursor) return;
@@ -234,31 +263,10 @@ export class TreeView {
   action_moveNodeLeft (event) {
   }
 
-  async action_addNoteAsNextVisibleRow (event) {
-    // how SHOULD this work?
-    // - prompt for note text (manual add-node is always a note, right?)
-    //   (node edit thing should let user edit the note, and maybe add a 
-    //   checkbox and/or long note?)
-    // - on dialog completed, continue with next steps:
-    //   (can I use a Promise for that, or do I need a separate handler?)
-    // - figure out where to put the new node
-    //   (determine parent and index)
-    //   - empty tree: 1st child of Tree
-    //   - leaf node: add as next sibling
-    //     (configurable option to add as 1st child?)
-    //   - collapsed branch: add as next sibling
-    //   - expanded branch: add as 1st child
-    // - use base Node stuff to create a new node at position P with value V
-    // - base Node stuff notifies other threads
-    // - then render the new node
-    // - ... and other threads add the node too,
-    //   but with the old ID and no broadcast
-    //
-    // types of NodeView.addNode events...
-    // - add note as next visible row
-    // - add note as prev visible row
-    // - add note as 1st child when cursor is on a leaf?
-    //
+  async addNoteAsPrevOrNextVisibleRow (position) {
+    // ensure valid position: prev or next
+    if (undefined === position) position = 'next';
+    if ('next' !== position) position = 'prev';
 
     // prompt for new note text
     const result = await this.inputDialog({
@@ -272,83 +280,52 @@ export class TreeView {
     const noteText = result.value;
 
     // figure out where to put the new node (determine parent and index)
-    // TODO: move this to its own function
-    // default to first child of this TreeView if no cursor (like, empty tree)
-    let destParent = this.root;
+    let destParent = this.root;  // default if empty tree or no cursor
     let destIndex = 0;
     if (this.cursor) {
+      // if root, just make new 1st child
+      if (this.cursor.isRoot()) {
+        destParent = this.cursor;
+        destIndex = 0;
+      }
+      // add new row before this one
+      else if ('prev' === position) {
+        // in all 'prev' cases, just insert a new sibling before self
+        destParent = this.cursor.parent;
+        destIndex = this.cursor.indexOf();
+      }
       // if leaf node: add as next sibling
-      if (0 === this.cursor.nodes.length) {
-        log('add to leaf');
-        // FIXME:
+      // or collapsed branch: add as next sibling
+      else if (this.cursor.isLeaf() || this.cursor.isCollapsed()) {
+        log('add to leaf or collapsed');
         destParent = this.cursor.parent;
         destIndex = this.cursor.indexOf() + 1;
-        //destParent = this.cursor;
-        //destIndex = 0;
       }
       // expanded branch: add as first child
-      else if (this.cursor.expanded) {
+      else {
         log('add to expanded branch');
         destParent = this.cursor;
         destIndex = 0;
       }
-      // collapsed branch: add as next sibling
-      else {
-        log('add to collapsed branch');
-        destParent = this.cursor.parent;
-        destIndex = this.cursor.indexOf() + 1;
-      }
     }
-
-    const lengthBefore = destParent.nodes.length;
 
     // add a new Node
-    const newNode = await destParent.addChild({index: destIndex, note: noteText});
+    const newNode = await destParent.addChild(
+      {index: destIndex, note: noteText, render: true}
+    );
     log(destParent.nodes);
-
-    // show it
-    newNode.$render();
-
-    // attach new node in the correct location
-    destParent.$nodes.classList.remove('hidden');
-    if ((lengthBefore === 0) || (destIndex >= lengthBefore)) {
-      destParent.$nodes.appendChild(newNode.$);
-    } else {
-      destParent.$nodes.insertBefore(newNode.$,
-        destParent.nodes[destIndex+1].$);
-    }
-    log(`added ${newNode.note}`);
     this.setCursor(newNode);
+    log(`added ${newNode.note}`);
+
   }
 
-  //async action_addNode (event) {
-  //  // create the new node
-  //  const node = new NodeView(this, this, this.window);
-  //  const newID = await this.root.newNodeID();
-  //  node.id = newID;
-  //  // figure out where to put it in the tree
-  //  let newIndex = 0;
-  //  if (this.cursor) {
-  //    newIndex = this.cursor.indexOf() + 1;
-  //  }
-  //  const lengthBefore = this.root.nodes.length;
-  //  this.root.nodes.splice(newIndex, 0, node);
-  //  // assign a title
-  //  node.note = `node ${newID}`;
-  //  node.$render();
-  //  // attach new node in the correct location
-  //  if (this.expanded) {
-  //    this.$root.classList.remove('hidden');
-  //    this.root.$nodes.classList.remove('hidden');
-  //    if ((lengthBefore === 0) || (newIndex >= lengthBefore)) {
-  //      this.root.$nodes.appendChild(node.$);
-  //    } else {
-  //      this.root.$nodes.insertBefore(node.$, this.root.nodes[newIndex+1].$);
-  //    }
-  //  }
-  //  log(`added ${node.note}`);
-  //  this.setCursor(node);
-  //}
+  async action_addNoteAsNextVisibleRow (event) {
+    return await this.addNoteAsPrevOrNextVisibleRow('next');
+  }
+
+  async action_addNoteAsPrevVisibleRow (event) {
+    return await this.addNoteAsPrevOrNextVisibleRow('prev');
+  }
 
   // TODO
   action_addChild (event) {
