@@ -439,7 +439,8 @@ export class TreeView extends Tree {
     log('action_toggleExpanded()');
     // skip no-op cases
     if (! this.cursor) return;
-    this.cursor.toggleExpanded();
+    const toggled = ! this.cursor.expanded;
+    this.cursor.setExpanded(toggled);
   }
 
   setCursor(node) {

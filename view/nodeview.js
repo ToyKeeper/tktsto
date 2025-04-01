@@ -272,9 +272,9 @@ export class NodeView extends Node {
     }
   }
 
-  toggleExpanded () {
+  setExpanded (expanded, ...extra) {
     const wasExpanded = this.expanded;
-    super.toggleExpanded();
+    super.setExpanded(expanded, ...extra);
 
     // if no change, do nothing
     if (wasExpanded === this.expanded) return;

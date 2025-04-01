@@ -238,17 +238,20 @@ export class Node {
         { nodeID: this.id, destParentID: destParent.id, destIndex: destIndex});
   }
 
-  toggleExpanded () {
+  setExpanded (expanded, notify = true) {
+    // abort on no-op
+    if (expanded === this.expanded) return;
     // leaf is always expanded
     if (this.isLeaf()) {
       this.expanded = true;
       return;
     }
     // otherwise, twiddle the bit
-    this.expanded = (! this.expanded);
+    this.expanded = expanded;
     // TODO? recalculate stats
-    // TODO: emit nodeChanged event
-    //       (complicated though, since expanded may be per browser?)
+    if (notify)
+      emit('tree_nodeChanged',
+        { nodeID: this.id, type: 'setExpanded', expanded: this.expanded });
   }
 
 }  // end class Node

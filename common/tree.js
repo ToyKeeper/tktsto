@@ -93,5 +93,24 @@ export class Tree {
     return node.moveTo(destParent, destIndex, false);
   }
 
+  async tree_nodeChanged (msg, sender, sendResponse) {
+    // unpack
+    const nodeID = msg.nodeID;
+    const changeType = msg.type;
+
+    // find nodes
+    const node = this.nodes[nodeID];
+    if (! node)
+      return error(`tree_nodeChanged(): couldn't find node "${nodeID}"`);
+
+    // figure out what kind of change happened, and update it
+    if ('setExpanded' === changeType) {
+      return node.setExpanded(msg.expanded, false);
+    }
+    else {
+      return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);
+    }
+  }
+
 }
 
