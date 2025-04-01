@@ -59,7 +59,7 @@ class Bkgd {
   }
 
   onMessage (msg, sender, sendResponse) {
-    log('bkgd onMessage', msg);
+    //log('bkgd onMessage', msg);
     if (! msg.msg) {
       warn('bkgd onMessage invalid', msg);
       sendResponse({error: 'invalid msg type'});
@@ -68,12 +68,12 @@ class Bkgd {
     const handler = this[`${msg.msg}`];
     if (handler) {
       // actually handle the event
-      log(`bkgd: ${msg.msg}()`);
+      //log(`bkgd: ${msg.msg}()`);
       handler.bind(this)(msg, sender, sendResponse);
     }
     else {
       // message was probably intended for someone else
-      log(`bkgd fn not found: ${msg.msg}`);
+      //log(`bkgd fn not found: ${msg.msg}`);
     }
   }
 

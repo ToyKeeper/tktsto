@@ -5,27 +5,24 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log } from '/common/common.js';
+import { log, emit } from '/common/common.js';
 import { inputDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
-// import { Tree } from '/common/tree.js';
+import { Tree } from '/common/tree.js';
 
 
-//export class TreeView extends NodeView {
-//export class TreeView extends Tree {
-export class TreeView {
+export class TreeView extends Tree {
 
   constructor () {
-    //super(null, null, window);
+    super(NodeView);
 
     // TODO: determine whether full view or single-window
 
     this.document = document;
     this.window = window;
-    this.root = new NodeView(this, null, this.window);
-    this.root.parent = this.root;
-    this.root.id = 'root';
-    this.root.note = 'root';
+    //this.root = new NodeView(this, null, this.window);
+    this.root.window = this.window;
+    this.root.note = 'Session';
 
     this.$ = this.document.getElementById('tree-view');
     this.$ul = this.document.getElementById('tree-root');
@@ -95,6 +92,7 @@ export class TreeView {
   }
 
   init () {
+    super.init();
     this.initKeyHandler();
     this.initBkgdPing();
     // TODO: load the nodes from storage and render them
@@ -390,9 +388,8 @@ export class TreeView {
     }
 
     // add a new Node
-    const newNode = await destParent.addChild(
-      {index: destIndex, note: noteText, render: true}
-    );
+    const newNode = await destParent.addChild(destIndex,
+      {note: noteText, render: true});
     log(destParent.nodes);
     this.setCursor(newNode);
     log(`added ${newNode.note}`);
@@ -425,6 +422,10 @@ export class TreeView {
     // move to prev row if cursor is already on the last row
     if (newCursor === this.cursor) newCursor = this.cursor.prevVisibleNode();
 
+    // FIXME: needs to promote children to parent's level first
+    //        (either promote all children in place,
+    //         or promote 1st child and put all others under it)
+
     // remove this node
     const toDelete = this.cursor;
     toDelete.$destroy();
@@ -449,20 +450,26 @@ export class TreeView {
   }
 
   initBkgdPing () {
-    this.bkgdPing = setInterval(this.pingBkgd, 10 * 1000);
+    this.bkgdPing = setInterval(this.pingBkgd, 15 * 1000);
   }
 
   async pingBkgd () {
     // keep service worker alive
     // so it won't have to keep reloading the tree from persistent storage
     const before = Date.now();
-    const response = await api.runtime.sendMessage({ 'msg': 'bkgd_ping' });
+    //const response = await api.runtime.sendMessage({ 'msg': 'bkgd_ping' });
+    const response = await emit('bkgd_ping');
     const after = Date.now();
     if (! response) { return warn('bkgd ping failed'); }
     const elapsed = after - before;
     const oneway = response - before;
-    log(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
+    if (elapsed > 10)  // don't log fast pings, only slow pings
+      log(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
   }
 
+  tree_nodeAdded (msg, sender, sendResponse) {
+    msg.node.render = true;
+    return super.tree_nodeAdded(msg, sender, sendResponse);
+  }
 }
 

@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log } from '/common/common.js';
+import { log, emit } from '/common/common.js';
 
 
 export class Node {
@@ -22,7 +22,7 @@ export class Node {
     this.title = null;
     this.url = null;
     //this.$url = null;  // <a>
-    this.favicon_url = null;
+    this.faviconUrl = null;
     //this.$favicon = null;  // <img>
     //this.checkbox = false;
     this.expanded = true;
@@ -33,6 +33,22 @@ export class Node {
   }
 
   destroy () {
+  }
+
+  toDict () {
+    // make this object serializable for runtime.sendMessage()
+    const d = {};
+    d.id = this.id;
+    d.parent = this.parent.id;
+    d.note = this.note;
+    d.title = this.title;
+    d.url = this.url;
+    d.faviconUrl = this.faviconUrl;
+    d.expanded = this.expanded;
+    d.loaded = this.loaded;
+    d.wasLoaded = this.wasLoaded;
+    d.nodes = this.nodes.map((n) => n.id);
+    return d;
   }
 
   deleteSelf () {  //  TODO: rename this, maybe just use destroy ()
@@ -92,25 +108,21 @@ export class Node {
     return total;
   }
 
-  addChild ({
-    id = null,
-    index = 0,
-    note = null,
-    title = null,
-    url = null,
-    favicon_url = null,
-    expanded = true
-  }={}) {
+  addChild (index = 0, details, notify = true) {
+    // details to pass:
+    // id, note, title, url, faviconUrl, expanded
     const newNode = new this.constructor(this.tree, this);
     this.nodes.splice(index, 0, newNode);
-    newNode.note = note;
-    newNode.title = title;
-    newNode.url = url;
-    newNode.favicon_url = favicon_url;
-    newNode.expanded = expanded;
-    //if (null === id) { newNodeID.id = await this.newNodeID(); }
-    //else { newNode.id = id; }
-    newNode.id = id;
+    for (const key in details) {
+      // if key isn't banned, copy it
+      if (! ['parent', 'nodes', 'parentID'].includes(key))
+        newNode[key] = details[key];
+    }
+    this.tree.nodes[newNode.id] = newNode;
+    // tell other threads
+    if (notify)
+      emit('tree_nodeAdded',
+        { parentID: this.id, index: index, node: newNode });
     return newNode;
   }
 
@@ -203,7 +215,7 @@ export class Node {
     node.parent = this;
   }
 
-  moveTo (destParent, destIndex) {
+  moveTo (destParent, destIndex, notify = true) {
     // remove
     const prevParent = this.parent;
     if (prevParent) {
@@ -220,7 +232,9 @@ export class Node {
     // ... and add
     destParent.insertChild(this, destIndex);
     // TODO: recalculate stats
-    // TODO: emit moveTo event
+    if (notify)
+      emit('tree_nodeMoved',
+        { nodeID: this.id, destParentID: destParent.id, destIndex: destIndex});
   }
 
   toggleExpanded () {

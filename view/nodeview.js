@@ -132,7 +132,11 @@ export class NodeView extends Node {
         function (node) { return node.isLoaded(); }
       );
       const totalChildren = this.countDescendants();
-      statsText = `<span class="node-stats">[<span class="node-stat-open">${openChildren}</span> / <span class="node-stat-total">${totalChildren}</span>]</span> `;
+      // only show "open" if non-zero
+      if (openChildren > 0)
+        statsText = `<span class="node-stats">[<span class="node-stat-open">${openChildren}</span>/<span class="node-stat-total">${totalChildren}</span>]</span> `;
+      else
+        statsText = `<span class="node-stats">[<span class="node-stat-total">${totalChildren}</span>]</span> `;
     }
     // TODO: favicon
     let faviconText = '';
@@ -164,20 +168,21 @@ export class NodeView extends Node {
     }
   }
 
-  async addChild (args) {
-    //log('NodeView.addChild():', args);
+  async addChild (index, details, ...extra) {
+    //log('NodeView.addChild():', details);
     // index is required; assume 1st child if not given
-    if (undefined === args.index) args.index = 0;
+    if (undefined === index) index = 0;
     // save for later
-    const prevNodeAtIndex = this.nodes[args.index];
+    const prevNodeAtIndex = this.nodes[index];
 
+    // must allocate ID before creating node and emitting notifications
+    if (! details.id) { details.id = await this.newNodeID(); }
     // create new Node object
-    const newNode = super.addChild(args);
+    const newNode = super.addChild(index, details, ...extra);
     newNode.window = this.window;  // redundant?
-    if (! args.id) { newNode.id = await this.newNodeID(); }
 
     // display it
-    if (args.render) {
+    if (details.render) {
       //this.expandAndShow();
       this.$nodes.classList.remove('hidden');
 
@@ -247,9 +252,9 @@ export class NodeView extends Node {
     this.$row.classList.remove('cursor');
   }
 
-  moveTo (destParent, destIndex) {
+  moveTo (destParent, destIndex, ...extra) {
     const oldParent = this.parent;
-    super.moveTo(destParent, destIndex);
+    super.moveTo(destParent, destIndex, ...extra);
 
     destParent.$insertChild(this, destIndex);
     // refresh old parent if needed

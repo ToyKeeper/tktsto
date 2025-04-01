@@ -21,3 +21,14 @@ export function error (...args) {
   console.error(...args);
 }
 
+export async function emit (name, args) {
+  if (undefined === args) args = {};
+  args['msg'] = name;
+  for (const key in args) {
+    if (args[key].toDict) args[key] = args[key].toDict();
+  }
+  log('emit()', args);
+  const response = await api.runtime.sendMessage(args);
+  return response;
+}
+

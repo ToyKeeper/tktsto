@@ -116,12 +116,13 @@ ul {
 }
 
 .nodes {
-  border-left: 2px solid #567;
+  border-left: 2px solid var(--tree-line);
   padding-left: 7px;
+  /* border-radius: 0 0 0 3px; */
 }
 
 .cursor-node .nodes {
-  border-left: 2px solid #aad4ee;
+  border-left: 2px solid var(--tree-line-cursor);
 }
 
 /* less padding on top-level items */
@@ -157,15 +158,43 @@ ul {
   margin: 0;
   padding: 0;
   margin-right: -4px;
-  color: #68a;
+  color: var(--tree-line);
   overflow: visible;
 }
 .expanded.row {
   /* margin-left: -4px; */
 }
 
+/* only show stats on collapsed nodes */
+#tree-view .expanded .node-stats {
+  display: none;
+}
+#tree-view .collapsed .node-stats {
+  display: unset;
+}
+
+.node-stats {
+  font-size: 0.8em;
+  font-weight: bold;
+  color: var(--node-stat-dim-color);
+}
+.node-stat-open, .node-stat-total {
+  font-weight: normal;
+  color: var(--node-stat-bright-color);
+  padding-left: 0.15em;
+  padding-right: 0.15em;
+}
+
+/* expanded parent nodes have extra padding below */
+.node.expanded {
+  padding-bottom: 3px;
+}
+
+
+/******************** cursor ********************/
+
 .cursor-node .expanded.row::before {
-  color: #aad4ee;
+  color: var(--tree-line-cursor);
 }
 
 .cursor-node.expanded {
@@ -188,19 +217,6 @@ ul {
 
 #tree-view .cursor.leaf, #tree-view .cursor.collapsed {
   border-radius: 6px;
-}
-
-/* only show stats on collapsed nodes */
-#tree-view .expanded .node-stats {
-  display: none;
-}
-#tree-view .collapsed .node-stats {
-  display: unset;
-}
-
-/* expanded parent nodes have extra padding below */
-.node.expanded {
-  padding-bottom: 3px;
 }
 
 /******************** misc ********************/
@@ -226,6 +242,10 @@ ul {
   --tab-unloaded-fg: #9cb7d3;
   --window-active-fg: #fff;
   --window-loaded-fg: #8696a7;
+  /***** tree lines *****/
+  --tree-line: #567;
+  --tree-line-med: #68a;
+  --tree-line-cursor: #aad4ee;
   /***** cursor *****/
   --cursor-bg-top: #57b;
   --cursor-bg-bot: #235;
@@ -241,6 +261,9 @@ ul {
   --toolbar-fg: #ccc;
   --top-toolbar-edge: 5px solid #282828;
   --bottom-toolbar-edge: 5px solid #3c3c3c;
+  /***** node stats *****/
+  --node-stat-bright-color: var(--tree-line-cursor);
+  --node-stat-dim-color: var(--tree-line);
   /***** node detail box *****/
   --node-detail-box-height: 30%;
   --node-detail-box-bg: #333;
