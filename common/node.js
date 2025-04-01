@@ -218,6 +218,7 @@ export class Node {
   moveTo (destParent, destIndex, notify = true) {
     // remove
     const prevParent = this.parent;
+    let newIndex = destIndex;
     if (prevParent) {
       const oldIndex = this.indexOf();
       if (oldIndex >= 0) {
@@ -225,12 +226,12 @@ export class Node {
         // special case if moving to a later spot in the same parent
         // because removing an item reduced the indexes after it
         if ((prevParent === destParent) && (destIndex > oldIndex)) {
-          destIndex -= 1;
+          newIndex -= 1;
         }
       }
     }
     // ... and add
-    destParent.insertChild(this, destIndex);
+    destParent.insertChild(this, newIndex);
     // TODO: recalculate stats
     if (notify)
       emit('tree_nodeMoved',
