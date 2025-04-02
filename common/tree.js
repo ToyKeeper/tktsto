@@ -15,6 +15,8 @@ export class Tree {
     if (undefined === NodeClass) NodeClass = Node;
     this.NodeClass = NodeClass;
 
+    this.markedNodes = [];
+
     this.createRootNode();
   }
 
@@ -34,6 +36,16 @@ export class Tree {
     this.root.nodes = [];
     // cache all nodes by ID
     this.nodes = { 'root': this.root };
+  }
+
+  nodeMarkChanged (node) {
+    if (node.marked) {
+      this.markedNodes.push(node.id);
+    }
+    else {
+      const index = this.markedNodes.indexOf(node.id);
+      if (index >= 0) this.markedNodes.splice(index, 1);
+    }
   }
 
   async loadTreeFromBkgd () {
@@ -77,6 +89,7 @@ export class Tree {
 
     this.nodes[node.id] = node;
     node.fromDict(nodeDict);
+    this.nodeMarkChanged(node);  // update our mark cache
     node.nodes = [];
     numLoaded ++;
     for (const nodeID of nodeDict.nodes) {
@@ -170,6 +183,9 @@ export class Tree {
     // figure out what kind of change happened, and update it
     if ('setExpanded' === changeType) {
       return node.setExpanded(msg.expanded, false);
+    }
+    else if ('setMarked' === changeType) {
+      return node.setMarked(msg.marked, false);
     }
     else {
       return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);

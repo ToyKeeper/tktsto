@@ -28,6 +28,7 @@ export class Node {
     this.expanded = true;
     this.loaded = false;
     this.wasLoaded = false;
+    this.marked = false;
     // children
     this.nodes = [];
   }
@@ -47,6 +48,7 @@ export class Node {
     d.expanded = this.expanded;
     d.loaded = this.loaded;
     d.wasLoaded = this.wasLoaded;
+    d.marked = this.marked;
     d.nodes = this.nodes.map((n) => n.id);
     return d;
   }
@@ -62,6 +64,7 @@ export class Node {
     this.expanded = d.expanded;
     this.loaded = d.loaded;
     this.wasLoaded = d.wasLoaded;
+    this.marked = d.marked;
     //this.nodes = [];  // restore this elsewhere
   }
 
@@ -120,6 +123,16 @@ export class Node {
       total += node.countDescendants(filter);
     }
     return total;
+  }
+
+  findParent (fn) {
+    log('findParent', this.parent, fn(this.parent));
+    // search ancestors for one which satisfies the "fn" condition
+    // stop recursion at root
+    if (this.isRoot()) return null;
+    const found = fn(this.parent);
+    if (found) return this.parent;
+    return this.parent.findParent(fn);
   }
 
   addChild (index = 0, details, notify = true) {
@@ -246,6 +259,13 @@ export class Node {
     }
     // ... and add
     destParent.insertChild(this, newIndex);
+
+    // if new parent is marked, unmark self
+    if (this.marked) {
+      const markedParent = this.findParent((n) => n.marked);
+      if (markedParent) this.setMarked(false, false);
+    }
+
     // TODO: recalculate stats
     if (notify)
       emit('tree_nodeMoved',
@@ -266,6 +286,31 @@ export class Node {
     if (notify)
       emit('tree_nodeChanged',
         { nodeID: this.id, type: 'setExpanded', expanded: this.expanded });
+  }
+
+  setMarked (marked, notify = true) {
+    // abort on no-op
+    if (marked === this.marked) return;
+    // refuse to mark root node
+    if (this.isRoot()) return;
+
+    // reject mark request if ancestor is already marked,
+    // because that means we're already marked by association
+    if (marked) {
+      const markedParent = this.findParent((n) => n.marked);
+      if (markedParent) return;
+    }
+
+    // otherwise, twiddle the bit
+    this.marked = marked;
+
+    // update Tree's list of marked nodes
+    this.tree.nodeMarkChanged(this);
+
+    // TODO? recalculate stats
+    if (notify)
+      emit('tree_nodeChanged',
+        { nodeID: this.id, type: 'setMarked', marked: this.marked });
   }
 
 }  // end class Node

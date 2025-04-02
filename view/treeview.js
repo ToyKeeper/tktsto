@@ -28,6 +28,10 @@ export class TreeView extends Tree {
     // shows info about most recent event
     //this.$statusBar = this.document.getElementById('status-bar');
     this.$statusText = this.document.getElementById('status-text');
+
+    // count of marked nodes when non-zero
+    this.$markedCount = this.document.getElementById('marked-count');
+
     // table mapping keys to actions
     // TODO: let user bind keys
     this.keyBindngs = {
@@ -39,14 +43,18 @@ export class TreeView extends Tree {
       'Shift+O': 'addNoteAsPrevVisibleRow',
       ///// edit nodes
       'Space': 'toggleExpanded',
-      'n': 'editNote',
+      'e': 'editNote',
       ///// task status
       //'x': 'toggleTaskDone',
       //'t': 'taskLeaderKey',
       ///// search
       //'/': 'beginSearch',
+      //'Shift+*': 'searchForCurrent',  // match current note, url, or title
       //'Ctrl+f': 'beginSearch',
       //'Ctrl+g': 'nextSearchResult',
+      //'n': 'nextSearchResult',
+      //'Shift+N': 'prevSearchResult',
+      //'Escape': 'endSearch',
       ///// cursor movement
       'ArrowUp': 'cursorUp',
       'ArrowDown': 'cursorDown',
@@ -69,7 +77,14 @@ export class TreeView extends Tree {
       // move to first / last position
       'Shift+Home': 'moveNodeHome',
       'Shift+End': 'moveNodeEnd',
-      // misc
+      ///// mark / paste
+      'm': 'toggleMarked',
+      'Shift+M': 'unmarkAll',
+      'p': 'pasteMarked',
+      //'Shift+P': 'pasteMarkedBefore',
+      // TODO: leader key for batch processing of other things,
+      //   like delete and maybe sort and checkbox actions and ...
+      ///// misc
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
     };
@@ -116,6 +131,8 @@ export class TreeView extends Tree {
     this.root.$renderChildren();
     this.root.$render();
 
+    this.updateMarkedCount();
+
     // restore state
     if (oldCursor) {
       const newCursor = this.tree[oldCursor];
@@ -125,6 +142,23 @@ export class TreeView extends Tree {
 
   setStatus (msg) {
     this.$statusText.textContent = msg;
+  }
+
+  updateMarkedCount () {
+    // add a "+" to the number if any marked nodes have kids
+    let plus = '';
+    for (const nodeID of this.markedNodes) {
+      const node = this.nodes[nodeID];
+      if (node.hasKids()) {
+        plus = '+';
+        break;
+      }
+    }
+    // update the counter widget
+    this.$markedCount.innerText = `${this.markedNodes.length}${plus}`;
+    if (this.markedNodes.length <= 0)
+      this.$markedCount.classList.add('hidden');
+    else this.$markedCount.classList.remove('hidden');
   }
 
   async inputDialog (...args) {
@@ -462,6 +496,69 @@ export class TreeView extends Tree {
     if (! this.cursor) return;
     const toggled = ! this.cursor.expanded;
     this.cursor.setExpanded(toggled);
+  }
+
+  action_toggleMarked (event) {
+    log('action_toggleMarked()');
+    // skip no-op cases
+    if (! this.cursor) return;
+    const toggled = ! this.cursor.marked;
+    this.cursor.setMarked(toggled);
+  }
+
+  async action_unmarkAll (event) {
+    log('action_unmarkAll()');
+    // iterate over a copy of the array,
+    // since the original will be modified while iterating
+    for (const nodeID of this.markedNodes.slice()) {
+      const node = this.nodes[nodeID];
+      //log(`unmarking "${nodeID}"`);
+      await node.setMarked(false);
+    }
+  }
+
+  async action_pasteMarked (event) {
+    // skip no-op cases
+    if (! this.cursor) return;
+    log('action_pasteMarked()');
+
+    // find the right place to put the marked nodes
+    let destParent;
+    let destIndex;
+    if (this.cursor.isRoot() ||
+      (this.cursor.hasKids() && this.cursor.isExpanded()))
+    {
+      // if root, or if expanded, paste as new first children
+      destParent = this.cursor;
+      destIndex = 0;
+    }
+    else {
+      // otherwise, paste as next sibling(s)
+      destParent = this.cursor.parent;
+      destIndex = this.cursor.indexOf() + 1;
+    }
+
+    // TODO: sort the markedNodes list by order in tree
+    //   instead of order added to list
+    for (const nodeID of this.markedNodes) {
+      const node = this.nodes[nodeID];
+      // special case: moving from/to same parent can get weird
+      const pastingToSameParent = (node.parent === destParent);
+      const oldIndex = node.indexOf();
+      // move the node
+      await node.moveTo(destParent, destIndex);
+      // adjust if special case was triggered
+      if (pastingToSameParent) {
+        if (oldIndex < destIndex)
+          destIndex --;
+      }
+      // next paste goes at next slot
+      destIndex ++;
+    }
+  }
+
+  // TODO
+  async action_pasteMarkedBefore (event) {
   }
 
   setCursor(node) {

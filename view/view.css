@@ -210,13 +210,77 @@ ul {
   scroll-margin-bottom: 1em;
   background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
   margin: 0px;
-  border-radius: 6px 6px 0px 0px;
+  border-radius: var(--cursor-radius-expanded);
   border-style: none;
   box-shadow: var(--cursor-shadow);
 }
 
 #tree-view .cursor.leaf, #tree-view .cursor.collapsed {
-  border-radius: 6px;
+  border-radius: var(--cursor-radius-collapsed);
+}
+
+/******************** marked / tagged nodes ********************/
+
+@keyframes pulse {
+  0% {
+    outline-color: gold;
+    box-shadow: 0 0 10px gold;
+  }
+  50% {
+    outline-color: orange;
+    box-shadow: 0 0 20px orange;
+  }
+  100% {
+    outline-color: gold;
+    box-shadow: 0 0 10px gold;
+  }
+}
+
+@keyframes shine {
+  0% { background-position: 150% 50%; }
+  48% { background-position: 150% 50%; }
+  52% { background-position: -50% 50%; }
+  100% { background-position: -50% 50%; }
+}
+
+.node.marked, #marked-count {
+  box-shadow: 0 0 10px gold;
+  border-radius: var(--cursor-branch-radius);
+
+  background: linear-gradient(300deg,
+    rgba(255,215,0,0.15) 45%,
+    rgba(255,215,0,0.25) 47% 53%,
+    rgba(255,215,0,0.15) 55%);
+  background-size: 200% 200%;
+  animation: shine 5.1s infinite linear;
+}
+
+/* let cursor background override marked background */
+.cursor-node.expanded.marked {
+  outline: 1px outset var(--cursor-branch-hl);
+  background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
+}
+
+.row.marked, #marked-count {
+  outline: 1px solid gold;
+  animation: pulse 2s infinite alternate;
+  border-radius: var(--cursor-radius-collapsed);
+}
+
+.row.marked.expanded {
+  border-radius: var(--cursor-radius-expanded);
+}
+
+#marked-count {
+  position: fixed;
+  top: var(--toolbar-height);
+  right: 5px;
+  border-radius: var(--cursor-branch-radius);
+  padding: 0.1em 0.25em;
+  font-size: 133%;
+  color: gold;
+  /* background: var(--tree-view-bg); */
+  background: #0004;
 }
 
 /******************** misc ********************/
@@ -255,6 +319,8 @@ ul {
   --cursor-branch-bot: #2c2c2c;
   --cursor-branch-shadow: 0.15em 0.15em 0.333em var(--shadow-color);
   --cursor-branch-radius: 6px;
+  --cursor-radius-collapsed: 6px;
+  --cursor-radius-expanded: 6px 6px 0 0;
   /***** toolbars *****/
   --toolbar-height: 2em;
   --toolbar-bg: #333;

@@ -70,6 +70,16 @@ export class NodeView extends Node {
       this.$nodes.classList.remove('hidden');
     }
 
+    // are we marked?
+    if (this.marked) {
+      this.$.classList.add('marked');
+      this.$row.classList.add('marked');
+    }
+    else {
+      this.$.classList.remove('marked');
+      this.$row.classList.remove('marked');
+    }
+
     // add to parent (nope, nevermind, let the parent do that on its own)
     // needs a way to specify where to insert the new node
     //if (!this.parent) return;
@@ -260,9 +270,17 @@ export class NodeView extends Node {
     // refresh old parent if needed
     if (oldParent != destParent) oldParent.$refreshAncestry();
 
+    // update the #marked-count widget
+    // (can change when nodes move into / out of marked nodes)
+    this.tree.updateMarkedCount();
+
     // TODO: if has cursor and new position hidden,
     // move cursor to nearest visible parent
+    // (when can this actually happen though,
+    //  in cases where it isn't already handled?)
 
+    // TODO: move tabs around
+    // TODO: handle window changes
     if (this.window !== this.parent.window) {
       // moved to new window
       this.window = this.parent.window;
@@ -291,6 +309,17 @@ export class NodeView extends Node {
       // TODO: hide stats
       this.$render();
     }
+  }
+
+  setMarked (marked, ...extra) {
+    // if no change, do nothing
+    if (marked === this.marked) return;
+    super.setMarked(marked, ...extra);
+
+    this.$render();
+
+    // update the #marked-count widget
+    this.tree.updateMarkedCount();
   }
 
 }  // end class NodeView
