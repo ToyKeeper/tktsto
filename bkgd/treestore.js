@@ -7,9 +7,14 @@ import { api, isChrome, isFirefox } from '/api.js';
 
 import { log } from '/common/common.js';
 import { NodeStore } from './nodestore.js';
+import { Tree } from '/common/tree.js';
 
 
-//class TreeStore extends Node {
-export class TreeStore extends NodeStore {
+export class TreeStore extends Tree {
+
+  constructor () {
+    super(NodeStore);
+  }
+
 }
 

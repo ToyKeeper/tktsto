@@ -24,7 +24,8 @@ class Bkgd {
 
     sidepanel.init();
     this.tree = new TreeStore();
-    //this.tree.init();
+    this.tree.init();
+
     this.initMessageListener();
     this.initConnectListener();
   }
@@ -90,6 +91,12 @@ class Bkgd {
     // FIXME: strip everything but a-zA-Z0-9
     this.clientID = msg.clientID;
     this.idGen.name = this.clientID;
+  }
+
+  bkgd_getTree (msg, sender, sendResponse) {
+    const response = {};
+    response.nodes = this.tree.serializeNodes();
+    sendResponse(response);
   }
 
 }

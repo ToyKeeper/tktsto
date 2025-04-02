@@ -11,5 +11,10 @@ import { Node } from '/common/node.js';
 
 // TODO
 export class NodeStore extends Node {
+
+  constructor (...args) {
+    super(...args);
+  }
+
 }
 

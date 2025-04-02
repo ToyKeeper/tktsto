@@ -20,22 +20,9 @@ export class TreeView extends Tree {
 
     this.document = document;
     this.window = window;
-    //this.root = new NodeView(this, null, this.window);
-    this.root.window = this.window;
-    this.root.note = 'Session';
 
     this.$ = this.document.getElementById('tree-view');
     this.$ul = this.document.getElementById('tree-root');
-    //this.root.$ = this.$;
-    this.root.$render();
-    this.root.$.classList.add('root-nodes');
-    //this.root.$nodes.classList.remove('hidden');
-    this.$ul.appendChild(this.root.$);
-    //this.$.appendChild(this.root.$row);
-    //this.$.appendChild(this.root.$nodes);
-    //this.$root = this.document.createElement('ul');
-    //this.$root.classList.add('root-nodes');
-    //this.$.append(this.$root);
 
     this.cursor = null;
     // shows info about most recent event
@@ -91,16 +78,50 @@ export class TreeView extends Tree {
   destroy () {
   }
 
-  init () {
+  async init () {
     super.init();
     this.initKeyHandler();
     this.initBkgdPing();
     // TODO: load the nodes from storage and render them
+    await this.loadTreeFromBkgd();
+
+    //this.root = new NodeView(this, null, this.window);
+    this.root.window = this.window;
+    this.root.note = 'Session';
+    //this.root.$ = this.$;
+    this.root.$render();
+    this.root.$.classList.add('root-nodes');
+    //this.root.$nodes.classList.remove('hidden');
+    this.$ul.appendChild(this.root.$);
+    //this.$.appendChild(this.root.$row);
+    //this.$.appendChild(this.root.$nodes);
+    //this.$root = this.document.createElement('ul');
+    //this.$root.classList.add('root-nodes');
+    //this.$.append(this.$root);
+
   }
 
-  //addChild (...args) {
-  //  return NodeView.addChild(...args);
-  //}
+  async loadTreeFromBkgd () {
+    // save any state which needs to be restored on new Tree
+    let oldCursor;
+    if (this.cursor) {
+      oldCursor = this.cursor.id;
+    }
+
+    // load the tree
+    await super.loadTreeFromBkgd();
+
+    // render ... everything
+    //this.renderWholeTree();
+    this.root.$renderChildren();
+    this.root.$render();
+
+    // restore state
+    if (oldCursor) {
+      const newCursor = this.tree[oldCursor];
+      this.setCursor(newCursor);
+    }
+  }
 
   setStatus (msg) {
     this.$statusText.textContent = msg;

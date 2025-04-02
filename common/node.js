@@ -51,6 +51,20 @@ export class Node {
     return d;
   }
 
+  fromDict (d) {
+    // restore values from a previously-dicted copy
+    this.id = d.id;
+    //this.parent.id = d.parent;  // restore this elsewhere
+    this.note = d.note;
+    this.title = d.title;
+    this.url = d.url;
+    this.faviconUrl = d.faviconUrl;
+    this.expanded = d.expanded;
+    this.loaded = d.loaded;
+    this.wasLoaded = d.wasLoaded;
+    //this.nodes = [];  // restore this elsewhere
+  }
+
   deleteSelf () {  //  TODO: rename this, maybe just use destroy ()
     // root should refuse to delete itself
     if (this.isRoot()) return;
