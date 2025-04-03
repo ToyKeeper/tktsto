@@ -21,14 +21,35 @@ export function error (...args) {
   console.error(...args);
 }
 
-export async function emit (name, args) {
+export async function emit (name, args, retry = true) {
   if (undefined === args) args = {};
   args['msg'] = name;
   for (const key in args) {
     if (args[key].toDict) args[key] = args[key].toDict();
   }
   log('emit()', args);
-  const response = await api.runtime.sendMessage(args);
+  // get ready to try more than once,
+  // because sometimes the service worker gets killed
+  // and needs a few moments to wake up before it can respond
+  let response;
+  let tryNum = 1;
+  const maxTries = 1000;
+  while (retry && (! response) && (tryNum < maxTries)) {
+    try {
+      response = await api.runtime.sendMessage(args);
+      retry = false;
+    } catch (error) {
+      log(`emit() error, try #${tryNum}`, error, args);
+      tryNum ++;
+      await new Promise(r => setTimeout(r, 10));  // wait 10ms
+    }
+  }
+  if (tryNum >= maxTries) {
+    // TODO: this is probably a serious error,
+    // and should be escalated more than just a console log
+    // (like, expose it in the UI somehow)
+    error('emit() exceeded maximum retries', name, args);
+  }
   return response;
 }
 
