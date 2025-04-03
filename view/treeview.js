@@ -477,14 +477,26 @@ export class TreeView extends Tree {
     // move to prev row if cursor is already on the last row
     if (newCursor === this.cursor) newCursor = this.cursor.prevVisibleNode();
 
-    // FIXME: needs to promote children to parent's level first
-    //        (either promote all children in place,
-    //         or promote 1st child and put all others under it)
-
-    // remove this node
+    // delete depending on the node type and state
     const toDelete = this.cursor;
-    toDelete.$destroy();
-    toDelete.deleteSelf();
+    // if leaf, just delete it... simple
+    if (this.cursor.isLeaf()) {
+      log('delete leaf node');
+      toDelete.deleteSelf();
+    }
+    // if expanded, promote kids then delete parent
+    else if (this.cursor.isExpanded()) {
+      log('promote kids and delete parent');
+      // TODO: let user configure "promote all kids" or "promote 1st child"
+      toDelete.deleteSelfAndPromoteKids();
+      //toDelete.deleteSelfAndPromote1stKid();
+    }
+    // if collapsed, delete entire branch
+    else {
+      //toDelete.deleteRecursive();
+      log('deleting entire branch recursively');
+      toDelete.deleteSelf();
+    }
 
     // update the cursor
     this.setCursor(newCursor);
@@ -496,6 +508,25 @@ export class TreeView extends Tree {
     if (! this.cursor) return;
     const toggled = ! this.cursor.expanded;
     this.cursor.setExpanded(toggled);
+  }
+
+  async action_editNote (event) {
+    log('action_editNote()');
+    // skip no-op cases
+    if (! this.cursor) return;
+
+    // prompt for new note text
+    const result = await this.inputDialog({
+      doc: document,
+      title: 'Edit Note',
+      description: 'Note text:',
+      value: this.cursor.note
+    });
+    // abort if user cancelled
+    if ((!result) || ('OK' !== result.button)) return;
+    // update the node
+    const noteText = result.value;
+    this.cursor.setNote(noteText);
   }
 
   action_toggleMarked (event) {

@@ -118,6 +118,7 @@ export class NodeView extends Node {
     // full row: [3/14] @ Note Text ~ <a href="link">Link Title</a>
     // ... where "[3/14]" is num children open/total, and "@" is a favicon
     let mainText = '';
+    // FIXME: instead of innerHTML, use safer Element creation and innerText
     if (this.note) {
       if (this.url) {  // note ~ href
         mainText = `<span class="node-note">${this.note}</span><span class="node-note-url-sep"> ~ </span><a class="node-link" href="${this.url}">${this.title}</a>`;
@@ -178,6 +179,15 @@ export class NodeView extends Node {
     }
   }
 
+  async deleteSelf (...extra) {
+    if (this.isRoot()) return;  // never delete root
+    const oldParent = this.parent;
+    await super.deleteSelf(...extra);
+    this.$destroy();  // un-render
+    // update parent node stats and decorations
+    if (oldParent) oldParent.$refreshAncestry();
+  }
+
   async addChild (index, details, ...extra) {
     //log('NodeView.addChild():', details);
     // index is required; assume 1st child if not given
@@ -232,6 +242,15 @@ export class NodeView extends Node {
     }
     // refresh displayed info
     this.$refreshAncestry();
+  }
+
+  setNote (text, ...extra) {
+    // if no change, do nothing
+    if (text === this.note) return;
+    // do it
+    super.setNote(text, ...extra);
+    // show it
+    this.$render();
   }
 
   scrollIntoView () {

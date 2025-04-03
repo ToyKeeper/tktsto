@@ -17,18 +17,26 @@ export class Node {
     this.parent = parent;
     // attributes
     this.note = null;
-    //this.$note = null;  // <span>
     //this.long_note = null;
     this.title = null;
     this.url = null;
-    //this.$url = null;  // <a>
     this.faviconUrl = null;
-    //this.$favicon = null;  // <img>
-    //this.checkbox = false;
     this.expanded = true;
     this.loaded = false;
-    this.wasLoaded = false;
+    //this.wasLoaded = false;
     this.marked = false;
+    // checkbox: task completion and other task statuses
+    this.checkbox = null;  // null or single character
+    this.checkboxPx = null;  // percent complete, calculated and cached
+    // timestamps
+    // ctime: set when node first created only
+    // mtime: set when changed note, title, url, checkbox, ...
+    // atime: set when expanded/collapsed, moved, unloaded, tab focused, ...
+    // ltime: set when url last loaded
+    this.ctime = Date.now();  // creation time (NOT posix style change time)
+    this.mtime = Date.now();  // modification time
+    this.atime = Date.now();  // access time
+    this.ltime = null;  // loaded time (urls only)
     // children
     this.nodes = [];
   }
@@ -47,8 +55,9 @@ export class Node {
     d.faviconUrl = this.faviconUrl;
     d.expanded = this.expanded;
     d.loaded = this.loaded;
-    d.wasLoaded = this.wasLoaded;
+    //d.wasLoaded = this.wasLoaded;
     d.marked = this.marked;
+    d.checkbox = this.checkbox;
     d.nodes = this.nodes.map((n) => n.id);
     return d;
   }
@@ -63,18 +72,52 @@ export class Node {
     this.faviconUrl = d.faviconUrl;
     this.expanded = d.expanded;
     this.loaded = d.loaded;
-    this.wasLoaded = d.wasLoaded;
+    //this.wasLoaded = d.wasLoaded;
     this.marked = d.marked;
+    this.checkbox = d.checkbox;
     //this.nodes = [];  // restore this elsewhere
   }
 
-  deleteSelf () {  //  TODO: rename this, maybe just use destroy ()
+  async deleteSelf (notify = true) {  //  TODO: rename this, maybe just use destroy ()
     // root should refuse to delete itself
     if (this.isRoot()) return;
+
+    // delete kids first
+    if (this.hasKids()) {
+      for (const node of this.nodes.slice()) {
+        await node.deleteSelf(notify);
+      }
+    }
+
+    // unmark if necessary
+    this.setMarked(false, false);
     // remove this node from its parent
     this.parent.nodes.splice(this.indexOf(), 1);
-    // TODO: notify background (in NodeView)
+    this.parent = null;
+
     // TODO: update ancestor stat info
+
+    // notify others
+    if (notify)
+      await emit('tree_nodeDeleted', { nodeID: this.id });
+  }
+
+  async deleteSelfAndPromoteKids (notify = true) {
+    log('Node.deleteSelfAndPromoteKids()');
+    // root should refuse to delete itself
+    if (this.isRoot()) return;
+    // TODO: if deleting a window node, handle any loaded tabs specially
+    //   (since loaded tabs cannot exist outside a window)
+    if (this.hasKids()) {
+      let newIndex = this.indexOf();
+      for (const node of this.nodes.slice()) {
+        newIndex ++;
+        await node.moveTo(this.parent, newIndex, notify);
+      }
+    }
+
+    // remove this node from its parent
+    await this.deleteSelf(notify);
   }
 
   indexOf () {
@@ -154,8 +197,15 @@ export class Node {
   }
 
   // TODO
-  setNote (text) {
+  setNote (text, notify = true) {
+    // abort on no-op
+    if (text === this.note) return;
+    // Do The Thing
     this.note = text;
+    // notify others
+    if (notify)
+      emit('tree_nodeChanged',
+        { nodeID: this.id, type: 'setNote', note: this.note });
   }
 
   newNodeID () {  // sub-classes should override this
@@ -243,6 +293,7 @@ export class Node {
   }
 
   moveTo (destParent, destIndex, notify = true) {
+    log('Node.moveTo()', this, destParent, destIndex);
     // remove
     const prevParent = this.parent;
     let newIndex = destIndex;

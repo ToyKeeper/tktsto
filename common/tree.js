@@ -152,6 +152,18 @@ export class Tree {
     log('Tree root:', this.root);
   }
 
+  async tree_nodeDeleted (msg, sender, sendResponse) {
+    const nodeID = msg.nodeID;
+    const node = this.nodes[nodeID];
+    log('tree_nodeDeleted()', nodeID);
+    if (! node) {
+      return error(`tree_nodeDeleted(): couldn't find node "${nodeID}"`);
+    }
+    // un-cache and delete it
+    delete this.nodes[nodeID];
+    return await node.deleteSelf(false);
+  }
+
   async tree_nodeMoved (msg, sender, sendResponse) {
     // unpack
     const nodeID = msg.nodeID;
@@ -180,9 +192,18 @@ export class Tree {
     if (! node)
       return error(`tree_nodeChanged(): couldn't find node "${nodeID}"`);
 
+    // FIXME: change API to make it more general
+    // like nodeChanged(fieldName, before, after)
+    // so it can just set node['fieldName'] = after
+    // or node[set${fieldName}](after, false)
+    // or something like that
+
     // figure out what kind of change happened, and update it
     if ('setExpanded' === changeType) {
       return node.setExpanded(msg.expanded, false);
+    }
+    else if ('setNote' === changeType) {
+      return node.setNote(msg.note, false);
     }
     else if ('setMarked' === changeType) {
       return node.setMarked(msg.marked, false);
