@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log } from '/common/common.js';
+import { log, debug } from '/common/common.js';
 
 
 class Dialog {
@@ -84,7 +84,7 @@ class Dialog {
             const _input = _dialog.querySelector('input');
             // 1st button triggers the 'submit' event
             if (input && first) {
-              log('first button pressed');
+              debug('first button pressed');
               _form.dispatchEvent(new Event('submit'));
               return;
             }

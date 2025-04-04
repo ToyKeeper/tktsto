@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log } from '/common/common.js';
+import { log, debug, emit } from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -25,17 +25,20 @@ export class NodeView extends Node {
   }
 
   async newNodeID () {
-    //super.newNodeID();  // unnecessary?
-    const nextID = await api.runtime.sendMessage({msg: 'bkgd_newNodeID'});
+    // NodeView.newNodeID() and NodeStore.newNodeID()
+    // are totally different, and Node.newNodeID() doesn't exist
+    //super.newNodeID();  // unnecessary, doesn't exist
+    const nextID = await emit('bkgd_newNodeID');
+    //debug('NodeView.newNodeID():', nextID);
     return nextID;
   }
 
   $render () {
-    log('Node.$render');
+    debug('NodeView.$render');
     if (!this.tree.document) return;
     const doc = this.tree.document;
 
-    log('Node.$render $');
+    //debug('Node.$render $');
     // create outermost node element
     if (! this.$) this.$ = doc.createElement('li');
     this.$.id = `node${this.id}`;
@@ -53,14 +56,14 @@ export class NodeView extends Node {
       this.$.classList.remove('expanded', 'collapsed');
     }
 
-    log('Node.$render $row');
+    //debug('Node.$render $row');
     // container for node title and details
     if (!this.$row) this.$row = doc.createElement('div');
     this.$renderTitle();
     if (! this.$.contains(this.$row)) this.$.append(this.$row);
 
     // container for node children
-    log('Node.$render $nodes');
+    //debug('Node.$render $nodes');
     if (! this.$nodes) this.$nodes = doc.createElement('ul');
     if (! this.$.contains(this.$nodes)) this.$.append(this.$nodes);
     this.$nodes.classList.add('nodes');
@@ -84,14 +87,14 @@ export class NodeView extends Node {
     // needs a way to specify where to insert the new node
     //if (!this.parent) return;
     //if (!this.parent.$nodes) return;
-    //log('Node.$render parent');
+    //debug('Node.$render parent');
     //this.parent.$nodes.append(this.$);
   }
 
   $destroy () {
-    log('$destroy');
+    debug('NodeView.$destroy');
     if (this.$) {
-      log('remove');
+      //debug('remove');
       this.$.remove();
     }
   }
@@ -189,7 +192,7 @@ export class NodeView extends Node {
   }
 
   async addChild (index, details, ...extra) {
-    //log('NodeView.addChild():', details);
+    //debug('NodeView.addChild():', details);
     // index is required; assume 1st child if not given
     if (undefined === index) index = 0;
     // save for later

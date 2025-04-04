@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, emit } from '/common/common.js';
+import { log, debug, emit } from '/common/common.js';
 
 
 export class Node {
@@ -103,7 +103,7 @@ export class Node {
   }
 
   async deleteSelfAndPromoteKids (notify = true) {
-    log('Node.deleteSelfAndPromoteKids()');
+    debug('Node.deleteSelfAndPromoteKids()');
     // root should refuse to delete itself
     if (this.isRoot()) return;
     // TODO: if deleting a window node, handle any loaded tabs specially
@@ -169,7 +169,7 @@ export class Node {
   }
 
   findParent (fn) {
-    log('findParent', this.parent, fn(this.parent));
+    //debug('findParent', this.parent, fn(this.parent));
     // search ancestors for one which satisfies the "fn" condition
     // stop recursion at root
     if (this.isRoot()) return null;
@@ -293,7 +293,7 @@ export class Node {
   }
 
   moveTo (destParent, destIndex, notify = true) {
-    log('Node.moveTo()', this, destParent, destIndex);
+    debug('Node.moveTo()', this, destParent, destIndex);
     // remove
     const prevParent = this.parent;
     let newIndex = destIndex;

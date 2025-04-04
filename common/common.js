@@ -22,22 +22,27 @@ export function error (...args) {
 }
 
 export async function emit (name, args, retry = true) {
+  // ensure valid args
+  if (!((typeof name === 'string') || (name instanceof String)))
+    throw new TypeError(`emit(name): name was not a string: ${name}`);
   if (undefined === args) args = {};
   args['msg'] = name;
+  // dict-ify parameters so they can be serialized
   for (const key in args) {
     if (args[key].toDict) args[key] = args[key].toDict();
   }
-  log('emit()', args);
+  debug('emit()', args);
   // get ready to try more than once,
   // because sometimes the service worker gets killed
   // and needs a few moments to wake up before it can respond
   let response;
   let tryNum = 1;
-  const maxTries = 1000;
+  const maxTries = 100;
   while (retry && (! response) && (tryNum < maxTries)) {
     try {
       response = await api.runtime.sendMessage(args);
       retry = false;
+      debug('emit() response:', response);
     } catch (error) {
       log(`emit() error, try #${tryNum}`, error, args);
       tryNum ++;

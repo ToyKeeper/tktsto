@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, emit } from '/common/common.js';
+import { log, debug, warn, emit } from '/common/common.js';
 import { inputDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
 import { Tree } from '/common/tree.js';
@@ -275,7 +275,7 @@ export class TreeView extends Tree {
   }
 
   action_moveNodeUp (event) {
-    log('TreeView.action_moveNodeUp()');
+    debug('TreeView.action_moveNodeUp()');
 
     // if root or 1st child of root, do nothing
     if (! this.cursor) return;
@@ -292,7 +292,7 @@ export class TreeView extends Tree {
   }
 
   action_moveNodeDown (event) {
-    log('TreeView.action_moveNodeDown()');
+    debug('TreeView.action_moveNodeDown()');
 
     // if root or 1st child of root, do nothing
     if (! this.cursor) return;
@@ -324,7 +324,7 @@ export class TreeView extends Tree {
   }
 
   action_moveNodeUpNoDescend (event) {
-    log('TreeView.action_moveNodeUpNoDescend()');
+    debug('TreeView.action_moveNodeUpNoDescend()');
 
     // if 1st child of root, do nothing
     if (! this.cursor) return;
@@ -430,13 +430,13 @@ export class TreeView extends Tree {
       // if leaf node: add as next sibling
       // or collapsed branch: add as next sibling
       else if (this.cursor.isLeaf() || this.cursor.isCollapsed()) {
-        log('add to leaf or collapsed');
+        //log('add to leaf or collapsed');
         destParent = this.cursor.parent;
         destIndex = this.cursor.indexOf() + 1;
       }
       // expanded branch: add as first child
       else {
-        log('add to expanded branch');
+        //log('add to expanded branch');
         destParent = this.cursor;
         destIndex = 0;
       }
@@ -445,9 +445,9 @@ export class TreeView extends Tree {
     // add a new Node
     const newNode = await destParent.addChild(destIndex,
       {note: noteText, render: true});
-    log(destParent.nodes);
+    //log(destParent.nodes);
     this.setCursor(newNode);
-    log(`added ${newNode.note}`);
+    debug(`added "${newNode.note}"`);
 
   }
 
@@ -464,7 +464,7 @@ export class TreeView extends Tree {
   }
 
   action_deleteNode(event) {
-    log('deleteNode');
+    debug('deleteNode');
     // abort if nothing to delete
     if (this.root.nodes.length <= 0) return;
     if (! this.cursor) return;
@@ -481,12 +481,12 @@ export class TreeView extends Tree {
     const toDelete = this.cursor;
     // if leaf, just delete it... simple
     if (this.cursor.isLeaf()) {
-      log('delete leaf node');
+      //debug('delete leaf node');
       toDelete.deleteSelf();
     }
     // if expanded, promote kids then delete parent
     else if (this.cursor.isExpanded()) {
-      log('promote kids and delete parent');
+      //debug('promote kids and delete parent');
       // TODO: let user configure "promote all kids" or "promote 1st child"
       toDelete.deleteSelfAndPromoteKids();
       //toDelete.deleteSelfAndPromote1stKid();
@@ -494,7 +494,7 @@ export class TreeView extends Tree {
     // if collapsed, delete entire branch
     else {
       //toDelete.deleteRecursive();
-      log('deleting entire branch recursively');
+      //debug('deleting entire branch recursively');
       toDelete.deleteSelf();
     }
 
@@ -503,7 +503,7 @@ export class TreeView extends Tree {
   }
 
   action_toggleExpanded (event) {
-    log('action_toggleExpanded()');
+    debug('action_toggleExpanded()');
     // skip no-op cases
     if (! this.cursor) return;
     const toggled = ! this.cursor.expanded;
@@ -511,7 +511,7 @@ export class TreeView extends Tree {
   }
 
   async action_editNote (event) {
-    log('action_editNote()');
+    debug('action_editNote()');
     // skip no-op cases
     if (! this.cursor) return;
 
@@ -530,7 +530,7 @@ export class TreeView extends Tree {
   }
 
   action_toggleMarked (event) {
-    log('action_toggleMarked()');
+    debug('action_toggleMarked()');
     // skip no-op cases
     if (! this.cursor) return;
     const toggled = ! this.cursor.marked;
@@ -538,12 +538,12 @@ export class TreeView extends Tree {
   }
 
   async action_unmarkAll (event) {
-    log('action_unmarkAll()');
+    debug('action_unmarkAll()');
     // iterate over a copy of the array,
     // since the original will be modified while iterating
     for (const nodeID of this.markedNodes.slice()) {
       const node = this.nodes[nodeID];
-      //log(`unmarking "${nodeID}"`);
+      //debug(`unmarking "${nodeID}"`);
       await node.setMarked(false);
     }
   }
@@ -551,7 +551,7 @@ export class TreeView extends Tree {
   async action_pasteMarked (event) {
     // skip no-op cases
     if (! this.cursor) return;
-    log('action_pasteMarked()');
+    debug('action_pasteMarked()');
 
     // find the right place to put the marked nodes
     let destParent;
@@ -614,7 +614,7 @@ export class TreeView extends Tree {
     const elapsed = after - before;
     const oneway = response - before;
     if (elapsed > 10)  // don't log fast pings, only slow pings
-      log(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
+      debug(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
   }
 
   tree_nodeAdded (msg, sender, sendResponse) {

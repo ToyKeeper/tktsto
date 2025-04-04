@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, error, emit } from '/common/common.js';
+import { log, debug, error, emit } from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -57,7 +57,7 @@ export class Tree {
     if (! response)
       return error('Tree.loadTreeFromBkgd() failed, bkgd did not send tree');
 
-    log('bkgd_getTree() =>', response);
+    //debug('bkgd_getTree() =>', response);
     // TODO: delete anything which needs deleting before restoring
     // (like removing DOM elements in Views)
     // (maybe call derived class handler?)
@@ -78,14 +78,14 @@ export class Tree {
   }
 
   rebuildNodeFromSerializedHash (node, hash) {
-    log('rebuildNodeFromSerializedHash()', node, hash);
+    //debug('rebuildNodeFromSerializedHash()', node, hash);
     let numLoaded = 0;
     const nodeDict = hash[node.id];
     if (! nodeDict) {
       error(`rebuildNodeFromSerializedHash(): no nodeID "${node.id}"`);
       return 0;
     }
-    log('nodeDict()', nodeDict);
+    //debug('nodeDict()', nodeDict);
 
     this.nodes[node.id] = node;
     node.fromDict(nodeDict);
@@ -93,7 +93,7 @@ export class Tree {
     node.nodes = [];
     numLoaded ++;
     for (const nodeID of nodeDict.nodes) {
-      log('nodeDict() childID', nodeID);
+      //debug('nodeDict() childID', nodeID);
       const child = new this.NodeClass(this, node);
       child.id = nodeID;
       node.nodes.push(child);
@@ -109,27 +109,31 @@ export class Tree {
   }
 
   onMessage (msg, sender, sendResponse) {
-    log('Tree onMessage', msg);
     if (! msg.msg) {
       warn('Tree onMessage invalid', msg);
       sendResponse({error: 'invalid msg type'});
       return;
     }
+    // if message not for us, ignore it and abort
+    if (! msg.msg.startsWith('tree_')) return;
+
+    // below here, no sendResponse() is expected
+    // and we must return 'false' or nothing at all,
+    // to avoid making caller think an async response is coming
+    debug('Tree onMessage', msg);
     const handler = this[`${msg.msg}`];
     if (handler) {
       // actually handle the event
-      log(`Tree: ${msg.msg}()`);
+      //debug(`Tree: ${msg.msg}()`);
       handler.bind(this)(msg, sender, sendResponse);
       // FIXME: on sync error, tree should set an error state
       //   which can be exposed to the user to let them know they should
       //   reload the view or whatever...
       //   ... or perhaps it should automatically reload the whole tree
       //   any time there's a sync error.
+      return;
     }
-    else {
-      // message was probably intended for someone else
-      //log(`Tree fn not found: ${msg.msg}`);
-    }
+    return error(`Tree fn not found: ${msg.msg}`);
   }
 
   async tree_nodeAdded (msg, sender, sendResponse) {
@@ -137,25 +141,25 @@ export class Tree {
     const index = msg.index;
     const details = msg.node;
     const parent = this.nodes[parentID];
-    log('tree_nodeAdded() parent', parent);
+    //debug('tree_nodeAdded() parent', parent);
     if (! parent) {
       return error(`tree_nodeAdded(): couldn't find parent "${parentID}"`);
     }
     const newNode = await parent.addChild(index, details, false);
     //const newNode = parent.nodes[index];
-    log('tree_nodeAdded() newNode', newNode);
+    //debug('tree_nodeAdded() newNode', newNode);
     if (! newNode) {
       return error(`tree_nodeAdded(): failed to add node "${details.id}"`);
     }
     this.nodes[newNode.id] = newNode;
-    log(`tree_nodeAdded() added "${newNode.id}" to "${parent.id}"`);
-    log('Tree root:', this.root);
+    debug(`tree_nodeAdded() added "${newNode.id}" to "${parent.id}"`);
+    //debug('Tree root:', this.root);
   }
 
   async tree_nodeDeleted (msg, sender, sendResponse) {
     const nodeID = msg.nodeID;
     const node = this.nodes[nodeID];
-    log('tree_nodeDeleted()', nodeID);
+    debug('tree_nodeDeleted()', nodeID);
     if (! node) {
       return error(`tree_nodeDeleted(): couldn't find node "${nodeID}"`);
     }
