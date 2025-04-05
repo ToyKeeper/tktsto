@@ -1,5 +1,7 @@
 *~
 *.old
 .*.sw?
+build/
+dist/
 ignore/
 todo.otl
