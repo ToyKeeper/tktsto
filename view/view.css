@@ -121,7 +121,7 @@ ul {
   /* border-radius: 0 0 0 3px; */
 }
 
-.cursor-node .nodes {
+.cursor.node .nodes {
   border-left: 2px solid var(--tree-line-cursor);
 }
 
@@ -194,11 +194,11 @@ ul {
 
 /******************** cursor ********************/
 
-.cursor-node .expanded.row::before {
+.cursor.node .expanded.row::before {
   color: var(--tree-line-cursor);
 }
 
-.cursor-node.expanded {
+.cursor.node.expanded {
   outline: 1px outset var(--cursor-branch-hl);
   background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
   border-radius: var(--cursor-branch-radius);
@@ -263,7 +263,7 @@ ul {
 }
 
 /* let cursor background override marked background */
-.cursor-node.expanded.marked {
+.cursor.node.expanded.marked {
   outline: none;
   background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
 }

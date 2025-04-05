@@ -274,13 +274,13 @@ export class NodeView extends Node {
 
   addCursor () {
     if (! this.$row) return;
-    this.$.classList.add('cursor-node');
+    this.$.classList.add('cursor');
     this.$row.classList.add('cursor');
   }
 
   removeCursor () {
     if (! this.$row) return;
-    this.$.classList.remove('cursor-node');
+    this.$.classList.remove('cursor');
     this.$row.classList.remove('cursor');
   }
 
