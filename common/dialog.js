@@ -45,6 +45,7 @@ class Dialog {
         $input.id = 'inputDialogInput';
         $input.type = 'text';
         $input.value = value;
+        $input.select();
         // user pressed Enter to submit the form
         const handleSubmit = (ev) => {
           ev.preventDefault();
