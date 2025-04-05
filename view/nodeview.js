@@ -144,7 +144,10 @@ export class NodeView extends Node {
         mainText = `<a class="node-link" href="${this.url}">${this.title}</a>`;
     }
     else {  // totally blank
-      mainText = `<span class="node-notitle">node ${this.id}</span>`;
+      if (this.isWindow())
+        mainText = `<span class="node-notitle">Window ${this.windowId}</span>`;
+      else
+        mainText = `<span class="node-notitle">node ${this.id}</span>`;
     }
     // node stats
     let statsText = '';
