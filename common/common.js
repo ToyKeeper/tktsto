@@ -31,7 +31,7 @@ export async function emit (name, args, retry = true) {
   for (const key in args) {
     if (args[key].toDict) args[key] = args[key].toDict();
   }
-  debug('emit()', args);
+  debug(`emit(${name})`, args);
   // get ready to try more than once,
   // because sometimes the service worker gets killed
   // and needs a few moments to wake up before it can respond
@@ -42,9 +42,9 @@ export async function emit (name, args, retry = true) {
     try {
       response = await api.runtime.sendMessage(args);
       retry = false;
-      debug('emit() response:', response);
+      debug(`emit(${name}) response:`, response);
     } catch (error) {
-      log(`emit() error, try #${tryNum}`, error, args);
+      log(`emit(${name}) error, try #${tryNum}`, error, args);
       tryNum ++;
       await new Promise(r => setTimeout(r, 10));  // wait 10ms
     }
@@ -53,7 +53,7 @@ export async function emit (name, args, retry = true) {
     // TODO: this is probably a serious error,
     // and should be escalated more than just a console log
     // (like, expose it in the UI somehow)
-    error('emit() exceeded maximum retries', name, args);
+    error(`emit(${name}) exceeded maximum retries`, name, args);
   }
   return response;
 }

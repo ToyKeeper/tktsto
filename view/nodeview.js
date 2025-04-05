@@ -83,6 +83,16 @@ export class NodeView extends Node {
       this.$row.classList.remove('marked');
     }
 
+    // are we a window?
+    if (this.isWindow()) {
+      this.$.classList.add('window');
+      this.$row.classList.add('window');
+    }
+    else {
+      this.$.classList.remove('window');
+      this.$row.classList.remove('window');
+    }
+
     // add to parent (nope, nevermind, let the parent do that on its own)
     // needs a way to specify where to insert the new node
     //if (!this.parent) return;
@@ -252,6 +262,15 @@ export class NodeView extends Node {
     if (text === this.note) return;
     // do it
     super.setNote(text, ...extra);
+    // show it
+    this.$render();
+  }
+
+  unload (...extra) {
+    // abort on no-op
+    if (! this.isLoaded()) return;
+    // Do The Thing
+    super.unload(...extra);
     // show it
     this.$render();
   }

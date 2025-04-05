@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn } from '/common/common.js';
+import { log, debug, warn, error } from '/common/common.js';
 import { IDGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
@@ -19,6 +19,9 @@ class Bkgd {
     // help event handlers wait until init is finished
     this.configLoaded = new Promise(resolve => {
       this.resolveConfigLoaded = resolve;
+    });
+    this.treeDbLoaded = new Promise(resolve => {
+      this.resolveTreeDbLoaded = resolve;
     });
     this.treeLoaded = new Promise(resolve => {
       this.resolveTreeLoaded = resolve;
@@ -34,6 +37,8 @@ class Bkgd {
     // (by receiving events but delaying the processing until init is done)
     this.initMessageListener();
     this.initConnectListener();
+    this.initWindowListeners();
+    this.initTabListeners();
 
     // tell the browser the sidepanel can be opened via hotkey or icon click
     sidepanel.init();
@@ -42,7 +47,7 @@ class Bkgd {
       this.idGen = new IDGenerator(this.clientID, 9, 2);
       this.resolveConfigLoaded();  // let listeners know the config is ready
 
-      this.tree = new TreeStore();
+      this.tree = new TreeStore(this);
       this.tree.init();
       // TODO: use tree node dict as idGen ID cache
       // TODO: make IDGenerator check a cache to avoid duplicates
@@ -51,7 +56,12 @@ class Bkgd {
       // this.tree.loadFromIDB().then(() => {
       //   this.resolveTreeLoaded();
       // });
-      this.resolveTreeLoaded();  // let listeners know the tree is loaded
+      this.resolveTreeDbLoaded();  // let listeners know the IDB is loaded
+      // grab all the open windows and tabs, and put them in the tree
+      this.mergeOpenWindowsIntoTree().then(() => {
+        // tree is ready to use
+        this.resolveTreeLoaded();  // let listeners know the tree is loaded
+      });
     });
 
   }
@@ -69,6 +79,20 @@ class Bkgd {
     //);
   }
 
+  initWindowListeners () {
+    // monitor for windows being opened and closed
+    api.windows.onCreated.addListener((window) => {
+      this.onWindowOpened(window);
+    });
+    api.windows.onRemoved.addListener((windowId) => {
+      this.onWindowClosed(windowId);
+    });
+    // TODO: handle window change events, like resizing
+  }
+
+  initTabListeners () {
+  }
+
   async initConfig () {
     // load client name from storage
     const result = await api.storage.local.get('clientID');
@@ -82,6 +106,90 @@ class Bkgd {
       this.clientID = base32encode(num, 2);
       await api.storage.local.set({ 'clientID': this.clientID });
       log(`rand clientID: ${this.clientID}`);
+    }
+  }
+
+  async mergeOpenWindowsIntoTree () {
+    log('mergeOpenWindowsIntoTree()');
+    const windows = await api.windows.getAll({ populate: true });
+    for (const window of windows) {
+      debug(`Window ID: ${window.id}`);
+      // TODO: detect whether window is already in tree
+      // TODO: may need to detect based on tab matching
+      let winNode = this.tree.windows[window.id];
+      if (winNode) {
+      }
+      // TODO: if not, add new window to the tree
+      else {
+        winNode = await this.onWindowOpened(window, false);
+      }
+      for (const tab of window.tabs) {
+        debug(`Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
+        // TODO: detect whether tab is already in tree
+        // TODO: if not, add new tab to the tree
+        //       ... in an appropriate position
+        let destParent = winNode;
+        let destIndex = winNode.nodes.length;
+        if (tab.openerTabId) {
+          let found = this.tree.root.findNodes(
+            (n) => { return (n.tabId === tab.openerTabId); });
+          if (found.length > 0) {
+            destParent = found[0];
+            destIndex = destParent.nodes.length;
+          } else {
+            error(`tab ${tab.id} has openerTabId ${tab.openerTabId} but no parent found`);
+          }
+        }
+        await destParent.addChild(destIndex, {
+          windowId: window.id,
+          tabId: tab.id,
+          title: tab.title,
+          url: tab.url,
+          loaded: true,
+          active: tab.active,
+          incognito: tab.incognito,
+          atime: tab.lastAccessed
+          }, false);
+      }
+    }
+    log('mergeOpenWindowsIntoTree() done');
+  }
+
+  async onWindowOpened (window, notify = true) {
+    log(`Window opened: ID ${window.id}`, window);
+    // add new window to the tree
+    //await this.configLoaded;
+    await this.treeDbLoaded;
+    //await this.treeLoaded;
+    const noteText = `Window ${window.id}`;
+    const destParent = this.tree.root;
+    const destIndex = this.tree.root.nodes.length;
+    // TODO: handle window.top, .left, .width, .height
+    //       so it can re-open saved windows at same size+position
+    // TODO: handle window types: normal, incognito, pop-up?, ...
+    const newNode = await destParent.addChild(destIndex, {
+      type: 'window',
+      windowId: window.id,
+      loaded: true,
+      geometry: [window.width, window.height, window.left, window.top],
+      note: noteText
+    }, notify);
+    return newNode;
+  }
+
+  async onWindowClosed (windowId) {
+    log(`Window closed: ID ${windowId}`);
+    // TODO: detect whether window was closed by user or by us
+    await this.treeLoaded;
+    // TODO
+    debug('bkgd.tree.windows', this.tree.windows);
+    const node = this.tree.windows[windowId];
+    if (node) {
+      debug('found window node', windowId, node);
+      node.windowClosed();
+    }
+    else {
+      debug('no window node found', windowId);
     }
   }
 

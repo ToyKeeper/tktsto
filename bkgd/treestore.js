@@ -12,8 +12,9 @@ import { Tree } from '/common/tree.js';
 
 export class TreeStore extends Tree {
 
-  constructor () {
+  constructor (bkgd) {
     super(NodeStore);
+    this.bkgd = bkgd;
   }
 
 }

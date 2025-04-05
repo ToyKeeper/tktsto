@@ -15,6 +15,11 @@ export class Node {
     // placement
     this.tree = tree;
     this.parent = parent;
+    // '', 'window', or 'tab'
+    this.type = '';
+    // browser attachment
+    this.windowId = null;
+    this.tabId = null;
     // attributes
     this.note = null;
     //this.long_note = null;
@@ -49,6 +54,9 @@ export class Node {
     const d = {};
     d.id = this.id;
     d.parent = this.parent.id;
+    d.type = this.type;
+    d.windowId = this.windowId;
+    d.tabId = this.tabId;
     d.note = this.note;
     d.title = this.title;
     d.url = this.url;
@@ -66,6 +74,9 @@ export class Node {
     // restore values from a previously-dicted copy
     this.id = d.id;
     //this.parent.id = d.parent;  // restore this elsewhere
+    this.type = d.type;
+    this.windowId = d.windowId;
+    this.tabId = d.tabId;
     this.note = d.note;
     this.title = d.title;
     this.url = d.url;
@@ -94,6 +105,10 @@ export class Node {
     // remove this node from its parent
     this.parent.nodes.splice(this.indexOf(), 1);
     this.parent = null;
+
+    // delete from tree cache
+    delete this.tree.nodes[this.id];
+    if (this.isWindow()) delete this.tree.windows[this.windowId];
 
     // TODO: update ancestor stat info
 
@@ -135,8 +150,25 @@ export class Node {
     return (0 === this.nodes.length);
   }
 
+  isWindow () {
+    return ('window' === this.type);
+  }
+
   hasKids () {
     return (0 < this.nodes.length);
+  }
+
+  hasLoadedTabs () {
+    const openTabs = this.countDescendants(
+      function (node) { return node.isLoaded(); }
+    );
+  }
+
+  getLoadedTabs () {
+    const openTabs = this.countDescendants(
+      function (node) { return node.isLoaded(); }
+    );
+    return openTabs;
   }
 
   isExpanded () {
@@ -168,6 +200,16 @@ export class Node {
     return total;
   }
 
+  findNodes (fn, found) {
+    if (undefined === found) found = [];
+    for (const node of this.nodes) {
+      debug(`findNodes(${node.id}: ${fn(node)}`, node);
+      if (fn(node)) found.push(node);
+      if (node.hasKids()) node.findNodes(fn, found);
+    }
+    return found;
+  }
+
   findParent (fn) {
     //debug('findParent', this.parent, fn(this.parent));
     // search ancestors for one which satisfies the "fn" condition
@@ -176,6 +218,30 @@ export class Node {
     const found = fn(this.parent);
     if (found) return this.parent;
     return this.parent.findParent(fn);
+  }
+
+  async windowClosed (notify = true) {
+    // window was closed by user
+    // windows require special care
+    // this shouldn't happen, but just in case, ignore non-windows
+    if (! this.isWindow()) return;
+    // if window has no kids, just delete it
+    if (! this.hasKids()) {
+      await this.deleteSelf(false);
+    }
+    // if window has no open tabs, mark it as unloaded
+    else if (! this.hasLoadedTabs()) {
+      await this.unload(false);
+    }
+    // if open tabs, ... well fuck.  I don't know.
+    // The browser *should* close the tabs first, right?  Right??
+    else {
+      error('window closed while still having open tabs');
+    }
+    // notify others
+    if (notify)
+      emit('tree_windowClosed',
+        { nodeID: this.id, windowId: this.windowId });
   }
 
   addChild (index = 0, details, notify = true) {
@@ -188,7 +254,10 @@ export class Node {
       if (! ['parent', 'nodes', 'parentID'].includes(key))
         newNode[key] = details[key];
     }
+    // update the tree caches
     this.tree.nodes[newNode.id] = newNode;
+    if (newNode.isWindow())
+      this.tree.windows[newNode.windowId] = newNode;
     // tell other threads
     if (notify)
       emit('tree_nodeAdded',
@@ -196,7 +265,6 @@ export class Node {
     return newNode;
   }
 
-  // TODO
   setNote (text, notify = true) {
     // abort on no-op
     if (text === this.note) return;
@@ -206,6 +274,19 @@ export class Node {
     if (notify)
       emit('tree_nodeChanged',
         { nodeID: this.id, type: 'setNote', note: this.note });
+  }
+
+  unload (notify = true) {
+    // abort on no-op
+    if (! this.isLoaded()) return;
+    // Do The Thing
+    // TODO: if tab, unload the tab
+    //   if window, unload the window
+    this.loaded = false;
+    // notify others
+    if (notify)
+      emit('tree_nodeUnloaded',
+        { nodeID: this.id });
   }
 
   newNodeID () {  // sub-classes should override this
@@ -294,6 +375,14 @@ export class Node {
 
   moveTo (destParent, destIndex, notify = true) {
     debug('Node.moveTo()', this, destParent, destIndex);
+    // TODO: handle window nodes specially
+    //   - refuse to move one window into another
+    //   - update windowId while moving non-window nodes
+    //   - remove tabs from old window, add tabs to new window
+    //   - only do actual window operations if notify=true
+    //     (or maybe only do them if this.tree.bkgd exists?)
+    //     (meaning we are a service worker, not a view)
+    const prevWindowId = this.windowId;
     // remove
     const prevParent = this.parent;
     let newIndex = destIndex;
@@ -344,6 +433,8 @@ export class Node {
     if (marked === this.marked) return;
     // refuse to mark root node
     if (this.isRoot()) return;
+    // refuse to mark window nodes
+    if (this.isWindow()) return;
 
     // reject mark request if ancestor is already marked,
     // because that means we're already marked by association

@@ -11,6 +11,7 @@ html, body {
   background: var(--tree-view-bg);
   color: #ccc;
   /* font-family: Tahoma, Geneva, sans-serif; */
+  font-family: Tahoma, Geneva, sans-serif;
   font-size: var(--global-font-size):
 }
 
@@ -152,6 +153,15 @@ ul {
   min-height: 1.5em;  /* ensure row still visible even when empty */
 }
 
+.row a {
+  text-decoration: none;
+  color: var(--tab-unloaded-fg);
+}
+
+.row.loaded a {
+  color: var(--tab-loaded-fg);
+}
+
 /* FIXME: let the user configure whether this expansion thingy appears */
 .expanded.row::before {
   content: "+";
@@ -191,6 +201,33 @@ ul {
   padding-bottom: 3px;
 }
 
+
+/******************** window nodes ********************/
+
+.window.node {
+  /* put some extra space between window nodes */
+  margin-bottom: 1em;
+}
+
+.window.row {
+  background: linear-gradient(90deg, #579, transparent);
+  text-shadow: var(--window-title-text-shadow);
+  font-weight: bold;
+  color: var(--window-unloaded-fg);
+  border-radius: var(--cursor-radius-collapsed);
+}
+.window.row.expanded {
+  border-radius: var(--cursor-radius-expanded);
+}
+
+.window.row.loaded {
+  color: var(--window-loaded-fg);
+}
+
+.window.row.active {
+  /* the current window is brighter */
+  color: var(--window-active-fg);
+}
 
 /******************** cursor ********************/
 
@@ -244,7 +281,7 @@ ul {
 }
 
 .node.marked, #marked-count {
-  box-shadow: 0 0 10px gold;
+  box-shadow: var(--marked-node-shadow);
   border-radius: var(--cursor-branch-radius);
 
   /* this animation takes a non-trivial amount of CPU cycles */
@@ -266,16 +303,17 @@ ul {
 .cursor.node.expanded.marked {
   outline: none;
   background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
+  box-shadow: var(--marked-node-shadow);
 }
 
 .row.marked, #marked-count {
-  outline: 1px solid gold;
+  outline: var(--marked-row-outline);
   border-radius: var(--cursor-radius-collapsed);
   /* this animation takes a surprising amount of CPU cycles */
   /* animation: pulse 2s infinite alternate; */
   /* here's a version without the animation */
-  outline-color: orange;
-  box-shadow: 0 0 20px orange;
+  /* outline-color: orange; */
+  box-shadow: var(--marked-row-shadow);
 }
 
 .row.marked.expanded {
@@ -289,7 +327,7 @@ ul {
   border-radius: var(--cursor-branch-radius);
   padding: 0.1em 0.25em;
   font-size: 133%;
-  color: gold;
+  color: var(--marked-count-color);
   /* background: var(--tree-view-bg); */
   background: #0004;
 }
@@ -315,12 +353,25 @@ ul {
   --tab-active-fg: #eee;
   --tab-loaded-fg: #ccc;
   --tab-unloaded-fg: #9cb7d3;
-  --window-active-fg: #fff;
-  --window-loaded-fg: #8696a7;
   /***** tree lines *****/
   --tree-line: #567;
   --tree-line-med: #68a;
   --tree-line-cursor: #aad4ee;
+  /***** window nodes *****/
+  --window-active-fg: #fff;
+  --window-loaded-fg: #ccc;
+  --window-unloaded-fg: #8696a7;
+  --window-title-text-shadow:
+        #00000060 -0.05em  0      0.02em, /* outline */
+        #00000060  0.05em  0      0.02em,
+        #00000060  0      -0.05em 0.02em,
+        #00000060  0       0.05em 0.02em,
+        #00000060 -0.03em -0.03em 0.02em,
+        #00000060 -0.03em  0.03em 0.02em,
+        #00000060  0.03em -0.03em 0.02em,
+        #00000080  0.05em 0.05em 0.10em, /* shadow */
+        #000000c0  0.07em 0.10em 0.15em,
+        #000000f0  0.10em 0.15em 0.25em;
   /***** cursor *****/
   --cursor-bg-top: #57b;
   --cursor-bg-bot: #235;
@@ -332,6 +383,12 @@ ul {
   --cursor-branch-radius: 6px;
   --cursor-radius-collapsed: 6px;
   --cursor-radius-expanded: 6px 6px 0 0;
+  /***** marked nodes *****/
+  --marked-node-shadow: 0 0 10px gold;
+  /* --marked-row-outline: 1px solid gold; */
+  --marked-row-outline: 1px solid orange;
+  --marked-row-shadow: 0 0 20px orange;
+  --marked-count-color: gold;
   /***** toolbars *****/
   --toolbar-height: 2em;
   --toolbar-bg: #333;

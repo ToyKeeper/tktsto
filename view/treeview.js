@@ -484,6 +484,7 @@ export class TreeView extends Tree {
       //debug('delete leaf node');
       toDelete.deleteSelf();
     }
+    // TODO: if window and has open tabs, things get complicated
     // if expanded, promote kids then delete parent
     else if (this.cursor.isExpanded()) {
       //debug('promote kids and delete parent');

@@ -36,6 +36,8 @@ export class Tree {
     this.root.nodes = [];
     // cache all nodes by ID
     this.nodes = { 'root': this.root };
+    // cache all windows by ID
+    this.windows = {};
   }
 
   nodeMarkChanged (node) {
@@ -72,6 +74,7 @@ export class Tree {
   serializeNodes () {
     const result = {};
     for (const key in this.nodes) {
+      debug('serializeNodes:', key, this.nodes[key]);
       result[key] = this.nodes[key].toDict();
     }
     return result;
@@ -87,7 +90,10 @@ export class Tree {
     }
     //debug('nodeDict()', nodeDict);
 
+    // update caches
     this.nodes[node.id] = node;
+    if ('window' === node.type) this.windows[node.windowId] = node;
+    // build the node
     node.fromDict(nodeDict);
     this.nodeMarkChanged(node);  // update our mark cache
     node.nodes = [];
@@ -152,6 +158,10 @@ export class Tree {
       return error(`tree_nodeAdded(): failed to add node "${details.id}"`);
     }
     this.nodes[newNode.id] = newNode;
+    if (newNode.isWindow()) {
+      this.windows[newNode.windowId] = newNode;
+      debug('Tree.windows[] added', newNode.windowId, this.windows);
+    }
     debug(`tree_nodeAdded() added "${newNode.id}" to "${parent.id}"`);
     //debug('Tree root:', this.root);
   }
@@ -165,6 +175,7 @@ export class Tree {
     }
     // un-cache and delete it
     delete this.nodes[nodeID];
+    if (node.isWindow()) delete this.windows[node.windowId];
     return await node.deleteSelf(false);
   }
 
@@ -215,6 +226,24 @@ export class Tree {
     else {
       return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);
     }
+  }
+
+  async tree_windowClosed (msg, sender, sendResponse) {
+    const nodeID = msg.nodeID;
+    const windowId = msg.windowId;
+    const node = this.nodes[nodeID];
+    debug('tree_windowClosed()', nodeID, windowId);
+    if (! node) {
+      return error(`tree_windowClosed(): couldn't find node "${nodeID}"`);
+    }
+    if (! node.isWindow()) {
+      return error(`tree_windowClosed(): not a window: "${nodeID}"`);
+    }
+    // un-cache and delete it (?)
+    // (a closed window object may just be unloaded, not deleted)
+    //delete this.nodes[nodeID];
+    delete this.windows[node.windowId];
+    return await node.windowClosed(false);
   }
 
 }
