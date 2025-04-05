@@ -8,3 +8,6 @@ firefox-zip:
 chrome-zip:
 	./make-zip.sh chromium
 
+todo:
+	grep -1 -n -E 'TODO|FIXME' *.js */*.js */*.html */*.css | less -S
+
