@@ -10,8 +10,7 @@ html, body {
   overflow-x: hidden;
   background: var(--tree-view-bg);
   color: #ccc;
-  /* font-family: Tahoma, Geneva, sans-serif; */
-  font-family: Tahoma, Geneva, sans-serif;
+  font-family: var(--font-family);
   font-size: var(--global-font-size):
 }
 
@@ -113,12 +112,12 @@ ul {
   display: block;
   padding: 0;
   margin: 0;
-  margin-left: 6px;
+  margin-left: 0.27rem;
 }
 
 .nodes {
   border-left: 2px solid var(--tree-line);
-  padding-left: 7px;
+  padding-left: 0.4rem;
   /* border-radius: 0 0 0 3px; */
 }
 
@@ -131,7 +130,7 @@ ul {
   border: none;
   margin: none;
   padding: none;
-  margin-right: 5px;
+  margin-right: 8px;
 }
 .root-nodes {
   padding-left: 0;
@@ -149,8 +148,9 @@ ul {
 .row {
   white-space: nowrap;
   overflow: hidden;
-  line-height: 150%;
-  min-height: 1.5em;  /* ensure row still visible even when empty */
+  line-height: var(--row-line-height);
+  min-height: var(--row-min-height);  /* ensure row still visible even when empty */
+  font-size: var(--global-font-size);
 }
 
 .row a {
@@ -160,6 +160,16 @@ ul {
 
 .row.loaded a {
   color: var(--tab-loaded-fg);
+}
+
+.row .node-note {
+  color: var(--note-unloaded-fg);
+}
+.row.loaded .node-note {
+  color: var(--note-loaded-fg);
+}
+.node-note-url-sep {
+  color: var(--note-title-sep-fg);
 }
 
 /* FIXME: let the user configure whether this expansion thingy appears */
@@ -209,22 +219,35 @@ ul {
   margin-bottom: 1em;
 }
 
+.window.node.expanded {
+  outline: 1px outset var(--window-branch-hl);
+  background: linear-gradient(var(--window-branch-top), var(--window-branch-bot));
+  border-radius: var(--cursor-branch-radius);
+  box-shadow: var(--window-branch-shadow);
+}
+
+
 .window.row {
-  background: linear-gradient(90deg, #579, transparent);
+  background: var(--window-row-bg);
   text-shadow: var(--window-title-text-shadow);
   font-weight: bold;
   color: var(--window-unloaded-fg);
   border-radius: var(--cursor-radius-collapsed);
 }
+.window.row .node-note {
+  color: var(--window-unloaded-fg);
+}
 .window.row.expanded {
   border-radius: var(--cursor-radius-expanded);
 }
 
-.window.row.loaded {
+.window.row.loaded,
+.window.row.loaded .node-note {
   color: var(--window-loaded-fg);
 }
 
-.window.row.active {
+.window.row.active,
+.window.row.active .node-note {
   /* the current window is brighter */
   color: var(--window-active-fg);
 }
@@ -251,6 +274,7 @@ ul {
   border-radius: var(--cursor-radius-expanded);
   border-style: none;
   box-shadow: var(--cursor-shadow);
+  text-shadow: var(--fancy-text-shadow);
 }
 
 .cursor.leaf, .cursor.collapsed {
@@ -343,8 +367,24 @@ ul {
 
 :root {
   /***** globals *****/
-  --global-font-size: 133%;
+  --font-family: "Quicksand Medium", Tahoma, Geneva, sans-serif;
+  --font-family: "DejaVu Sans", Arial, sans-serif;
+  --font-family: Tahoma, Geneva, sans-serif;
+  --global-font-size: 1.15rem;
+  --row-min-height: 1.5rem;
+  --row-line-height: 1.5rem;
   --shadow-color: #000000c0;
+  --fancy-text-shadow:
+        #00000060 -0.05em  0      0.02em, /* outline */
+        #00000060  0.05em  0      0.02em,
+        #00000060  0      -0.05em 0.02em,
+        #00000060  0       0.05em 0.02em,
+        #00000060 -0.03em -0.03em 0.02em,
+        #00000060 -0.03em  0.03em 0.02em,
+        #00000060  0.03em -0.03em 0.02em,
+        #00000080  0.05em 0.05em 0.10em, /* shadow */
+        #000000c0  0.07em 0.10em 0.15em,
+        #000000f0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
   --note-loaded-fg: #2c6;
@@ -358,20 +398,15 @@ ul {
   --tree-line-med: #68a;
   --tree-line-cursor: #aad4ee;
   /***** window nodes *****/
+  --window-row-bg: linear-gradient(150deg, #134372, transparent);
   --window-active-fg: #fff;
   --window-loaded-fg: #ccc;
   --window-unloaded-fg: #8696a7;
-  --window-title-text-shadow:
-        #00000060 -0.05em  0      0.02em, /* outline */
-        #00000060  0.05em  0      0.02em,
-        #00000060  0      -0.05em 0.02em,
-        #00000060  0       0.05em 0.02em,
-        #00000060 -0.03em -0.03em 0.02em,
-        #00000060 -0.03em  0.03em 0.02em,
-        #00000060  0.03em -0.03em 0.02em,
-        #00000080  0.05em 0.05em 0.10em, /* shadow */
-        #000000c0  0.07em 0.10em 0.15em,
-        #000000f0  0.10em 0.15em 0.25em;
+  --window-title-text-shadow: var(--fancy-text-shadow);
+  --window-branch-hl: #0e0e1c;
+  --window-branch-top: #1a1a29;
+  --window-branch-bot: #16161f;
+  --window-branch-shadow: 0.10em 0.10em 0.25em var(--shadow-color);
   /***** cursor *****/
   --cursor-bg-top: #57b;
   --cursor-bg-bot: #235;
