@@ -1,0 +1,104 @@
+{
+    "manifest_version": 3,
+    "name": "TK Tree Style Tab Outliner",
+    "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
+    "version": "0.0.0.1",
+    "permissions": [
+        "storage",
+        "unlimitedStorage",
+        "tabs"
+    ],
+    "optional_permissions": [
+        "clipboardRead",
+        "clipboardWrite"
+    ],
+    "optional_host_permissions": [
+        "http://localhost/*",
+        "<all_urls>"
+    ],
+    "options_page": "options/options.html",
+    "background": {
+        "scripts": ["bkgd/bkgd.js"],
+        "type": "module"
+    },
+    "sidebar_action": {
+        "default_title": "TK Tree Style Tab Outliner",
+        "default_panel": "view/sidepanel.html"
+    },
+    "action": {
+        "default_title": "TKTSTO Sidebar"
+    },
+    "commands": {
+        "_execute_sidebar_action": {
+            "description": "Toggle Side Panel",
+            "suggested_key": { "default": "Alt+T" }
+        },
+        "toggle_side_panel": {
+            "description": "Open Side Panel"
+        },
+        "cursor_up": {
+            "description": "Move cursor up"
+        },
+        "cursor_down": {
+            "description": "Move cursor down"
+        },
+        "cursor_pgup": {
+            "description": "Move cursor up 1 page"
+        },
+        "cursor_pgdown": {
+            "description": "Move cursor down 1 page"
+        },
+        "cursor_home": {
+            "description": "Move cursor to first sibling"
+        },
+        "cursor_end": {
+            "description": "Move cursor to last sibling"
+        },
+        "move_node_up": {
+            "description": "Move highlighted node up"
+        },
+        "move_node_down": {
+            "description": "Move highlighted node down"
+        },
+        "move_node_home": {
+            "description": "Move highlighted node up to first position"
+        },
+        "move_node_end": {
+            "description": "Move highlighted node down to last position"
+        },
+        "move_node_left": {
+            "description": "Move highlighted node left (toward parent)"
+        },
+        "move_node_left": {
+            "description": "Move highlighted node right (child of prev sibling)"
+        },
+        "toggle_current_node_expanded": {
+            "description": "Expand/Collapse current node"
+        },
+        "open_current_node": {
+            "description": "Open current node"
+        },
+        "unload_current_tab": {
+            "description": "Unload current tab",
+            "suggested_key": { "default": "Alt+U" }
+        },
+        "edit_current_note": {
+            "description": "Edit current node's note"
+        },
+        "cut_current_node": {
+            "description": "Delete/cut current node and its children"
+        },
+        "copy_current_node": {
+            "description": "Yank/copy current node and its children"
+        },
+        "paste_after_cursor": {
+            "description": "Paste last copied/deleted item after cursor"
+        },
+        "paste_before_cursor": {
+            "description": "Paste last copied/deleted item before cursor"
+        },
+        "manual_backup_now": {
+            "description": "Back up session now"
+        }
+    }
+}

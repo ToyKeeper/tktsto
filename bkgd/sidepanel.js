@@ -13,5 +13,12 @@ export function init() {
       .catch((error) => console.error(error));
   }
   // TODO: Firefox
+  else if (isFirefox) {
+    // get the ID of the window this sidepanel is running in
+    // (might not be specific to Firefox)
+    //api.windows.getCurrent({populate: true}).then((windowInfo) => {
+    //  myWindowId = windowInfo.id;
+    //});
+  }
 }
 
