@@ -151,7 +151,7 @@ export class Tree {
     if (! parent) {
       return error(`tree_nodeAdded(): couldn't find parent "${parentId}"`);
     }
-    const newNode = await parent.addChild(index, details, false);
+    const newNode = await parent.addChild(index, details, msg, false);
     //const newNode = parent.nodes[index];
     //debug('tree_nodeAdded() newNode', newNode);
     if (! newNode) {
@@ -176,7 +176,7 @@ export class Tree {
     // un-cache and delete it
     delete this.nodes[nodeId];
     if (node.isWindow()) delete this.windows[node.windowId];
-    return await node.deleteSelf(false);
+    return await node.deleteSelf(msg, false);
   }
 
   async tree_nodeMoved (msg, sender, sendResponse) {
@@ -194,7 +194,7 @@ export class Tree {
       return error(`tree_nodeMoved(): couldn't find parent "${destParentId}"`);
 
     // move the node
-    return node.moveTo(destParent, destIndex, false);
+    return node.moveTo(destParent, destIndex, msg, false);
   }
 
   async tree_nodeChanged (msg, sender, sendResponse) {
@@ -215,13 +215,13 @@ export class Tree {
 
     // figure out what kind of change happened, and update it
     if ('setExpanded' === changeType) {
-      return node.setExpanded(msg.expanded, false);
+      return node.setExpanded(msg.expanded, msg, false);
     }
     else if ('setNote' === changeType) {
-      return node.setNote(msg.note, false);
+      return node.setNote(msg.note, msg, false);
     }
     else if ('setMarked' === changeType) {
-      return node.setMarked(msg.marked, false);
+      return node.setMarked(msg.marked, msg, false);
     }
     else {
       return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);
@@ -243,7 +243,7 @@ export class Tree {
     // (a closed window object may just be unloaded, not deleted)
     //delete this.nodes[nodeId];
     delete this.windows[node.windowId];
-    return await node.windowClosed(false);
+    return await node.windowClosed(msg, false);
   }
 
 }

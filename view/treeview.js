@@ -28,6 +28,8 @@ export class TreeView extends Tree {
     // shows info about most recent event
     //this.$statusBar = this.document.getElementById('status-bar');
     this.$statusText = this.document.getElementById('status-text');
+    this.$detailsBox = this.document.getElementById('details-box');
+    this.$detailsBtn = this.document.getElementById('details-btn');
 
     // count of marked nodes when non-zero
     this.$markedCount = this.document.getElementById('marked-count');
@@ -97,6 +99,7 @@ export class TreeView extends Tree {
     super.init();
     this.initKeyHandler();
     this.initBkgdPing();
+    this.initButtonHandlers();
     // TODO: load the nodes from storage and render them
     await this.loadTreeFromBkgd();
 
@@ -606,7 +609,28 @@ export class TreeView extends Tree {
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();
     this.cursor = node;
-    if (node) node.scrollIntoView();
+    if (node) {
+      // show and update node detail box
+      this.updateDetailsBox();
+      // ensure node is visible
+      node.scrollIntoView();
+    }
+    else {
+      this.hideDetailsBox();
+    }
+  }
+
+  updateDetailsBox () {
+    if (! this.cursor) return;
+    // only show details if its button is in a 'pressed' state
+    if (this.$detailsBtn.classList.contains('pressed')) {
+      this.cursor.$renderDetails(this.$detailsBox);
+      this.$detailsBox.classList.remove('hidden');
+    }
+  }
+
+  hideDetailsBox () {
+    this.$detailsBox.classList.add('hidden');
   }
 
   initBkgdPing () {
@@ -625,6 +649,27 @@ export class TreeView extends Tree {
     const oneway = response - before;
     if (elapsed > 10)  // don't log fast pings, only slow pings
       debug(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
+  }
+
+  initButtonHandlers () {
+    // when details-btn clicked, toggle the details box
+    this.$detailsBtn.addEventListener('click', () => {
+      this.onDetailsBtnClick();
+    });
+  }
+
+  onDetailsBtnClick () {
+    // TODO: save button state to config storage
+    if (this.$detailsBox.classList.contains('hidden')) {
+      this.$detailsBtn.classList.add('pressed');
+      if (this.cursor) {
+        this.updateDetailsBox();
+        this.cursor.scrollIntoView();
+      }
+    } else {
+      this.$detailsBtn.classList.remove('pressed');
+      this.hideDetailsBox();
+    }
   }
 
   tree_nodeAdded (msg, sender, sendResponse) {

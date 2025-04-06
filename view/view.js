@@ -93,6 +93,7 @@ function init() {
 
   let tree = new TreeView();
   tree.init();
+  return tree;
 }
 
 
@@ -111,6 +112,6 @@ function initButtonBars () {
 
 // init when page is ready
 document.addEventListener('DOMContentLoaded', () => {
-  init();
+  const tree = init();
 });
 

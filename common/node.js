@@ -22,7 +22,7 @@ export class Node {
     this.tabId = null;
     // attributes
     this.note = null;
-    //this.long_note = null;
+    this.longNote = null;
     this.title = null;
     this.url = null;
     this.faviconUrl = null;
@@ -44,6 +44,25 @@ export class Node {
     this.ltime = null;  // loaded time (urls only)
     // children
     this.nodes = [];
+    // fields to copy when serializing to/from dict
+    this.dictable = [
+      'id',
+      'type',
+      'windowId',
+      'tabId',
+      'note',
+      'longNote',
+      'title',
+      'url',
+      'faviconUrl',
+      'expanded',
+      'loaded',
+      'marked',
+      'checkbox',
+      'ctime',
+      'mtime',
+      'atime'
+    ];
   }
 
   destroy () {
@@ -52,57 +71,34 @@ export class Node {
   toDict () {
     // make this object serializable for runtime.sendMessage()
     const d = {};
-    d.id = this.id;
+    for (const key of this.dictable) d[key] = this[key];
     d.parent = this.parent.id;
-    d.type = this.type;
-    d.windowId = this.windowId;
-    d.tabId = this.tabId;
-    d.note = this.note;
-    d.title = this.title;
-    d.url = this.url;
-    d.faviconUrl = this.faviconUrl;
-    d.expanded = this.expanded;
-    d.loaded = this.loaded;
-    //d.wasLoaded = this.wasLoaded;
-    d.marked = this.marked;
-    d.checkbox = this.checkbox;
     d.nodes = this.nodes.map((n) => n.id);
     return d;
   }
 
   fromDict (d) {
     // restore values from a previously-dicted copy
-    this.id = d.id;
+    for (const key of this.dictable) this[key] = d[key];
     //this.parent.id = d.parent;  // restore this elsewhere
-    this.type = d.type;
-    this.windowId = d.windowId;
-    this.tabId = d.tabId;
-    this.note = d.note;
-    this.title = d.title;
-    this.url = d.url;
-    this.faviconUrl = d.faviconUrl;
-    this.expanded = d.expanded;
-    this.loaded = d.loaded;
-    //this.wasLoaded = d.wasLoaded;
-    this.marked = d.marked;
-    this.checkbox = d.checkbox;
     //this.nodes = [];  // restore this elsewhere
   }
 
-  async deleteSelf (notify = true) {  //  TODO: rename this, maybe just use destroy ()
+  async deleteSelf (msg, notify = true) {  //  TODO: rename this, maybe just use destroy ()
     // root should refuse to delete itself
     if (this.isRoot()) return;
 
     // delete kids first
     if (this.hasKids()) {
       for (const node of this.nodes.slice()) {
-        await node.deleteSelf(notify);
+        await node.deleteSelf(msg, notify);
       }
     }
 
     // unmark if necessary
-    this.setMarked(false, false);
+    this.setMarked(false, msg, false);
     // remove this node from its parent
+    this.parent.bump('mtime', msg);
     this.parent.nodes.splice(this.indexOf(), 1);
     this.parent = null;
 
@@ -112,12 +108,14 @@ export class Node {
 
     // TODO: update ancestor stat info
 
+    // bump timestamp
+    this.bump('mtime', msg);
     // notify others
     if (notify)
-      await emit('tree_nodeDeleted', { nodeId: this.id });
+      await emit('tree_nodeDeleted', { nodeId: this.id, when: this.mtime });
   }
 
-  async deleteSelfAndPromoteKids (notify = true) {
+  async deleteSelfAndPromoteKids (msg, notify = true) {
     debug('Node.deleteSelfAndPromoteKids()');
     // root should refuse to delete itself
     if (this.isRoot()) return;
@@ -127,12 +125,12 @@ export class Node {
       let newIndex = this.indexOf();
       for (const node of this.nodes.slice()) {
         newIndex ++;
-        await node.moveTo(this.parent, newIndex, notify);
+        await node.moveTo(this.parent, newIndex, msg, notify);
       }
     }
 
     // remove this node from its parent
-    await this.deleteSelf(notify);
+    await this.deleteSelf(msg, notify);
   }
 
   indexOf () {
@@ -237,18 +235,26 @@ export class Node {
     }
   }
 
-  async windowClosed (notify = true) {
+  bump (tStampName, msg) {
+    // ignore invalid requests
+    if (! ['ctime', 'mtime', 'atime'].includes(tStampName)) return;
+    // bump the timestamp
+    if (msg && msg.when) this[tStampName] = msg.when;
+    else this[tStampName] = Date.now();
+  }
+
+  async windowClosed (msg, notify = true) {
     // window was closed by user
     // windows require special care
     // this shouldn't happen, but just in case, ignore non-windows
     if (! this.isWindow()) return;
     // if window has no kids, just delete it
     if (! this.hasKids()) {
-      await this.deleteSelf(false);
+      await this.deleteSelf(msg, false);
     }
     // if window has no open tabs, mark it as unloaded
     else if (! this.hasLoadedTabs()) {
-      await this.unload(false);
+      await this.unload(msg, false);
     }
     // if open tabs, ... well fuck.  I don't know.
     // The browser *should* close the tabs first, right?  Right??
@@ -258,10 +264,11 @@ export class Node {
     // notify others
     if (notify)
       emit('tree_windowClosed',
-        { nodeId: this.id, windowId: this.windowId });
+        { nodeId: this.id, windowId: this.windowId,
+          when: this.mtime });
   }
 
-  addChild (index = 0, details, notify = true) {
+  addChild (index = 0, details, msg, notify = true) {
     // details to pass:
     // id, note, title, url, faviconUrl, expanded
     const newNode = new this.constructor(this.tree, this);
@@ -275,35 +282,43 @@ export class Node {
     this.tree.nodes[newNode.id] = newNode;
     if (newNode.isWindow())
       this.tree.windows[newNode.windowId] = newNode;
+    // bump timestamp
+    this.bump('mtime', msg);
     // tell other threads
     if (notify)
       emit('tree_nodeAdded',
-        { parentId: this.id, index: index, node: newNode });
+        { parentId: this.id, index: index, node: newNode,
+          when: this.mtime });
     return newNode;
   }
 
-  setNote (text, notify = true) {
+  setNote (text, msg, notify = true) {
     // abort on no-op
     if (text === this.note) return;
     // Do The Thing
     this.note = text;
+    // bump timestamp
+    this.bump('mtime', msg);
     // notify others
     if (notify)
       emit('tree_nodeChanged',
-        { nodeId: this.id, type: 'setNote', note: this.note });
+        { nodeId: this.id, type: 'setNote', note: this.note,
+          when: this.mtime });
   }
 
-  unload (notify = true) {
+  unload (msg, notify = true) {
     // abort on no-op
     if (! this.isLoaded()) return;
     // Do The Thing
     // TODO: if tab, unload the tab
     //   if window, unload the window
     this.loaded = false;
+    // bump timestamp
+    this.bump('mtime', msg);
     // notify others
     if (notify)
       emit('tree_nodeUnloaded',
-        { nodeId: this.id });
+        { nodeId: this.id, when: this.mtime });
   }
 
   newNodeId () {  // sub-classes should override this
@@ -390,7 +405,7 @@ export class Node {
     node.parent = this;
   }
 
-  moveTo (destParent, destIndex, notify = true) {
+  moveTo (destParent, destIndex, msg, notify = true) {
     debug('Node.moveTo()', this, destParent, destIndex);
     // TODO: handle window nodes specially
     //   - refuse to move one window into another
@@ -412,24 +427,31 @@ export class Node {
         if ((prevParent === destParent) && (destIndex > oldIndex)) {
           newIndex -= 1;
         }
+        // bump old parent timestamp
+        prevParent.bump('mtime', msg);
       }
     }
     // ... and add
     destParent.insertChild(this, newIndex);
 
+    // bump new parent timestamp
+    destParent.bump('mtime', msg);
+
     // if new parent is marked, unmark self
     if (this.marked) {
       const markedParent = this.findParent((n) => n.marked);
-      if (markedParent) this.setMarked(false, false);
+      if (markedParent) this.setMarked(false, msg, false);
     }
 
     // TODO: recalculate stats
     if (notify)
       emit('tree_nodeMoved',
-        { nodeId: this.id, destParentId: destParent.id, destIndex: destIndex});
+        { nodeId: this.id,
+          destParentId: destParent.id, destIndex: destIndex,
+          when: destParent.mtime });
   }
 
-  setExpanded (expanded, notify = true) {
+  setExpanded (expanded, msg, notify = true) {
     // abort on no-op
     if (expanded === this.expanded) return;
     // leaf is always expanded
@@ -439,13 +461,18 @@ export class Node {
     }
     // otherwise, twiddle the bit
     this.expanded = expanded;
+
+    // bump timestamp
+    this.bump('atime', msg);
+
     // TODO? recalculate stats
     if (notify)
       emit('tree_nodeChanged',
-        { nodeId: this.id, type: 'setExpanded', expanded: this.expanded });
+        { nodeId: this.id, type: 'setExpanded', expanded: this.expanded,
+          when: this.atime });
   }
 
-  setMarked (marked, notify = true) {
+  setMarked (marked, msg, notify = true) {
     // abort on no-op
     if (marked === this.marked) return;
     // refuse to mark root node
@@ -469,10 +496,17 @@ export class Node {
     // update Tree's list of marked nodes
     this.tree.nodeMarkChanged(this);
 
+    // 'msg' and the timestamp aren't actually used,
+    // but they're included for consistency with other calls
+    let when;
+    if (msg && msg.when) when = msg.when;
+    else when = Date.now();
+
     // TODO? recalculate stats
     if (notify)
       emit('tree_nodeChanged',
-        { nodeId: this.id, type: 'setMarked', marked: this.marked });
+        { nodeId: this.id, type: 'setMarked', marked: this.marked,
+          when: when });
   }
 
 }  // end class Node

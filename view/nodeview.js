@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, emit } from '/common/common.js';
+import { log, debug, emit, fmtDate } from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -93,6 +93,11 @@ export class NodeView extends Node {
       this.$row.classList.remove('window');
     }
 
+    // if the details box is showing this node, update it
+    if (this === this.tree.cursor) {
+      this.$renderDetails(this.tree.$detailsBox);
+    }
+
     // add to parent (nope, nevermind, let the parent do that on its own)
     // needs a way to specify where to insert the new node
     //if (!this.parent) return;
@@ -172,6 +177,73 @@ export class NodeView extends Node {
     let faviconText = '';
     // combined output
     this.$row.innerHTML = `${statsText}${faviconText}${mainText}`;
+  }
+
+  $renderDetails ($detailsBox) {
+    if (!this.tree.document) return;
+    const doc = this.tree.document;
+
+    // load or create each element
+    function getOrCreate(id, elem, $parent) {
+      let $elem = doc.getElementById(id);
+      if (! $elem) {
+        $elem = doc.createElement(elem);
+        $elem.id = id;
+        if ($parent) $parent.append($elem);
+        else $detailsBox.append($elem);
+      }
+      return $elem;
+    }
+
+    function setOrHide ($elem, val, text, html) {
+      if (val) {
+        $elem.classList.remove('hidden');
+        if (text) $elem.innerText = text;
+        else if (html) $elem.innerHTML = html;
+      } else {
+        $elem.innerHTML = '';
+        $elem.classList.add('hidden');
+      }
+    }
+
+    // short note
+    let $note = getOrCreate('detail-note', 'div');
+    setOrHide($note, this.note, this.note);
+
+    // long note
+    let $longNote = getOrCreate('detail-long-note', 'div');
+    setOrHide($longNote, this.longNote, this.longNote);
+
+    // link title
+    let $title = getOrCreate('detail-title', 'div');
+    let $titleLabel = getOrCreate('detail-title-label', 'b', $title);
+    let $titleValue = getOrCreate('detail-title-value', 'span', $title);
+    setOrHide($title, this.title);
+    setOrHide($titleLabel, true, 'Title: ');
+    setOrHide($titleValue, this.title, this.title);
+
+    // link URL
+    let $url = getOrCreate('detail-url', 'div');
+    let $urlLabel = getOrCreate('detail-url-label', 'b', $url);
+    let $urlValue = getOrCreate('detail-url-value', 'span', $url);
+    setOrHide($url, this.url);
+    setOrHide($urlLabel, true, 'URL: ');
+    setOrHide($urlValue, this.url, this.url);
+
+    // node ID
+    let $nodeId = getOrCreate('detail-node-id', 'div');
+    $nodeId.innerHTML = `<b>ID:</b> <span>${this.id}</span>`;
+
+    // ctime, mtime, atime, ...
+    for (const tstamp of ['ctime', 'mtime', 'atime']) {
+      const $tstampDiv = getOrCreate(`detail-${tstamp}`, 'div');
+      const fmt = fmtDate(this[tstamp]);
+      // always show ctime, show others only if they're different
+      const toShow = (tstamp === 'ctime') || (this[tstamp] !== this.ctime);
+      setOrHide($tstampDiv, toShow, null,
+        `<b>${tstamp}:</b> <span>${fmt}</span>`);
+    }
+
   }
 
   $refreshAncestry () {

@@ -21,6 +21,14 @@ export function error (...args) {
   console.error(...args);
 }
 
+export function fmtDate (date) {
+  if (! date) return '';
+  // serialized dates turn into a plain number; convert it back
+  if ('number' === typeof date) date = new Date(date);
+  // generate ISO 8601 style timestamp string in local time zone
+  return date.toLocaleString("en-CA", { hour12: false });
+}
+
 export async function emit (name, args, retry = true) {
   // ensure valid args
   if (!((typeof name === 'string') || (name instanceof String)))

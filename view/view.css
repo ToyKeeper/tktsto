@@ -40,7 +40,10 @@ html, body {
   border-bottom: var(--top-toolbar-edge);
 }
 
-#bottom-bar {
+#details-box {
+  border-top: var(--bottom-toolbar-edge);
+}
+#details-box.hidden + #bottom-bar {
   border-top: var(--bottom-toolbar-edge);
 }
 
@@ -51,14 +54,30 @@ html, body {
   background: var(--tree-view-bg);
 }
 
-#node-detail-box {
+/******************** node details box ********************/
+
+#details-box {
   width: 100%;
-  height: var(--node-detail-box-height);
+  max-height: var(--details-box-height);
   overflow-x: wrap;
   overflow-y: auto;
-  background: var(--node-detail-box-bg);
-  color: var(--node-detail-box-fg);
-  display: none;
+  background: var(--details-box-bg);
+  color: var(--details-box-fg);
+}
+
+/*
+#detail-node-id,
+#detail-note {
+  display: inline-block;
+}
+*/
+
+#details-box b {
+  color: var(--details-label-fg);
+}
+
+#details-box span {
+  color: var(--details-value-fg);
 }
 
 
@@ -92,17 +111,23 @@ html, body {
 .toolbar .button {
   display: inline-block;
   margin: auto;
-  padding: 0.2em 0.5em;
+  padding: 0.2em 0.3em;
   border: 1px outset #555;
   border-radius: 0.5em;
   background: #444;
   box-shadow: 0.1em 0.1em 0.1em #000;
+  cursor: default;
 }
 .toolbar .button:hover {
   background: #555;
   border: 1px outset #777;
   box-shadow: 0.2em 0.2em 0.2em #000;
   color: #fff;
+}
+.toolbar .button.pressed {
+  border: 1px inset #555;
+  background: #222;
+  box-shadow: none;
 }
 
 /******************** lists ********************/
@@ -167,7 +192,8 @@ ul {
   color: var(--note-unloaded-fg);
 }
 .row.loaded .node-note,
-.row.loaded-children .node-note {
+.row.loaded-children .node-note,
+#detail-note {
   color: var(--note-loaded-fg);
 }
 .node-note-url-sep {
@@ -449,8 +475,10 @@ ul {
   --node-stat-bright-color: var(--tree-line-cursor);
   --node-stat-dim-color: var(--tree-line);
   /***** node detail box *****/
-  --node-detail-box-height: 30%;
-  --node-detail-box-bg: #333;
-  --node-detail-box-fg: #ccc;
+  --details-box-height: 25%;
+  --details-box-bg: #333;
+  --details-box-fg: #ccc;
+  --details-label-fg: #ccc;
+  --details-value-fg: #aaa;
 }
 

@@ -149,7 +149,7 @@ class Bkgd {
           active: tab.active,
           incognito: tab.incognito,
           atime: tab.lastAccessed
-          }, false);
+          }, null, false);
       }
     }
     log('mergeOpenWindowsIntoTree() done');
@@ -161,7 +161,6 @@ class Bkgd {
     //await this.configLoaded;
     await this.treeDbLoaded;
     //await this.treeLoaded;
-    const noteText = `Window ${window.id}`;
     const destParent = this.tree.root;
     const destIndex = this.tree.root.nodes.length;
     // TODO: handle window.top, .left, .width, .height
@@ -171,9 +170,8 @@ class Bkgd {
       type: 'window',
       windowId: window.id,
       loaded: true,
-      geometry: [window.width, window.height, window.left, window.top],
-      note: noteText
-    }, notify);
+      geometry: [window.width, window.height, window.left, window.top]
+    }, null, notify);
     return newNode;
   }
 
