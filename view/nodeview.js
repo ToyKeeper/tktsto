@@ -24,13 +24,13 @@ export class NodeView extends Node {
     this.$nodes = null;  // <ul>
   }
 
-  async newNodeID () {
-    // NodeView.newNodeID() and NodeStore.newNodeID()
-    // are totally different, and Node.newNodeID() doesn't exist
-    //super.newNodeID();  // unnecessary, doesn't exist
-    const nextID = await emit('bkgd_newNodeID');
-    //debug('NodeView.newNodeID():', nextID);
-    return nextID;
+  async newNodeId () {
+    // NodeView.newNodeId() and NodeStore.newNodeId()
+    // are totally different, and Node.newNodeId() doesn't exist
+    //super.newNodeId();  // unnecessary, doesn't exist
+    const nextId = await emit('bkgd_newNodeId');
+    //debug('NodeView.newNodeId():', nextId);
+    return nextId;
   }
 
   $render () {
@@ -215,7 +215,7 @@ export class NodeView extends Node {
     const prevNodeAtIndex = this.nodes[index];
 
     // must allocate ID before creating node and emitting notifications
-    if (! details.id) { details.id = await this.newNodeID(); }
+    if (! details.id) { details.id = await this.newNodeId(); }
     // create new Node object
     const newNode = super.addChild(index, details, ...extra);
     newNode.window = this.window;  // redundant?

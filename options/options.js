@@ -11,25 +11,25 @@ import { log } from '/common/common.js';
 // and store new values when the user hits "save"
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('options-form');
-  const clientIDInput = document.getElementById('client-id');
+  const clientIdInput = document.getElementById('client-id');
 
   // load saved client ID
-  api.storage.local.get('clientID').then((result) => {
-    if (result.clientID) {
-      clientIDInput.value = result.clientID;
+  api.storage.local.get('clientId').then((result) => {
+    if (result.clientId) {
+      clientIdInput.value = result.clientId;
     }
   });
 
   // save on form submit
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    const clientID = clientIDInput.value;
-    api.storage.local.set({ clientID }).then(() => {
+    const clientId = clientIdInput.value;
+    api.storage.local.set({ clientId }).then(() => {
       alert('Saved!');
     });
     api.runtime.sendMessage({
-      'msg':'bkgd_setClientID',
-      'clientID': clientID
+      'msg':'bkgd_setClientId',
+      'clientId': clientId
     });
   });
 });

@@ -147,8 +147,8 @@ export class TreeView extends Tree {
   updateMarkedCount () {
     // add a "+" to the number if any marked nodes have kids
     let plus = '';
-    for (const nodeID of this.markedNodes) {
-      const node = this.nodes[nodeID];
+    for (const nodeId of this.markedNodes) {
+      const node = this.nodes[nodeId];
       if (node.hasKids()) {
         plus = '+';
         break;
@@ -542,9 +542,9 @@ export class TreeView extends Tree {
     debug('action_unmarkAll()');
     // iterate over a copy of the array,
     // since the original will be modified while iterating
-    for (const nodeID of this.markedNodes.slice()) {
-      const node = this.nodes[nodeID];
-      //debug(`unmarking "${nodeID}"`);
+    for (const nodeId of this.markedNodes.slice()) {
+      const node = this.nodes[nodeId];
+      //debug(`unmarking "${nodeId}"`);
       await node.setMarked(false);
     }
   }
@@ -581,8 +581,8 @@ export class TreeView extends Tree {
 
     // TODO: sort the markedNodes list by order in tree
     //   instead of order added to list
-    for (const nodeID of this.markedNodes) {
-      const node = this.nodes[nodeID];
+    for (const nodeId of this.markedNodes) {
+      const node = this.nodes[nodeId];
       // special case: moving from/to same parent can get weird
       const pastingToSameParent = (node.parent === destParent);
       const oldIndex = node.indexOf();

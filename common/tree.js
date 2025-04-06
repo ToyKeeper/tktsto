@@ -85,7 +85,7 @@ export class Tree {
     let numLoaded = 0;
     const nodeDict = hash[node.id];
     if (! nodeDict) {
-      error(`rebuildNodeFromSerializedHash(): no nodeID "${node.id}"`);
+      error(`rebuildNodeFromSerializedHash(): no nodeId "${node.id}"`);
       return 0;
     }
     //debug('nodeDict()', nodeDict);
@@ -98,10 +98,10 @@ export class Tree {
     this.nodeMarkChanged(node);  // update our mark cache
     node.nodes = [];
     numLoaded ++;
-    for (const nodeID of nodeDict.nodes) {
-      //debug('nodeDict() childID', nodeID);
+    for (const nodeId of nodeDict.nodes) {
+      //debug('nodeDict() childId', nodeId);
       const child = new this.NodeClass(this, node);
-      child.id = nodeID;
+      child.id = nodeId;
       node.nodes.push(child);
       numLoaded += this.rebuildNodeFromSerializedHash(child, hash);
     }
@@ -143,13 +143,13 @@ export class Tree {
   }
 
   async tree_nodeAdded (msg, sender, sendResponse) {
-    const parentID = msg.parentID;
+    const parentId = msg.parentId;
     const index = msg.index;
     const details = msg.node;
-    const parent = this.nodes[parentID];
+    const parent = this.nodes[parentId];
     //debug('tree_nodeAdded() parent', parent);
     if (! parent) {
-      return error(`tree_nodeAdded(): couldn't find parent "${parentID}"`);
+      return error(`tree_nodeAdded(): couldn't find parent "${parentId}"`);
     }
     const newNode = await parent.addChild(index, details, false);
     //const newNode = parent.nodes[index];
@@ -167,31 +167,31 @@ export class Tree {
   }
 
   async tree_nodeDeleted (msg, sender, sendResponse) {
-    const nodeID = msg.nodeID;
-    const node = this.nodes[nodeID];
-    debug('tree_nodeDeleted()', nodeID);
+    const nodeId = msg.nodeId;
+    const node = this.nodes[nodeId];
+    debug('tree_nodeDeleted()', nodeId);
     if (! node) {
-      return error(`tree_nodeDeleted(): couldn't find node "${nodeID}"`);
+      return error(`tree_nodeDeleted(): couldn't find node "${nodeId}"`);
     }
     // un-cache and delete it
-    delete this.nodes[nodeID];
+    delete this.nodes[nodeId];
     if (node.isWindow()) delete this.windows[node.windowId];
     return await node.deleteSelf(false);
   }
 
   async tree_nodeMoved (msg, sender, sendResponse) {
     // unpack
-    const nodeID = msg.nodeID;
-    const destParentID = msg.destParentID;
+    const nodeId = msg.nodeId;
+    const destParentId = msg.destParentId;
     const destIndex = msg.destIndex;
 
     // find nodes
-    const node = this.nodes[nodeID];
-    const destParent = this.nodes[destParentID];
+    const node = this.nodes[nodeId];
+    const destParent = this.nodes[destParentId];
     if (! node)
-      return error(`tree_nodeMoved(): couldn't find node "${nodeID}"`);
+      return error(`tree_nodeMoved(): couldn't find node "${nodeId}"`);
     if (! destParent)
-      return error(`tree_nodeMoved(): couldn't find parent "${destParentID}"`);
+      return error(`tree_nodeMoved(): couldn't find parent "${destParentId}"`);
 
     // move the node
     return node.moveTo(destParent, destIndex, false);
@@ -199,13 +199,13 @@ export class Tree {
 
   async tree_nodeChanged (msg, sender, sendResponse) {
     // unpack
-    const nodeID = msg.nodeID;
+    const nodeId = msg.nodeId;
     const changeType = msg.type;
 
     // find nodes
-    const node = this.nodes[nodeID];
+    const node = this.nodes[nodeId];
     if (! node)
-      return error(`tree_nodeChanged(): couldn't find node "${nodeID}"`);
+      return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
 
     // FIXME: change API to make it more general
     // like nodeChanged(fieldName, before, after)
@@ -229,19 +229,19 @@ export class Tree {
   }
 
   async tree_windowClosed (msg, sender, sendResponse) {
-    const nodeID = msg.nodeID;
+    const nodeId = msg.nodeId;
     const windowId = msg.windowId;
-    const node = this.nodes[nodeID];
-    debug('tree_windowClosed()', nodeID, windowId);
+    const node = this.nodes[nodeId];
+    debug('tree_windowClosed()', nodeId, windowId);
     if (! node) {
-      return error(`tree_windowClosed(): couldn't find node "${nodeID}"`);
+      return error(`tree_windowClosed(): couldn't find node "${nodeId}"`);
     }
     if (! node.isWindow()) {
-      return error(`tree_windowClosed(): not a window: "${nodeID}"`);
+      return error(`tree_windowClosed(): not a window: "${nodeId}"`);
     }
     // un-cache and delete it (?)
     // (a closed window object may just be unloaded, not deleted)
-    //delete this.nodes[nodeID];
+    //delete this.nodes[nodeId];
     delete this.windows[node.windowId];
     return await node.windowClosed(false);
   }

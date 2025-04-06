@@ -114,7 +114,7 @@ export class Node {
 
     // notify others
     if (notify)
-      await emit('tree_nodeDeleted', { nodeID: this.id });
+      await emit('tree_nodeDeleted', { nodeId: this.id });
   }
 
   async deleteSelfAndPromoteKids (notify = true) {
@@ -258,7 +258,7 @@ export class Node {
     // notify others
     if (notify)
       emit('tree_windowClosed',
-        { nodeID: this.id, windowId: this.windowId });
+        { nodeId: this.id, windowId: this.windowId });
   }
 
   addChild (index = 0, details, notify = true) {
@@ -268,7 +268,7 @@ export class Node {
     this.nodes.splice(index, 0, newNode);
     for (const key in details) {
       // if key isn't banned, copy it
-      if (! ['parent', 'nodes', 'parentID'].includes(key))
+      if (! ['parent', 'nodes', 'parentId'].includes(key))
         newNode[key] = details[key];
     }
     // update the tree caches
@@ -278,7 +278,7 @@ export class Node {
     // tell other threads
     if (notify)
       emit('tree_nodeAdded',
-        { parentID: this.id, index: index, node: newNode });
+        { parentId: this.id, index: index, node: newNode });
     return newNode;
   }
 
@@ -290,7 +290,7 @@ export class Node {
     // notify others
     if (notify)
       emit('tree_nodeChanged',
-        { nodeID: this.id, type: 'setNote', note: this.note });
+        { nodeId: this.id, type: 'setNote', note: this.note });
   }
 
   unload (notify = true) {
@@ -303,10 +303,10 @@ export class Node {
     // notify others
     if (notify)
       emit('tree_nodeUnloaded',
-        { nodeID: this.id });
+        { nodeId: this.id });
   }
 
-  newNodeID () {  // sub-classes should override this
+  newNodeId () {  // sub-classes should override this
   }
 
   firstSibling () {
@@ -426,7 +426,7 @@ export class Node {
     // TODO: recalculate stats
     if (notify)
       emit('tree_nodeMoved',
-        { nodeID: this.id, destParentID: destParent.id, destIndex: destIndex});
+        { nodeId: this.id, destParentId: destParent.id, destIndex: destIndex});
   }
 
   setExpanded (expanded, notify = true) {
@@ -442,7 +442,7 @@ export class Node {
     // TODO? recalculate stats
     if (notify)
       emit('tree_nodeChanged',
-        { nodeID: this.id, type: 'setExpanded', expanded: this.expanded });
+        { nodeId: this.id, type: 'setExpanded', expanded: this.expanded });
   }
 
   setMarked (marked, notify = true) {
@@ -472,7 +472,7 @@ export class Node {
     // TODO? recalculate stats
     if (notify)
       emit('tree_nodeChanged',
-        { nodeID: this.id, type: 'setMarked', marked: this.marked });
+        { nodeId: this.id, type: 'setMarked', marked: this.marked });
   }
 
 }  // end class Node

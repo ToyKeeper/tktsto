@@ -25,7 +25,7 @@
 
 import { base32encode } from '/common/base32.js';
 
-export class IDGenerator {
+export class IdGenerator {
 
   constructor (name, dateDigits, seqDigits) {
     this.name = name;
@@ -38,7 +38,7 @@ export class IDGenerator {
     this.seq = 0;  // sequential counter within a single timestamp
   }
 
-  newID (when) {
+  newId (when) {
     let now = when;
     if (when === undefined) { now = Date.now(); }
     // if this timestamp has already been used,

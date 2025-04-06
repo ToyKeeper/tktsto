@@ -6,7 +6,7 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug, warn, error } from '/common/common.js';
-import { IDGenerator } from '/common/id-generator.js';
+import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
 import { base32encode } from '/common/base32.js';
@@ -44,13 +44,13 @@ class Bkgd {
     sidepanel.init();
 
     this.initConfig().then(() => {
-      this.idGen = new IDGenerator(this.clientID, 9, 2);
+      this.idGen = new IdGenerator(this.clientId, 9, 2);
       this.resolveConfigLoaded();  // let listeners know the config is ready
 
       this.tree = new TreeStore(this);
       this.tree.init();
       // TODO: use tree node dict as idGen ID cache
-      // TODO: make IDGenerator check a cache to avoid duplicates
+      // TODO: make IdGenerator check a cache to avoid duplicates
       //this.idGen.cache = this.tree.nodes;
       //  TODO: actually load the tree from storage
       // this.tree.loadFromIDB().then(() => {
@@ -95,17 +95,17 @@ class Bkgd {
 
   async initConfig () {
     // load client name from storage
-    const result = await api.storage.local.get('clientID');
-    if (result.clientID) {
-      this.clientID = result.clientID;
-      log(`clientID: ${this.clientID}`);
+    const result = await api.storage.local.get('clientId');
+    if (result.clientId) {
+      this.clientId = result.clientId;
+      log(`clientId: ${this.clientId}`);
     } else {
       // detect first run and generate random client name
       // generate 2-digit base32 string
       let num = Math.floor(Math.random() * (32**2));
-      this.clientID = base32encode(num, 2);
-      await api.storage.local.set({ 'clientID': this.clientID });
-      log(`rand clientID: ${this.clientID}`);
+      this.clientId = base32encode(num, 2);
+      await api.storage.local.set({ 'clientId': this.clientId });
+      log(`rand clientId: ${this.clientId}`);
     }
   }
 
@@ -244,20 +244,20 @@ class Bkgd {
     return Date.now();
   }
 
-  async bkgd_newNodeID (msg) {
-    //debug('bkgd_newNodeID()', msg);
+  async bkgd_newNodeId (msg) {
+    //debug('bkgd_newNodeId()', msg);
     await this.configLoaded;  // wait for config to finish loading
-    const newID = this.idGen.newID();
-    //debug(`bkgd_newNodeID() => "${newID}"`);
-    return newID;
+    const newId = this.idGen.newId();
+    //debug(`bkgd_newNodeId() => "${newId}"`);
+    return newId;
   }
 
-  async bkgd_setClientID (msg) {
+  async bkgd_setClientId (msg) {
     await this.configLoaded;  // wait for config to finish loading
     // FIXME: strip everything but a-zA-Z0-9
     // TODO: save to config
-    this.clientID = msg.clientID;
-    this.idGen.name = this.clientID;
+    this.clientId = msg.clientId;
+    this.idGen.name = this.clientId;
   }
 
   async bkgd_getTree (msg) {
