@@ -38,6 +38,7 @@ export async function emit (name, args, retry = true) {
   let response;
   let tryNum = 1;
   const maxTries = 100;
+  const startTime = performance.now();
   while (retry && (! response) && (tryNum < maxTries)) {
     try {
       response = await api.runtime.sendMessage(args);
@@ -55,6 +56,8 @@ export async function emit (name, args, retry = true) {
     // (like, expose it in the UI somehow)
     error(`emit(${name}) exceeded maximum retries`, name, args);
   }
+  const endTime = performance.now();
+  debug(`emit(${name}) elapsed: ${endTime - startTime} ms`);
   return response;
 }
 
