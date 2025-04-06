@@ -220,7 +220,7 @@ ul {
 }
 
 .window.node.expanded {
-  outline: 1px outset var(--window-branch-hl);
+  border: 1px outset var(--window-branch-hl);
   background: linear-gradient(var(--window-branch-top), var(--window-branch-bot));
   border-radius: var(--cursor-branch-radius);
   box-shadow: var(--window-branch-shadow);
@@ -274,7 +274,7 @@ ul {
   border-radius: var(--cursor-radius-expanded);
   border-style: none;
   box-shadow: var(--cursor-shadow);
-  text-shadow: var(--fancy-text-shadow);
+  text-shadow: var(--medium-text-shadow);
 }
 
 .cursor.leaf, .cursor.collapsed {
@@ -385,6 +385,17 @@ ul {
         #00000080  0.05em 0.05em 0.10em, /* shadow */
         #000000c0  0.07em 0.10em 0.15em,
         #000000f0  0.10em 0.15em 0.25em;
+  --medium-text-shadow:
+        #00000040 -0.05em  0      0.02em, /* outline */
+        #00000040  0.05em  0      0.02em,
+        #00000040  0      -0.05em 0.02em,
+        #00000040  0       0.05em 0.02em,
+        #00000040 -0.03em -0.03em 0.02em,
+        #00000040 -0.03em  0.03em 0.02em,
+        #00000040  0.03em -0.03em 0.02em,
+        #00000060  0.05em 0.05em 0.10em, /* shadow */
+        #00000080  0.07em 0.10em 0.15em,
+        #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
   --note-loaded-fg: #2c6;
@@ -422,7 +433,7 @@ ul {
   --marked-node-shadow: 0 0 10px gold;
   /* --marked-row-outline: 1px solid gold; */
   --marked-row-outline: 1px solid orange;
-  --marked-row-shadow: 0 0 20px orange;
+  --marked-row-shadow: 0 0 10px orange;
   --marked-count-color: gold;
   /***** toolbars *****/
   --toolbar-height: 2em;
