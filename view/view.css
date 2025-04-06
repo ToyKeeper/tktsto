@@ -18,7 +18,7 @@ html, body {
 
 #top-bar,
 #bottom-bar {
-  height: var(--toolbar-height);
+  min-height: var(--toolbar-height);
   width: 100%;
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
@@ -106,10 +106,15 @@ html, body {
 #top-bar, #bottom-bar {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-bottom: 5px;
 }
 
 .toolbar .button {
   display: inline-block;
+  flex: 1 1 auto;
+  text-align: center;
   margin: auto;
   padding: 0.2em 0.3em;
   border: 1px outset #555;
