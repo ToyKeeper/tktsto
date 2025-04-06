@@ -124,6 +124,9 @@ export class NodeView extends Node {
     // is the link loaded in a tab?
     if (this.loaded) this.$row.classList.add('loaded');
     else this.$row.classList.remove('loaded');
+    // are any kids loaded?
+    if (this.hasLoadedTabs()) this.$row.classList.add('loaded-children');
+    else this.$row.classList.remove('loaded-children');
     // is the page the window's current active tab?
     if (this.active) this.$row.classList.add('active');
     else this.$row.classList.remove('active');

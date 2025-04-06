@@ -557,10 +557,19 @@ export class TreeView extends Tree {
     // find the right place to put the marked nodes
     let destParent;
     let destIndex;
-    if (this.cursor.isRoot() ||
-      (this.cursor.hasKids() && this.cursor.isExpanded()))
-    {
-      // if root, or if expanded, paste as new first children
+    const markedParent = this.cursor.markedBy();
+    if (this.cursor.isRoot()) {
+      destParent = this.cursor;
+      destIndex = 0;
+    }
+    else if (markedParent) {
+      // haha, I see you... trying to dive into your own belly button
+      // but this is a strict No Infinite Recursion Zone
+      destParent = markedParent.parent;
+      destIndex = markedParent.indexOf();
+    }
+    else if (this.cursor.hasKids() && this.cursor.isExpanded()) {
+      // if expanded with kids, paste as new first children
       destParent = this.cursor;
       destIndex = 0;
     }

@@ -159,9 +159,13 @@ export class Node {
   }
 
   hasLoadedTabs () {
-    const openTabs = this.countDescendants(
-      function (node) { return node.isLoaded(); }
-    );
+    // check if any descendant are loaded
+    // (but try to minimize the amount of CPU cycles to calculate this)
+    for (const node of this.nodes)
+      if (node.isLoaded()) return true;
+    for (const node of this.nodes)
+      if (node.hasLoadedTabs()) return true;
+    return false;
   }
 
   getLoadedTabs () {
@@ -186,6 +190,12 @@ export class Node {
 
   isLoaded () {
     return this.loaded;
+  }
+
+  markedBy () {
+    if (this.marked) return this;
+    else if (this.isRoot()) return null;
+    else return this.parent.markedBy();
   }
 
   countDescendants (filter) {

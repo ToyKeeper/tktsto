@@ -158,14 +158,16 @@ ul {
   color: var(--tab-unloaded-fg);
 }
 
-.row.loaded a {
+.row.loaded a,
+.row.loaded-children a {
   color: var(--tab-loaded-fg);
 }
 
 .row .node-note {
   color: var(--note-unloaded-fg);
 }
-.row.loaded .node-note {
+.row.loaded .node-note,
+.row.loaded-children .node-note {
   color: var(--note-loaded-fg);
 }
 .node-note-url-sep {
@@ -242,7 +244,9 @@ ul {
 }
 
 .window.row.loaded,
-.window.row.loaded .node-note {
+.window.row.loaded-children,
+.window.row.loaded .node-note,
+.window.row.loaded-children .node-note {
   color: var(--window-loaded-fg);
 }
 
