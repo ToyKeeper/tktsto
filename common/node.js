@@ -220,6 +220,13 @@ export class Node {
     return this.parent.findParent(fn);
   }
 
+  forEachRecursive (fn) {
+    for (const node of this.nodes) {
+      fn(node);
+      node.forEachRecursive(fn);
+    }
+  }
+
   async windowClosed (notify = true) {
     // window was closed by user
     // windows require special care
@@ -436,11 +443,14 @@ export class Node {
     // refuse to mark window nodes
     if (this.isWindow()) return;
 
-    // reject mark request if ancestor is already marked,
-    // because that means we're already marked by association
     if (marked) {
+      // reject mark request if ancestor is already marked,
+      // because that means we're already marked by association
       const markedParent = this.findParent((n) => n.marked);
       if (markedParent) return;
+
+      // unmark children, because they will now be marked by association
+      this.forEachRecursive((node) => { node.setMarked(false, false); });
     }
 
     // otherwise, twiddle the bit
