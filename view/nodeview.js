@@ -157,6 +157,10 @@ export class NodeView extends Node {
       else
         mainText = `<span class="node-notitle">node ${this.id}</span>`;
     }
+    // indicate when there's a long note attached
+    let longNoteIcon = '';
+    if (this.longNote)
+      longNoteIcon = '<span class="node-note-icon">📎 </span>';  // paperclip
     // node stats
     let statsText = '';
     // TODO: unsure if always include stats or only when collapsed
@@ -176,7 +180,7 @@ export class NodeView extends Node {
     // TODO: favicon
     let faviconText = '';
     // combined output
-    this.$row.innerHTML = `${statsText}${faviconText}${mainText}`;
+    this.$row.innerHTML = `${statsText}${faviconText}${longNoteIcon}${mainText}`;
   }
 
   $renderDetails ($detailsBox) {

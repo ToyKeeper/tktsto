@@ -197,11 +197,14 @@ ul {
   color: var(--tab-loaded-fg);
 }
 
-.row .node-note {
+.row .node-note,
+.row .node-note-icon {
   color: var(--note-unloaded-fg);
 }
 .row.loaded .node-note,
 .row.loaded-children .node-note,
+.row.loaded .node-note-icon,
+.row.loaded-children .node-note-icon,
 #detail-note {
   color: var(--note-loaded-fg);
 }
