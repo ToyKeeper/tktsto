@@ -37,7 +37,7 @@ export async function emit (name, args, retry = true) {
   args['msg'] = name;
   // dict-ify parameters so they can be serialized
   for (const key in args) {
-    if (args[key].toDict) args[key] = args[key].toDict();
+    if (args[key] && args[key].toDict) args[key] = args[key].toDict();
   }
   debug(`emit(${name})`, args);
   // get ready to try more than once,
