@@ -292,17 +292,20 @@ export class Node {
     return newNode;
   }
 
-  setNote (text, msg, notify = true) {
+  setNote (text, longNote, msg, notify = true) {
     // abort on no-op
-    if (text === this.note) return;
+    if ((text === this.note) && (longNote === this.longNote)) return;
     // Do The Thing
     this.note = text;
+    this.longNote = longNote;
     // bump timestamp
     this.bump('mtime', msg);
     // notify others
     if (notify)
       emit('tree_nodeChanged',
-        { nodeId: this.id, type: 'setNote', note: this.note,
+        { nodeId: this.id, type: 'setNote',
+          note: this.note,
+          longNote: this.longNote,
           when: this.mtime });
   }
 

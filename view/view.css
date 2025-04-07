@@ -111,7 +111,8 @@ html, body {
   padding-bottom: 5px;
 }
 
-.toolbar .button {
+.toolbar .button,
+#inputDialogButtons button {
   display: inline-block;
   flex: 1 1 auto;
   text-align: center;
@@ -123,13 +124,16 @@ html, body {
   box-shadow: 0.1em 0.1em 0.1em #000;
   cursor: default;
 }
-.toolbar .button:hover {
+.toolbar .button:hover,
+#inputDialogButtons button:hover {
   background: #555;
   border: 1px outset #777;
   box-shadow: 0.2em 0.2em 0.2em #000;
   color: #fff;
 }
-.toolbar .button.pressed {
+.toolbar .button.pressed,
+.toolbar .button:active,
+#inputDialogButtons button:active {
   border: 1px inset #555;
   background: #222;
   box-shadow: none;
@@ -200,6 +204,12 @@ ul {
 .row.loaded-children .node-note,
 #detail-note {
   color: var(--note-loaded-fg);
+}
+#detail-long-note {
+  color: var(--note-long-fg);
+  background: #0002;
+  border: 1px inset #444;
+  border-radius: var(--cursor-radius-collapsed);
 }
 .node-note-url-sep {
   color: var(--note-title-sep-fg);
@@ -391,6 +401,80 @@ ul {
   background: #0004;
 }
 
+/******************** input dialogs ********************/
+
+#inputDialog {
+  width: 85%;
+  /* min-height: 33%; */
+  border: 1px outset var(--dialog-border-color);
+  background: linear-gradient(var(--dialog-bg-top), var(--dialog-bg-bot));
+  border-radius: var(--dialog-radius);
+  box-shadow: var(--dialog-shadow);
+  padding: var(--dialog-padding);
+  color: var(--dialog-fg);
+  font-size: var(--global-font-size);
+}
+
+#inputDialogTitle {
+  background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
+  font-weight: bold;
+  font-size: calc(var(--global-font-size) * 1.1);
+  padding: 0.2em 0.5em;
+  border-radius: var(--cursor-radius-expanded);
+  border-style: none;
+  box-shadow: var(--cursor-shadow);
+  /* text-shadow: var(--medium-text-shadow); */
+  color: var(--dialog-title-fg);
+  margin-bottom: var(--dialog-padding);
+}
+
+#inputDialog input,
+#inputDialog textarea {
+  background: var(--dialog-input-bg);
+  border: 1px inset var(--dialog-input-border);
+  border-radius: 3px;
+  width: calc(100% - var(--dialog-padding));
+  max-width: calc(100% - var(--dialog-padding));
+  margin-bottom: var(--dialog-padding);
+}
+
+#inputDialog input {
+  color: var(--note-loaded-fg);
+  font-size: calc(var(--global-font-size) * 0.9);
+  padding: 0.1em 0.2em;
+}
+
+#inputDialog textarea {
+  /* height: 100%; */
+  min-height: 10em;
+  color: var(--note-long-fg);
+  font-size: calc(var(--global-font-size) * 0.8);
+}
+
+#inputDialogButtons {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* style the "submit" button differently */
+#inputDialogButtons button {
+  color: var(--dialog-fg);
+}
+#inputDialogButtons button:first-of-type {
+  background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
+  font-weight: bold;
+  border-style: none;
+  box-shadow: var(--cursor-shadow);
+  color: var(--dialog-title-fg);
+}
+#inputDialogButtons button:first-of-type:hover {
+  text-shadow: var(--fancy-text-shadow);
+  box-shadow: var(--fancy-text-shadow);
+}
+
+
 /******************** misc ********************/
 
 .hidden {
@@ -410,30 +494,31 @@ ul {
   --row-line-height: 1.5rem;
   --shadow-color: #000000c0;
   --fancy-text-shadow:
-        #00000060 -0.05em  0      0.02em, /* outline */
-        #00000060  0.05em  0      0.02em,
-        #00000060  0      -0.05em 0.02em,
-        #00000060  0       0.05em 0.02em,
-        #00000060 -0.03em -0.03em 0.02em,
-        #00000060 -0.03em  0.03em 0.02em,
-        #00000060  0.03em -0.03em 0.02em,
-        #00000080  0.05em 0.05em 0.10em, /* shadow */
-        #000000c0  0.07em 0.10em 0.15em,
-        #000000f0  0.10em 0.15em 0.25em;
+    #00000060 -0.05em  0      0.02em, /* outline */
+    #00000060  0.05em  0      0.02em,
+    #00000060  0      -0.05em 0.02em,
+    #00000060  0       0.05em 0.02em,
+    #00000060 -0.03em -0.03em 0.02em,
+    #00000060 -0.03em  0.03em 0.02em,
+    #00000060  0.03em -0.03em 0.02em,
+    #00000080  0.05em 0.05em 0.10em, /* shadow */
+    #000000c0  0.07em 0.10em 0.15em,
+    #000000f0  0.10em 0.15em 0.25em;
   --medium-text-shadow:
-        #00000040 -0.05em  0      0.02em, /* outline */
-        #00000040  0.05em  0      0.02em,
-        #00000040  0      -0.05em 0.02em,
-        #00000040  0       0.05em 0.02em,
-        #00000040 -0.03em -0.03em 0.02em,
-        #00000040 -0.03em  0.03em 0.02em,
-        #00000040  0.03em -0.03em 0.02em,
-        #00000060  0.05em 0.05em 0.10em, /* shadow */
-        #00000080  0.07em 0.10em 0.15em,
-        #000000a0  0.10em 0.15em 0.25em;
+    #00000040 -0.05em  0      0.02em, /* outline */
+    #00000040  0.05em  0      0.02em,
+    #00000040  0      -0.05em 0.02em,
+    #00000040  0       0.05em 0.02em,
+    #00000040 -0.03em -0.03em 0.02em,
+    #00000040 -0.03em  0.03em 0.02em,
+    #00000040  0.03em -0.03em 0.02em,
+    #00000060  0.05em 0.05em 0.10em, /* shadow */
+    #00000080  0.07em 0.10em 0.15em,
+    #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
   --note-loaded-fg: #2c6;
+  --note-long-fg: #5c9;
   --note-unloaded-fg: #498360;
   --note-title-sep-fg: #49d;
   --tab-active-fg: #eee;
@@ -485,5 +570,18 @@ ul {
   --details-box-fg: #ccc;
   --details-label-fg: #ccc;
   --details-value-fg: #aaa;
+  /***** input dialogs *****/
+  --dialog-fg: #ccc;
+  --dialog-title-fg: #fff;
+  --dialog-border-color: var(--cursor-branch-hl);
+  --dialog-bg-top: var(--cursor-branch-top);
+  --dialog-bg-bot: var(--cursor-branch-bot);
+  --dialog-radius: 8px;
+  --dialog-shadow:
+      0.5em 0.5em 5em var(--shadow-color),
+      0.5em 1.5em 2em var(--shadow-color);
+  --dialog-padding: 0.5em;
+  --dialog-input-bg: #222;
+  --dialog-input-border: #444;
 }
 

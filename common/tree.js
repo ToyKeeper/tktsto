@@ -218,7 +218,7 @@ export class Tree {
       return node.setExpanded(msg.expanded, msg, false);
     }
     else if ('setNote' === changeType) {
-      return node.setNote(msg.note, msg, false);
+      return node.setNote(msg.note, msg.longNote, msg, false);
     }
     else if ('setMarked' === changeType) {
       return node.setMarked(msg.marked, msg, false);

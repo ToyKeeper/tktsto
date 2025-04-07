@@ -335,11 +335,11 @@ export class NodeView extends Node {
     this.$refreshAncestry();
   }
 
-  setNote (text, ...extra) {
+  setNote (text, longNote, ...extra) {
     // if no change, do nothing
-    if (text === this.note) return;
+    if ((text === this.note) && (longNote === this.longNote)) return;
     // do it
-    super.setNote(text, ...extra);
+    super.setNote(text, longNote, ...extra);
     // show it
     this.$render();
   }

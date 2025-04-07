@@ -523,14 +523,19 @@ export class TreeView extends Tree {
     const result = await this.inputDialog({
       doc: document,
       title: 'Edit Note',
-      description: 'Note text:',
-      value: this.cursor.note
+      description: 'Title',
+      value: this.cursor.note,
+      textArea: true,
+      textAreaLabel: 'Notes',
+      textAreaValue: this.cursor.longNote
     });
     // abort if user cancelled
     if ((!result) || ('OK' !== result.button)) return;
     // update the node
     const noteText = result.value;
-    this.cursor.setNote(noteText);
+    const longNoteText = result.textAreaValue;
+    debug('action_editNote():', noteText, longNoteText);
+    this.cursor.setNote(noteText, longNoteText);
   }
 
   action_toggleMarked (event) {

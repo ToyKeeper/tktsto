@@ -16,6 +16,9 @@ class Dialog {
     description = '',
     input = true,
     value = '',
+    textArea = false,
+    textAreaLabel = '',
+    textAreaValue = '',
     buttons = ['OK', 'Cancel']
   }={}) {
     const promise = new Promise((resolve) => {
@@ -30,40 +33,43 @@ class Dialog {
         $dialog.appendChild($title);
       }
 
+      const $form = doc.createElement('form');
+
       // optional description widget
       if (description) {
         const $description = doc.createElement('div');
         $description.id = 'inputDialogDescription';
         $description.innerHTML = description;
-        $dialog.appendChild($description);
+        $form.appendChild($description);
       }
 
       // build the widget the user types into
+      let $input;
       if (input) {
-        const $form = doc.createElement('form');
-        const $input = doc.createElement('input');
+        $input = doc.createElement('input');
         $input.id = 'inputDialogInput';
         $input.type = 'text';
         $input.value = value;
         $input.select();
-        // user pressed Enter to submit the form
-        const handleSubmit = (ev) => {
-          ev.preventDefault();
-          const result = {
-            value: $input.value,
-            button: buttons[0]  // pretend 1st/default button was clicked
-          };
-          // clean up
-          $form.removeEventListener('submit', handleSubmit);
-          $dialog.close();
-          $dialog.remove();
-          // return what the user entered
-          resolve(result);
-        }
-        $form.addEventListener('submit', handleSubmit);
         // show these elements
         $form.appendChild($input);
-        $dialog.appendChild($form);
+      }
+
+      // build the long text entry widget
+      let $textArea;
+      if (textArea) {
+        // optional label
+        if (textAreaLabel) {
+          const $label = doc.createElement('div');
+          $label.id = 'inputDialogTextAreaLabel';
+          $label.innerHTML = textAreaLabel;
+          $form.appendChild($label);
+        }
+
+        $textArea = doc.createElement('textarea');
+        $textArea.id = 'inputDialogTextArea';
+        $textArea.value = textAreaValue;
+        $form.appendChild($textArea);
       }
 
       // add the buttons
@@ -74,39 +80,50 @@ class Dialog {
         for (const label of buttons) {
           const $btn = doc.createElement('button');
           $btn.innerText = label;
-          //$btn.id = `inputDialogButton${label}`;  // unsafe, fixme
-          // first button is the "submit" button
+          //$btn.id = `inputDialogButton${label}`;  // FIXME: unsafe
+          // first button is the 'submit' button
+          // and emits its own special event when clicked
           if (first) $btn.type = 'submit';
-          else $btn.type = 'button';
-          // handle clicks
-          $btn.addEventListener('click', (ev) => {
-            const _dialog = ev.target.closest('dialog');
-            const _form = _dialog.querySelector('form');
-            const _input = _dialog.querySelector('input');
-            // 1st button triggers the 'submit' event
-            if (input && first) {
-              debug('first button pressed');
-              _form.dispatchEvent(new Event('submit'));
-              return;
-            }
-            // otherwise, return which button was pressed
-            const result = {
-              value: _input.value,  // TODO: get input value
-              button: label
-            };
-            // clean up
-            $dialog.close();
-            $dialog.remove();
-            // return the user's inputs
-            resolve(result);
-          });
+          // handle clicks on all other buttons
+          else {
+            $btn.type = 'button';
+            $btn.addEventListener('click', (ev) => {
+              // return which button was pressed
+              const result = { button: label };
+              if (input) result.value = $input.value;
+              if (textArea) result.textAreaValue = $textArea.value;
+              // clean up
+              $dialog.close();
+              $dialog.remove();
+              // return the user's inputs
+              resolve(result);
+            });
+          }
           first = false;
           // show the button
           $buttons.appendChild($btn);
         }
         // show all buttons
-        $dialog.appendChild($buttons);
+        $form.appendChild($buttons);
       }
+
+      // user pressed Enter to submit the form
+      const handleSubmit = (ev) => {
+        ev.preventDefault();
+        const result = {
+          button: buttons[0]  // pretend 1st/default button was clicked
+        };
+        if (input) result.value = $input.value;
+        if (textArea) result.textAreaValue = $textArea.value;
+        // clean up
+        $form.removeEventListener('submit', handleSubmit);
+        $dialog.close();
+        $dialog.remove();
+        // return what the user entered
+        resolve(result);
+      }
+      $form.addEventListener('submit', handleSubmit);
+      $dialog.appendChild($form);
 
       // if the user pressed Escape to dismiss the dialog
       $dialog.addEventListener('close', () => {
