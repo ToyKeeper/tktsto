@@ -30,6 +30,8 @@ export class TreeView extends Tree {
     this.$statusText = this.document.getElementById('status-text');
     this.$detailsBox = this.document.getElementById('details-box');
     this.$detailsBtn = this.document.getElementById('details-btn');
+    // TODO: this should load from config
+    this.detailsState = 1;  // 0=off, 1=notes, 2=details
 
     // count of marked nodes when non-zero
     this.$markedCount = this.document.getElementById('marked-count');
@@ -105,7 +107,6 @@ export class TreeView extends Tree {
 
     //this.root = new NodeView(this, null, this.window);
     this.root.window = this.window;
-    this.root.note = 'Session';
     //this.root.$ = this.$;
     this.root.$render();
     this.root.$.classList.add('root-nodes');
@@ -116,6 +117,9 @@ export class TreeView extends Tree {
     //this.$root = this.document.createElement('ul');
     //this.$root.classList.add('root-nodes');
     //this.$.append(this.$root);
+
+    // apply the user's detail box setting
+    this.$renderDetailsBtn();
 
   }
 
@@ -628,10 +632,7 @@ export class TreeView extends Tree {
   updateDetailsBox () {
     if (! this.cursor) return;
     // only show details if its button is in a 'pressed' state
-    if (this.$detailsBtn.classList.contains('pressed')) {
-      this.cursor.$renderDetails(this.$detailsBox);
-      this.$detailsBox.classList.remove('hidden');
-    }
+    this.cursor.$renderDetails(this.$detailsBox);
   }
 
   hideDetailsBox () {
@@ -664,16 +665,43 @@ export class TreeView extends Tree {
   }
 
   onDetailsBtnClick () {
-    // TODO: save button state to config storage
-    if (this.$detailsBox.classList.contains('hidden')) {
-      this.$detailsBtn.classList.add('pressed');
-      if (this.cursor) {
+    // it's a 3-state button: off, short, full (none, notes, details)
+    this.detailsState = (this.detailsState + 1) % 3;
+    // save button state to config storage
+    // TODO: should this be per-view or global?
+    //api.storage.local.set({ 'TreeView.detailsState': this.detailsState });
+    //api.storage.local.set({
+    //  'TreeView(${this.windowId}).detailsState': this.detailsState });
+    this.$renderDetailsBtn();
+  }
+
+  $renderDetailsBtn () {
+    switch (this.detailsState) {
+      // 0 = off / none
+      case 0:
+        this.$detailsBtn.classList.remove('pressed');
+        //this.$detailsBtn.classList.remove('half-pressed');
+        this.$detailsBtn.innerText = 'Details';
+        this.hideDetailsBox();
+        break;
+      // 1 = short / notes only
+      case 1:
+        //this.$detailsBtn.classList.remove('pressed');
+        //this.$detailsBtn.classList.add('half-pressed');
+        this.$detailsBtn.classList.add('pressed');
+        this.$detailsBtn.innerText = 'Notes';
         this.updateDetailsBox();
-        this.cursor.scrollIntoView();
-      }
-    } else {
-      this.$detailsBtn.classList.remove('pressed');
-      this.hideDetailsBox();
+        if (this.cursor) this.cursor.scrollIntoView();
+        break;
+      // 2 = full / all details
+      case 2:
+      default:
+        this.$detailsBtn.classList.add('pressed');
+        //this.$detailsBtn.classList.remove('half-pressed');
+        this.$detailsBtn.innerText = 'Details';
+        this.updateDetailsBox();
+        if (this.cursor) this.cursor.scrollIntoView();
+        break;
     }
   }
 

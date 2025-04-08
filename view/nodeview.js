@@ -154,6 +154,8 @@ export class NodeView extends Node {
     else {  // totally blank
       if (this.isWindow())
         mainText = `<span class="node-notitle">Window ${this.windowId}</span>`;
+      else if (this.isRoot())
+        mainText = `<span class="node-notitle">Session</span>`;
       else
         mainText = `<span class="node-notitle">node ${this.id}</span>`;
     }
@@ -186,6 +188,21 @@ export class NodeView extends Node {
   $renderDetails ($detailsBox) {
     if (!this.tree.document) return;
     const doc = this.tree.document;
+    const mode = this.tree.detailsState;
+
+    // set the box mode in the view
+    $detailsBox.classList.remove('hidden');
+    if (0 === mode) {
+      $detailsBox.classList.add('hidden');
+      $detailsBox.classList.remove('notes-only');
+      $detailsBox.classList.remove('all-details');
+    } else if (1 === mode) {
+      $detailsBox.classList.remove('all-details');
+      $detailsBox.classList.add('notes-only');
+    } else {
+      $detailsBox.classList.remove('notes-only');
+      $detailsBox.classList.add('all-details');
+    }
 
     // load or create each element
     function getOrCreate(id, elem, $parent) {
@@ -197,6 +214,11 @@ export class NodeView extends Node {
         else $detailsBox.append($elem);
       }
       return $elem;
+    }
+
+    function hide ($elem) {
+      $elem.innerHTML = '';
+      $elem.classList.add('hidden');
     }
 
     function setOrHide ($elem, val, text, html) {
@@ -212,6 +234,8 @@ export class NodeView extends Node {
 
     // short note
     let $note = getOrCreate('detail-note', 'div');
+    //if (mode <= 1) hide($note);
+    //else
     setOrHide($note, this.note, this.note);
 
     // long note
@@ -220,27 +244,35 @@ export class NodeView extends Node {
 
     // link title
     let $title = getOrCreate('detail-title', 'div');
-    let $titleLabel = getOrCreate('detail-title-label', 'b', $title);
-    let $titleValue = getOrCreate('detail-title-value', 'span', $title);
-    setOrHide($title, this.title);
-    setOrHide($titleLabel, true, '', 'Title:&nbsp;');
-    setOrHide($titleValue, this.title, this.title);
+    if (mode <= 1) hide($title);
+    else {
+      let $titleLabel = getOrCreate('detail-title-label', 'b', $title);
+      let $titleValue = getOrCreate('detail-title-value', 'span', $title);
+      setOrHide($title, this.title);
+      setOrHide($titleLabel, true, '', 'Title:&nbsp;');
+      setOrHide($titleValue, this.title, this.title);
+    }
 
     // link URL
     let $url = getOrCreate('detail-url', 'div');
-    let $urlLabel = getOrCreate('detail-url-label', 'b', $url);
-    let $urlValue = getOrCreate('detail-url-value', 'span', $url);
-    setOrHide($url, this.url);
-    setOrHide($urlLabel, true, '', 'URL:&nbsp;');
-    setOrHide($urlValue, this.url, this.url);
+    if (mode <= 1) hide($url);
+    else {
+      let $urlLabel = getOrCreate('detail-url-label', 'b', $url);
+      let $urlValue = getOrCreate('detail-url-value', 'span', $url);
+      setOrHide($url, this.url);
+      setOrHide($urlLabel, true, '', 'URL:&nbsp;');
+      setOrHide($urlValue, this.url, this.url);
+    }
 
     // node ID
     let $nodeId = getOrCreate('detail-node-id', 'div');
-    $nodeId.innerHTML = `<b>ID:</b>&nbsp;<span>${this.id}</span>`;
+    if (mode <= 1) hide($nodeId);
+    else $nodeId.innerHTML = `<b>ID:</b>&nbsp;<span>${this.id}</span>`;
 
     // ctime, mtime, atime, ...
     for (const tstamp of ['ctime', 'mtime', 'atime']) {
       const $tstampDiv = getOrCreate(`detail-${tstamp}`, 'div');
+      if (mode <= 1) { hide($tstampDiv); continue; }
       const fmt = fmtDate(this[tstamp]);
       // always show ctime, show others only if they're different
       const toShow = (tstamp === 'ctime') || (this[tstamp] !== this.ctime);

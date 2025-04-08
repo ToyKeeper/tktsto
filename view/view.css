@@ -62,11 +62,17 @@ html, body {
   width: calc(100% - 0.5em);
   padding-left: 0.25em;
   padding-right: 0.25em;
+  height: var(--details-box-height);
   max-height: var(--details-box-height);
   overflow-x: wrap;
   overflow-y: auto;
   background: var(--details-box-bg);
   color: var(--details-box-fg);
+}
+
+#details-box.notes-only {
+  height: unset;
+  max-height: var(--details-box-height-notes-only);
 }
 
 /*
@@ -140,6 +146,11 @@ html, body {
   box-shadow: 0.2em 0.2em 0.2em #000;
   color: #fff;
 }
+.toolbar .button.half-pressed {
+  border: 1px solid #555;
+  background: #333;
+  box-shadow: none;
+}
 .toolbar .button.pressed,
 .toolbar .button:active,
 #inputDialogButtons button:active {
@@ -147,7 +158,6 @@ html, body {
   background: #222;
   box-shadow: none;
 }
-
 /******************** lists ********************/
 
 .nodes {
@@ -611,7 +621,8 @@ html, body {
   --node-stat-bright-color: var(--tree-line-cursor);
   --node-stat-dim-color: var(--tree-line);
   /***** node detail box *****/
-  --details-box-height: 25%;
+  --details-box-height: 20%;
+  --details-box-height-notes-only: 20%;
   --details-box-bg: #333;
   --details-box-fg: #ccc;
   --details-label-fg: #ccc;
