@@ -223,7 +223,7 @@ export class NodeView extends Node {
     let $titleLabel = getOrCreate('detail-title-label', 'b', $title);
     let $titleValue = getOrCreate('detail-title-value', 'span', $title);
     setOrHide($title, this.title);
-    setOrHide($titleLabel, true, 'Title: ');
+    setOrHide($titleLabel, true, '', 'Title:&nbsp;');
     setOrHide($titleValue, this.title, this.title);
 
     // link URL
@@ -231,12 +231,12 @@ export class NodeView extends Node {
     let $urlLabel = getOrCreate('detail-url-label', 'b', $url);
     let $urlValue = getOrCreate('detail-url-value', 'span', $url);
     setOrHide($url, this.url);
-    setOrHide($urlLabel, true, 'URL: ');
+    setOrHide($urlLabel, true, '', 'URL:&nbsp;');
     setOrHide($urlValue, this.url, this.url);
 
     // node ID
     let $nodeId = getOrCreate('detail-node-id', 'div');
-    $nodeId.innerHTML = `<b>ID:</b> <span>${this.id}</span>`;
+    $nodeId.innerHTML = `<b>ID:</b>&nbsp;<span>${this.id}</span>`;
 
     // ctime, mtime, atime, ...
     for (const tstamp of ['ctime', 'mtime', 'atime']) {
@@ -245,7 +245,7 @@ export class NodeView extends Node {
       // always show ctime, show others only if they're different
       const toShow = (tstamp === 'ctime') || (this[tstamp] !== this.ctime);
       setOrHide($tstampDiv, toShow, null,
-        `<b>${tstamp}:</b> <span>${fmt}</span>`);
+        `<b>${tstamp}:</b>&nbsp;<span>${fmt}</span>`);
     }
 
   }

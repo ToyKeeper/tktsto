@@ -19,7 +19,9 @@ html, body {
 #top-bar,
 #bottom-bar {
   min-height: var(--toolbar-height);
-  width: 100%;
+  width: calc(100% - 0.5em);
+  padding-left: 0.25em;
+  padding-right: 0.25em;
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
   /* box-shadow: 0 1em 1em #000; */
@@ -57,7 +59,9 @@ html, body {
 /******************** node details box ********************/
 
 #details-box {
-  width: 100%;
+  width: calc(100% - 0.5em);
+  padding-left: 0.25em;
+  padding-right: 0.25em;
   max-height: var(--details-box-height);
   overflow-x: wrap;
   overflow-y: auto;
@@ -71,6 +75,11 @@ html, body {
   display: inline-block;
 }
 */
+
+#detail-title, #detail-url {
+  /* text-wrap-mode: nowrap; */
+  overflow-wrap: anywhere;
+}
 
 #details-box b {
   color: var(--details-label-fg);
@@ -141,15 +150,12 @@ html, body {
 
 /******************** lists ********************/
 
-ul {
+.nodes {
   list-style-type: none;
   display: block;
   padding: 0;
   margin: 0;
   margin-left: 0.27rem;
-}
-
-.nodes {
   border-left: 2px solid var(--tree-line);
   padding-left: 0.4rem;
   /* border-radius: 0 0 0 3px; */
@@ -159,22 +165,53 @@ ul {
   border-left: 2px solid var(--tree-line-cursor);
 }
 
+/* outer structure...
+ * #tree-root.nodes.root-nodes
+ *   #noderoot.node.root-nodes
+ *     .row (root node title)
+ *     .nodes (top-level items)
+ */
 /* less padding on top-level items */
-#tree-root {
+.nodes.root-nodes {
   border: none;
-  margin: none;
   padding: none;
-  margin-right: 8px;
+  padding-left: 0;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  margin-left: 4px;
+  margin-right: 8px;  /* leave room for the scrollbar */
 }
-.root-nodes {
+#noderoot.node.root-nodes {
+  padding: 0;
+  margin: 0;
   padding-left: 0;
   margin-left: 0;
 }
-.root-nodes > .nodes {
-  margin-left: 2px;
+.node.root-nodes {
+  padding-left: 0;
+  margin-left: 0;
+}
+.node.root-nodes > .row {
+  margin-bottom: 0.25em;
+  font-weight: bold;
+  text-shadow: var(--fancy-text-shadow);
+}
+.node.root-nodes > .row::before {
+  /* root node needs no "+" marker */
+  display: none;
+}
+.node.root-nodes > .nodes {
+  padding-left: 0;
+  margin-left: 0;
+  border-left: 0;
 }
 .root-nodes > .row.expanded {
-  margin-left: -4px;
+  /* margin-left: -4px;: */
+}
+/* top-level nodes */
+.root-nodes > .nodes > .node {
+  /* put some space between top-level nodes */
+  margin-bottom: 1em;
 }
 
 /******************** nodes ********************/
@@ -251,6 +288,9 @@ ul {
   padding-left: 0.15em;
   padding-right: 0.15em;
 }
+.node-stat-open {
+  color: var(--tab-loaded-fg);
+}
 
 /* expanded parent nodes have extra padding below */
 .node.expanded {
@@ -262,7 +302,7 @@ ul {
 
 .window.node {
   /* put some extra space between window nodes */
-  margin-bottom: 1em;
+  /* margin-bottom: 1em; */
 }
 
 .window.node.expanded {
@@ -458,7 +498,9 @@ ul {
   display: flex;
   flex-direction: row-reverse;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: var(--dialog-padding);
+  line-height: var(--row-line-height);
+  font-size: var(--global-font-size);
 }
 
 /* style the "submit" button differently */
@@ -521,7 +563,8 @@ ul {
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
   --note-loaded-fg: #2c6;
-  --note-long-fg: #5c9;
+  /* --note-long-fg: #5c9; */
+  --note-long-fg: var(--details-value-fg);
   --note-unloaded-fg: #498360;
   --note-title-sep-fg: #49d;
   --tab-active-fg: #eee;
