@@ -114,6 +114,15 @@ export class Tree {
     });
   }
 
+  onTabActivated (windowId, tabId) {
+    const windowNode = this.windows[windowId];
+    if (! windowNode) {
+      // FIXME: WTF, shouldn't happen, big error here
+      return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
+    }
+    windowNode.setActiveTab(tabId);
+  }
+
   onMessage (msg, sender, sendResponse) {
     if (! msg.msg) {
       warn('Tree onMessage invalid', msg);
@@ -222,6 +231,9 @@ export class Tree {
     }
     else if ('setMarked' === changeType) {
       return node.setMarked(msg.marked, msg, false);
+    }
+    else if ('setActive' === changeType) {
+      return node.setActive(msg.active, msg, false);
     }
     else {
       return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);

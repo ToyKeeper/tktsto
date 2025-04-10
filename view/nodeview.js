@@ -478,5 +478,13 @@ export class NodeView extends Node {
     this.tree.updateMarkedCount();
   }
 
+  setActive (active, ...extra) {
+    // if no change, do nothing
+    if (active === this.active) return;
+    super.setActive(active, ...extra);
+
+    this.$render();
+  }
+
 }  // end class NodeView
 

@@ -39,7 +39,8 @@ export async function emit (name, args, retry = true) {
   for (const key in args) {
     if (args[key] && args[key].toDict) args[key] = args[key].toDict();
   }
-  debug(`emit(${name})`, args);
+  if ('bkgd_ping' !== name)
+    debug(`emit(${name})`, args);
   // get ready to try more than once,
   // because sometimes the service worker gets killed
   // and needs a few moments to wake up before it can respond
@@ -51,7 +52,8 @@ export async function emit (name, args, retry = true) {
     try {
       response = await api.runtime.sendMessage(args);
       retry = false;
-      debug(`emit(${name}) response:`, response);
+      if ('bkgd_ping' !== name)
+        debug(`emit(${name}) response:`, response);
     } catch (error) {
       log(`emit(${name}) error, try #${tryNum}`, error, args);
       tryNum ++;
@@ -65,7 +67,8 @@ export async function emit (name, args, retry = true) {
     error(`emit(${name}) exceeded maximum retries`, name, args);
   }
   const endTime = performance.now();
-  debug(`emit(${name}) elapsed: ${endTime - startTime} ms`);
+  if ('bkgd_ping' !== name)
+    debug(`emit(${name}) elapsed: ${endTime - startTime} ms`);
   return response;
 }
 

@@ -39,6 +39,7 @@ class Bkgd {
     this.initConnectListener();
     this.initWindowListeners();
     this.initTabListeners();
+    this.initMiscListeners();
 
     // tell the browser the sidepanel can be opened via hotkey or icon click
     sidepanel.init();
@@ -67,30 +68,50 @@ class Bkgd {
   }
 
   initMessageListener () {
-    api.runtime.onMessage.addListener( (msg, sender, sendResponse) => {
-      return this.onMessage(msg, sender, sendResponse);
-    });
+    api.runtime.onMessage.addListener( this.onMessage.bind(this) );
   }
 
   // TODO: Do I actually need this?
   initConnectListener () {
-    //api.runtime.onConnect.addListener( (msg, sender, sendResponse)
-    //  => { this.onConnect(msg, sender, sendResponse) }
+    //api.runtime.onConnect.addListener( (...args)
+    //  => { this.onConnect(...args); }
     //);
+  }
+
+  initMiscListeners () {
+    // TODO
+    //api.action.onClicked.addListener((...args) => {
+    //  this.onExtensionIconClicked(...args);
+    //});
+    //api.commands.onCommand.addListener((...args) => {
+    //  this.onGlobalHotkeyCommand(...args);
+    //});
   }
 
   initWindowListeners () {
     // monitor for windows being opened and closed
-    api.windows.onCreated.addListener((window) => {
-      this.onWindowOpened(window);
-    });
-    api.windows.onRemoved.addListener((windowId) => {
-      this.onWindowClosed(windowId);
-    });
+    api.windows.onCreated.addListener( this.onWindowCreated.bind(this) );
+    api.windows.onRemoved.addListener( this.onWindowRemoved.bind(this) );
+    // user changed keyboard focus to a new window
+    api.windows.onFocusChanged.addListener( this.onWindowFocusChanged.bind(this) );
     // TODO: handle window change events, like resizing
   }
 
   initTabListeners () {
+    // tabs opened and closed
+    api.tabs.onCreated.addListener( this.onTabCreated.bind(this) );
+    api.tabs.onRemoved.addListener( this.onTabRemoved.bind(this) );
+    // tab became the window's active tab
+    api.tabs.onActivated.addListener (this.onTabActivated.bind(this) );
+    // tab moved within a single window
+    api.tabs.onMoved.addListener (this.onTabMoved.bind(this) );
+    // tab moved from one window to another
+    api.tabs.onAttached.addListener (this.onTabAttached.bind(this) );
+    api.tabs.onDetached.addListener (this.onTabDetached.bind(this) );
+    // virtually anything else changed
+    api.tabs.onUpdated.addListener (this.onTabUpdated.bind(this) );
+    // not really sure when this happens or why or how
+    api.tabs.onReplaced.addListener (this.onTabReplaced.bind(this) );
   }
 
   async initConfig () {
@@ -121,7 +142,7 @@ class Bkgd {
       }
       // TODO: if not, add new window to the tree
       else {
-        winNode = await this.onWindowOpened(window, false);
+        winNode = await this.onWindowCreated(window, false);
       }
       for (const tab of window.tabs) {
         debug(`Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
@@ -155,7 +176,7 @@ class Bkgd {
     log('mergeOpenWindowsIntoTree() done');
   }
 
-  async onWindowOpened (window, notify = true) {
+  async onWindowCreated (window, notify = true) {
     log(`Window opened: ID ${window.id}`, window);
     // add new window to the tree
     //await this.configLoaded;
@@ -175,7 +196,7 @@ class Bkgd {
     return newNode;
   }
 
-  async onWindowClosed (windowId) {
+  async onWindowRemoved (windowId) {
     log(`Window closed: ID ${windowId}`);
     // TODO: detect whether window was closed by user or by us
     await this.treeLoaded;
@@ -189,6 +210,92 @@ class Bkgd {
     else {
       debug('no window node found', windowId);
     }
+  }
+
+  async onWindowFocusChanged (...args) {
+    debug('bkgd.onWindowFocusChanged', ...args);
+  }
+
+  onTabCreated (tab) {
+    // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
+    // tab.active: boolean
+    // tab.discarded: boolean
+    // tab.favIconUrl: string
+    // tab.frozen: boolean
+    // tab.groupId: number
+    // tab.id: number
+    // tab.incognito: boolean
+    // tab.index: number
+    // tab.lastAccessed: number
+    // tab.openerTabId: number
+    // tab.pinned: number
+    // tab.sessionId: string (will be useful for handling restored sessions later)
+    // tab.title: string
+    // tab.url: string
+    // tab.windowId: number
+    debug('bkgd.onTabCreated()', tab);
+  }
+
+  onTabRemoved (tabId, removeInfo) {
+    // tabId: number
+    // removeInfo.isWindowClosing: boolean
+    // removeInfo.windowId: number
+    debug(`bkgd.onTabRemoved(tabId=${tabId}, windowId=${removeInfo.windowId}, isWindowClosing=${removeInfo.isWindowClosing})`);
+  }
+
+  onTabActivated (activeInfo) {
+    // activeInfo.tabId: number
+    // activeInfo.windowId: number
+    debug(`bkgd.onTabActivated(tabId=${activeInfo.tabId}, windowId=${activeInfo.windowId})`);
+    this.tree.onTabActivated(activeInfo.windowId, activeInfo.tabId);
+  }
+
+  onTabMoved (tabId, moveInfo) {
+    // tab was moved within a window
+    // tabId: number
+    // moveInfo.fromIndex: number
+    // moveInfo.toIndex: number
+    // moveInfo.windowId: number
+    debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
+  }
+
+  onTabAttached (tabId, attachInfo) {
+    // tabId: number
+    // attachInfo.newPosition: number
+    // attachInfo.newWindowId: number
+    debug(`bkgd.onTabAttached(tabId=${tabId}, windowId=${attachInfo.newWindowId}, ${attachInfo.newPosition})`);
+  }
+
+  onTabDetached (tabId, detachInfo) {
+    // tabId: number
+    // detachInfo.oldPosition: number
+    // detachInfo.oldWindowId: number
+    debug(`bkgd.onTabDetached(tabId=${tabId}, windowId=${detachInfo.oldWindowId}, ${detachInfo.oldPosition})`);
+  }
+
+  onTabUpdated (tabId, changeInfo, tab) {
+    // tabId: number
+    // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
+    // changeInfo.audible: boolean
+    // changeInfo.autoDiscardable: boolean
+    // changeInfo.discarded: boolean
+    // changeInfo.favIconUrl: string
+    // changeInfo.frozen: boolean
+    // changeInfo.groupId: number
+    // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
+    // changeInfo.pinned: boolean
+    // changeInfo.status: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-TabStatus
+    //   - 'unloaded', 'loading', 'complete'
+    // changeInfo.title: string
+    // changeInfo.url: url
+    debug(`bkgd.onTabUpdated(tabId=${tabId})`, changeInfo, tab);
+  }
+
+  onTabReplaced (addedTabId, removedTabId) {
+    // "Fired when a tab is replaced with another tab due to prerendering or instant."
+    // addedTabId: number
+    // removedTabId: number
+    debug(`bkgd.onTabReplaced(addedTabId=${addedTabId}, removedTabId=${removedTabId})`);
   }
 
   onMessage (msg, sender, sendResponse) {
@@ -218,7 +325,8 @@ class Bkgd {
   }
 
   async onBkgdMessage (msg, sender, sendResponse) {
-    debug('bkgd onMessage', msg);
+    if (msg && ('bkgd_ping' !== msg.msg))
+      debug('bkgd onMessage', msg);
     // look up the appropriate message handler
     const handler = this[`${msg.msg}`];
     if (handler) {

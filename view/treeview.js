@@ -36,6 +36,22 @@ export class TreeView extends Tree {
     // count of marked nodes when non-zero
     this.$markedCount = this.document.getElementById('marked-count');
 
+    // TODO: buttons to zoom this TreeView
+    // https://developer.chrome.com/docs/extensions/reference/api/tabs#type-ZoomSettings
+    // api.tabs.setZoom(tabId?, zoomFactor, callback?)
+    // api.tabs.getZoom(tabId?, callback?)
+    //   cb(zoomFactor)
+    // api.tabs.onZoomChange.addListener(cb)
+    //   cb(ZoomChangeInfo)
+    //     zci.newZoomFactor
+    //     zci.oldZoomFactor
+    //     zci.tabId
+    //     zci.zoomSettings
+    // Must get the sidepanel's tabId first though?
+    // await api.tabs.query({active:true, currentWindow:true})
+    // await api.tabs.query({active:true, windowId:(await api.windows.getCurrent()).id})
+    // https://stackoverflow.com/questions/76456744/chrome-extension-get-tab-id-in-sidepanel
+
     // table mapping keys to actions
     // TODO: let user bind keys
     this.keyBindngs = {
@@ -652,7 +668,7 @@ export class TreeView extends Tree {
     if (! response) { return warn('bkgd ping failed'); }
     const elapsed = after - before;
     const oneway = response - before;
-    if (elapsed > 10)  // don't log fast pings, only slow pings
+    if (elapsed > 30)  // don't log fast pings, only slow pings
       debug(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
   }
 

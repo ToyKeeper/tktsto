@@ -28,6 +28,7 @@ export class Node {
     this.faviconUrl = null;
     this.expanded = true;
     this.loaded = false;
+    this.active = false;
     //this.wasLoaded = false;
     this.marked = false;
     // checkbox: task completion and other task statuses
@@ -57,6 +58,7 @@ export class Node {
       'faviconUrl',
       'expanded',
       'loaded',
+      'active',
       'marked',
       'checkbox',
       'ctime',
@@ -105,6 +107,7 @@ export class Node {
     // delete from tree cache
     delete this.tree.nodes[this.id];
     if (this.isWindow()) delete this.tree.windows[this.windowId];
+    if (this.isLoaded()) this.updateTabCache();
 
     // TODO: update ancestor stat info
 
@@ -166,11 +169,38 @@ export class Node {
     return false;
   }
 
+  //countLoadedTabs () {
+  //  const numOpenTabs = this.countDescendants(
+  //    function (node) { return node.isLoaded(); }
+  //  );
+  //  return numOpenTabs;
+  //}
+
   getLoadedTabs () {
-    const openTabs = this.countDescendants(
+    // FIXME: should handle nested window nodes
+    //   (only cache tabs which are in this window, not a sub-window)
+    const openTabs = this.findNodes(
       function (node) { return node.isLoaded(); }
     );
     return openTabs;
+  }
+
+  updateTabCache () {
+    // find nearest 'window' node and re-generate its list of open tabs
+    if (this.isRoot()) return;
+    else if (this.isWindow()) {
+      this.tabs = this.getLoadedTabs();
+      this.tabIds = this.tabs.reduce((acc, node) => {
+        acc[node.tabId] = node;
+        return acc;
+      }, {});
+      //this.tabIds = {};
+      //for (const node of this.tabs) {
+      //  this.tabIds[node.tabId] = node;
+      //}
+      debug(`Window ${this.windowId}: ${this.tabs.length} tabs`, this.tabIds);
+    }
+    else return this.parent.updateTabCache();
   }
 
   isExpanded () {
@@ -189,6 +219,8 @@ export class Node {
   isLoaded () {
     return this.loaded;
   }
+
+  isActive () { return this.active; }
 
   markedBy () {
     if (this.marked) return this;
@@ -282,6 +314,8 @@ export class Node {
     this.tree.nodes[newNode.id] = newNode;
     if (newNode.isWindow())
       this.tree.windows[newNode.windowId] = newNode;
+    // TODO: maybe redundant?  (bkgd will notice and generate events)
+    if (newNode.isLoaded()) this.updateTabCache();
     // bump timestamp
     this.bump('mtime', msg);
     // tell other threads
@@ -316,6 +350,9 @@ export class Node {
     // TODO: if tab, unload the tab
     //   if window, unload the window
     this.loaded = false;
+    // remove self from parent's tab cache
+    // TODO: maybe redundant?  (bkgd will notice and generate events)
+    this.updateTabCache();
     // bump timestamp
     this.bump('mtime', msg);
     // notify others
@@ -430,12 +467,19 @@ export class Node {
         if ((prevParent === destParent) && (destIndex > oldIndex)) {
           newIndex -= 1;
         }
+        // remove self from old parent's tab cache maybe
+        // TODO: maybe redundant?  (bkgd will notice and generate events)
+        if (this.isLoaded()) prevParent.updateTabCache();
         // bump old parent timestamp
         prevParent.bump('mtime', msg);
       }
     }
     // ... and add
     destParent.insertChild(this, newIndex);
+
+    // add self to new parent's tab cache maybe
+    // TODO: maybe redundant?  (bkgd will notice and generate events)
+    if (this.isLoaded()) this.updateTabCache();
 
     // bump new parent timestamp
     destParent.bump('mtime', msg);
@@ -510,6 +554,43 @@ export class Node {
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setMarked', marked: this.marked,
           when: when });
+  }
+
+  setActive (active, msg, notify = true) {
+    // abort on no-op
+    if (active === this.active) return;
+    // Do The Thing
+    this.active = active;
+    // bump timestamp
+    if (active) this.bump('atime', msg);
+    // let others know
+    if (notify)
+      emit('tree_nodeChanged',
+        { nodeId: this.id, type: 'setActive', active: this.active,
+          when: this.atime });
+  }
+
+  setActiveTab (tabId, notify = true) {
+    // this should only be called on window nodes
+    if (! this.isWindow()) return;
+    let tabNode = this.tabIds[tabId];
+    // if it wasn't cached, look it up
+    if (! tabNode) {
+      const nodes = this.findNodes((node) => { return (tabId === node.tabId); });
+      tabNode = nodes[0];
+    }
+    if (! tabNode) {
+      // TODO: handle the error better
+      return error(`Node.setActiveTab(): can't find tab "${tabId}"`);
+    }
+
+    // mark all other active tabs in this window as not-active
+    for (const node of this.tabs) {
+      if (node.isActive()) node.setActive(false, null, notify);
+    }
+
+    // mark the new tab as active
+    tabNode.setActive(true, null, notify);
   }
 
 }  // end class Node

@@ -243,6 +243,13 @@ html, body {
   color: var(--tab-loaded-fg);
 }
 
+.row.active a {
+  color: var(--tab-active-fg);
+}
+.row.active {
+  font-weight: bold;
+}
+
 .row .node-note,
 .row .node-note-icon {
   color: var(--note-unloaded-fg);
@@ -578,7 +585,7 @@ html, body {
   --note-title-sep-fg: #49d;
   --tab-active-fg: #fff;
   --tab-loaded-fg: #eee;
-  --tab-unloaded-fg: #aaa;
+  --tab-unloaded-fg: #999;
   /***** tree lines *****/
   --tree-line: #567;
   --tree-line-med: #68a;
