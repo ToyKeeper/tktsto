@@ -239,8 +239,7 @@ html, body {
   color: var(--tab-unloaded-fg);
 }
 
-.row.loaded a,
-.row.loaded-children a {
+.row.loaded a {
   color: var(--tab-loaded-fg);
 }
 
@@ -257,7 +256,7 @@ html, body {
 }
 #detail-long-note {
   color: var(--note-long-fg);
-  background: #0002;
+  background: #0003;
   border: 1px inset #444;
   border-radius: var(--cursor-radius-collapsed);
 }
@@ -543,7 +542,7 @@ html, body {
   /***** globals *****/
   --font-family: "Quicksand Medium", Tahoma, Geneva, sans-serif;
   --font-family: "DejaVu Sans", Arial, sans-serif;
-  --font-family: Tahoma, Geneva, sans-serif;
+  --font-family: Arial, Tahoma, Geneva, sans-serif;
   --global-font-size: 1.15rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
@@ -572,14 +571,14 @@ html, body {
     #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
-  --note-loaded-fg: #2c6;
+  --note-loaded-fg: #12ee6a;
   /* --note-long-fg: #5c9; */
-  --note-long-fg: var(--details-value-fg);
-  --note-unloaded-fg: #498360;
+  --note-long-fg: var(--details-label-fg);
+  --note-unloaded-fg: #1aab54;
   --note-title-sep-fg: #49d;
-  --tab-active-fg: #eee;
-  --tab-loaded-fg: #ccc;
-  --tab-unloaded-fg: #9cb7d3;
+  --tab-active-fg: #fff;
+  --tab-loaded-fg: #eee;
+  --tab-unloaded-fg: #aaa;
   /***** tree lines *****/
   --tree-line: #567;
   --tree-line-med: #68a;
