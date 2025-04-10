@@ -255,8 +255,7 @@ export class TreeView extends Tree {
 
     // expand if necessary
     if (! this.cursor.isExpanded()) {
-      this.cursor.expanded = true;
-      // TODO: draw freshly-expanded nodes
+      this.cursor.setExpanded(true);
     }
 
     // move to 1st child
