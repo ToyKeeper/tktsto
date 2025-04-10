@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>TK Tree Style Tab Outliner Options</title>
+  <script defer src="options.js" type="module"></script>
   <style>
     body {
       background-color: #333;
@@ -20,7 +21,13 @@
     .short-input {
       min-width: unset;
     }
-    button {
+    .file-input {
+      display: flex;
+      flex-direction: row;
+      gap: 0.5em;
+    }
+    button,
+    input[type="file"]::file-selector-button {
       background: linear-gradient(180deg, #888, #444);
       border-radius: 1em;
       color: #fff;
@@ -57,13 +64,51 @@
       "home notebook", and "phone firefox".</li>
   </ul>
 
-  <form id="options-form">
+  <form id="options-form" accept-charset="utf-8">
     <label for="client-id">ID for this browser: (a-z and 0-9 only)</label>
     <input type="text" maxlength="8" class="short-input"
       id="client-id" name="client-id" required />
     <button type="submit">Save</button>
   </form>
-  <script src="options.js" type="module"></script>
+
+
+  <h2>Import Session Files</h2>
+
+  <p>Old session backup files can be imported here.  Note that imported
+  sessions will <i>add to</i> your current session, not <i>replace</i> your
+  session.  If you have sessions from a few different browsers and want to
+  merge them into one, import each session and they'll all get added to one big
+  tree.  Be prepared to do some manual re-organization and de-duplication
+  afterward though, because the import process does not attempt to de-duplicate
+  for you.</p>
+
+  <p>To restore old session backups from <i>this</i> extension, unzip them first
+  and then put them here.</p>
+
+  <p>File decompression is not directly supported by the browser, so if the
+  backup file is compressed, unzip it first.  If it uses gzip (a
+  <code>.gz</code> extension), unzip it with a command like <code>gzip -d
+  myfile.json.gz</code> or <code>gunzip myfile.json.gz</code>.  If the file is
+  compressed with zstd (uses a <code>.zst</code> or <code>.zstd</code>
+  extension), unzip it with <code>zstd -d myfile.json.zst</code> or
+  <code>unzstd myfile.json.zst</code>.</p>
+
+  <div class="file-input">
+  <!-- <form id="tktsto-import-form" accept-charset="utf-8"> -->
+    <input type="file" id="tktsto-file-input">
+    <button id="tktsto-file-button">Restore</button>
+    <!-- </form> -->
+  </div>
+
+  <p>If you used Tabs Outliner and have session file backups, import those
+  here.</p>
+
+  <div class="file-input">
+  <!-- <form id="tabs-outliner-import-form" accept-charset="utf-8"> -->
+    <input type="file" id="tabs-outliner-file-input" />
+    <button id="tabs-outliner-file-button">Import</button>
+  <!-- </form> -->
+  </div>
 
 
   <!-- TODO:
@@ -80,9 +125,9 @@
         - also a link to manage the configured server
       - Maybe some other external server types?
       - show sync status (last sync date + type + status, at least)
-    - import / restore snapshots
+    + import / restore snapshots
       - from this extension
-      - import Tabs Outliner backups
+      + import Tabs Outliner backups
     - export/import *all* TKTSTO settings and data for a complete backup
     - Configure tree behavior
       - New "C-t" tab location

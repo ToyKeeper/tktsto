@@ -16,11 +16,12 @@ export class NodeStore extends Node {
     super(...args);
   }
 
-  async newNodeId () {
+  newNodeId () {
     // NodeView.newNodeId() and NodeStore.newNodeId()
     // are totally different, and Node.newNodeId() doesn't exist
     //super.newNodeId();  // unnecessary, doesn't exist
     const nodeId = this.tree.bkgd.idGen.newId();
+    log(`NodeStore.newNodeId(): ${nodeId}`);
     return nodeId;
   }
 
@@ -29,8 +30,9 @@ export class NodeStore extends Node {
     // index is required; assume 1st child if not given
     if (undefined === index) index = 0;
 
+    log('NodeStore.addChild()');
     // must allocate ID before creating node and emitting notifications
-    if (! details.id) { details.id = await this.newNodeId(); }
+    if (! details.id) { details.id = this.newNodeId(); }
     // create new Node object
     const newNode = super.addChild(index, details, ...extra);
 

@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, error } from '/common/common.js';
+import { log, debug, warn, error, fmtDate } from '/common/common.js';
 import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
@@ -263,6 +263,210 @@ class Bkgd {
     const response = {};
     response.nodes = this.tree.serializeNodes();
     return response;
+  }
+
+  async bkgd_importTabsOutliner (msg) {
+    const response = {};
+    let total = 0;
+    try {
+      total = await this.importTabsOutlinerExport(msg.data, msg.filename);
+      response.status = `${total} nodes imported`;
+    } catch (err) {
+      response.status = `Import error: ${err}`;
+      error(err);
+    }
+    response.total = total;
+    return response;
+  }
+
+  async importTabsOutlinerExport(json, filename) {
+    //log(typeof(json), json);
+    if (! Array.isArray(json)) {
+      error('Does not appear to be a Tabs Outliner file.  Outer element is not an array.');
+      return -1;
+    }
+    // step 1: parse the data into a temporary structure
+    const parsedNodes = this.parseTabsOutlinerExport(json, filename);
+    if (! parsedNodes) return -1;
+    // step 2: convert the parsed items into actual tree nodes
+    const rootNode = await this.importParsedNodes(parsedNodes);
+    if (! rootNode) return -1;
+    return rootNode.countDescendants();
+  }
+
+  parseTabsOutlinerExport (json, filename) {
+    let parsedNodes = [];
+
+    // look up a list of indexes in the parsedNodes tree
+    function findNode(path) {
+      //debug('findNode', path);
+      let node = parsedNodes[0];
+      let prevNode = node;
+      for (const index of path) {
+        node = node.nodes[index];
+        if (! node) {
+          // final index is the destination, and it should not exist yet
+          return prevNode;
+          //warn(`findNode(): invalid path: ${path}`, parsedNodes);
+          //return null;
+        }
+        prevNode = node;
+      }
+      return node;
+    }
+
+    for (const item of json) {
+      //debug('parsing item', item);
+      // first item (2000) is a session summary
+      // middle items (2001) are the tree nodes
+      // last item (11111) is an export summary
+      if (item.type) {
+        // session summary object
+        if ((2000 === item.type)
+          || (item.node && ('session' === item.node.type))) {
+          // create session root node
+          const details = {};
+          details.expanded = false;  // collapse new sub-tree
+          details.note = `Tabs Outliner Session`;
+          // treeId is the session creation time
+          details.ctime = Number(item.node.data.treeId);
+          details.sessionImportTime = Date.now();
+          details.nodes = [];
+          parsedNodes.push(details);
+        }
+        // export summary object
+        else if (11111 === item.type) {
+          const rootNode = parsedNodes[0];
+          rootNode.sessionExportTime = item.time;
+          // create the root / session node's longNote
+          const ctimeStr = fmtDate(rootNode.ctime);
+          const itimeStr = fmtDate(rootNode.sessionImportTime);
+          const etimeStr = fmtDate(rootNode.sessionExportTime);
+          let filenameStr = '';
+          if (filename) filenameStr = `Filename: ${filename}\n`;
+          rootNode.longNote = `${filenameStr}Created: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
+        }
+      }
+      // regular tree items are Arrays
+      else if (Array.isArray(item)) {
+        const twoThousandOne = item[0];  // every item starts with 2001
+        if (2001 !== twoThousandOne) {
+          warn('Unexpected item in import', item);
+          continue;
+        }
+        const fields = item[1];
+        const parents = item[2];
+        // find the new node's parent node
+        const parent = findNode(parents);
+        //debug('parent', parent);
+        if (! parent) continue;
+        // parse the details
+        const details = {};
+        details.nodes = [];
+        // expanded / collapsed state ("colapsed" is TO author's typo)
+        if (fields.colapsed) details.expanded = false;
+        else details.expanded = true;
+        // general
+        if (fields.marks) {
+          // parse marks.customTitle
+          details.note = fields.marks.customTitle;
+        }
+        if (fields.data) {
+          const d = fields.data;
+          // parse data.title
+          if (d.title) details.title = d.title;
+          // parse data.url
+          if (d.url) details.url = d.url;
+          // parse data.favIconUrl
+          if (d.favIconUrl) details.faviconUrl = d.favIconUrl;
+          // parse data.lastAccessed
+          if (d.lastAccessed) details.atime = Number(d.lastAccessed);
+        }
+        // window nodes
+        if (['win', 'savedwin', 'group'].includes(fields.type)) {
+          details.type = 'window';
+          details.loaded = false;
+          if (! details.note) details.note = 'Window';
+          if (fields.data) {
+            const d = fields.data;
+            // parse data.type for window type
+            let winType = '';
+            if (d.type && (d.type !== 'normal')) {
+              // capitalize 1st letter
+              winType = String(d.type).charAt(0).toUpperCase()
+                + String(d.type).slice(1);
+              details.note = `${winType} ${details.note}`;
+            }
+            // parse data.crashDetectedDate
+            if (d.crashDetectedDate) {
+              const dateStr = fmtDate(Number(d.crashDetectedDate));
+              details.note = `${details.note} (crashed ${dateStr})`;
+            }
+          }
+          // TODO: parse data.rect
+          //details.geometry = [window.width, window.height, window.left, window.top];
+          // TODO: parse data.focused
+          //debug('window', details);
+        }
+        // note-only nodes
+        else if ('textnote' === fields.type) {
+          // parse data.note
+          details.note = fields.data.note;
+          //debug('textnote', details);
+        }
+        // regular nodes
+        else if (! fields.type) {
+          // TODO: parse data.openerTabId?
+          // TODO: parse data.highlighted?
+          // TODO: parse data.audible?
+          // TODO: parse data.autoDiscardable?
+          // TODO: parse data.discarded?
+          // TODO: parse data.frozen?
+          // TODO: parse data.groupId?
+          // TODO: parse data.mutedInfo?
+          // TODO: parse marks.relicons?
+        }
+        // attach a new node under the parent
+        //debug('loaded', details);
+        parent.nodes.push(details);
+      }
+      // unrecognized item
+      else {
+        warn('Unexpected item in import', item);
+      }
+    }
+    return parsedNodes;
+  }
+
+  async importParsedNodes(parsedNodes) {
+    // don't import to an incomplete tree
+    await this.treeLoaded;
+
+    let rootNode;
+    async function createNodes (parent, children) {
+      for (const node of children) {
+        const destIndex = parent.nodes.length;
+        const newNode = await parent.addChild(destIndex, node);
+        // first node created is the "root" of this sub-tree
+        if (! rootNode) rootNode = newNode;
+        if (node.nodes) {
+          await createNodes(newNode, node.nodes);
+        }
+      }
+    }
+
+    // actually create the nodes now
+    await createNodes(this.tree.root, parsedNodes);
+
+    // if imported session is older than current session,
+    // set the current session's creation date to the older date
+    if (rootNode.ctime < this.tree.root.ctime) {
+      // FIXME: do this through proper channels so it gets saved and emitted
+      this.tree.root.ctime = rootNode.ctime;
+    }
+    // return the root of the new subtree
+    //debug('rootNode:', rootNode);
+    return rootNode;
   }
 
 }

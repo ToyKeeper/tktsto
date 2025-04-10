@@ -74,7 +74,7 @@ export class Tree {
   serializeNodes () {
     const result = {};
     for (const key in this.nodes) {
-      debug('serializeNodes:', key, this.nodes[key]);
+      //debug('serializeNodes:', key, this.nodes[key]);
       result[key] = this.nodes[key].toDict();
     }
     return result;

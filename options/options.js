@@ -5,11 +5,14 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log } from '/common/common.js';
+import { log, warn, emit } from '/common/common.js';
+
+log('options.js running');
 
 // pre-populate form with saved user options,
 // and store new values when the user hits "save"
 document.addEventListener('DOMContentLoaded', () => {
+  log('options.js loaded');
   const form = document.getElementById('options-form');
   const clientIdInput = document.getElementById('client-id');
 
@@ -32,5 +35,63 @@ document.addEventListener('DOMContentLoaded', () => {
       'clientId': clientId
     });
   });
+
+
+  // TODO: handle tktsto-file-button
+
+  // handle tabs-outliner-file-button
+  document.getElementById("tabs-outliner-file-button").addEventListener("click", () => {
+    log('tabs-outliner-file-button clicked');
+    const $button = document.getElementById("tabs-outliner-file-button");
+    const fileInput = document.getElementById("tabs-outliner-file-input");
+    if (fileInput.files.length === 0) {
+      alert("Please select a file first.");
+      return;
+    }
+
+    //const file = fileInput.files[0]; {
+    for (const file of fileInput.files) {
+      log(`loading ${file.name} (${file.type}) (${file.size} bytes) ...`);
+      const reader = new FileReader();
+
+      if ('application/json' !== file.type) {
+        alert(`Unsupported file type "${file.type}", must be "application/json".`);
+        return;
+      }
+
+      reader.onerror = function (event) {
+        err = 'file load failed';
+        warn(err, event);
+        alert(err);
+      }
+
+      reader.onload = function (event) {
+        log('tabs-outliner-file loaded');
+        let fileContent = event.target.result;
+        // try parsing as json
+        try {
+          const jsonData = JSON.parse(fileContent);
+          // send to bkgd
+          emit('bkgd_importTabsOutliner',
+            { data: jsonData, filename: file.name })
+            .then((response) => {
+              log(`${response.total} nodes imported from: "${file.name}"`);
+              $button.innerText = 'Import';
+              alert(`${response.total} nodes imported from: "${file.name}"`);
+            });
+        } catch (error) {
+          warn("Error parsing JSON:", error);
+          $button.innerText = 'Import';
+          alert(`The file is not valid JSON: "${file.name}"`);
+        }
+      };
+
+      // read the file; it'll trigger reader.onload when it's ready
+      log(`loading ${file.name} now ...`);
+      reader.readAsText(file);
+      $button.innerText = '... Loading ...';
+    }
+  });
+
 });
 
