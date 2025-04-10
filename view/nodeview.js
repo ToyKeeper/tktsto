@@ -34,7 +34,7 @@ export class NodeView extends Node {
   }
 
   $render () {
-    debug('NodeView.$render');
+    //debug('NodeView.$render');
     if (!this.tree.document) return;
     const doc = this.tree.document;
 
@@ -267,7 +267,8 @@ export class NodeView extends Node {
     // node ID
     let $nodeId = getOrCreate('detail-node-id', 'div');
     if (mode <= 1) hide($nodeId);
-    else $nodeId.innerHTML = `<b>ID:</b>&nbsp;<span>${this.id}</span>`;
+    else setOrHide($nodeId, this.id, null,
+      `<b>ID:</b>&nbsp;<span>${this.id}</span>`);
 
     // ctime, mtime, atime, ...
     for (const tstamp of ['ctime', 'mtime', 'atime']) {
