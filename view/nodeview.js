@@ -94,7 +94,7 @@ export class NodeView extends Node {
     }
 
     // if the details box is showing this node, update it
-    if (this === this.tree.cursor) {
+    if (this.isCursor()) {
       this.$renderDetails(this.tree.$detailsBox);
     }
 
@@ -309,11 +309,20 @@ export class NodeView extends Node {
 
   async deleteSelf (...extra) {
     if (this.isRoot()) return;  // never delete root
+    let newCursor;
+    if (this.isCursor()) {
+      // move to next row when possible
+      newCursor = this.nextVisibleNode();
+      // move to prev row if cursor is already on the last row
+      if (newCursor === this) newCursor = this.prevVisibleNode();
+    }
     const oldParent = this.parent;
     await super.deleteSelf(...extra);
     this.$destroy();  // un-render
     // update parent node stats and decorations
     if (oldParent) oldParent.$refreshAncestry();
+    // move the cursor to a new valid node if necessary
+    if (newCursor) this.tree.setCursor(newCursor);
   }
 
   async addChild (index, details, ...extra) {
@@ -404,6 +413,10 @@ export class NodeView extends Node {
       block: "start",  // vertical scroll policy
       inline: "start"  // horizontal, left
     });
+  }
+
+  isCursor () {
+    return (this === this.tree.cursor);
   }
 
   addCursor () {
