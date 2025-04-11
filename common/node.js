@@ -101,8 +101,16 @@ export class Node {
       }
     }
 
+    if (this.isLoaded()) {
+      // delete this item from its parent window's tab cache
+      this.loaded = false;
+      this.updateTabCache();
+      this.loaded = true;
+    }
+
     // unmark if necessary
     this.setMarked(false, msg, false);
+
     // remove this node from its parent
     this.parent.bump('mtime', msg);
     this.parent.nodes.splice(this.indexOf(), 1);
@@ -111,13 +119,6 @@ export class Node {
     // delete from tree cache
     delete this.tree.nodes[this.id];
     if (this.isWindow()) delete this.tree.windows[this.windowId];
-    if (this.isLoaded()) {
-      // delete this item from its parent window's tab cache
-      this.loaded = false;
-      this.updateTabCache();
-      this.loaded = true;
-    }
-
     // TODO: update ancestor stat info
 
     // bump timestamp
@@ -227,10 +228,12 @@ export class Node {
       || this.checkbox
       //|| (this.type !== '')  // is a window or something
     ) return true;
+    // stop if we've gone deep enough
+    if (! recurse) return false;
     // true if 1st-level kids are interesting
     // (like, if this plain tab has notes attached as children)
     let found = false;
-    for (node of this.nodes) {
+    for (const node of this.nodes) {
       if (node.shouldUnloadNotDelete(false)) found = true;
     }
     if (found) return true;

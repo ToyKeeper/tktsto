@@ -146,22 +146,22 @@ export class Tree {
     // if tab closed only because its window is closing
     if (removeInfo && removeInfo.isWindowClosing) {
       // keep unloaded tab as part of the user's saved window
-      tabNode.unload({ onTabRemoved: true });
+      return tabNode.unload({ onTabRemoved: true });
     }
     // if tab closed manually by user, but it has notes
     else if (tabNode.shouldUnloadNotDelete()) {
       // keep tab in tree to preserve its metadata
-      tabNode.unload({ onTabRemoved: true });
+      return tabNode.unload({ onTabRemoved: true });
     }
     // if tab is boring but has kids
     else if (tabNode.hasKids()) {
       // delete the node, but keep its kids
-      tabNode.deleteSelfAndPromoteKids({ onTabRemoved: true });
+      return tabNode.deleteSelfAndPromoteKids({ onTabRemoved: true });
     }
     // tab is a leaf node with no notes or anything interesting
     else {
       // delete boring tabs on close
-      tabNode.deleteSelf({ onTabRemoved: true });
+      return tabNode.deleteSelf({ onTabRemoved: true });
     }
   }
 
@@ -280,14 +280,7 @@ export class Tree {
     // find nodes
     const node = this.nodes[nodeId];
     if (! node) {
-      // ignore expected "errors":
-      // setActive(false) after deleting Node:
-      //   trigger by pressing C-w in active tab
-      if (('setActive' === changeType) && (false === msg.active))
-        return;
-      // allow unexpected errors
-      else
-        return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
+      return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
     }
 
     // FIXME: change API to make it more general
