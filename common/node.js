@@ -232,11 +232,9 @@ export class Node {
     if (! recurse) return false;
     // true if 1st-level kids are interesting
     // (like, if this plain tab has notes attached as children)
-    let found = false;
     for (const node of this.nodes) {
-      if (node.shouldUnloadNotDelete(false)) found = true;
+      if (node.shouldUnloadNotDelete(false)) return true;
     }
-    if (found) return true;
     // false if node is plain / boring and has no interesting metadata
     return false;
   }
