@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, emit } from '/common/common.js';
+import { log, warn, error, debug, emit } from '/common/common.js';
 
 
 export class Node {
@@ -87,8 +87,12 @@ export class Node {
   }
 
   async deleteSelf (msg, notify = true) {  //  TODO: rename this, maybe just use destroy ()
+    //debug(`Node.deleteSelf(${this.id})`, msg, notify);
     // root should refuse to delete itself
     if (this.isRoot()) return;
+
+    // default parameters
+    if (!msg) msg = { onTabRemoved: false };
 
     // delete kids first
     if (this.hasKids()) {
@@ -107,7 +111,28 @@ export class Node {
     // delete from tree cache
     delete this.tree.nodes[this.id];
     if (this.isWindow()) delete this.tree.windows[this.windowId];
-    if (this.isLoaded()) this.updateTabCache();
+
+    // close tab if it's open
+    if (this.isLoaded()) {
+      // delete this item from its parent window's tab cache
+      this.loaded = false;
+      this.updateTabCache();
+      this.loaded = true;
+      // if not already closed by browser
+      if (!msg || (!msg.onTabRemoved)) {
+        // close the tab
+        if (this.tabId) {
+          //debug(`Node.deleteSelf(${this.id}) removing tab "${this.tabId}"...`);
+          try {
+            await api.tabs.remove(this.tabId);
+            //debug(`Node.deleteSelf() removed tab: "${this.tabId}"`);
+          } catch (err) {
+            warn(`Node.deleteSelf() tried to remove tab twice: "${this.tabId}"`);
+          }
+        }
+        else warn(`Node.deleteSelf() can't close tab because no tabId`, this);
+      }
+    }
 
     // TODO: update ancestor stat info
 
@@ -115,7 +140,9 @@ export class Node {
     this.bump('mtime', msg);
     // notify others
     if (notify)
-      await emit('tree_nodeDeleted', { nodeId: this.id, when: this.mtime });
+      await emit('tree_nodeDeleted', { nodeId: this.id,
+        onTabRemoved: msg.onTabRemoved,
+        when: this.mtime });
   }
 
   async deleteSelfAndPromoteKids (msg, notify = true) {
@@ -185,6 +212,24 @@ export class Node {
     return openTabs;
   }
 
+  shouldUnloadNotDelete (recurse = true) {
+    // true if node has any metadata worth keeping
+    if (this.note
+      || this.longNote
+      || this.checkbox
+      //|| (this.type !== '')  // is a window or something
+    ) return true;
+    // true if 1st-level kids are interesting
+    // (like, if this plain tab has notes attached as children)
+    let found = false;
+    for (node of this.nodes) {
+      if (node.shouldUnloadNotDelete(false)) found = true;
+    }
+    if (found) return true;
+    // false if node is plain / boring and has no interesting metadata
+    return false;
+  }
+
   updateTabCache () {
     // find nearest 'window' node and re-generate its list of open tabs
     if (this.isRoot()) return;
@@ -220,6 +265,21 @@ export class Node {
     return this.loaded;
   }
 
+  isUnloadedTab () {
+    if (this.url
+      && (!this.isLoaded())
+      && (!this.isWindow())
+    ) return true;
+    return false;
+  }
+
+  isUnloadedWindow () {
+    if (this.isWindow()
+      && (!this.isLoaded())
+    ) return true;
+    return false;
+  }
+
   isActive () { return this.active; }
 
   markedBy () {
@@ -243,7 +303,7 @@ export class Node {
   findNodes (fn, found) {
     if (undefined === found) found = [];
     for (const node of this.nodes) {
-      debug(`findNodes(${node.id}: ${fn(node)}`, node);
+      //debug(`findNodes(${node.id}): ${fn(node)}`, node);
       if (fn(node)) found.push(node);
       if (node.hasKids()) node.findNodes(fn, found);
     }
@@ -343,22 +403,79 @@ export class Node {
           when: this.mtime });
   }
 
-  unload (msg, notify = true) {
+  async load (msg, notify = true) {
     // abort on no-op
-    if (! this.isLoaded()) return;
+    if (this.isLoaded()) return;
+    if (! this.isUnloadedTab()) return;
+    // TODO: if window, load the window
     // Do The Thing
-    // TODO: if tab, unload the tab
-    //   if window, unload the window
     this.loaded = false;
-    // remove self from parent's tab cache
     // TODO: maybe redundant?  (bkgd will notice and generate events)
     this.updateTabCache();
     // bump timestamp
+    this.bump('atime', msg);
+    // notify others
+    if (notify)
+      await emit('tree_nodeChanged',
+        { nodeId: this.id, type: 'load',
+          onTabCreated: true,  // tell others the tab is already open
+          when: this.atime });
+
+    // AFTER everyone has marked the tab as loaded,
+    // then it's finally safe to open the tab itself
+    // if not already opened by browser, opened the tab
+    if (!msg || (!msg.onTabCreated)) {
+      // actually open the tab
+      const createProperties = {};
+      createProperties.active = true;
+      createProperties.url = this.url;
+      // TODO: handle case when node is not in a loaded window
+      createProperties.windowId = this.windowId;
+      //createProperties.windowId = this.getWindow().windowId;
+      // TODO: figure out where this tab should go in the window
+      //createProperties.index = this.getWindowTabIndex();
+      // set openerTabId if possible
+      if (this.parent && this.parent.isLoaded() && this.parent.tabId)
+        createProperties.openerTabId = this.parent.tabId;
+      api.tabs.create(createProperties);
+    }
+  }
+
+  async unload (msg, notify = true) {
+    // abort on no-op
+    if (! this.isLoaded()) return;
+    // Do The Thing
+    this.loaded = false;
+    this.active = false;
+    // remove self from parent's tab cache
+    // TODO: maybe redundant?  (bkgd will notice and generate events)
+    this.updateTabCache();
+    // bump timestamp (?)
+    // TODO: (but are 'load' and 'unload' really modifications?)
     this.bump('mtime', msg);
     // notify others
     if (notify)
-      emit('tree_nodeUnloaded',
-        { nodeId: this.id, when: this.mtime });
+      await emit('tree_nodeChanged',
+        { nodeId: this.id, type: 'unload',
+          onTabRemoved: true,  // tell others the tab is already closed
+          when: this.mtime });
+
+    // AFTER everyone has unloaded the tab from the tree,
+    // then it's finally safe to close the tab itself
+    // if not already closed by browser, close the tab
+    if (!msg || (!msg.onTabRemoved)) {
+      // actually close the tab
+      if (this.tabId) {
+        try {
+          await api.tabs.remove(this.tabId);
+          //debug(`Node.deleteSelf() removed tab: "${this.tabId}"`);
+        } catch (err) {
+          warn(`Node.unloaded() tried to remove tab twice: "${this.tabId}"`);
+        }
+      }
+      else warn(`Node.unload() called on Node with no tabId`, this);
+    }
+    // TODO: if window, unload the window
   }
 
   newNodeId () {  // sub-classes should override this
@@ -576,7 +693,8 @@ export class Node {
     let tabNode = this.tabIds[tabId];
     // if it wasn't cached, look it up
     if (! tabNode) {
-      const nodes = this.findNodes((node) => { return (tabId === node.tabId); });
+      const nodes = this.findNodes((node) =>
+        { return node.isLoaded() && (tabId === node.tabId); });
       tabNode = nodes[0];
     }
     if (! tabNode) {

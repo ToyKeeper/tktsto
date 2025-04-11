@@ -241,6 +241,7 @@ class Bkgd {
     // removeInfo.isWindowClosing: boolean
     // removeInfo.windowId: number
     debug(`bkgd.onTabRemoved(tabId=${tabId}, windowId=${removeInfo.windowId}, isWindowClosing=${removeInfo.isWindowClosing})`);
+    this.tree.onTabRemoved(tabId, removeInfo);
   }
 
   onTabActivated (activeInfo) {

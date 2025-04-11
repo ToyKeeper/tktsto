@@ -58,7 +58,9 @@ export class TreeView extends Tree {
       // test
       //'a': 'addNode',
       ///// add / remove nodes
+      'Enter': 'loadOrEditNode',
       'd': 'deleteNode',
+      'u': 'unloadNode',
       'o': 'addNoteAsNextVisibleRow',
       'Shift+O': 'addNoteAsPrevVisibleRow',
       ///// edit nodes
@@ -523,6 +525,34 @@ export class TreeView extends Tree {
 
     // update the cursor
     this.setCursor(newCursor);
+  }
+
+  action_unloadNode(event) {
+    debug('action_unloadNode');
+    // abort if nothing to unload
+    if (! this.cursor) return;
+    if (! this.cursor.isLoaded()) return;
+
+    this.cursor.unload();
+  }
+
+  action_loadOrEditNode(event) {
+    debug('action_loadOrEditNode`');
+    // abort if nothing to do
+    if (! this.cursor) return;
+
+    // if unloaded tab, load it
+    if (this.cursor.isUnloadedTab()) {
+      this.cursor.load();
+    }
+    // if unloaded window, load it (complicated)
+    else if (this.cursor.isUnloadedWindow()) {
+      error('Window load() not yet supported');
+    }
+    // if note or loaded tab, edit it
+    else {
+      this.action_editNote(event);
+    }
   }
 
   action_toggleExpanded (event) {

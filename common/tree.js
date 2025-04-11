@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, error, emit } from '/common/common.js';
+import { log, debug, warn, error, emit } from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -114,6 +114,19 @@ export class Tree {
     });
   }
 
+  getNodeByTabId(tabId)  {
+    // TODO: cache loaded tabs in Tree.tabIds
+    //       instead of searching the whole damn tree every time
+    // TODO: maybe move this function to Node.getNodeByTabId() ?
+    const found = this.root.findNodes((node) =>
+      { return (node.isLoaded() && (node.tabId === tabId));}
+    );
+    if (1 === found.length) return found[0];
+    if (1 > found.length) return null;
+    warn(`Tree.getNodeByTabId(${tabId}) found ${found.length} matches, not 1`);
+    return found[0];
+  }
+
   onTabActivated (windowId, tabId) {
     const windowNode = this.windows[windowId];
     if (! windowNode) {
@@ -121,6 +134,35 @@ export class Tree {
       return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
     windowNode.setActiveTab(tabId);
+  }
+
+  onTabRemoved (tabId, removeInfo) {
+    // tabId: number
+    // removeInfo.isWindowClosing: boolean
+    // removeInfo.windowId: number
+    const tabNode = this.getNodeByTabId(tabId);
+    // if tab doesn't exist, do nothing
+    if (! tabNode) return;
+    // if tab closed only because its window is closing
+    if (removeInfo && removeInfo.isWindowClosing) {
+      // keep unloaded tab as part of the user's saved window
+      tabNode.unload({ onTabRemoved: true });
+    }
+    // if tab closed manually by user, but it has notes
+    else if (tabNode.shouldUnloadNotDelete()) {
+      // keep tab in tree to preserve its metadata
+      tabNode.unload({ onTabRemoved: true });
+    }
+    // if tab is boring but has kids
+    else if (tabNode.hasKids()) {
+      // delete the node, but keep its kids
+      tabNode.deleteSelfAndPromoteKids({ onTabRemoved: true });
+    }
+    // tab is a leaf node with no notes or anything interesting
+    else {
+      // delete boring tabs on close
+      tabNode.deleteSelf({ onTabRemoved: true });
+    }
   }
 
   onMessage (msg, sender, sendResponse) {
@@ -177,15 +219,39 @@ export class Tree {
 
   async tree_nodeDeleted (msg, sender, sendResponse) {
     const nodeId = msg.nodeId;
-    const node = this.nodes[nodeId];
     debug('tree_nodeDeleted()', nodeId);
+    let node = this.nodes[nodeId];
+    // FIXME: this happens reliably when deleting loaded tabs from the TreeView
+    //if (! node) {
+    //  const found = this.root.findNodes((node) =>
+    //    { return nodeId === node.id; });
+    //  if (found) {
+    //    warn(`tree_nodeDeleted(): node cache miss: "${nodeId}"`);
+    //    node = found[0];
+    //    this.nodes[nodeId] = node;
+    //  }
+    //}
     if (! node) {
-      return error(`tree_nodeDeleted(): couldn't find node "${nodeId}"`);
+      // FIXME: this happens reliably when deleting loaded tabs from the TreeView
+      // probably already deleted the node in a different event,
+      // and a second event triggered the same deletion
+      // (like pressing 'd' in the TreeView to delete a loaded tab,
+      //  then getting a onTabRemoved event for the same ID)
+      //warn(`tree_nodeDeleted(): couldn't find node "${nodeId}"`);
+      return;
     }
     // un-cache and delete it
     delete this.nodes[nodeId];
     if (node.isWindow()) delete this.windows[node.windowId];
-    return await node.deleteSelf(msg, false);
+
+    //return await node.deleteSelf(msg, false);
+    let result;
+    try {
+      result = await node.deleteSelf(msg, false);
+    } catch (err) {
+      error(`tree_nodeDeleted() error`, err);
+    }
+    return result;
   }
 
   async tree_nodeMoved (msg, sender, sendResponse) {
@@ -213,8 +279,16 @@ export class Tree {
 
     // find nodes
     const node = this.nodes[nodeId];
-    if (! node)
-      return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
+    if (! node) {
+      // ignore expected "errors":
+      // setActive(false) after deleting Node:
+      //   trigger by pressing C-w in active tab
+      if (('setActive' === changeType) && (false === msg.active))
+        return;
+      // allow unexpected errors
+      else
+        return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
+    }
 
     // FIXME: change API to make it more general
     // like nodeChanged(fieldName, before, after)
@@ -234,6 +308,12 @@ export class Tree {
     }
     else if ('setActive' === changeType) {
       return node.setActive(msg.active, msg, false);
+    }
+    else if ('load' === changeType) {
+      return node.load(msg, false);
+    }
+    else if ('unload' === changeType) {
+      return node.unload(msg, false);
     }
     else {
       return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);
