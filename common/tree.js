@@ -165,6 +165,39 @@ export class Tree {
     }
   }
 
+  onTabUpdated(tabId, changeInfo, tab) {
+    // tabId: number
+    // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
+    // changeInfo.title: string
+    // changeInfo.url: url
+    // changeInfo.favIconUrl: string
+    // changeInfo.status: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-TabStatus
+    //   - 'unloaded', 'loading', 'complete'
+    // changeInfo.pinned: boolean
+    // changeInfo.groupId: number
+    // changeInfo.discarded: boolean
+    // changeInfo.frozen: boolean
+    // changeInfo.audible: boolean
+    // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
+    // changeInfo.autoDiscardable: boolean
+    const tabNode = this.getNodeByTabId(tabId);
+    // if tab doesn't exist, do nothing
+    if (! tabNode) return;
+    // change ... multiple things
+    let changes = {};  // only changes we care about
+    for (const field of
+      ['title', 'url', 'favIconUrl',
+        'discarded', 'frozen', 'hidden']) {
+      if (undefined !== changeInfo[field]) {
+        changes[field] = changeInfo[field];
+      }
+    }
+    // apply changes, if any
+    if (Object.keys(changes).length > 0) {
+      return tabNode.setTabFields(changes);
+    }
+  }
+
   onMessage (msg, sender, sendResponse) {
     if (! msg.msg) {
       warn('Tree onMessage invalid', msg);
@@ -295,6 +328,9 @@ export class Tree {
     }
     else if ('setNote' === changeType) {
       return node.setNote(msg.note, msg.longNote, msg, false);
+    }
+    else if ('setTabFields' === changeType) {
+      return node.setTabFields(msg.changes, msg, false);
     }
     else if ('setMarked' === changeType) {
       return node.setMarked(msg.marked, msg, false);

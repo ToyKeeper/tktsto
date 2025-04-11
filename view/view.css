@@ -249,6 +249,19 @@ html, body {
 .row.active {
   font-weight: bold;
 }
+/* tabs which are basically half unloaded */
+.row.discarded,
+.row.frozen,
+.row.tab-hidden {
+  font-style: italic;
+}
+.row.tab-hidden {
+  /* just in case you're a madman and use "Tab Unloader for Tree Style Tab"
+   * AT THE SAME TIME as this extension, and made it unload+hide some tabs
+   * ... but you'd have to be pretty crazy to do that.
+   */
+  opacity: 66%;
+}
 
 .row .node-note,
 .row .node-note-icon {

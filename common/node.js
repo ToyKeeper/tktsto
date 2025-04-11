@@ -412,6 +412,21 @@ export class Node {
           when: this.mtime });
   }
 
+  setTabFields (changes, msg, notify = true) {
+    // abort on no-op
+    if ({} === changes) return;
+    // Do The Thing
+    for (const [key, value] of Object.entries(changes)) this[key] = value;
+    // bump timestamp
+    this.bump('mtime', msg);
+    // notify others
+    if (notify)
+      emit('tree_nodeChanged',
+        { nodeId: this.id, type: 'setTabFields',
+          changes: changes,
+          when: this.mtime });
+  }
+
   async load (msg, notify = true) {
     // abort on no-op
     if (this.isLoaded()) return;

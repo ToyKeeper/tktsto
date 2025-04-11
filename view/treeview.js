@@ -118,8 +118,9 @@ export class TreeView extends Tree {
   async init () {
     super.init();
     this.initKeyHandler();
-    this.initBkgdPing();
     this.initButtonHandlers();
+    await this.initBkgdPort();
+    this.initBkgdPing();
     // TODO: load the nodes from storage and render them
     await this.loadTreeFromBkgd();
 
@@ -682,6 +683,14 @@ export class TreeView extends Tree {
 
   hideDetailsBox () {
     this.$detailsBox.classList.add('hidden');
+  }
+
+  initBkgdPort () {
+    this.port = api.runtime.connect();
+    this.port.onDisconnect.addListener(() => {
+      debug("TreeView.port disconnected, reconnecting...");
+      setTimeout(this.initBkgdPort, 100);
+    });
   }
 
   initBkgdPing () {

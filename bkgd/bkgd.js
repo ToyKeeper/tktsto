@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, error, fmtDate } from '/common/common.js';
+import { log, debug, warn, error, fmtDate, emit } from '/common/common.js';
 import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
@@ -29,14 +29,21 @@ class Bkgd {
   }
 
   init () {
+    // tell emit() that this thread is a service worker,
+    // so it should only runtime.sendMessage()
+    // when TreeView ports are connected
+    emit.isBkgd = true;
+    emit.bkgd = this;
+    this.ports = [];
+
     // if I understand correctly, this needs to NOT be async,
     // because that means listeners aren't registered immediately at startup,
     // which means it misses messages until init is finished...
     // but instead, it needs to register listeners *immediately* and then
     // make them handle "waiting on init" conditions when events come in
     // (by receiving events but delaying the processing until init is done)
-    this.initMessageListener();
     this.initConnectListener();
+    this.initMessageListener();
     this.initWindowListeners();
     this.initTabListeners();
     this.initMiscListeners();
@@ -67,15 +74,12 @@ class Bkgd {
 
   }
 
-  initMessageListener () {
-    api.runtime.onMessage.addListener( this.onMessage.bind(this) );
+  initConnectListener () {
+    api.runtime.onConnect.addListener( this.onConnect.bind(this) );
   }
 
-  // TODO: Do I actually need this?
-  initConnectListener () {
-    //api.runtime.onConnect.addListener( (...args)
-    //  => { this.onConnect(...args); }
-    //);
+  initMessageListener () {
+    api.runtime.onMessage.addListener( this.onMessage.bind(this) );
   }
 
   initMiscListeners () {
@@ -168,6 +172,9 @@ class Bkgd {
           url: tab.url,
           loaded: true,
           active: tab.active,
+          discarded: tab.discarded,
+          frozen: tab.frozen,
+          hidden: tab.hidden,  // firefox only?
           incognito: tab.incognito,
           atime: tab.lastAccessed
           }, null, false);
@@ -277,19 +284,20 @@ class Bkgd {
   onTabUpdated (tabId, changeInfo, tab) {
     // tabId: number
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
-    // changeInfo.audible: boolean
-    // changeInfo.autoDiscardable: boolean
-    // changeInfo.discarded: boolean
-    // changeInfo.favIconUrl: string
-    // changeInfo.frozen: boolean
-    // changeInfo.groupId: number
-    // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
-    // changeInfo.pinned: boolean
-    // changeInfo.status: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-TabStatus
-    //   - 'unloaded', 'loading', 'complete'
     // changeInfo.title: string
     // changeInfo.url: url
+    // changeInfo.favIconUrl: string
+    // changeInfo.status: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-TabStatus
+    //   - 'unloaded', 'loading', 'complete'
+    // changeInfo.pinned: boolean
+    // changeInfo.groupId: number
+    // changeInfo.discarded: boolean
+    // changeInfo.frozen: boolean
+    // changeInfo.audible: boolean
+    // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
+    // changeInfo.autoDiscardable: boolean
     debug(`bkgd.onTabUpdated(tabId=${tabId})`, changeInfo, tab);
+    this.tree.onTabUpdated(tabId, changeInfo, tab);
   }
 
   onTabReplaced (addedTabId, removedTabId) {
@@ -297,6 +305,13 @@ class Bkgd {
     // addedTabId: number
     // removedTabId: number
     debug(`bkgd.onTabReplaced(addedTabId=${addedTabId}, removedTabId=${removedTabId})`);
+  }
+
+  onConnect (port) {
+    this.ports.push(port);
+    port.onDisconnect.addListener(() => {
+      this.ports = this.ports.filter(p => p !== port);
+    });
   }
 
   onMessage (msg, sender, sendResponse) {

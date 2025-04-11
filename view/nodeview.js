@@ -135,6 +135,13 @@ export class NodeView extends Node {
     // is the page the window's current active tab?
     if (this.active) this.$row.classList.add('active');
     else this.$row.classList.remove('active');
+    // is the tab partially unloaded?
+    if (this.discarded) this.$row.classList.add('discarded');
+    else this.$row.classList.remove('discarded');
+    if (this.frozen) this.$row.classList.add('frozen');
+    else this.$row.classList.remove('frozen');
+    if (this.hidden) this.$row.classList.add('tab-hidden');
+    else this.$row.classList.remove('tab-hidden');
     // title row text
     // full row: [3/14] @ Note Text ~ <a href="link">Link Title</a>
     // ... where "[3/14]" is num children open/total, and "@" is a favicon
@@ -386,6 +393,13 @@ export class NodeView extends Node {
     if ((text === this.note) && (longNote === this.longNote)) return;
     // do it
     super.setNote(text, longNote, ...extra);
+    // show it
+    this.$render();
+  }
+
+  setTabFields (...args) {
+    // do it
+    super.setTabFields(...args);
     // show it
     this.$render();
   }

@@ -35,18 +35,23 @@ export async function emit (name, args, retry = true) {
     throw new TypeError(`emit(name): name was not a string: ${name}`);
   if (undefined === args) args = {};
   args['msg'] = name;
+  // debug info except for noisy pings
+  if ('bkgd_ping' !== name) debug(`emit(${name})`, args);
+  // abort if we're the Bkgd script and there are no receivers
+  if (emit.isBkgd && (0 === emit.bkgd.ports.length)) {
+    debug('emit(bkgd): no receivers');
+    return;
+  }
   // dict-ify parameters so they can be serialized
   for (const key in args) {
     if (args[key] && args[key].toDict) args[key] = args[key].toDict();
   }
-  if ('bkgd_ping' !== name)
-    debug(`emit(${name})`, args);
   // get ready to try more than once,
   // because sometimes the service worker gets killed
   // and needs a few moments to wake up before it can respond
   let response;
   let tryNum = 1;
-  const maxTries = 100;
+  const maxTries = 10;
   const startTime = performance.now();
   while (retry && (! response) && (tryNum < maxTries)) {
     try {
@@ -57,7 +62,7 @@ export async function emit (name, args, retry = true) {
     } catch (error) {
       log(`emit(${name}) error, try #${tryNum}`, error, args);
       tryNum ++;
-      await new Promise(r => setTimeout(r, 10));  // wait 10ms
+      await new Promise(r => setTimeout(r, 50));  // wait 50ms
     }
   }
   if (tryNum >= maxTries) {
