@@ -111,13 +111,30 @@ export class Node {
     // delete from tree cache
     delete this.tree.nodes[this.id];
     if (this.isWindow()) delete this.tree.windows[this.windowId];
-
-    // close tab if it's open
     if (this.isLoaded()) {
       // delete this item from its parent window's tab cache
       this.loaded = false;
       this.updateTabCache();
       this.loaded = true;
+    }
+
+    // TODO: update ancestor stat info
+
+    // bump timestamp
+    this.bump('mtime', msg);
+    // notify others
+    if (notify)
+      await emit('tree_nodeDeleted', { nodeId: this.id,
+        onTabRemoved: msg.onTabRemoved,
+        when: this.mtime });
+
+    // TODO: ideally, this should wait until all threads have finished
+    //       handling the tree_nodeDeleted event, but await only waits
+    //       for the first response ... but it seems to at least get
+    //       the events in the correct order regardless?
+
+    // close tab if it's open (but only if we're the originator of this event)
+    if (notify && this.isLoaded()) {
       // if not already closed by browser
       if (!msg || (!msg.onTabRemoved)) {
         // close the tab
@@ -134,15 +151,6 @@ export class Node {
       }
     }
 
-    // TODO: update ancestor stat info
-
-    // bump timestamp
-    this.bump('mtime', msg);
-    // notify others
-    if (notify)
-      await emit('tree_nodeDeleted', { nodeId: this.id,
-        onTabRemoved: msg.onTabRemoved,
-        when: this.mtime });
   }
 
   async deleteSelfAndPromoteKids (msg, notify = true) {
