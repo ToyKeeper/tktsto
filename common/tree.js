@@ -114,11 +114,12 @@ export class Tree {
     });
   }
 
-  getNodeByTabId(tabId)  {
+  getNodeByTabId(tabId, root)  {
     // TODO: cache loaded tabs in Tree.tabIds
     //       instead of searching the whole damn tree every time
     // TODO: maybe move this function to Node.getNodeByTabId() ?
-    const found = this.root.findNodes((node) =>
+    if (! root) root = this.root;
+    const found = root.findNodes((node) =>
       { return (node.isLoaded() && (node.tabId === tabId));}
     );
     if (1 === found.length) return found[0];
@@ -127,13 +128,93 @@ export class Tree {
     return found[0];
   }
 
-  onTabActivated (windowId, tabId) {
-    const windowNode = this.windows[windowId];
-    if (! windowNode) {
-      // FIXME: WTF, shouldn't happen, big error here
-      return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
+  async onTabCreated (tab) {
+    // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
+    // tab.active: boolean
+    // tab.discarded: boolean
+    // tab.favIconUrl: string
+    // tab.frozen: boolean
+    // tab.groupId: number
+    // tab.id: number
+    // tab.incognito: boolean
+    // tab.index: number
+    // tab.lastAccessed: number
+    // tab.openerTabId: number
+    // tab.pinned: number
+    // tab.sessionId: string (will be useful for handling restored sessions later)
+    // tab.title: string
+    // tab.url: string
+    // tab.windowId: number
+    debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
+    // detect whether tab was opened *BY US*
+    // if so, attach it to the existing Tree Node
+    // instead of creating a new one
+    const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
+    const needle = tabNodeUrl.split('://')[1];  // strip "protocol://"
+    if (tab.title.startsWith(needle)) {
+      const nodeId = tab.title.slice(needle.length);
+      debug(`Tree.onTabCreated(): restoring nodeId=${nodeId}`);
+      const node = this.nodes[nodeId];
+      if (node) {
+        // TODO: re-attach this tab to the found Node
+        await node.setTabFields({
+          tabId: tab.id,
+          loaded: true
+        }, null, true);
+        // restore the tab's metadata
+        // (doesn't work if we do it here)
+        // (need to wait for tab.status='complete' first)
+        // (because the request is ignored if we do it here)
+        // (so it gets redirected later,
+        //  during onTabUpdated({status:'complete'}) event)
+        //await api.tabs.update(tab.id, { url: node.url });
+
+        // TODO: move the tab to the correct window and index
+        return;
+      }
+      debug(`Tree.onTabCreated(): restoring node failed`);
     }
-    windowNode.setActiveTab(tabId);
+    //       ... in an appropriate position
+    // find the window Node
+    const winNode = this.windows[tab.windowId];
+    if (! winNode) {
+      // FIXME: shouldn't happen, but may need to handle it anyway
+      return error(`Tree.onTabCreated() can't find windowId="${tab.windowId}"`);
+    }
+    // TODO: find the right place to put this tab in the tree
+    let destParent = winNode;
+    let destIndex = winNode.nodes.length;
+    if (tab.openerTabId) {
+      const found = this.getNodeByTabId(tab.openerTabId, winNode);
+      if (found) {
+        destParent = found;
+        // FIXME: find the correct destIndex
+        destIndex = destParent.nodes.length;
+        //debug(`Tree.onTabCreated: destParent(${destIndex})`, destParent);
+      }
+      //let found = this.tree.root.findNodes(
+      //  (n) => { return (n.tabId === tab.openerTabId); });
+      //if (found.length > 0) {
+      //  destParent = found[0];
+      //  destIndex = destParent.nodes.length;
+      //} else {
+      //  error(`tab ${tab.id} has openerTabId ${tab.openerTabId} but no parent found`);
+      //}
+    }
+    // create the tree node
+    await destParent.addChild(destIndex, {
+      windowId: tab.windowId,
+      tabId: tab.id,
+      title: tab.title,
+      url: tab.url,
+      loaded: true,
+      active: tab.active,
+      discarded: tab.discarded,
+      frozen: tab.frozen,
+      hidden: tab.hidden,  // firefox only?
+      incognito: tab.incognito,
+      atime: tab.lastAccessed
+      }, null, true);
   }
 
   onTabRemoved (tabId, removeInfo) {
@@ -165,6 +246,15 @@ export class Tree {
     }
   }
 
+  onTabActivated (windowId, tabId) {
+    const windowNode = this.windows[windowId];
+    if (! windowNode) {
+      // FIXME: WTF, shouldn't happen, big error here
+      return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
+    }
+    windowNode.setActiveTab(tabId);
+  }
+
   onTabUpdated(tabId, changeInfo, tab) {
     // tabId: number
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
@@ -181,8 +271,19 @@ export class Tree {
     // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
     // changeInfo.autoDiscardable: boolean
     const tabNode = this.getNodeByTabId(tabId);
+
     // if tab doesn't exist, do nothing
-    if (! tabNode) return;
+    if (! tabNode) return warn(`Tree.onTabUpdated(${tabId}): no tab found`);
+
+    // if this tab was being restored, finish that process
+    const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
+    if (('complete' === changeInfo.status)
+      && (tab.url.startsWith(tabNodeUrl))
+    ) {
+      api.tabs.update(tab.id, { url: tabNode.pendingUrl });
+      return;
+    }
+
     // change ... multiple things
     let changes = {};  // only changes we care about
     for (const field of

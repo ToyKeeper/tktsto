@@ -223,7 +223,7 @@ class Bkgd {
     debug('bkgd.onWindowFocusChanged', ...args);
   }
 
-  onTabCreated (tab) {
+  async onTabCreated (tab) {
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // tab.active: boolean
     // tab.discarded: boolean
@@ -240,7 +240,8 @@ class Bkgd {
     // tab.title: string
     // tab.url: string
     // tab.windowId: number
-    debug('bkgd.onTabCreated()', tab);
+    debug(`bkgd.onTabCreated(${tab.id}): ${tab.url} : ${tab.title}`, tab);
+    await this.tree.onTabCreated(tab);
   }
 
   onTabRemoved (tabId, removeInfo) {
@@ -308,6 +309,7 @@ class Bkgd {
   }
 
   onConnect (port) {
+    // keep a list of connected TreeView instances
     this.ports.push(port);
     port.onDisconnect.addListener(() => {
       this.ports = this.ports.filter(p => p !== port);

@@ -538,7 +538,7 @@ export class TreeView extends Tree {
   }
 
   action_loadOrEditNode(event) {
-    debug('action_loadOrEditNode`');
+    debug('action_loadOrEditNode');
     // abort if nothing to do
     if (! this.cursor) return;
 
@@ -546,11 +546,15 @@ export class TreeView extends Tree {
     if (this.cursor.isUnloadedTab()) {
       this.cursor.load();
     }
+    // if loaded tab but not focused, focus it
+    else if (this.cursor.isLoaded() && (!this.cursor.isActive())) {
+      this.cursor.setActive(true, { activateTab: true });
+    }
     // if unloaded window, load it (complicated)
     else if (this.cursor.isUnloadedWindow()) {
       error('Window load() not yet supported');
     }
-    // if note or loaded tab, edit it
+    // if note or focused tab, edit it
     else {
       this.action_editNote(event);
     }

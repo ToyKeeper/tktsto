@@ -15,6 +15,7 @@ cp -v \
   Makefile \
   *.js \
   *.md \
+  *.html \
   build
 
 # manifest differs per browser

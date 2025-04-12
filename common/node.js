@@ -252,7 +252,7 @@ export class Node {
       //for (const node of this.tabs) {
       //  this.tabIds[node.tabId] = node;
       //}
-      debug(`Window ${this.windowId}: ${this.tabs.length} tabs`, this.tabIds);
+      debug(`updateTabCache(): Window ${this.windowId}: ${this.tabs.length} tabs`, this.tabIds);
     }
     else return this.parent.updateTabCache();
   }
@@ -392,6 +392,7 @@ export class Node {
       emit('tree_nodeAdded',
         { parentId: this.id, index: index, node: newNode,
           when: this.mtime });
+    debug(`Node.addChild() => "${newNode.id}"`);
     return newNode;
   }
 
@@ -417,6 +418,8 @@ export class Node {
     if ({} === changes) return;
     // Do The Thing
     for (const [key, value] of Object.entries(changes)) this[key] = value;
+    // if the tabId changed, update cache
+    if (changes.tabId) this.updateTabCache();
     // bump timestamp
     this.bump('mtime', msg);
     // notify others
@@ -433,9 +436,10 @@ export class Node {
     if (! this.isUnloadedTab()) return;
     // TODO: if window, load the window
     // Do The Thing
-    this.loaded = false;
+    this.loaded = false;  // will get set to true after tab actually loads
+    this.pendingUrl = this.url;  // go here when the tab is ready
     // TODO: maybe redundant?  (bkgd will notice and generate events)
-    this.updateTabCache();
+    //this.updateTabCache();  // can't cache, tabId hasn't been allocated yet
     // bump timestamp
     this.bump('atime', msg);
     // notify others
@@ -451,8 +455,21 @@ export class Node {
     if (!msg || (!msg.onTabCreated)) {
       // actually open the tab
       const createProperties = {};
-      createProperties.active = true;
-      createProperties.url = this.url;
+
+      // When loading a saved tab, we need to attach extra data
+      // while creating the tab, to tell the onTabCreated() handler
+      // that the tab is restoring a saved tab, so it should
+      // re-attach the old Node instead of making a new one.
+      // But only place to attach data is the tab URL.
+      // So we put the nodeId in the URL instead of the real URL,
+      // and attach the real URL to the Node
+      // so it can be redirected as soon as the tab is ready for a real URL.
+      //createProperties.url = this.url;  // should be this, but
+      //createProperties.url = `about:blank?nodeId=${this.id}`;
+      createProperties.url = api.runtime.getURL('/node.html')
+        + `?id=${this.id}`;
+
+      //createProperties.active = true;  // <-- unsure if it should be active
       // TODO: handle case when node is not in a loaded window
       createProperties.windowId = this.windowId;
       //createProperties.windowId = this.getWindow().windowId;
@@ -461,7 +478,8 @@ export class Node {
       // set openerTabId if possible
       if (this.parent && this.parent.isLoaded() && this.parent.tabId)
         createProperties.openerTabId = this.parent.tabId;
-      api.tabs.create(createProperties);
+      const newTab = api.tabs.create(createProperties);
+      // TODO: attach newTab to this, and delete newly-created Node
     }
   }
 
@@ -709,6 +727,10 @@ export class Node {
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setActive', active: this.active,
           when: this.atime });
+
+    // if we're the originator and the tab isn't focused, focus it
+    if (active && msg && msg.activateTab)
+      api.tabs.update(this.tabId, { active: true });
   }
 
   setActiveTab (tabId, notify = true) {
