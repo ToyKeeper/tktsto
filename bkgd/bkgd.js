@@ -233,6 +233,8 @@ class Bkgd {
 
   async onWindowFocusChanged (...args) {
     debug('bkgd.onWindowFocusChanged', ...args);
+    // TODO: set window node as 'active' and set others as just 'loaded'?
+    //   (so the focused window can have a brighter row in the tree view)
   }
 
   async onTabCreated (tab) {
@@ -295,6 +297,8 @@ class Bkgd {
     // detachInfo.oldPosition: number
     // detachInfo.oldWindowId: number
     debug(`bkgd.onTabDetached(tabId=${tabId}, windowId=${detachInfo.oldWindowId}, ${detachInfo.oldPosition})`);
+    // blank, on purpose
+    // we don't really need to do anything here
   }
 
   onTabUpdated (tabId, changeInfo, tab) {
@@ -321,6 +325,17 @@ class Bkgd {
     // addedTabId: number
     // removedTabId: number
     debug(`bkgd.onTabReplaced(addedTabId=${addedTabId}, removedTabId=${removedTabId})`);
+    // this apparently only happens in chrome,
+    // and only in some circumstances which are almost entirely undocumented
+    // so I'm not sure how to even make it happen
+    // If I understand correctly, it's stuff like... you start typing into
+    // the address bar with "instant search" enabled, and it pre-fetches
+    // and pre-renders some pages, and then when you click on one,
+    // it replaces the current tab?
+    // I'll probably have to install a whole separate browser just to find
+    // one which actually supports this feature, since all the browsers I
+    // use either block it or don't implement it at all.
+    this.tree.onTabReplaced(addedTabId, removedTabId);
   }
 
   onConnect (port) {

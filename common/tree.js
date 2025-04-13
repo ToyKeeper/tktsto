@@ -474,6 +474,24 @@ export class Tree {
     }
   }
 
+  onTabReplaced (addedTabId, removedTabId) {
+    // "Fired when a tab is replaced with another tab due to prerendering or instant."
+    // addedTabId: number
+    // removedTabId: number
+    debug(`Tree.onTabReplaced(addedTabId=${addedTabId}, removedTabId=${removedTabId})`);
+    // I don't even know how to make this event happen...
+    // ... and apparently it doesn't happen at all in some browsers ...
+    // so the code here is untested
+    const tabNode = this.getNodeByTabId(removedTabId);
+
+    // if tab doesn't exist, do nothing
+    if (! tabNode) return warn(`Tree.onTabReplaced(${removedTabId}): no tab found`);
+
+    // it's like a onTabUpdated(), but only the tabId changes?
+    const changes = { 'tabId': addedTabId };
+    return tabNode.setTabFields(changes);
+  }
+
   onMessage (msg, sender, sendResponse) {
     if (! msg.msg) {
       warn('Tree onMessage invalid', msg);
