@@ -231,18 +231,22 @@ export class Tree {
       const found = this.getNodeByTabId(tab.openerTabId, winNode);
       if (found) {
         destParent = found;
-        // FIXME: find the correct destIndex
-        destIndex = destParent.nodes.length;
+        // find the correct destIndex
+        // TODO: decide this based on a user config option:
+        //   - open tabs as [first / last] child of current,
+        //     or open as next sibling
+        //destIndex = destParent.nodes.length;
+        destIndex = 0;  // always insert as 1st child of current tab
         //debug(`Tree.onTabCreated: destParent(${destIndex})`, destParent);
       }
-      //let found = this.tree.root.findNodes(
-      //  (n) => { return (n.tabId === tab.openerTabId); });
-      //if (found.length > 0) {
-      //  destParent = found[0];
-      //  destIndex = destParent.nodes.length;
-      //} else {
-      //  error(`tab ${tab.id} has openerTabId ${tab.openerTabId} but no parent found`);
-      //}
+      else {
+        // if parent not found, open tab as 1st child of current/active tab
+        const activeTabNode = winNode.getActiveTab();
+        if (activeTabNode) {
+          destParent = activeTabNode;
+          destIndex = 0;
+        }
+      }
     }
     // create the tree node
     await destParent.addChild(destIndex, {
