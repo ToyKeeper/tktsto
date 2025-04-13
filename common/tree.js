@@ -470,6 +470,8 @@ export class Tree {
         ) tabNode.pendingUrl = 'about:blank';
         // send tab to the correct URL
         api.tabs.update(tab.id, { url: tabNode.pendingUrl });
+        // prevent possible infinite loop
+        tabNode.pendingUrl = undefined;
       }
       // don't send updates to Node while saved tab is being redirected
       // (this eats the 'loading' and 'complete' events)
