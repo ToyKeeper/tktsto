@@ -660,6 +660,9 @@ export class Node {
 
   async moveTo (destParent, destIndex, msg, notify = true) {
     debug('Node.moveTo()', this, destParent, destIndex);
+    // abort on no-op
+    if ((destParent === this.parent) && (destIndex === this.indexOf()))
+      return;
     // TODO: handle window nodes specially
     //   - refuse to move one window into another
     //   - update windowId while moving non-window nodes
