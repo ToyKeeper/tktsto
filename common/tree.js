@@ -173,6 +173,10 @@ export class Tree {
     // tab.title: string
     // tab.url: string
     // tab.windowId: number
+    //   MAY NOT EXIST YET
+    //   When opening a new window, the browser does onTabCreated
+    //   before doing onWindowCreated, so it can refer to a window
+    //   which doesn't exist yet.  :(
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
 
     // figure out which URL this new tab is going to
@@ -210,10 +214,22 @@ export class Tree {
     }
     //       ... in an appropriate position
     // find the window Node
-    const winNode = this.windows[tab.windowId];
+    let winNode = this.windows[tab.windowId];
     if (! winNode) {
-      // FIXME: shouldn't happen, but may need to handle it anyway
-      return error(`Tree.onTabCreated() can't find windowId="${tab.windowId}"`);
+      // this usually means the user just opened a new window, and
+      // the browser generated onTabCreated BEFORE doing an onWindowCreated
+      // event, so we need to create a new window Node on the assumption
+      // that it WILL exist in a few milliseconds (7ms later, in my tests)
+      //return error(`Tree.onTabCreated() can't find windowId="${tab.windowId}"`);
+      debug(`Tree.onTabCreated() can't find windowId="${tab.windowId}", creating new Node for it`);
+      // create the window node, assuming the window will exist soon
+      const winParent = this.root;
+      const winIndex = this.root.nodes.length;
+      winNode = await winParent.addChild(winIndex, {
+        type: 'window',
+        windowId: tab.windowId,
+        loaded: false
+        }, null, true);
     }
     let destParent = winNode;
     let destIndex = winNode.nodes.length;
@@ -226,7 +242,7 @@ export class Tree {
       destIndex = 0;
       debug(`Tree.onTabCreated() moving new tab to the right of: "${destParent.title}"`);
     }
-    // TODO: find the right place to put this tab in the tree
+    // find the right place to put this tab in the tree
     else if (tab.openerTabId) {
       const found = this.getNodeByTabId(tab.openerTabId, winNode);
       if (found) {
@@ -271,6 +287,9 @@ export class Tree {
     const tabNode = this.getNodeByTabId(tabId);
     // if tab doesn't exist, do nothing
     if (! tabNode) return;
+    // TODO: if tab was last Node in the window and it's boring,
+    //   delete the tab node...
+    //   and if the window was boring too, delete it too
     // if tab closed only because its window is closing
     if (removeInfo && removeInfo.isWindowClosing) {
       // keep unloaded tab as part of the user's saved window

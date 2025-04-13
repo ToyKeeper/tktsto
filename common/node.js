@@ -566,9 +566,12 @@ export class Node {
           warn(`Node.unloaded() tried to remove tab twice: "${this.tabId}"`);
         }
       }
-      else warn(`Node.unload() called on Node with no tabId`, this);
+      else if (this.isWindow()) {}  // a window has no tabId and it's fine
+      else {
+        warn(`Node.unload() called on Node with no tabId`, this);
+      }
     }
-    // TODO: if window, unload the window
+    // TODO: if window, unload all tabs in the window
   }
 
   newNodeId () {  // sub-classes should override this
@@ -821,7 +824,9 @@ export class Node {
       { return node.isActive() && node.isLoaded(); });
     const tabNode = nodes[0];
     if (! tabNode) {
-      warn("Node.getActiveTab(): can't find active tab");
+      // this happens when opening a new window,
+      // and no tab has been set as active yet
+      debug("Node.getActiveTab(): can't find active tab");
       return null;
     }
     return tabNode;
@@ -830,7 +835,8 @@ export class Node {
   setActiveTab (tabId, notify = true) {
     // this should only be called on window nodes
     if (! this.isWindow()) return;
-    let tabNode = this.tabIds[tabId];
+    let tabNode;
+    if (this.tabIds) tabNode = this.tabIds[tabId];
     // if it wasn't cached, look it up
     if (! tabNode) {
       //const nodes = this.findNodes((node) =>
