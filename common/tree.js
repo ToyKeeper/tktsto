@@ -128,10 +128,12 @@ export class Tree {
     return found[0];
   }
 
-  getSavedTabNodeId (tab) {
+  getSavedTabNodeId (tab, url) {
     const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
     const minusProtocol = tabNodeUrl.split('://')[1];  // strip "protocol://"
-    const tabPendingUrl = this.getTabPendingUrl(tab);
+    let tabPendingUrl = url;
+    if (undefined === tabPendingUrl)
+      tabPendingUrl = this.getTabPendingUrl(tab);
     if ((tabPendingUrl.startsWith(tabNodeUrl))
       || tabPendingUrl.startsWith(minusProtocol)
     ) {
@@ -172,10 +174,12 @@ export class Tree {
     // tab.url: string
     // tab.windowId: number
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
+
     // figure out which URL this new tab is going to
     const tabPendingUrl = this.getTabPendingUrl(tab);
     const loadingSavedTabNodeId = this.getSavedTabNodeId(tab);
-    debug(`Tree.onTabCreated() tabPendingUrl: ${tabPendingUrl}`);
+    debug(`Tree.onTabCreated() loadingSavedTabNodeId=${loadingSavedTabNodeId} tabPendingUrl: ${tabPendingUrl}`);
+
     // detect whether tab was opened *BY US*
     // if so, attach it to the existing Tree Node
     // instead of creating a new one
@@ -197,9 +201,9 @@ export class Tree {
         // (because the request is ignored if we do it here)
         // (so it gets redirected later,
         //  during onTabUpdated({status:'complete'}) event)
+        // I'm sad that this doesn't work:
         //await api.tabs.update(tab.id, { url: node.url });
-
-        // TODO: move the tab to the correct window and index
+        api.tabs.update(tab.id, { url: node.url });
         return;
       }
       debug(`Tree.onTabCreated(): restoring node failed`);
@@ -213,15 +217,14 @@ export class Tree {
     }
     let destParent = winNode;
     let destIndex = winNode.nodes.length;
+
     // if the tab is a blank created by the user with C-t...
     // ... make it the 1st child of the active tab
-    if ( tabPendingUrl.startsWith('about:')
-      || tabPendingUrl.startsWith('chrome://newtab')
-    ) {
+    if (isNewTabPage(tabPendingUrl)) {
       destParent = winNode.getActiveTab();
       if (! destParent) destParent = winNode;
       destIndex = 0;
-      debug(`Tree.onTabCreated() AlwaysRight: ${destParent.title}`);
+      debug(`Tree.onTabCreated() moving new tab to the right of: "${destParent.title}"`);
     }
     // TODO: find the right place to put this tab in the tree
     else if (tab.openerTabId) {
@@ -433,17 +436,20 @@ export class Tree {
     if (! tabNode) return warn(`Tree.onTabUpdated(${tabId}): no tab found`);
 
     // if this tab was being restored, finish that process
-    const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
-    if (('complete' === changeInfo.status)
-      && (tab.url.startsWith(tabNodeUrl))
-    ) {
-      // work around Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=1412498
-      if (isFirefox &&
-        (('about:newtab' === tabNode.pendingUrl)
-          || ('about:home' === tabNode.pendingUrl))
-      ) tabNode.pendingUrl = 'about:blank';
-      // send tab to the correct URL
-      api.tabs.update(tab.id, { url: tabNode.pendingUrl });
+    const savedTabNodeId = this.getSavedTabNodeId(tab, tab.url);
+    if (savedTabNodeId) {
+      // redirect to saved tab URL as soon as the browser allows
+      if ('complete' === changeInfo.status) {
+        // work around Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=1412498
+        if (isFirefox &&
+          (('about:newtab' === tabNode.pendingUrl)
+            || ('about:home' === tabNode.pendingUrl))
+        ) tabNode.pendingUrl = 'about:blank';
+        // send tab to the correct URL
+        api.tabs.update(tab.id, { url: tabNode.pendingUrl });
+      }
+      // don't send updates to Node while saved tab is being redirected
+      // (this eats the 'loading' and 'complete' events)
       return;
     }
 
@@ -453,7 +459,9 @@ export class Tree {
       ['title', 'url', 'favIconUrl',
         'discarded', 'frozen', 'hidden']) {
       if (undefined !== changeInfo[field]) {
-        changes[field] = changeInfo[field];
+        // if data actually changed, add it to the outgoing message
+        if (tabNode[field] !== changeInfo[field])
+          changes[field] = changeInfo[field];
       }
     }
     // apply changes, if any
@@ -631,5 +639,25 @@ export class Tree {
     return await node.windowClosed(msg, false);
   }
 
+}
+
+function isNewTabPage (url) {
+  const prefixes = [
+    // firefox, librewolf, ...
+    'about:newtab',
+    'about:blank',
+    'about:home',
+    'about://newtab',
+    'about://blank',
+    'about://home',
+    // chrome, chromium, ...
+    'chrome://newtab',
+    // edge
+    'edge://newtab',
+    'edge://new-tab-page'
+  ];
+  for (const prefix of prefixes)
+    if (url.startsWith(prefix)) return true;
+  return false;
 }
 
