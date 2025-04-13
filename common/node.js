@@ -710,22 +710,21 @@ export class Node {
           destParentId: destParent.id, destIndex: destIndex,
           when: destParent.mtime });
 
+      // TODO: if a loaded tab was moved so it's not in a window,
+      //   create a new window to hold it
+
+      await this.reorderAllTabsInThisWindow();
+
       // update the tab's openerTabId if possible
+      // (can't do this until after reordering,
+      //  in case we moved to a new window,
+      //  because opener must be in same window)
       this.updateOpenerTabId();
 
       // if this node has loaded kids, update their openerTabIds too
       const loadedKids = this.getLoadedTabs();
       for (const kid of loadedKids) kid.updateOpenerTabId();
 
-      // TODO: if a loaded tab was moved so it's not in a window,
-      //   create a new window to hold it
-
-      // if relevant, update the browser's info
-      // if we are the originator of this move event
-      //if (!msg || !msg.onTabMoved) {
-        //warn('Node.moveTo(): moving tabs not implemented yet');
-        this.reorderAllTabsInThisWindow();
-      //}
     }
   }
 
@@ -811,7 +810,8 @@ export class Node {
     let tabNode = this.tabIds[tabId];
     // if it wasn't cached, look it up
     if (! tabNode) {
-      const nodes = this.findNodes((node) =>
+      //const nodes = this.findNodes((node) =>
+      const nodes = this.tree.root.findNodes((node) =>
         { return node.isLoaded() && (tabId === node.tabId); });
       tabNode = nodes[0];
     }
@@ -842,18 +842,25 @@ export class Node {
     const tabIds = [];
     for (const node of tabList) tabIds.push(node.tabId);
     debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
-    api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
+    return api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
   }
 
-  updateOpenerTabId () {
+  async updateOpenerTabId () {
     if (! this.isLoaded()) return;
     if (! this.tabId) return;
     const nearestLoadedParent = this.getLoadedParent();
+    let opener;
     if (nearestLoadedParent)
-      api.tabs.update(this.tabId,
-        { openerTabId: nearestLoadedParent.tabId });
+      opener = nearestLoadedParent.tabId;
     else
-      api.tabs.update(this.tabId, { openerTabId: this.tabId });
+      opener = this.tabId;
+    try {
+      return await api.tabs.update(this.tabId, { openerTabId: opener });
+    } catch (err) {
+      // can happen if tab just moved to a new window, and its parent
+      // hasn't been officially marked as part of the new window yet
+      warn(`Node.updateOpenerTabId(): ${err}`);
+    }
   }
 
 }  // end class Node

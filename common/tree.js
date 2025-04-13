@@ -274,24 +274,30 @@ export class Tree {
       // FIXME: also shouldn't happen
       return error(`Tree.onTabMoved() can't find tabId="${tabId}"`);
     }
+    // for later use
+    function doTheMove(destParent, destIndex) {
+      return tabNode.moveTo(destParent, destIndex, { onTabMoved: true });
+    }
     // get the ordered list of tabs in this windowNode
     let tabList = windowNode.getLoadedTabs();
     if (tabList.length < 1) {
-      // WTF, should never happen
-      return error(`Tree.onTabMoved() no tabs found in windowNode`);
+      // this happens if I drag a tab into nowhere to create a new window,
+      // and it initially has no tabs
+      return doTheMove(windowNode, 0);
     }
     if (moveInfo.toIndex >= tabList.length) {
-      return error(`Tree.onTabMoved() not enough tabs found in windowNode`);
+      // this happens if I drag a tab into the end of another window
+      //return error(`Tree.onTabMoved() not enough tabs found in windowNode`);
+      let prevNode = tabList[moveInfo.toIndex - 1];
+      let destParent = prevNode.parent;
+      let destIndex = prevNode.indexOf() + 1;
+      return doTheMove(destParent, destIndex);
     }
     // do nothing if the tab is already in the right place
     // (this probably means we initiated the tabMove operation)
     if (tabId === tabList[moveInfo.toIndex]) {
       debug('Tree.onTabMoved(): tab already at correct index');
       return;
-    }
-    // for later use
-    function doTheMove(destParent, destIndex) {
-      return tabNode.moveTo(destParent, destIndex, { onTabMoved: true });
     }
     // if moving left, things are surprisingly easy...
     // just insert immediately before the tab at the new location
@@ -335,6 +341,39 @@ export class Tree {
     // - if prev is branch, place as 1st child?
   }
 
+  async onTabAttached (tabId, attachInfo) {
+    // tabId: number
+    // attachInfo.newPosition: number
+    // attachInfo.newWindowId: number
+    //   (may refer to a window which doesn't exist yet)
+    const newIndex = attachInfo.newPosition;
+    const windowId = attachInfo.newWindowId;
+
+    // find the tab node
+    const tabNode = this.getNodeByTabId(tabId);
+    // if tab doesn't exist, do nothing
+    if (! tabNode) return warn(`Tree.onTabAttached(${tabId}): no tab found`);
+
+    // find or create the window node
+    let windowNode;
+    const found = this.root.findNodes((node) =>
+      { return node.isWindow() && (node.windowId === windowId); });
+    if (found.length > 0) { windowNode = found[0]; }
+    else {
+      const destParent = this.root;
+      const destIndex = destParent.nodes.length;
+      windowNode = await destParent.addChild(destIndex, {
+        type: 'window',
+        windowId: windowId
+      }, null, true);
+    }
+
+    // now that the tab node and window node are guaranteed to exist,
+    // onTabMoved() can handle the rest
+    return this.onTabMoved(tabId,
+      { windowId: windowId, toIndex: newIndex, fromIndex: 9999999 });
+  }
+
   onTabUpdated(tabId, changeInfo, tab) {
     // tabId: number
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
@@ -360,6 +399,12 @@ export class Tree {
     if (('complete' === changeInfo.status)
       && (tab.url.startsWith(tabNodeUrl))
     ) {
+      // work around Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=1412498
+      if (isFirefox &&
+        (('about:newtab' === tabNode.pendingUrl)
+          || ('about:home' === tabNode.pendingUrl))
+      ) tabNode.pendingUrl = 'about:blank';
+      // send tab to the correct URL
       api.tabs.update(tab.id, { url: tabNode.pendingUrl });
       return;
     }

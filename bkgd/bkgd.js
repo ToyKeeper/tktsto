@@ -184,13 +184,25 @@ class Bkgd {
   }
 
   async onWindowCreated (window, notify = true) {
-    log(`Window opened: ID ${window.id}`, window);
     // add new window to the tree
+    // (note: window.id may have already been created by a prior event,
+    //  so we need to search for it and attach to that node if it exists)
+    log(`bkgd.onWindowCreated: ID ${window.id}`, window);
     //await this.configLoaded;
     await this.treeDbLoaded;
     //await this.treeLoaded;
     const destParent = this.tree.root;
     const destIndex = this.tree.root.nodes.length;
+    const found = this.tree.root.findNodes((node) =>
+      { return node.isWindow() && (node.windowId === window.id); });
+    if (found.length > 0) {
+      const windowNode = found[0];
+      await windowNode.setTabFields({
+        loaded: true,
+        geometry: [window.width, window.height, window.left, window.top]
+      }, null, notify);
+      return windowNode;
+    }
     // TODO: handle window.top, .left, .width, .height
     //       so it can re-open saved windows at same size+position
     // TODO: handle window types: normal, incognito, pop-up?, ...
@@ -204,7 +216,7 @@ class Bkgd {
   }
 
   async onWindowRemoved (windowId) {
-    log(`Window closed: ID ${windowId}`);
+    log(`bkgd.onWindowRemoved: ID ${windowId}`);
     // TODO: detect whether window was closed by user or by us
     await this.treeLoaded;
     // TODO
@@ -273,7 +285,9 @@ class Bkgd {
     // tabId: number
     // attachInfo.newPosition: number
     // attachInfo.newWindowId: number
+    //   (may refer to a window which doesn't exist yet)
     debug(`bkgd.onTabAttached(tabId=${tabId}, windowId=${attachInfo.newWindowId}, ${attachInfo.newPosition})`);
+    this.tree.onTabAttached(tabId, attachInfo);
   }
 
   onTabDetached (tabId, detachInfo) {
