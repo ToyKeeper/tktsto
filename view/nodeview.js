@@ -342,7 +342,7 @@ export class NodeView extends Node {
     // must allocate ID before creating node and emitting notifications
     if (! details.id) { details.id = await this.newNodeId(); }
     // create new Node object
-    const newNode = super.addChild(index, details, ...extra);
+    const newNode = await super.addChild(index, details, ...extra);
     newNode.window = this.window;  // redundant?
 
     // display it

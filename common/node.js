@@ -408,7 +408,7 @@ export class Node {
           when: this.mtime });
   }
 
-  addChild (index = 0, details, msg, notify = true) {
+  async addChild (index = 0, details, msg, notify = true) {
     // details to pass:
     // id, note, title, url, faviconUrl, expanded
     const newNode = new this.constructor(this.tree, this);
@@ -427,10 +427,15 @@ export class Node {
     // bump timestamp
     this.bump('mtime', msg);
     // tell other threads
-    if (notify)
+    if (notify) {
       emit('tree_nodeAdded',
         { parentId: this.id, index: index, node: newNode,
           when: this.mtime });
+
+      // make sure the tab bar matches the tree
+      await this.reorderAllTabsInThisWindow();
+      this.updateOpenerTabId();
+    }
     debug(`Node.addChild() => "${newNode.id}"`);
     return newNode;
   }
@@ -802,6 +807,17 @@ export class Node {
     // if we're the originator and the tab isn't focused, focus it
     if (active && msg && msg.activateTab)
       api.tabs.update(this.tabId, { active: true });
+  }
+
+  getActiveTab () {
+    const nodes = this.findNodes(function (node)
+      { return node.isActive() && node.isLoaded(); });
+    const tabNode = nodes[0];
+    if (! tabNode) {
+      warn("Node.getActiveTab(): can't find active tab");
+      return null;
+    }
+    return tabNode;
   }
 
   setActiveTab (tabId, notify = true) {

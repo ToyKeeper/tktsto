@@ -128,6 +128,32 @@ export class Tree {
     return found[0];
   }
 
+  getSavedTabNodeId (tab) {
+    const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
+    const minusProtocol = tabNodeUrl.split('://')[1];  // strip "protocol://"
+    const tabPendingUrl = this.getTabPendingUrl(tab);
+    if ((tabPendingUrl.startsWith(tabNodeUrl))
+      || tabPendingUrl.startsWith(minusProtocol)
+    ) {
+      const nodeId = tabPendingUrl.split('/node.html?id=')[1];
+      return nodeId;
+    }
+    return null;
+  }
+
+  getTabPendingUrl (tab) {
+    if (tab.pendingUrl) return tab.pendingUrl;  // chrome
+    if ('about:blank' === tab.url) {  // firefox
+      if (tab.title && tab.title.includes('/')) {
+        // firefox puts the pending URL in the title
+        // but strips the protocol://
+        return tab.title;
+      }
+      return tab.url;
+    }
+    return tab.url;
+  }
+
   async onTabCreated (tab) {
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // tab.active: boolean
@@ -146,23 +172,25 @@ export class Tree {
     // tab.url: string
     // tab.windowId: number
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
+    // figure out which URL this new tab is going to
+    const tabPendingUrl = this.getTabPendingUrl(tab);
+    const loadingSavedTabNodeId = this.getSavedTabNodeId(tab);
+    debug(`Tree.onTabCreated() tabPendingUrl: ${tabPendingUrl}`);
     // detect whether tab was opened *BY US*
     // if so, attach it to the existing Tree Node
     // instead of creating a new one
-    const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
-    const needle = tabNodeUrl.split('://')[1];  // strip "protocol://"
-    if ((tab.pendingUrl && tab.pendingUrl.startsWith(tabNodeUrl))  // chrome (?)
-      || tab.title.startsWith(needle)  // firefox
-    ) {
-      const nodeId = tab.title.slice(needle.length);
+    if (loadingSavedTabNodeId) {
+      const nodeId = loadingSavedTabNodeId;
       debug(`Tree.onTabCreated(): restoring nodeId=${nodeId}`);
       const node = this.nodes[nodeId];
       if (node) {
-        // TODO: re-attach this tab to the found Node
+        // re-attach this tab to the found Node
         await node.setTabFields({
           tabId: tab.id,
           loaded: true
         }, null, true);
+        // put the tab in the right position
+        await node.reorderAllTabsInThisWindow();
         // restore the tab's metadata
         // (doesn't work if we do it here)
         // (need to wait for tab.status='complete' first)
@@ -183,10 +211,20 @@ export class Tree {
       // FIXME: shouldn't happen, but may need to handle it anyway
       return error(`Tree.onTabCreated() can't find windowId="${tab.windowId}"`);
     }
-    // TODO: find the right place to put this tab in the tree
     let destParent = winNode;
     let destIndex = winNode.nodes.length;
-    if (tab.openerTabId) {
+    // if the tab is a blank created by the user with C-t...
+    // ... make it the 1st child of the active tab
+    if ( tabPendingUrl.startsWith('about:')
+      || tabPendingUrl.startsWith('chrome://newtab')
+    ) {
+      destParent = winNode.getActiveTab();
+      if (! destParent) destParent = winNode;
+      destIndex = 0;
+      debug(`Tree.onTabCreated() AlwaysRight: ${destParent.title}`);
+    }
+    // TODO: find the right place to put this tab in the tree
+    else if (tab.openerTabId) {
       const found = this.getNodeByTabId(tab.openerTabId, winNode);
       if (found) {
         destParent = found;

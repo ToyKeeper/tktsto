@@ -34,7 +34,7 @@ export class NodeStore extends Node {
     // must allocate ID before creating node and emitting notifications
     if (! details.id) { details.id = this.newNodeId(); }
     // create new Node object
-    const newNode = super.addChild(index, details, ...extra);
+    const newNode = await super.addChild(index, details, ...extra);
 
     return newNode;
   }
