@@ -664,7 +664,7 @@ export class TreeView extends Tree {
   async action_pasteMarkedBefore (event) {
   }
 
-  setCursor(node) {
+  setCursor (node) {
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();
     this.cursor = node;
@@ -677,6 +677,18 @@ export class TreeView extends Tree {
     else {
       this.hideDetailsBox();
     }
+  }
+
+  ensureCursorVisible () {
+    if (! this.cursor) return this.setCursor(this.tree.root);
+
+    if (this.cursor.isVisible()) return;
+
+    debug('TreeView.ensureCursorVisible(): fixing invisible cursor');
+    let parent = this.cursor.parent;
+    while ((!parent.isRoot()) && (! parent.isVisible()))
+      parent = parent.parent;
+    this.setCursor(parent);
   }
 
   updateDetailsBox () {

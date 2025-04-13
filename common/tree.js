@@ -145,13 +145,15 @@ export class Tree {
     // tab.title: string
     // tab.url: string
     // tab.windowId: number
-    debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
+    debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
     // detect whether tab was opened *BY US*
     // if so, attach it to the existing Tree Node
     // instead of creating a new one
     const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
     const needle = tabNodeUrl.split('://')[1];  // strip "protocol://"
-    if (tab.title.startsWith(needle)) {
+    if ((tab.pendingUrl && tab.pendingUrl.startsWith(tabNodeUrl))  // chrome (?)
+      || tab.title.startsWith(needle)  // firefox
+    ) {
       const nodeId = tab.title.slice(needle.length);
       debug(`Tree.onTabCreated(): restoring nodeId=${nodeId}`);
       const node = this.nodes[nodeId];
@@ -253,6 +255,84 @@ export class Tree {
       return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
     windowNode.setActiveTab(tabId);
+  }
+
+  onTabMoved (tabId, moveInfo) {
+    // tab was moved within a window
+    // tabId: number
+    // moveInfo.fromIndex: number
+    // moveInfo.toIndex: number
+    // moveInfo.windowId: number
+    // get the tabNode and winNode
+    const windowNode = this.windows[moveInfo.windowId];
+    if (! windowNode) {
+      // FIXME: WTF, shouldn't happen, big error here
+      return error(`Tree.onTabMoved() can't find windowId="${moveInfo.windowId}"`);
+    }
+    const tabNode = this.getNodeByTabId(tabId);
+    if (! tabNode) {
+      // FIXME: also shouldn't happen
+      return error(`Tree.onTabMoved() can't find tabId="${tabId}"`);
+    }
+    // get the ordered list of tabs in this windowNode
+    let tabList = windowNode.getLoadedTabs();
+    if (tabList.length < 1) {
+      // WTF, should never happen
+      return error(`Tree.onTabMoved() no tabs found in windowNode`);
+    }
+    if (moveInfo.toIndex >= tabList.length) {
+      return error(`Tree.onTabMoved() not enough tabs found in windowNode`);
+    }
+    // do nothing if the tab is already in the right place
+    // (this probably means we initiated the tabMove operation)
+    if (tabId === tabList[moveInfo.toIndex]) {
+      debug('Tree.onTabMoved(): tab already at correct index');
+      return;
+    }
+    // for later use
+    function doTheMove(destParent, destIndex) {
+      return tabNode.moveTo(destParent, destIndex, { onTabMoved: true });
+    }
+    // if moving left, things are surprisingly easy...
+    // just insert immediately before the tab at the new location
+    if (moveInfo.toIndex < moveInfo.fromIndex) {
+      let prevNode = tabList[moveInfo.toIndex];
+      let destParent = prevNode.parent;
+      let destIndex = prevNode.indexOf();
+      // TODO: ideally should be just after the previous tab in the tree,
+      // but that's a lot harder to calculate
+      return doTheMove(destParent, destIndex);
+    }
+    // if moving right, then move to just before the next tab
+    // (Node.moveTo handles parent becoming its own child, so that's okay)
+    let nextNode = tabList[moveInfo.toIndex + 1];
+    if (nextNode) {
+      let destParent = nextNode.parent;
+      let destIndex = nextNode.indexOf();
+      return doTheMove(destParent, destIndex);
+    }
+    else {
+      // right-most tab
+      let lastNode = tabList[tabList.length - 1];
+      let destParent = lastNode.parent;
+      let destIndex = lastNode.indexOf() + 1;
+      return doTheMove(destParent, destIndex);
+    }
+
+    // old: some thoughts on how this maybe should work
+    // decide on a new position:
+    // - 1st child of prevTabNode
+    // - 1st sibling after prevTabNode
+    // - last child of prevTabNode
+    // - last sibling before nextTabNode
+    // - depends on Node expanded/collapsed states maybe?
+    // - other (after implementing user config options for other placements)
+    // cases...
+    // - if prev and next are siblings, place as sibling between them
+    // - if prev is leaf, place as sibling just after it
+    // - if prev is ancestor of next, place this as 1st child of prev
+    // - if prev is collapsed branch and next not a descendant, place as next sibling?
+    // - if prev is branch, place as 1st child?
   }
 
   onTabUpdated(tabId, changeInfo, tab) {

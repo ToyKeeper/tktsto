@@ -155,7 +155,7 @@ class Bkgd {
         //       ... in an appropriate position
         let destParent = winNode;
         let destIndex = winNode.nodes.length;
-        if (tab.openerTabId) {
+        if (tab.openerTabId && (tab.openerTabId !== tab.id)) {
           let found = this.tree.root.findNodes(
             (n) => { return (n.tabId === tab.openerTabId); });
           if (found.length > 0) {
@@ -266,6 +266,7 @@ class Bkgd {
     // moveInfo.toIndex: number
     // moveInfo.windowId: number
     debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
+    this.tree.onTabMoved(tabId, moveInfo);
   }
 
   onTabAttached (tabId, attachInfo) {

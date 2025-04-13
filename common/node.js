@@ -158,6 +158,18 @@ export class Node {
     debug('Node.deleteSelfAndPromoteKids()');
     // root should refuse to delete itself
     if (this.isRoot()) return;
+
+    // take care of the kids first
+    await this.promoteKids(msg, notify);
+
+    // remove this node from its parent
+    await this.deleteSelf(msg, notify);
+  }
+
+  async promoteKids (msg, notify = true) {
+    debug('Node.promoteKids()');
+    // root should refuse to promote its kids
+    if (this.isRoot()) return;
     // TODO: if deleting a window node, handle any loaded tabs specially
     //   (since loaded tabs cannot exist outside a window)
     if (this.hasKids()) {
@@ -167,9 +179,6 @@ export class Node {
         await node.moveTo(this.parent, newIndex, msg, notify);
       }
     }
-
-    // remove this node from its parent
-    await this.deleteSelf(msg, notify);
   }
 
   indexOf () {
@@ -193,6 +202,15 @@ export class Node {
 
   hasKids () {
     return (0 < this.nodes.length);
+  }
+
+  isParentOf (childNode) {
+    if (this.isRoot()) return true;
+    while (! childNode.isRoot()) {
+      if (this === childNode) return true;
+      childNode = childNode.parent;
+    }
+    return false;
   }
 
   hasLoadedTabs () {
@@ -219,6 +237,22 @@ export class Node {
       function (node) { return node.isLoaded(); }
     );
     return openTabs;
+  }
+
+  getWindowNode () {
+    // find the nearest open window in our ancestry
+    if (this.isWindow() && this.isLoaded()) return this;
+    if (this.isRoot()) return null;
+    return this.parent.getWindowNode();
+  }
+
+  getLoadedParent () {
+    if (this.isRoot()) return null;
+    if (this.isWindow()) return null;
+    if (this.parent.isRoot()) return null;
+    if (this.parent.isWindow()) return null;
+    if (this.parent.isLoaded() && this.parent.tabId) return this.parent;
+    return this.parent.getLoadedParent();
   }
 
   shouldUnloadNotDelete (recurse = true) {
@@ -266,8 +300,13 @@ export class Node {
   }
 
   isVisible () {
-    // TODO
-    return true;
+    // check if entire ancestry is expanded
+    let parent = this.parent;
+    while (true) {
+      if (parent.isCollapsed()) return false;
+      if (parent.isRoot()) return true;
+      parent = parent.parent;
+    }
   }
 
   isLoaded () {
@@ -604,7 +643,7 @@ export class Node {
     node.parent = this;
   }
 
-  moveTo (destParent, destIndex, msg, notify = true) {
+  async moveTo (destParent, destIndex, msg, notify = true) {
     debug('Node.moveTo()', this, destParent, destIndex);
     // TODO: handle window nodes specially
     //   - refuse to move one window into another
@@ -614,6 +653,21 @@ export class Node {
     //     (or maybe only do them if this.tree.bkgd exists?)
     //     (meaning we are a service worker, not a view)
     const prevWindowId = this.windowId;
+    // special case: moving a parent into its own child list
+    // (this happens when moving a tab to the right in the tab bar,
+    //  when that tab has loaded children)
+    // Before:
+    //   - a
+    //     - b
+    //       - c
+    // After:
+    //   - b
+    //     - a
+    //     - c
+    if ((this === destParent) || (this.isParentOf(destParent))) {
+      debug('Node.moveTo() becoming own child, promoting kids first...');
+      await this.promoteKids(undefined, false);
+    }
     // remove
     const prevParent = this.parent;
     let newIndex = destIndex;
@@ -650,11 +704,29 @@ export class Node {
     }
 
     // TODO: recalculate stats
-    if (notify)
+    if (notify) {
       emit('tree_nodeMoved',
         { nodeId: this.id,
           destParentId: destParent.id, destIndex: destIndex,
           when: destParent.mtime });
+
+      // update the tab's openerTabId if possible
+      this.updateOpenerTabId();
+
+      // if this node has loaded kids, update their openerTabIds too
+      const loadedKids = this.getLoadedTabs();
+      for (const kid of loadedKids) kid.updateOpenerTabId();
+
+      // TODO: if a loaded tab was moved so it's not in a window,
+      //   create a new window to hold it
+
+      // if relevant, update the browser's info
+      // if we are the originator of this move event
+      //if (!msg || !msg.onTabMoved) {
+        //warn('Node.moveTo(): moving tabs not implemented yet');
+        this.reorderAllTabsInThisWindow();
+      //}
+    }
   }
 
   setExpanded (expanded, msg, notify = true) {
@@ -755,6 +827,33 @@ export class Node {
 
     // mark the new tab as active
     tabNode.setActive(true, null, notify);
+  }
+
+  reorderAllTabsInThisWindow () {
+    // abort on no-op
+    if (! this.isLoaded()) return;
+    // find this tab's window
+    const windowNode = this.getWindowNode();
+    if (! windowNode) return;
+    if (! windowNode.windowId) return;
+    // get a list of all loaded tabs in this window, in order
+    const tabList = windowNode.getLoadedTabs();
+    // tell browser to move *all* tabs in this window to that order
+    const tabIds = [];
+    for (const node of tabList) tabIds.push(node.tabId);
+    debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
+    api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
+  }
+
+  updateOpenerTabId () {
+    if (! this.isLoaded()) return;
+    if (! this.tabId) return;
+    const nearestLoadedParent = this.getLoadedParent();
+    if (nearestLoadedParent)
+      api.tabs.update(this.tabId,
+        { openerTabId: nearestLoadedParent.tabId });
+    else
+      api.tabs.update(this.tabId, { openerTabId: this.tabId });
   }
 
 }  // end class Node

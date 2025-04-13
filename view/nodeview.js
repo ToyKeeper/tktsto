@@ -445,9 +445,9 @@ export class NodeView extends Node {
     this.$row.classList.remove('cursor');
   }
 
-  moveTo (destParent, destIndex, ...extra) {
+  async moveTo (destParent, destIndex, ...extra) {
     const oldParent = this.parent;
-    super.moveTo(destParent, destIndex, ...extra);
+    await super.moveTo(destParent, destIndex, ...extra);
 
     destParent.$insertChild(this, destIndex);
     // refresh old parent if needed
@@ -457,10 +457,11 @@ export class NodeView extends Node {
     // (can change when nodes move into / out of marked nodes)
     this.tree.updateMarkedCount();
 
-    // TODO: if has cursor and new position hidden,
+    // if has cursor and new position hidden,
     // move cursor to nearest visible parent
-    // (when can this actually happen though,
-    //  in cases where it isn't already handled?)
+    // (this can happen when a collapsed parent is becoming its own child)
+    // (when the user moved tabs via the tab bar)
+    this.tree.ensureCursorVisible();
 
     // TODO: move tabs around
     // TODO: handle window changes
@@ -485,6 +486,8 @@ export class NodeView extends Node {
       this.$destroyChildren();
       // TODO: update + show stats
       this.$render();
+      // promote the cursor if we just hid it in a fold
+      this.tree.ensureCursorVisible();
     }
     // if expanding, create subtree and hide stats
     else {
