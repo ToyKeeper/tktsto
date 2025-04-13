@@ -159,6 +159,13 @@ export class Node {
     // root should refuse to delete itself
     if (this.isRoot()) return;
 
+    // if the tab was already closed, remove its tab ID
+    // so we won't try to sort it in the tab bar
+    if (notify && msg && msg.onTabRemoved) {
+      this.tabId = null;
+      this.updateTabCache();  // TODO: I should probably get rid of the cache
+    }
+
     // take care of the kids first
     await this.promoteKids(msg, notify);
 
@@ -279,7 +286,7 @@ export class Node {
     else if (this.isWindow()) {
       this.tabs = this.getLoadedTabs();
       this.tabIds = this.tabs.reduce((acc, node) => {
-        acc[node.tabId] = node;
+        if (node.tabId) acc[node.tabId] = node;
         return acc;
       }, {});
       //this.tabIds = {};
@@ -856,7 +863,8 @@ export class Node {
     const tabList = windowNode.getLoadedTabs();
     // tell browser to move *all* tabs in this window to that order
     const tabIds = [];
-    for (const node of tabList) tabIds.push(node.tabId);
+    for (const node of tabList)
+      if (node.tabId) tabIds.push(node.tabId);
     debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
     return api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
   }
