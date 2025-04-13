@@ -698,6 +698,7 @@ export class Node {
         // remove self from old parent's tab cache maybe
         // TODO: maybe redundant?  (bkgd will notice and generate events)
         if (this.isLoaded()) prevParent.updateTabCache();
+        //prevParent.updateTabCache();
         // bump old parent timestamp
         prevParent.bump('mtime', msg);
       }
@@ -708,6 +709,7 @@ export class Node {
     // add self to new parent's tab cache maybe
     // TODO: maybe redundant?  (bkgd will notice and generate events)
     if (this.isLoaded()) this.updateTabCache();
+    //this.updateTabCache();
 
     // bump new parent timestamp
     destParent.bump('mtime', msg);
@@ -728,7 +730,8 @@ export class Node {
       // TODO: if a loaded tab was moved so it's not in a window,
       //   create a new window to hold it
 
-      await this.reorderAllTabsInThisWindow();
+      if (this.isLoaded() || this.hasLoadedTabs())
+        await destParent.reorderAllTabsInThisWindow();
 
       // update the tab's openerTabId if possible
       // (can't do this until after reordering,
@@ -850,7 +853,9 @@ export class Node {
     }
 
     // mark all other active tabs in this window as not-active
-    for (const node of this.tabs) {
+    //for (const node of this.tabs) {
+    const tabList = this.getLoadedTabs();
+    for (const node of tabList) {
       if (node.isActive()) node.setActive(false, null, notify);
     }
 
@@ -858,7 +863,7 @@ export class Node {
     tabNode.setActive(true, null, notify);
   }
 
-  reorderAllTabsInThisWindow () {
+  async reorderAllTabsInThisWindow () {
     // abort on no-op
     if (! this.isLoaded()) return;
     // find this tab's window
@@ -867,6 +872,11 @@ export class Node {
     if (! windowNode.windowId) return;
     // get a list of all loaded tabs in this window, in order
     const tabList = windowNode.getLoadedTabs();
+    // verify which tab is active, and deactivate all others
+    const result = await api.tabs.query(
+      { active: true, windowId: windowNode.windowId });
+    const activeTab = result[0];
+    if (activeTab) windowNode.setActiveTab(activeTab.id);
     // tell browser to move *all* tabs in this window to that order
     const tabIds = [];
     for (const node of tabList)
