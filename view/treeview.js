@@ -161,7 +161,7 @@ export class TreeView extends Tree {
 
     // restore state
     if (oldCursor) {
-      const newCursor = this.tree[oldCursor];
+      const newCursor = this.nodes[oldCursor];
       this.setCursor(newCursor);
     }
   }
@@ -680,7 +680,7 @@ export class TreeView extends Tree {
   }
 
   ensureCursorVisible () {
-    if (! this.cursor) return this.setCursor(this.tree.root);
+    if (! this.cursor) return this.setCursor(this.root);
 
     if (this.cursor.isVisible()) return;
 
