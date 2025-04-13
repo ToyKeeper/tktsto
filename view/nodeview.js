@@ -402,6 +402,19 @@ export class NodeView extends Node {
     super.setTabFields(...args);
     // show it
     this.$render();
+    // update affected parents
+    this.$refreshAncestry();
+  }
+
+  load (...extra) {
+    // abort on no-op
+    if (this.isLoaded()) return;
+    // Do The Thing
+    super.load(...extra);
+    // show it
+    this.$render();
+    // update affected parents
+    this.$refreshAncestry();
   }
 
   unload (...extra) {
@@ -411,6 +424,8 @@ export class NodeView extends Node {
     super.unload(...extra);
     // show it
     this.$render();
+    // update affected parents
+    this.$refreshAncestry();
   }
 
   scrollIntoView () {
