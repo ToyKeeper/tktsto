@@ -201,6 +201,10 @@ class Bkgd {
         loaded: true,
         geometry: [window.width, window.height, window.left, window.top]
       }, null, notify);
+      // in case a parent tab with child tabs has *already* been moved
+      // to this window (which caused the window to be created),
+      // reorder the tabs to pull in the child tabs
+      await windowNode.reorderAllTabsInThisWindow();
       return windowNode;
     }
     // TODO: handle window.top, .left, .width, .height
