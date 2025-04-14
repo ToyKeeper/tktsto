@@ -868,7 +868,7 @@ export class Node {
 
   async reorderAllTabsInThisWindow () {
     // abort on no-op
-    if (! this.isLoaded()) return;
+    if ((! this.isLoaded()) && (! this.hasLoadedTabs())) return;
     // find this tab's window
     const windowNode = this.getWindowNode();
     if (! windowNode) return;
