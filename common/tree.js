@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, error, emit } from '/common/common.js';
+import { log, debug, warn, error, emit, dateTupleStrings } from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -25,6 +25,12 @@ export class Tree {
 
   init () {
     this.initListeners();
+  }
+
+  initListeners () {
+    api.runtime.onMessage.addListener( (msg, sender, sendResponse) => {
+      this.onMessage(msg, sender, sendResponse);
+    });
   }
 
   createRootNode () {
@@ -71,11 +77,32 @@ export class Tree {
     log(`loadTreeFromBkgd(): loaded ${numLoaded} nodes`);
   }
 
-  serializeNodes () {
+  serializeNodes (forBackup = false) {
     const result = {};
+    let defaultNode;
+    if (forBackup) defaultNode = new Node();
+
     for (const key in this.nodes) {
       //debug('serializeNodes:', key, this.nodes[key]);
-      result[key] = this.nodes[key].toDict();
+      const node = this.nodes[key].toDict();
+      if (forBackup) {  // clean up the data before exporting
+        for (const [k,v] of Object.entries(node)) {
+          // get rid of attributes with no value
+          // (redundant, removing unchanged/default does this too)
+          //if ((null === v) || ('' === v))
+          //  delete node[k];
+          // remove data which shouldn't persist
+          if (['tabId', 'windowId', 'marked'].includes(k))
+            delete node[k];
+          // remove values which haven't changed from default
+          if (defaultNode[k] === node[k])
+            delete node[k];
+          // remove empty nodes from leaf
+          if (('nodes' === k) && (0 === node[k].length))
+            delete node[k];
+        }
+      }
+      result[key] = node;
     }
     return result;
   }
@@ -108,10 +135,70 @@ export class Tree {
     return numLoaded;
   }
 
-  initListeners () {
-    api.runtime.onMessage.addListener( (msg, sender, sendResponse) => {
-      this.onMessage(msg, sender, sendResponse);
+  async makeBackupObject (rootNode, when) {
+    const obj = {};
+    // TODO: actually write and publish the schema file
+    obj.$schema = 'https://toykeeper.net/tktsto/session-backup-json-schema-v1';
+    if (undefined === when) when = Date.now();
+    obj.metadata = {};
+    obj.metadata.exportDate = Number(when);
+    obj.metadata.sessionStartDate = Number(rootNode.ctime);
+    // attach the client ID
+    let clientId = '??';
+    const result = await api.storage.local.get('clientId');
+    if (result.clientId) clientId = result.clientId;
+    obj.metadata.clientId = clientId;
+    // attach the actual tree / node data
+    obj.nodes = this.serializeNodes(true);
+    return obj;
+  }
+
+  async downloadBackupNow () {
+    const when = new Date();
+    // determine whether to pretty-print the data
+    let prettyPrint = 0;
+    const result = await api.storage.local.get('humanFriendlyBackups');
+    if (result.humanFriendlyBackups) prettyPrint = 2;
+    // generate the file's raw data
+    const backup = await this.makeBackupObject(this.root, when);
+    const jsonString = JSON.stringify(backup, null, prettyPrint);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    // build a filename
+    const clientId = backup.metadata.clientId;
+    const date = dateTupleStrings(when);
+    const filename = `tktsto.${date[0]}-${date[1]}-${date[2]}_${date[3]}-${date[4]}-${date[5]}.${clientId}.json`;
+
+    // save the file
+    log(`Tree.downloadBackupNow(): saving to "${filename}"`);
+    const downloading = api.downloads.download({
+      url: url,
+      filename: filename,
+      saveAs: false
     });
+    let downloadId;
+    function onStarted (id) { downloadId = id; }
+    function progress (delta) {
+      if ((delta.id === downloadId)
+        && delta.state && delta.state.current === "complete")
+      {
+        log(`Download succeeded: ${filename}`);
+        api.downloads.onChanged.removeListener(progress);
+        try {
+          // docs recommend cleaning this up
+          // but docs also say this is unavailable in service workers
+          // so ... do it when possible, and ignore errors otherwise
+          URL.revokeObjectURL(url);
+        } catch (err) {
+        }
+      }
+    }
+    function onFailed (err) {
+      warn(`Download failed: ${err}`);
+      api.downloads.onChanged.removeListener(progress);
+    }
+    api.downloads.onChanged.addListener(progress);
+    downloading.then(onStarted, onFailed);
   }
 
   getNodeByTabId(tabId, root)  {

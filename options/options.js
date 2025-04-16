@@ -5,14 +5,11 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, warn, emit } from '/common/common.js';
+import { log, warn, debug, emit } from '/common/common.js';
 
 log('options.js running');
 
-// pre-populate form with saved user options,
-// and store new values when the user hits "save"
-document.addEventListener('DOMContentLoaded', () => {
-  log('options.js loaded');
+function initClientIdForm () {
   const form = document.getElementById('options-form');
   const clientIdInput = document.getElementById('client-id');
 
@@ -27,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const clientId = clientIdInput.value;
+    // FIXME: strip everything except letters and numbers from ID
     api.storage.local.set({ clientId }).then(() => {
       alert('Saved!');
     });
@@ -35,8 +33,25 @@ document.addEventListener('DOMContentLoaded', () => {
       'clientId': clientId
     });
   });
+}
 
+function initBackupsForm () {
+  // humanFriendlyBackups checkbox
+  const $humanFriendlyBackups = document.getElementById('humanFriendlyBackups');
+  api.storage.local.get('humanFriendlyBackups').then((result) => {
+    if (undefined !== result.humanFriendlyBackups) {
+      $humanFriendlyBackups.checked = result.humanFriendlyBackups;
+    }
+  });
+  // save on click
+  $humanFriendlyBackups.addEventListener('click', (event) => {
+    //debug(`humanFriendlyBackups: ${$humanFriendlyBackups.checked}`, $humanFriendlyBackups);
+    const humanFriendlyBackups = $humanFriendlyBackups.checked;
+    api.storage.local.set({ humanFriendlyBackups });
+  });
+}
 
+function initSessionRestoreForm () {
   // TODO: handle tktsto-file-button
 
   // handle tabs-outliner-file-button
@@ -92,6 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
       $button.innerText = '... Loading ...';
     }
   });
+}
 
+// pre-populate form with saved user options,
+// and store new values when the user hits "save"
+document.addEventListener('DOMContentLoaded', () => {
+  log('options.js loaded');
+  initClientIdForm();
+  initBackupsForm();
+  initSessionRestoreForm();
 });
 

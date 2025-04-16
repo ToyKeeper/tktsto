@@ -9,8 +9,6 @@
       color: #ccc;
     }
     label, input {
-      display: block;
-      min-width: 400px;
       margin: 0.25em 0;
     }
     input {
@@ -51,17 +49,14 @@
 
   <h2>Client ID</h2>
 
-  Each browser you use needs its own unique identifier.  Use something 
-  <b>short with no spaces or punctuation</b>, because it will become 
-  part of the ID for each tree node and transaction created by that 
-  browser.  For example:
+  Each browser you use needs its own unique identifier.  Use something <b>very
+  short with no spaces or punctuation</b>, ideally 3 letters or less, because
+  it will become part of the ID for each tree node and transaction created by
+  that browser.  For example:
   <ul>
-    <li>If you have computers "alice", "bob", and "carol", all using the 
-      same type of browser, they could be simply "a", "b", and "c".</li>
-    <li>Or perhaps you use six browsers and call them "wdc", "wdf", 
-      "wn", "hd", "hn", and "pf".  This would be short for "work desktop 
-      chrome", "work desktop firefox", "work notebook", "home desktop", 
-      "home notebook", and "phone firefox".</li>
+    <li><code>pc</code>: Your desktop computer.</li>
+    <li><code>nb</code>: Your notebook computer.</li>
+    <li><code>w</code>: Your work computer.</li>
   </ul>
 
   <form id="options-form" accept-charset="utf-8">
@@ -71,6 +66,19 @@
     <button type="submit">Save</button>
   </form>
 
+
+  <h2>Backups</h2>
+
+  <div>
+    <p>
+    Backup files can either be human friendly (easier to view in a text editor)
+    or not (smaller files).
+    </p>
+    <p>
+    <input type="checkbox" id="humanFriendlyBackups" name="humanFriendlyBackups">
+    Human readable backup files
+    </p>
+  </div>
 
   <h2>Import Session Files</h2>
 
@@ -93,6 +101,7 @@
   extension), unzip it with <code>zstd -d myfile.json.zst</code> or
   <code>unzstd myfile.json.zst</code>.</p>
 
+  <h3>TKTSTO files</h3>
   <div class="file-input">
   <!-- <form id="tktsto-import-form" accept-charset="utf-8"> -->
     <input type="file" id="tktsto-file-input">
@@ -100,6 +109,7 @@
     <!-- </form> -->
   </div>
 
+  <h3>Tabs Outliner files</h3>
   <p>If you used Tabs Outliner and have session file backups, import those
   here.</p>
 

@@ -6,6 +6,7 @@
     "permissions": [
         "storage",
         "unlimitedStorage",
+        "downloads",
         "tabs"
     ],
     "optional_permissions": [

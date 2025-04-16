@@ -32,6 +32,8 @@ export class TreeView extends Tree {
     this.$detailsBtn = this.document.getElementById('details-btn');
     // TODO: this should load from config
     this.detailsState = 1;  // 0=off, 1=notes, 2=details
+    // click to save a session backup
+    this.$backupBtn = this.document.getElementById('backup-btn');
 
     // count of marked nodes when non-zero
     this.$markedCount = this.document.getElementById('marked-count');
@@ -106,6 +108,8 @@ export class TreeView extends Tree {
       //'Shift+P': 'pasteMarkedBefore',
       // TODO: leader key for batch processing of other things,
       //   like delete and maybe sort and checkbox actions and ...
+      ///// buttons
+      'b': 'backupSession',
       ///// misc
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
@@ -664,6 +668,10 @@ export class TreeView extends Tree {
   async action_pasteMarkedBefore (event) {
   }
 
+  async action_backupSession (event) {
+    return await this.downloadBackupNow();
+  }
+
   setCursor (node) {
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();
@@ -732,6 +740,10 @@ export class TreeView extends Tree {
     this.$detailsBtn.addEventListener('click', () => {
       this.onDetailsBtnClick();
     });
+    // save a session backup when clicked
+    this.$backupBtn.addEventListener('click', () => {
+      this.onBackupBtnClick();
+    });
   }
 
   onDetailsBtnClick () {
@@ -773,6 +785,10 @@ export class TreeView extends Tree {
         if (this.cursor) this.cursor.scrollIntoView();
         break;
     }
+  }
+
+  onBackupBtnClick () {
+    this.action_backupSession();
   }
 
   tree_nodeAdded (msg, sender, sendResponse) {
