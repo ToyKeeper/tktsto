@@ -21,6 +21,47 @@ export function error (...args) {
   console.error(...args);
 }
 
+// unused
+// make a date tuple similar to python
+//export function dateTuple (date) {
+//  if (undefined === date) date = new Date(Date.now());
+//  const result = [
+//    // year, month, day, hour, minute, second, ms, weekday, tzOffsetMinutes
+//    date.getFullYear(), date.getMonth()+1, date.getDate(),
+//    date.getHours(), date.getMinutes(), date.getSeconds(),
+//    date.getMilliseconds(), date.getDay(), date.getTimezoneOffset()
+//  ];
+//  return result;
+//}
+
+// WTF, javascript doesn't have strftime()
+export function dateTupleStrings (date) {
+  if (undefined === date) date = new Date(Date.now());
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // calculate timezone offset string, like '+05:00' or '-3:30'
+  let tzOffset = date.getTimezoneOffset();
+  const ipart = Math.floor(tzOffset);
+  const fpart = tzOffset % 1;
+  if (tzOffset < 0) tzOffset = String(ipart / 60.0);
+  else tzOffset = '+' + String(ipart / 60.0);
+  tzOffset = tzOffset + ':' + String(Math.floor(fpart * 60)).padStart(2, '0');
+  // build the tuple of strings
+  const result = [
+    // year, month, day, hour, minute, second, ms, weekday, tzOffsetMinutes
+    String(date.getFullYear()).padStart(4,'0'),
+    String(date.getMonth()).padStart(2,'0'),
+    String(date.getDate()).padStart(2,'0'),
+    String(date.getHours()).padStart(2,'0'),
+    String(date.getMinutes()).padStart(2,'0'),
+    String(date.getSeconds()).padStart(2,'0'),
+    String(date.getMilliseconds()).padStart(3,'0'),
+    weekdays[date.getDay()],
+    tzOffset
+  ];
+  return result;
+}
+
+
 export function fmtDate (date) {
   if (! date) return '';
   // serialized dates turn into a plain number; convert it back
