@@ -5,7 +5,9 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, error, emit, dateTupleStrings } from '/common/common.js';
+import {
+  log, debug, warn, error, emit, jsonSchema, dateTupleStrings
+} from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -138,7 +140,7 @@ export class Tree {
   async makeBackupObject (rootNode, when) {
     const obj = {};
     // TODO: actually write and publish the schema file
-    obj.$schema = 'https://toykeeper.net/tktsto/session-backup-json-schema-v1';
+    obj.$schema = jsonSchema;
     if (undefined === when) when = Date.now();
     obj.metadata = {};
     obj.metadata.exportDate = Number(when);

@@ -21,6 +21,8 @@ export function error (...args) {
   console.error(...args);
 }
 
+export const jsonSchema = 'https://toykeeper.net/tktsto/session-backup-json-schema-v1';
+
 // unused
 // make a date tuple similar to python
 //export function dateTuple (date) {
