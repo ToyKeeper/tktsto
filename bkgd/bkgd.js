@@ -5,7 +5,9 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, error, fmtDate, emit } from '/common/common.js';
+import {
+  log, debug, warn, error, fmtDate, emit, jsonSchema
+} from '/common/common.js';
 import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
@@ -425,11 +427,19 @@ class Bkgd {
     return response;
   }
 
-  async bkgd_importTabsOutliner (msg) {
+  async bkgd_importBackupFile (msg) {
+    return this.importBackupFileGeneric(msg, this.importBackupFile);
+  }
+
+  bkgd_importTabsOutliner (msg) {
+    return this.importBackupFileGeneric(msg, this.importTabsOutlinerExport);
+  }
+
+  async importBackupFileGeneric (msg, handler) {
     const response = {};
     let total = 0;
     try {
-      total = await this.importTabsOutlinerExport(msg.data, msg.filename);
+      total = await handler.bind(this)(msg.data, msg.filename);
       response.status = `${total} nodes imported`;
     } catch (err) {
       response.status = `Import error: ${err}`;
@@ -437,6 +447,83 @@ class Bkgd {
     }
     response.total = total;
     return response;
+  }
+
+  async importBackupFile(json, filename) {
+    if (jsonSchema !== json.$schema) {
+      error('Does not appear to be a TKTSTO file.');
+      return -1;
+    }
+    if (! json.nodes['root']) return -1;
+
+    // don't import to an incomplete tree
+    await this.treeLoaded;
+
+    function lookup (id) {
+      const node = json.nodes[id];
+      if (! node) {
+        warn(`Failed to load node "${id}"`);
+        return null;
+      }
+      // let tree assign new IDs for all nodes
+      // (because we're adding to the current session, not replacing it)
+      node.id = undefined;
+      node.parent = undefined;
+      // nothing is loaded or active in an imported tree
+      if (node.loaded) {
+        node.loaded = false;
+        node.wasLoaded = true;
+      }
+      if (node.active) {
+        node.active = false;
+        node.wasActive = true;
+      }
+      // root node needs special care
+      if ('root' === id) {
+        const itimeStr = fmtDate(Date.now());
+        const ctimeStr = fmtDate(json.metadata.sessionStartDate);
+        const etimeStr = fmtDate(json.metadata.exportDate);
+        // generate a title
+        const note = filename;
+        if (node.note) node.note = `${note} (${node.note})`;
+        else node.note = note;
+        // generate a description
+        const filenameStr = `Filename: ${filename}\n`;
+        const importText = `${filenameStr}Session Started: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
+        if (node.longNote) node.longNote = importText + '\n' + node.longNote;
+        else node.longNote = importText;
+      }
+      return node;
+    }
+
+    async function createNodes (parent, childIds) {
+      let firstNode;
+      for (const childId of childIds) {
+        //debug(`loading "${parent.id}" :: "${childId}"`);
+        const destIndex = parent.nodes.length;
+        const childDict = lookup(childId);
+        if (! childDict) continue;
+        const newNode = await parent.addChild(destIndex, childDict);
+        // first node created is the "root" of this sub-tree
+        if (! firstNode) firstNode = newNode;
+        if (childDict.nodes) {
+          await createNodes(newNode, childDict.nodes);
+        }
+      }
+      return firstNode;
+    }
+
+    // actually create the nodes now
+    const sessionRoot = await createNodes(this.tree.root, ['root']);
+
+    // if imported session is older than current session,
+    // set the current session's creation date to the older date
+    if (sessionRoot.ctime < this.tree.root.ctime) {
+      // FIXME: do this through proper channels so it gets saved and emitted
+      this.tree.root.ctime = sessionRoot.ctime;
+    }
+
+    return sessionRoot.countDescendants();
   }
 
   async importTabsOutlinerExport(json, filename) {
@@ -504,7 +591,7 @@ class Bkgd {
           const etimeStr = fmtDate(rootNode.sessionExportTime);
           let filenameStr = '';
           if (filename) filenameStr = `Filename: ${filename}\n`;
-          rootNode.longNote = `${filenameStr}Created: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
+          rootNode.longNote = `${filenameStr}Session Started: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
         }
       }
       // regular tree items are Arrays
@@ -538,7 +625,7 @@ class Bkgd {
           // parse data.url
           if (d.url) details.url = d.url;
           // parse data.favIconUrl
-          if (d.favIconUrl) details.faviconUrl = d.favIconUrl;
+          if (d.favIconUrl) details.favIconUrl = d.favIconUrl;
           // parse data.lastAccessed
           if (d.lastAccessed) details.atime = Number(d.lastAccessed);
         }
@@ -567,6 +654,9 @@ class Bkgd {
           //details.geometry = [window.width, window.height, window.left, window.top];
           // TODO: parse data.focused
           //debug('window', details);
+        }
+        else if ('tab' === fields.type) {
+          details.wasLoaded = true;  // link was open in a tab
         }
         // note-only nodes
         else if ('textnote' === fields.type) {

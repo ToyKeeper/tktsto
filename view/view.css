@@ -239,9 +239,14 @@ html, body {
   color: var(--tab-unloaded-fg);
 }
 
+.row.was-loaded a,
+#detail-was-loaded b {
+  color: var(--tab-was-loaded-fg);
+}
 .row.loaded a {
   color: var(--tab-loaded-fg);
 }
+
 
 .row.active a {
   color: var(--tab-active-fg);
@@ -266,6 +271,12 @@ html, body {
 .row .node-note,
 .row .node-note-icon {
   color: var(--note-unloaded-fg);
+}
+.row.was-loaded .node-note,
+.row.was-loaded-children .node-note,
+.row.was-loaded .node-note-icon,
+.row.was-loaded-children .node-note-icon {
+  color: var(--note-was-loaded-fg);
 }
 .row.loaded .node-note,
 .row.loaded-children .node-note,
@@ -592,12 +603,14 @@ html, body {
   /***** main tree view *****/
   --tree-view-bg: #1c1b22;
   --note-loaded-fg: #12ee6a;
+  --note-was-loaded-fg: #e70e9d;
+  --note-unloaded-fg: #1aab54;
   /* --note-long-fg: #5c9; */
   --note-long-fg: var(--details-label-fg);
-  --note-unloaded-fg: #1aab54;
   --note-title-sep-fg: #49d;
   --tab-active-fg: #fff;
   --tab-loaded-fg: #eee;
+  --tab-was-loaded-fg: #f73f96;
   --tab-unloaded-fg: #999;
   /***** tree lines *****/
   --tree-line: #567;

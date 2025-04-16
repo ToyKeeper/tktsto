@@ -536,7 +536,7 @@ export class TreeView extends Tree {
     debug('action_unloadNode');
     // abort if nothing to unload
     if (! this.cursor) return;
-    if (! this.cursor.isLoaded()) return;
+    //if (! this.cursor.isLoaded()) return;
 
     this.cursor.unload();
   }

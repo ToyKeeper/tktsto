@@ -18,22 +18,22 @@ export class Node {
     // '', 'window', or 'tab'
     this.type = '';
     // browser attachment
-    this.windowId = null;
-    this.tabId = null;
+    this.windowId = undefined;
+    this.tabId = undefined;
     // attributes
-    this.note = null;
-    this.longNote = null;
-    this.title = null;
-    this.url = null;
-    this.faviconUrl = null;
+    this.note = undefined;
+    this.longNote = undefined;
+    this.title = undefined;
+    this.url = undefined;
+    this.faviconUrl = undefined;
     this.expanded = true;
     this.loaded = false;
     this.active = false;
-    //this.wasLoaded = false;
+    this.wasLoaded = false;
     this.marked = false;
     // checkbox: task completion and other task statuses
-    this.checkbox = null;  // null or single character
-    this.checkboxPx = null;  // percent complete, calculated and cached
+    this.checkbox = undefined;  // null or single character
+    this.checkboxPx = undefined;  // percent complete, calculated and cached
     // timestamps
     // ctime: set when node first created only
     // mtime: set when changed note, title, url, checkbox, ...
@@ -42,7 +42,7 @@ export class Node {
     this.ctime = Date.now();  // creation time (NOT posix style change time)
     this.mtime = Date.now();  // modification time
     this.atime = Date.now();  // access time
-    this.ltime = null;  // loaded time (urls only)
+    this.ltime = undefined;  // loaded time (urls only)
     // children
     this.nodes = [];
     // fields to copy when serializing to/from dict
@@ -58,6 +58,7 @@ export class Node {
       'faviconUrl',
       'expanded',
       'loaded',
+      'wasLoaded',
       'active',
       'marked',
       'checkbox',
@@ -469,6 +470,7 @@ export class Node {
     if ({} === changes) return;
     // Do The Thing
     for (const [key, value] of Object.entries(changes)) this[key] = value;
+    if (undefined !== changes.loaded) this.wasLoaded = changes.loaded;
     // if the tabId changed, update cache
     if (changes.tabId) this.updateTabCache();
     // bump timestamp
@@ -488,6 +490,7 @@ export class Node {
     // TODO: if window, load the window
     // Do The Thing
     this.loaded = false;  // will get set to true after tab actually loads
+    this.wasLoaded = true;  // is loading
     this.pendingUrl = this.url;  // go here when the tab is ready
     // TODO: maybe redundant?  (bkgd will notice and generate events)
     //this.updateTabCache();  // can't cache, tabId hasn't been allocated yet
@@ -536,10 +539,12 @@ export class Node {
 
   async unload (msg, notify = true) {
     // abort on no-op
-    if (! this.isLoaded()) return;
+    if (! this.isLoaded() && (! this.wasLoaded)) return;
+    const wasActuallyLoaded = this.loaded;
     // Do The Thing
     this.loaded = false;
     this.active = false;
+    this.wasLoaded = false;
     // remove self from parent's tab cache
     // TODO: maybe redundant?  (bkgd will notice and generate events)
     this.updateTabCache();
@@ -552,6 +557,9 @@ export class Node {
         { nodeId: this.id, type: 'unload',
           onTabRemoved: true,  // tell others the tab is already closed
           when: this.mtime });
+
+    // stop, if the only change was to remove the 'wasLoaded' state
+    if (! wasActuallyLoaded) return;
 
     // AFTER everyone has unloaded the tab from the tree,
     // then it's finally safe to close the tab itself

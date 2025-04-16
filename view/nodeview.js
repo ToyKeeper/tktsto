@@ -129,6 +129,8 @@ export class NodeView extends Node {
     // is the link loaded in a tab?
     if (this.loaded) this.$row.classList.add('loaded');
     else this.$row.classList.remove('loaded');
+    if (this.wasLoaded) this.$row.classList.add('was-loaded');
+    else this.$row.classList.remove('was-loaded');
     // are any kids loaded?
     if (this.hasLoadedTabs()) this.$row.classList.add('loaded-children');
     else this.$row.classList.remove('loaded-children');
@@ -159,13 +161,17 @@ export class NodeView extends Node {
         mainText = `<a class="node-link" href="${this.url}">${this.title}</a>`;
     }
     else {  // totally blank
-      if (this.isWindow())
-        mainText = `<span class="node-notitle">Window ${this.windowId}</span>`;
+      if (this.isWindow()) {
+        const windowIdMaybe = this.windowId ? ' ' + this.windowId : '';
+        mainText = `<span class="node-notitle">Window${windowIdMaybe}</span>`;
+      }
       else if (this.isRoot())
         mainText = `<span class="node-notitle">Session</span>`;
       else
         mainText = `<span class="node-notitle">node ${this.id}</span>`;
     }
+    if (this.isWindow() && (! this.isLoaded()))  // note closed windows
+      mainText = mainText + ' (closed)';
     // indicate when there's a long note attached
     let longNoteIcon = '';
     if (this.longNote)
@@ -244,6 +250,12 @@ export class NodeView extends Node {
     //if (mode <= 1) hide($note);
     //else
     setOrHide($note, this.note, this.note);
+
+    // wasLoaded
+    const wasLoaded = (!!this.wasLoaded) && (! this.loaded);
+    let $wasLoaded = getOrCreate('detail-was-loaded', 'div');
+    if (mode <= 1) hide($wasLoaded);
+    else setOrHide($wasLoaded, wasLoaded, null, `<b>Was Loaded</b>`);
 
     // long note
     let $longNote = getOrCreate('detail-long-note', 'div');
@@ -419,7 +431,7 @@ export class NodeView extends Node {
 
   unload (...extra) {
     // abort on no-op
-    if (! this.isLoaded()) return;
+    //if (! this.isLoaded()) return;
     // Do The Thing
     super.unload(...extra);
     // show it
