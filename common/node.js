@@ -103,7 +103,7 @@ export class Node {
     }
 
     // unmark if necessary
-    this.setMarked(false, msg, false);
+    this.setMarked(false, { reason: 'deleteSelf' });
 
     // remove this node from its parent
     this.parent.bump('mtime', msg);
@@ -433,16 +433,17 @@ export class Node {
     return newNode;
   }
 
-  setNote (text, longNote, msg, notify = true) {
+  setNote (text, longNote, args) {
     // abort on no-op
+    if (! args) return;
     if ((text === this.note) && (longNote === this.longNote)) return;
     // Do The Thing
     this.note = text;
     this.longNote = longNote;
     // bump timestamp
-    this.bump('mtime', msg);
+    this.bump('mtime', args);
     // notify others
-    if (notify)
+    if ('userAction' === args.reason)
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setNote',
           note: this.note,
@@ -450,16 +451,20 @@ export class Node {
           when: this.mtime });
   }
 
-  setTabFields (changes, msg, notify = true) {
+  setTabFields (changes, args) {
+    if (! args) return;
     // abort on no-op
     if ({} === changes) return;
     // Do The Thing
     for (const [key, value] of Object.entries(changes)) this[key] = value;
     if (undefined !== changes.loaded) this.wasLoaded = changes.loaded;
     // bump timestamp
-    this.bump('mtime', msg);
+    this.bump('mtime', args);
     // notify others
-    if (notify)
+    if ([
+      'onTabCreated', 'onTabUpdated', 'onTabReplaced',
+      'onWindowCreated'
+    ].includes(args.reason))
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',
           changes: changes,
@@ -704,7 +709,7 @@ export class Node {
     // if new parent is marked, unmark self
     if (this.marked) {
       const markedParent = this.findParent((n) => n.marked);
-      if (markedParent) this.setMarked(false, msg, false);
+      if (markedParent) this.setMarked(false, { reason: 'moveTo' });
     }
 
     // TODO: recalculate stats
@@ -733,28 +738,29 @@ export class Node {
     }
   }
 
-  setExpanded (expanded, msg, notify = true) {
+  setExpanded (expanded, args) {
+    if (! args) return;
     // abort on no-op
     if (expanded === this.expanded) return;
+    const wasExpanded = this.expanded;
     // leaf is always expanded
-    if (this.isLeaf()) {
-      this.expanded = true;
-      return;
-    }
+    if (this.isLeaf()) this.expanded = true;
     // otherwise, twiddle the bit
-    this.expanded = expanded;
+    else this.expanded = expanded;
+    const changed = (wasExpanded !== this.expanded);
 
     // bump timestamp
-    this.bump('atime', msg);
+    if (changed) this.bump('atime', args);
 
     // TODO? recalculate stats
-    if (notify)
+    if (changed && ('userAction' === args.reason))
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setExpanded', expanded: this.expanded,
           when: this.atime });
   }
 
-  setMarked (marked, msg, notify = true) {
+  setMarked (marked, args) {
+    if (! args) return;
     // abort on no-op
     if (marked === this.marked) return;
     // refuse to mark root node
@@ -769,7 +775,8 @@ export class Node {
       if (markedParent) return;
 
       // unmark children, because they will now be marked by association
-      this.forEachRecursive((node) => { node.setMarked(false, false); });
+      this.forEachRecursive((node) => {
+        node.setMarked(false, { reason: 'self' }); });
     }
 
     // otherwise, twiddle the bit
@@ -778,34 +785,37 @@ export class Node {
     // update Tree's list of marked nodes
     this.tree.nodeMarkChanged(this);
 
-    // 'msg' and the timestamp aren't actually used,
-    // but they're included for consistency with other calls
+    // the timestamp isn't actually used,
+    // but it's included for consistency with other calls
     let when;
-    if (msg && msg.when) when = msg.when;
+    if (args.when) when = args.when;
     else when = Date.now();
 
     // TODO? recalculate stats
-    if (notify)
+    if ('userAction' === args.reason)
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setMarked', marked: this.marked,
           when: when });
   }
 
-  setActive (active, msg, notify = true) {
+  setActive (active, args) {
+    if (! args) return;
     // abort on no-op
     if (active === this.active) return;
     // Do The Thing
     this.active = active;
     // bump timestamp
-    if (active) this.bump('atime', msg);
+    if (active) this.bump('atime', args);
     // let others know
-    if (notify)
+    if (['userAction', 'onTabActivated',
+      'reorderAllTabsInThisWindow'
+    ].includes(args.reason))
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setActive', active: this.active,
           when: this.atime });
 
     // if we're the originator and the tab isn't focused, focus it
-    if (active && msg && msg.activateTab)
+    if (active && ('userAction' === args.reason))
       api.tabs.update(this.tabId, { active: true });
   }
 
@@ -822,7 +832,8 @@ export class Node {
     return tabNode;
   }
 
-  setActiveTab (tabId, notify = true) {
+  setActiveTab (tabId, args) {
+    if (! args) return;
     // this should only be called on window nodes
     if (! this.isWindow()) return;
     const tabList = this.getLoadedTabs();
@@ -842,11 +853,11 @@ export class Node {
 
     // mark all other active tabs in this window as not-active
     for (const node of tabList) {
-      if (node.isActive()) node.setActive(false, null, notify);
+      if (node.isActive()) node.setActive(false, args);
     }
 
     // mark the new tab as active
-    tabNode.setActive(true, null, notify);
+    tabNode.setActive(true, args);
   }
 
   async reorderAllTabsInThisWindow () {
@@ -862,7 +873,8 @@ export class Node {
     const result = await api.tabs.query(
       { active: true, windowId: windowNode.windowId });
     const activeTab = result[0];
-    if (activeTab) windowNode.setActiveTab(activeTab.id);
+    if (activeTab) windowNode.setActiveTab(activeTab.id,
+      { reason: 'reorderAllTabsInThisWindow' });
     // tell browser to move *all* tabs in this window to that order
     const tabIds = [];
     for (const node of tabList)

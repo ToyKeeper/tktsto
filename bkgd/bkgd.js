@@ -204,10 +204,12 @@ class Bkgd {
       { return node.isWindow() && (node.windowId === window.id); });
     if (found.length > 0) {
       const windowNode = found[0];
+      let reason = 'onWindowCreated';
+      if (! notify) reason = 'mergeOpenWindowsIntoTree';
       await windowNode.setTabFields({
         loaded: true,
         geometry: [window.width, window.height, window.left, window.top]
-      }, null, notify);
+      }, { reason: reason });
       // in case a parent tab with child tabs has *already* been moved
       // to this window (which caused the window to be created),
       // reorder the tabs to pull in the child tabs

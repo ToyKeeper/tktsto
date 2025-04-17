@@ -285,7 +285,7 @@ export class Tree {
         await node.setTabFields({
           tabId: tab.id,
           loaded: true
-        }, null, true);
+        }, { reason: 'onTabCreated' });
         // put the tab in the right position
         await node.reorderAllTabsInThisWindow();
         // restore the tab's metadata
@@ -407,7 +407,7 @@ export class Tree {
       // FIXME: WTF, shouldn't happen, big error here
       return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
-    windowNode.setActiveTab(tabId);
+    windowNode.setActiveTab(tabId, { reason: 'onTabActivated' });
   }
 
   onTabMoved (tabId, moveInfo) {
@@ -580,7 +580,7 @@ export class Tree {
     }
     // apply changes, if any
     if (Object.keys(changes).length > 0) {
-      return tabNode.setTabFields(changes);
+      return tabNode.setTabFields(changes, { reason: 'onTabUpdated' });
     }
   }
 
@@ -599,7 +599,7 @@ export class Tree {
 
     // it's like a onTabUpdated(), but only the tabId changes?
     const changes = { 'tabId': addedTabId };
-    return tabNode.setTabFields(changes);
+    return tabNode.setTabFields(changes, { reason: 'onTabReplaced' });
   }
 
   onMessage (msg, sender, sendResponse) {
@@ -720,34 +720,30 @@ export class Tree {
       return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
     }
 
-    // FIXME: change API to make it more general
-    // like nodeChanged(fieldName, before, after)
-    // so it can just set node['fieldName'] = after
-    // or node[set${fieldName}](after, false)
-    // or something like that
+    // while syncing between threads,
+    // tell handlers not to emit this event again
+    msg.reason = 'tree_nodeChanged';
 
     // figure out what kind of change happened, and update it
     if ('setExpanded' === changeType) {
-      return node.setExpanded(msg.expanded, msg, false);
+      return node.setExpanded(msg.expanded, msg);
     }
     else if ('setNote' === changeType) {
-      return node.setNote(msg.note, msg.longNote, msg, false);
+      return node.setNote(msg.note, msg.longNote, msg);
     }
     else if ('setTabFields' === changeType) {
-      return node.setTabFields(msg.changes, msg, false);
+      return node.setTabFields(msg.changes, msg);
     }
     else if ('setMarked' === changeType) {
-      return node.setMarked(msg.marked, msg, false);
+      return node.setMarked(msg.marked, msg);
     }
     else if ('setActive' === changeType) {
-      return node.setActive(msg.active, msg, false);
+      return node.setActive(msg.active, msg);
     }
     else if ('load' === changeType) {
-      msg.reason = 'tree_nodeChanged';
       return node.load(msg);
     }
     else if ('unload' === changeType) {
-      msg.reason = 'tree_nodeChanged';
       return node.unload(msg);
     }
     else {

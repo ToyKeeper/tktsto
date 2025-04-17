@@ -278,7 +278,7 @@ export class TreeView extends Tree {
 
     // expand if necessary
     if (! this.cursor.isExpanded()) {
-      this.cursor.setExpanded(true);
+      this.cursor.setExpanded(true, { reason: 'userAction' });
     }
 
     // move to 1st child
@@ -552,7 +552,7 @@ export class TreeView extends Tree {
     }
     // if loaded tab but not focused, focus it
     else if (this.cursor.isLoaded() && (!this.cursor.isActive())) {
-      this.cursor.setActive(true, { activateTab: true });
+      this.cursor.setActive(true, { reason: 'userAction' });
     }
     // if unloaded window, load it (complicated)
     else if (this.cursor.isUnloadedWindow()) {
@@ -569,7 +569,7 @@ export class TreeView extends Tree {
     // skip no-op cases
     if (! this.cursor) return;
     const toggled = ! this.cursor.expanded;
-    this.cursor.setExpanded(toggled);
+    this.cursor.setExpanded(toggled, { reason: 'userAction' });
   }
 
   async action_editNote (event) {
@@ -593,7 +593,7 @@ export class TreeView extends Tree {
     const noteText = result.value;
     const longNoteText = result.textAreaValue;
     debug('action_editNote():', noteText, longNoteText);
-    this.cursor.setNote(noteText, longNoteText);
+    this.cursor.setNote(noteText, longNoteText, { reason: 'userAction' });
   }
 
   action_toggleMarked (event) {
@@ -601,7 +601,7 @@ export class TreeView extends Tree {
     // skip no-op cases
     if (! this.cursor) return;
     const toggled = ! this.cursor.marked;
-    this.cursor.setMarked(toggled);
+    this.cursor.setMarked(toggled, { reason: 'userAction' });
   }
 
   async action_unmarkAll (event) {
@@ -611,7 +611,7 @@ export class TreeView extends Tree {
     for (const nodeId of this.markedNodes.slice()) {
       const node = this.nodes[nodeId];
       //debug(`unmarking "${nodeId}"`);
-      await node.setMarked(false);
+      await node.setMarked(false, { reason: 'userAction' });
     }
   }
 
