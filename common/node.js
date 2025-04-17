@@ -375,18 +375,21 @@ export class Node {
     else this[tStampName] = Date.now();
   }
 
-  async windowClosed (msg, notify = true) {
+  async windowClosed (args) {
+    if (! args) return error('Node.windowClosed() requires args');
     // window was closed by user
     // windows require special care
     // this shouldn't happen, but just in case, ignore non-windows
     if (! this.isWindow()) return;
     // if window has no kids, just delete it
     if (! this.hasKids()) {
-      await this.deleteSelf(msg, false);
+      await this.deleteSelf(args, false);
     }
     // if window has no open tabs, mark it as unloaded
     else if (! this.hasLoadedTabs()) {
-      await this.unload(msg, false);
+      //args.reason = 'windowClosed';
+      // args.reason should already exist: tree_windowClosed or onWindowRemoved
+      await this.unload(args);
     }
     // if open tabs, ... well fuck.  I don't know.
     // The browser *should* close the tabs first, right?  Right??
@@ -394,7 +397,7 @@ export class Node {
       error('window closed while still having open tabs');
     }
     // notify others
-    if (notify)
+    if ('onWindowRemoved' === args.reason)
       emit('tree_windowClosed',
         { nodeId: this.id, windowId: this.windowId,
           when: this.mtime });
@@ -463,28 +466,32 @@ export class Node {
           when: this.mtime });
   }
 
-  async load (msg, notify = true) {
+  async load (args) {
     // abort on no-op
     if (this.isLoaded()) return;
     if (! this.isUnloadedTab()) return;
+    if (! args) return;
+
     // TODO: if window, load the window
+
     // Do The Thing
     this.loaded = false;  // will get set to true after tab actually loads
     this.wasLoaded = true;  // is loading
     this.pendingUrl = this.url;  // go here when the tab is ready
+
     // bump timestamp
-    this.bump('atime', msg);
-    // notify others
-    if (notify)
+    this.bump('atime', args);
+
+    // notify others, if event originated here
+    if (['userAction', 'onTabCreated'].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'load',
-          onTabCreated: true,  // tell others the tab is already open
           when: this.atime });
 
     // AFTER everyone has marked the tab as loaded,
     // then it's finally safe to open the tab itself
     // if not already opened by browser, opened the tab
-    if (!msg || (!msg.onTabCreated)) {
+    if ('userAction' === args.reason) {
       // actually open the tab
       const createProperties = {};
 
@@ -515,22 +522,25 @@ export class Node {
     }
   }
 
-  async unload (msg, notify = true) {
+  async unload (args) {
     // abort on no-op
+    if (! args) return;
     if (! this.isLoaded() && (! this.wasLoaded)) return;
     const wasActuallyLoaded = this.loaded;
+
     // Do The Thing
     this.loaded = false;
     this.active = false;
     this.wasLoaded = false;
+
     // bump timestamp (?)
     // TODO: (but are 'load' and 'unload' really modifications?)
-    this.bump('mtime', msg);
-    // notify others
-    if (notify)
+    this.bump('mtime', args);
+
+    // notify others, if event originated here
+    if (['userAction', 'onTabRemoved', 'onWindowClosed'].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'unload',
-          onTabRemoved: true,  // tell others the tab is already closed
           when: this.mtime });
 
     // stop, if the only change was to remove the 'wasLoaded' state
@@ -539,7 +549,7 @@ export class Node {
     // AFTER everyone has unloaded the tab from the tree,
     // then it's finally safe to close the tab itself
     // if not already closed by browser, close the tab
-    if (!msg || (!msg.onTabRemoved)) {
+    if ('userAction' === args.reason) {
       // actually close the tab
       if (this.tabId) {
         try {

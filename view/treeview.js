@@ -538,7 +538,7 @@ export class TreeView extends Tree {
     if (! this.cursor) return;
     //if (! this.cursor.isLoaded()) return;
 
-    this.cursor.unload();
+    this.cursor.unload({ reason: 'userAction' });
   }
 
   action_loadOrEditNode(event) {
@@ -548,7 +548,7 @@ export class TreeView extends Tree {
 
     // if unloaded tab, load it
     if (this.cursor.isUnloadedTab()) {
-      this.cursor.load();
+      this.cursor.load({ reason: 'userAction' });
     }
     // if loaded tab but not focused, focus it
     else if (this.cursor.isLoaded() && (!this.cursor.isActive())) {

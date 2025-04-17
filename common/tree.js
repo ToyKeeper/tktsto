@@ -382,12 +382,12 @@ export class Tree {
     // if tab closed only because its window is closing
     if (removeInfo && removeInfo.isWindowClosing) {
       // keep unloaded tab as part of the user's saved window
-      return tabNode.unload({ onTabRemoved: true });
+      return tabNode.unload({ reason: 'onWindowClosed' });
     }
     // if tab closed manually by user, but it has notes
     else if (tabNode.shouldUnloadNotDelete()) {
       // keep tab in tree to preserve its metadata
-      return tabNode.unload({ onTabRemoved: true });
+      return tabNode.unload({ reason: 'onTabRemoved' });
     }
     // if tab is boring but has kids
     else if (tabNode.hasKids()) {
@@ -743,10 +743,12 @@ export class Tree {
       return node.setActive(msg.active, msg, false);
     }
     else if ('load' === changeType) {
-      return node.load(msg, false);
+      msg.reason = 'tree_nodeChanged';
+      return node.load(msg);
     }
     else if ('unload' === changeType) {
-      return node.unload(msg, false);
+      msg.reason = 'tree_nodeChanged';
+      return node.unload(msg);
     }
     else {
       return error(`tree_nodeChanged(): unsupported change type "${changeType}"`);
@@ -768,7 +770,8 @@ export class Tree {
     // (a closed window object may just be unloaded, not deleted)
     //delete this.nodes[nodeId];
     delete this.windows[node.windowId];
-    return await node.windowClosed(msg, false);
+    msg.reason = 'tree_windowClosed';
+    return await node.windowClosed(msg);
   }
 
 }

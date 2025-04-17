@@ -235,7 +235,7 @@ class Bkgd {
     const node = this.tree.windows[windowId];
     if (node) {
       debug('found window node', windowId, node);
-      node.windowClosed();
+      node.windowClosed({ reason: 'onWindowRemoved' });
     }
     else {
       debug('no window node found', windowId);
