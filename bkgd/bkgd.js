@@ -100,7 +100,12 @@ class Bkgd {
     api.windows.onRemoved.addListener( this.onWindowRemoved.bind(this) );
     // user changed keyboard focus to a new window
     api.windows.onFocusChanged.addListener( this.onWindowFocusChanged.bind(this) );
-    // TODO: handle window change events, like resizing
+    // handle window resizing
+    // Firefox 128.6.0esr-1~deb12u1 gives an error that it doesn't have this,
+    // even though the docs say it does
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/windows/onBoundsChanged
+    if (api.windows.onBoundsChanged)
+      api.windows.onBoundsChanged.addListener( this.onWindowBoundsChanged.bind(this) );
   }
 
   initTabListeners () {
@@ -241,6 +246,11 @@ class Bkgd {
     debug('bkgd.onWindowFocusChanged', ...args);
     // TODO: set window node as 'active' and set others as just 'loaded'?
     //   (so the focused window can have a brighter row in the tree view)
+  }
+
+  async onWindowBoundsChanged (...args) {
+    debug('bkgd.onWindowBoundsChanged', ...args);
+    // TODO: update window geometry
   }
 
   async onTabCreated (tab) {
@@ -523,7 +533,7 @@ class Bkgd {
       this.tree.root.ctime = sessionRoot.ctime;
     }
 
-    return sessionRoot.countDescendants();
+    return sessionRoot.countNodes();
   }
 
   async importTabsOutlinerExport(json, filename) {
@@ -538,7 +548,7 @@ class Bkgd {
     // step 2: convert the parsed items into actual tree nodes
     const rootNode = await this.importParsedNodes(parsedNodes);
     if (! rootNode) return -1;
-    return rootNode.countDescendants();
+    return rootNode.countNodes();
   }
 
   parseTabsOutlinerExport (json, filename) {

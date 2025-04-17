@@ -102,13 +102,6 @@ export class Node {
       }
     }
 
-    if (this.isLoaded()) {
-      // delete this item from its parent window's tab cache
-      this.loaded = false;
-      this.updateTabCache();
-      this.loaded = true;
-    }
-
     // unmark if necessary
     this.setMarked(false, msg, false);
 
@@ -162,10 +155,10 @@ export class Node {
 
     // if the tab was already closed, remove its tab ID
     // so we won't try to sort it in the tab bar
-    if (notify && msg && msg.onTabRemoved) {
-      this.tabId = null;
-      this.updateTabCache();  // TODO: I should probably get rid of the cache
-    }
+    if (notify && msg && msg.onTabRemoved) this.tabId = null;
+
+    // FIXME: if this is a window with loaded tabs,
+    // the tabs will need a new window... maybe just refuse the request?
 
     // take care of the kids first
     await this.promoteKids(msg, notify);
@@ -225,24 +218,26 @@ export class Node {
     // check if any descendant are loaded
     // (but try to minimize the amount of CPU cycles to calculate this)
     for (const node of this.nodes)
-      if (node.isLoaded()) return true;
+      if ((! node.isWindow()) && node.isLoaded()) return true;
     for (const node of this.nodes)
-      if (node.hasLoadedTabs()) return true;
+      if ((! node.isWindow()) && node.hasLoadedTabs()) return true;
     return false;
   }
 
   //countLoadedTabs () {
-  //  const numOpenTabs = this.countDescendants(
-  //    function (node) { return node.isLoaded(); }
+  //  const numOpenTabs = this.countNodes(
+  //    function (node) { return (node.isLoaded() && (! node.isWindow())); },
+  //    // don't recurse into nested windows
+  //    function (node) { return ! node.isWindow(); }
   //  );
   //  return numOpenTabs;
   //}
 
   getLoadedTabs () {
-    // FIXME: should handle nested window nodes
-    //   (only cache tabs which are in this window, not a sub-window)
     const openTabs = this.findNodes(
-      function (node) { return node.isLoaded(); }
+      function (node) { return (node.isLoaded() && (! node.isWindow())); },
+      // don't recurse into nested windows
+      function (node) { return ! node.isWindow(); }
     );
     return openTabs;
   }
@@ -279,24 +274,6 @@ export class Node {
     }
     // false if node is plain / boring and has no interesting metadata
     return false;
-  }
-
-  updateTabCache () {
-    // find nearest 'window' node and re-generate its list of open tabs
-    if (this.isRoot()) return;
-    else if (this.isWindow()) {
-      this.tabs = this.getLoadedTabs();
-      this.tabIds = this.tabs.reduce((acc, node) => {
-        if (node.tabId) acc[node.tabId] = node;
-        return acc;
-      }, {});
-      //this.tabIds = {};
-      //for (const node of this.tabs) {
-      //  this.tabIds[node.tabId] = node;
-      //}
-      debug(`updateTabCache(): Window ${this.windowId}: ${this.tabs.length} tabs`, this.tabIds);
-    }
-    else return this.parent.updateTabCache();
   }
 
   isExpanded () {
@@ -344,24 +321,31 @@ export class Node {
     else return this.parent.markedBy();
   }
 
-  countDescendants (filter) {
+  countNodes (filter, recurseFilter) {
     let total = 0;
     for (const node of this.nodes) {
-      if (filter) {
-        if (filter(node)) total ++;
-      }
+      if (filter) { if (filter(node)) total ++; }
       else total ++;
-      total += node.countDescendants(filter);
+      let shouldRecurse = true;
+      if (recurseFilter) shouldRecurse = recurseFilter(node);
+      if (shouldRecurse)
+        total += node.countNodes(filter, recurseFilter);
     }
     return total;
   }
 
-  findNodes (fn, found) {
+  findNodes (filter, recurseFilter, found) {
     if (undefined === found) found = [];
     for (const node of this.nodes) {
-      //debug(`findNodes(${node.id}): ${fn(node)}`, node);
-      if (fn(node)) found.push(node);
-      if (node.hasKids()) node.findNodes(fn, found);
+      //debug(`findNodes(${node.id}): ${filter(node)}`, node);
+      if (filter) { if (filter(node)) found.push(node); }
+      else found.push(node);
+      if (node.hasKids()) {
+        let shouldRecurse = true;
+        if (recurseFilter) shouldRecurse = recurseFilter(node);
+        if (shouldRecurse)
+          node.findNodes(filter, recurseFilter, found);
+      }
     }
     return found;
   }
@@ -430,8 +414,6 @@ export class Node {
     this.tree.nodes[newNode.id] = newNode;
     if (newNode.isWindow())
       this.tree.windows[newNode.windowId] = newNode;
-    // TODO: maybe redundant?  (bkgd will notice and generate events)
-    if (newNode.isLoaded()) this.updateTabCache();
     // bump timestamp
     this.bump('mtime', msg);
     // tell other threads
@@ -471,8 +453,6 @@ export class Node {
     // Do The Thing
     for (const [key, value] of Object.entries(changes)) this[key] = value;
     if (undefined !== changes.loaded) this.wasLoaded = changes.loaded;
-    // if the tabId changed, update cache
-    if (changes.tabId) this.updateTabCache();
     // bump timestamp
     this.bump('mtime', msg);
     // notify others
@@ -492,8 +472,6 @@ export class Node {
     this.loaded = false;  // will get set to true after tab actually loads
     this.wasLoaded = true;  // is loading
     this.pendingUrl = this.url;  // go here when the tab is ready
-    // TODO: maybe redundant?  (bkgd will notice and generate events)
-    //this.updateTabCache();  // can't cache, tabId hasn't been allocated yet
     // bump timestamp
     this.bump('atime', msg);
     // notify others
@@ -545,9 +523,6 @@ export class Node {
     this.loaded = false;
     this.active = false;
     this.wasLoaded = false;
-    // remove self from parent's tab cache
-    // TODO: maybe redundant?  (bkgd will notice and generate events)
-    this.updateTabCache();
     // bump timestamp (?)
     // TODO: (but are 'load' and 'unload' really modifications?)
     this.bump('mtime', msg);
@@ -706,21 +681,12 @@ export class Node {
         if ((prevParent === destParent) && (destIndex > oldIndex)) {
           newIndex -= 1;
         }
-        // remove self from old parent's tab cache maybe
-        // TODO: maybe redundant?  (bkgd will notice and generate events)
-        if (this.isLoaded()) prevParent.updateTabCache();
-        //prevParent.updateTabCache();
         // bump old parent timestamp
         prevParent.bump('mtime', msg);
       }
     }
     // ... and add
     destParent.insertChild(this, newIndex);
-
-    // add self to new parent's tab cache maybe
-    // TODO: maybe redundant?  (bkgd will notice and generate events)
-    if (this.isLoaded()) this.updateTabCache();
-    //this.updateTabCache();
 
     // bump new parent timestamp
     destParent.bump('mtime', msg);
@@ -849,10 +815,11 @@ export class Node {
   setActiveTab (tabId, notify = true) {
     // this should only be called on window nodes
     if (! this.isWindow()) return;
+    const tabList = this.getLoadedTabs();
     let tabNode;
-    if (this.tabIds) tabNode = this.tabIds[tabId];
-    // if it wasn't cached, look it up
-    if (! tabNode) {
+    for (const node of tabList) { if (tabId === node.tabId) tabNode = node; }
+    // if it wasn't found, check the entire tree
+    if (! tabNode) {  // FIXME: remove this, it shouldn't happen
       //const nodes = this.findNodes((node) =>
       const nodes = this.tree.root.findNodes((node) =>
         { return node.isLoaded() && (tabId === node.tabId); });
@@ -864,8 +831,6 @@ export class Node {
     }
 
     // mark all other active tabs in this window as not-active
-    //for (const node of this.tabs) {
-    const tabList = this.getLoadedTabs();
     for (const node of tabList) {
       if (node.isActive()) node.setActive(false, null, notify);
     }

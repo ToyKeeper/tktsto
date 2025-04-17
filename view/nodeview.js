@@ -182,10 +182,10 @@ export class NodeView extends Node {
     //if (this.hasKids() && this.isCollapsed()) {
     if (this.hasKids()) {
       //  count all open descendants
-      const openChildren = this.countDescendants(
+      const openChildren = this.countNodes(
         function (node) { return node.isLoaded(); }
       );
-      const totalChildren = this.countDescendants();
+      const totalChildren = this.countNodes();
       // only show "open" if non-zero
       if (openChildren > 0)
         statsText = `<span class="node-stats">[<span class="node-stat-open">${openChildren}</span>/<span class="node-stat-total">${totalChildren}</span>]</span> `;
