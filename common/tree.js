@@ -392,12 +392,12 @@ export class Tree {
     // if tab is boring but has kids
     else if (tabNode.hasKids()) {
       // delete the node, but keep its kids
-      return tabNode.deleteSelfAndPromoteKids({ onTabRemoved: true });
+      return tabNode.deleteSelfAndPromoteKids({ reason: 'onTabRemoved' });
     }
     // tab is a leaf node with no notes or anything interesting
     else {
       // delete boring tabs on close
-      return tabNode.deleteSelf({ onTabRemoved: true });
+      return tabNode.deleteSelf({ reason: 'onTabRemoved' });
     }
   }
 
@@ -429,7 +429,7 @@ export class Tree {
     }
     // for later use
     function doTheMove(destParent, destIndex) {
-      return tabNode.moveTo(destParent, destIndex, { onTabMoved: true });
+      return tabNode.moveTo(destParent, destIndex, { reason: 'onTabMoved' });
     }
     // get the ordered list of tabs in this windowNode
     let tabList = windowNode.getLoadedTabs();
@@ -681,10 +681,12 @@ export class Tree {
     delete this.nodes[nodeId];
     if (node.isWindow()) delete this.windows[node.windowId];
 
-    //return await node.deleteSelf(msg, false);
+    msg.reason = 'tree_nodeDeleted';
+
+    //return await node.deleteSelf(msg);
     let result;
     try {
-      result = await node.deleteSelf(msg, false);
+      result = await node.deleteSelf(msg);
     } catch (err) {
       error(`tree_nodeDeleted() error`, err);
     }
@@ -706,7 +708,8 @@ export class Tree {
       return error(`tree_nodeMoved(): couldn't find parent "${destParentId}"`);
 
     // move the node
-    return node.moveTo(destParent, destIndex, msg, false);
+    msg.reason = 'tree_nodeMoved';
+    return node.moveTo(destParent, destIndex, msg);
   }
 
   async tree_nodeChanged (msg, sender, sendResponse) {

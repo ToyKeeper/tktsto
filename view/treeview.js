@@ -317,7 +317,7 @@ export class TreeView extends Tree {
     const destIndex = prevRow.indexOf();
 
     // move it
-    this.cursor.moveTo(destParent, destIndex);
+    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
   action_moveNodeDown (event) {
@@ -349,7 +349,7 @@ export class TreeView extends Tree {
     }
 
     // move it
-    this.cursor.moveTo(destParent, destIndex);
+    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
   action_moveNodeUpNoDescend (event) {
@@ -375,7 +375,7 @@ export class TreeView extends Tree {
     }
 
     // actually move it
-    this.cursor.moveTo(destParent, destIndex);
+    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
   action_moveNodeDownNoDescend (event) {
@@ -407,7 +407,7 @@ export class TreeView extends Tree {
       //newCursor = this.cursor.nextVisibleNode();
     }
 
-    this.cursor.moveTo(destParent, destIndex);
+    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
     this.setCursor(newCursor);
   }
 
@@ -422,7 +422,7 @@ export class TreeView extends Tree {
     const destIndex = this.cursor.parent.indexOf() + 1;
 
     // move it
-    this.cursor.moveTo(destParent, destIndex);
+    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
   async addNoteAsPrevOrNextVisibleRow (position) {
@@ -511,21 +511,21 @@ export class TreeView extends Tree {
     // if leaf, just delete it... simple
     if (this.cursor.isLeaf()) {
       //debug('delete leaf node');
-      toDelete.deleteSelf();
+      toDelete.deleteSelf({ reason: 'userAction' });
     }
     // TODO: if window and has open tabs, things get complicated
     // if expanded, promote kids then delete parent
     else if (this.cursor.isExpanded()) {
       //debug('promote kids and delete parent');
       // TODO: let user configure "promote all kids" or "promote 1st child"
-      toDelete.deleteSelfAndPromoteKids();
-      //toDelete.deleteSelfAndPromote1stKid();
+      toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
+      //toDelete.deleteSelfAndPromote1stKid({ reason: 'userAction' });
     }
     // if collapsed, delete entire branch
     else {
       //toDelete.deleteRecursive();
       //debug('deleting entire branch recursively');
-      toDelete.deleteSelf();
+      toDelete.deleteSelf({ reason: 'userAction' });
     }
 
     // update the cursor
@@ -653,7 +653,7 @@ export class TreeView extends Tree {
       const pastingToSameParent = (node.parent === destParent);
       const oldIndex = node.indexOf();
       // move the node
-      await node.moveTo(destParent, destIndex);
+      await node.moveTo(destParent, destIndex, { reason: 'userAction' });
       // adjust if special case was triggered
       if (pastingToSameParent) {
         if (oldIndex < destIndex)

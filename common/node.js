@@ -87,18 +87,15 @@ export class Node {
     //this.nodes = [];  // restore this elsewhere
   }
 
-  async deleteSelf (msg, notify = true) {  //  TODO: rename this, maybe just use destroy ()
-    //debug(`Node.deleteSelf(${this.id})`, msg, notify);
+  async deleteSelf (args) {  //  TODO: rename this, maybe just use destroy ()
+    debug(`Node.deleteSelf(${args.reason}, ${this.id})`, args);
     // root should refuse to delete itself
     if (this.isRoot()) return;
-
-    // default parameters
-    if (!msg) msg = { onTabRemoved: false };
 
     // delete kids first
     if (this.hasKids()) {
       for (const node of this.nodes.slice()) {
-        await node.deleteSelf(msg, notify);
+        await node.deleteSelf(args);
       }
     }
 
@@ -106,7 +103,7 @@ export class Node {
     this.setMarked(false, { reason: 'deleteSelf' });
 
     // remove this node from its parent
-    this.parent.bump('mtime', msg);
+    this.parent.bump('mtime', args);
     this.parent.nodes.splice(this.indexOf(), 1);
     this.parent = null;
 
@@ -116,12 +113,11 @@ export class Node {
     // TODO: update ancestor stat info
 
     // bump timestamp
-    this.bump('mtime', msg);
+    this.bump('mtime', args);
     // notify others
-    if (notify)
-      await emit('tree_nodeDeleted', { nodeId: this.id,
-        onTabRemoved: msg.onTabRemoved,
-        when: this.mtime });
+    if (['userAction', 'onTabRemoved'].includes(args.reason))
+      await emit('tree_nodeDeleted',
+        { nodeId: this.id, when: this.mtime });
 
     // TODO: ideally, this should wait until all threads have finished
     //       handling the tree_nodeDeleted event, but await only waits
@@ -129,45 +125,43 @@ export class Node {
     //       the events in the correct order regardless?
 
     // close tab if it's open (but only if we're the originator of this event)
-    if (notify && this.isLoaded()) {
-      // if not already closed by browser
-      if (!msg || (!msg.onTabRemoved)) {
-        // close the tab
-        if (this.tabId) {
-          //debug(`Node.deleteSelf(${this.id}) removing tab "${this.tabId}"...`);
-          try {
-            await api.tabs.remove(this.tabId);
-            //debug(`Node.deleteSelf() removed tab: "${this.tabId}"`);
-          } catch (err) {
-            warn(`Node.deleteSelf() tried to remove tab twice: "${this.tabId}"`);
-          }
+    if (('userAction' === args.reason) && this.isLoaded()) {
+      // TODO: handle deleting a loaded window
+      // close the tab
+      if (this.tabId) {
+        //debug(`Node.deleteSelf(${this.id}) removing tab "${this.tabId}"...`);
+        try {
+          await api.tabs.remove(this.tabId);
+          //debug(`Node.deleteSelf() removed tab: "${this.tabId}"`);
+        } catch (err) {
+          warn(`Node.deleteSelf() tried to remove tab twice: "${this.tabId}"`);
         }
-        else warn(`Node.deleteSelf() can't close tab because no tabId`, this);
       }
+      else warn(`Node.deleteSelf() can't close tab because no tabId`, this);
     }
 
   }
 
-  async deleteSelfAndPromoteKids (msg, notify = true) {
+  async deleteSelfAndPromoteKids (args) {
     debug('Node.deleteSelfAndPromoteKids()');
     // root should refuse to delete itself
     if (this.isRoot()) return;
 
     // if the tab was already closed, remove its tab ID
     // so we won't try to sort it in the tab bar
-    if (notify && msg && msg.onTabRemoved) this.tabId = null;
+    if ('onTabRemoved' === args.reason) this.tabId = null;
 
     // FIXME: if this is a window with loaded tabs,
     // the tabs will need a new window... maybe just refuse the request?
 
     // take care of the kids first
-    await this.promoteKids(msg, notify);
+    await this.promoteKids(args);
 
     // remove this node from its parent
-    await this.deleteSelf(msg, notify);
+    await this.deleteSelf(args);
   }
 
-  async promoteKids (msg, notify = true) {
+  async promoteKids (args) {
     debug('Node.promoteKids()');
     // root should refuse to promote its kids
     if (this.isRoot()) return;
@@ -177,7 +171,7 @@ export class Node {
       let newIndex = this.indexOf();
       for (const node of this.nodes.slice()) {
         newIndex ++;
-        await node.moveTo(this.parent, newIndex, msg, notify);
+        await node.moveTo(this.parent, newIndex, args);
       }
     }
   }
@@ -383,7 +377,7 @@ export class Node {
     if (! this.isWindow()) return;
     // if window has no kids, just delete it
     if (! this.hasKids()) {
-      await this.deleteSelf(args, false);
+      await this.deleteSelf({ reason: 'emptyWindowClosed' });
     }
     // if window has no open tabs, mark it as unloaded
     else if (! this.hasLoadedTabs()) {
@@ -656,15 +650,12 @@ export class Node {
     node.parent = this;
   }
 
-  async moveTo (destParent, destIndex, msg, notify = true) {
-    debug('Node.moveTo()', this, destParent, destIndex);
+  async moveTo (destParent, destIndex, args) {
+    debug(`Node.moveTo(${args.reason})`, this, destParent, destIndex);
     // abort on no-op
     if ((destParent === this.parent) && (destIndex === this.indexOf()))
       return;
     // TODO: handle window nodes specially
-    //   - refuse to move one window into another
-    //   - update windowId while moving non-window nodes
-    //   - remove tabs from old window, add tabs to new window
     //   - only do actual window operations if notify=true
     //     (or maybe only do them if this.tree.bkgd exists?)
     //     (meaning we are a service worker, not a view)
@@ -682,7 +673,7 @@ export class Node {
     //     - c
     if ((this === destParent) || (this.isParentOf(destParent))) {
       debug('Node.moveTo() becoming own child, promoting kids first...');
-      await this.promoteKids(undefined, false);
+      await this.promoteKids({ reason: 'moveTo' });
     }
     // remove
     const prevParent = this.parent;
@@ -697,14 +688,14 @@ export class Node {
           newIndex -= 1;
         }
         // bump old parent timestamp
-        prevParent.bump('mtime', msg);
+        prevParent.bump('mtime', args);
       }
     }
     // ... and add
     destParent.insertChild(this, newIndex);
 
     // bump new parent timestamp
-    destParent.bump('mtime', msg);
+    destParent.bump('mtime', args);
 
     // if new parent is marked, unmark self
     if (this.marked) {
@@ -713,7 +704,9 @@ export class Node {
     }
 
     // TODO: recalculate stats
-    if (notify) {
+    if ([
+      'userAction', 'onTabMoved', 'onTabRemoved'
+    ].includes(args.reason)) {
       emit('tree_nodeMoved',
         { nodeId: this.id,
           destParentId: destParent.id, destIndex: destIndex,
