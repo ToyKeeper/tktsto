@@ -397,7 +397,7 @@ export class Node {
           when: this.mtime });
   }
 
-  async addChild (index = 0, details, msg, notify = true) {
+  async addChild (index = 0, details, args) {
     // details to pass:
     // id, note, title, url, faviconUrl, expanded
     const newNode = new this.constructor(this.tree, this);
@@ -412,13 +412,21 @@ export class Node {
     if (newNode.isWindow())
       this.tree.windows[newNode.windowId] = newNode;
     // bump timestamp
-    this.bump('mtime', msg);
+    this.bump('mtime', args);
     // tell other threads
-    if (notify) {
+    if ([
+      'userAction',
+      'onTabCreated', 'onTabAttached', 'onWindowCreated',
+      'importFile'
+    ].includes(args.reason))
       emit('tree_nodeAdded',
         { parentId: this.id, index: index, node: newNode,
           when: this.mtime });
 
+    if ([
+      'userAction',
+      'onTabCreated', 'onTabAttached', 'onWindowCreated'
+    ].includes(args.reason)) {
       // make sure the tab bar matches the tree
       await this.reorderAllTabsInThisWindow();
       this.updateOpenerTabId();
@@ -705,7 +713,7 @@ export class Node {
 
     // TODO: recalculate stats
     if ([
-      'userAction', 'onTabMoved', 'onTabRemoved'
+      'userAction', 'onTabMoved', 'onTabRemoved', 'onTabAttached'
     ].includes(args.reason)) {
       emit('tree_nodeMoved',
         { nodeId: this.id,
@@ -854,6 +862,7 @@ export class Node {
   }
 
   async reorderAllTabsInThisWindow () {
+    debug(`Node.reorderAllTabsInThisWindow():`, this);
     // abort on no-op
     if ((! this.isLoaded()) && (! this.hasLoadedTabs())) return;
     // find this tab's window

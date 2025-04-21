@@ -153,7 +153,8 @@ class Bkgd {
       }
       // TODO: if not, add new window to the tree
       else {
-        winNode = await this.onWindowCreated(window, false);
+        winNode = await this.onWindowCreated(window,
+          { reason: 'mergeOpenWindowsIntoTree' });
       }
       for (const tab of window.tabs) {
         debug(`Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
@@ -184,17 +185,19 @@ class Bkgd {
           hidden: tab.hidden,  // firefox only?
           incognito: tab.incognito,
           atime: tab.lastAccessed
-          }, null, false);
+          }, { reason: 'mergeOpenWindowsIntoTree' });
       }
     }
     log('mergeOpenWindowsIntoTree() done');
   }
 
-  async onWindowCreated (window, notify = true) {
+  async onWindowCreated (window, args) {
     // add new window to the tree
     // (note: window.id may have already been created by a prior event,
     //  so we need to search for it and attach to that node if it exists)
-    log(`bkgd.onWindowCreated: ID ${window.id}`, window);
+    debug(`bkgd.onWindowCreated: ID ${window.id}`, window);
+    if (! args) args = {};
+    if (! args.reason) args.reason = 'onWindowCreated';
     //await this.configLoaded;
     await this.treeDbLoaded;
     //await this.treeLoaded;
@@ -203,13 +206,12 @@ class Bkgd {
     const found = this.tree.root.findNodes((node) =>
       { return node.isWindow() && (node.windowId === window.id); });
     if (found.length > 0) {
+      debug('bkgd.onWindowCreated() found window', found[0]);
       const windowNode = found[0];
-      let reason = 'onWindowCreated';
-      if (! notify) reason = 'mergeOpenWindowsIntoTree';
       await windowNode.setTabFields({
         loaded: true,
         geometry: [window.width, window.height, window.left, window.top]
-      }, { reason: reason });
+      }, { reason: args.reason });
       // in case a parent tab with child tabs has *already* been moved
       // to this window (which caused the window to be created),
       // reorder the tabs to pull in the child tabs
@@ -224,7 +226,8 @@ class Bkgd {
       windowId: window.id,
       loaded: true,
       geometry: [window.width, window.height, window.left, window.top]
-    }, null, notify);
+    }, { reason: args.reason });
+    debug('bkgd.onWindowCreated() new window node', newNode);
     return newNode;
   }
 
@@ -515,7 +518,8 @@ class Bkgd {
         const destIndex = parent.nodes.length;
         const childDict = lookup(childId);
         if (! childDict) continue;
-        const newNode = await parent.addChild(destIndex, childDict);
+        const newNode = await parent.addChild(destIndex, childDict,
+          { reason: 'importFile' });
         // first node created is the "root" of this sub-tree
         if (! firstNode) firstNode = newNode;
         if (childDict.nodes) {
@@ -708,7 +712,8 @@ class Bkgd {
     async function createNodes (parent, children) {
       for (const node of children) {
         const destIndex = parent.nodes.length;
-        const newNode = await parent.addChild(destIndex, node);
+        const newNode = await parent.addChild(destIndex, node,
+          { reason: 'importFile' });
         // first node created is the "root" of this sub-tree
         if (! rootNode) rootNode = newNode;
         if (node.nodes) {

@@ -318,7 +318,7 @@ export class Tree {
         type: 'window',
         windowId: tab.windowId,
         loaded: false
-        }, null, true);
+        }, { reason: 'onTabCreated' });
     }
     let destParent = winNode;
     let destIndex = winNode.nodes.length;
@@ -366,7 +366,7 @@ export class Tree {
       hidden: tab.hidden,  // firefox only?
       incognito: tab.incognito,
       atime: tab.lastAccessed
-      }, null, true);
+      }, { reason: 'onTabCreated' });
   }
 
   onTabRemoved (tabId, removeInfo) {
@@ -518,7 +518,7 @@ export class Tree {
       windowNode = await destParent.addChild(destIndex, {
         type: 'window',
         windowId: windowId
-      }, null, true);
+      }, { reason: 'onTabAttached' });
     }
 
     // now that the tab node and window node are guaranteed to exist,
@@ -639,7 +639,8 @@ export class Tree {
     if (! parent) {
       return error(`tree_nodeAdded(): couldn't find parent "${parentId}"`);
     }
-    const newNode = await parent.addChild(index, details, msg, false);
+    msg.reason = 'tree_nodeAdded';
+    const newNode = await parent.addChild(index, details, msg);
     //const newNode = parent.nodes[index];
     //debug('tree_nodeAdded() newNode', newNode);
     if (! newNode) {

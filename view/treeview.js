@@ -473,7 +473,8 @@ export class TreeView extends Tree {
 
     // add a new Node
     const newNode = await destParent.addChild(destIndex,
-      {note: noteText, render: true});
+      { note: noteText, render: true },
+      { reason: 'userAction' });
     //log(destParent.nodes);
     this.setCursor(newNode);
     debug(`added "${newNode.note}"`);
