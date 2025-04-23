@@ -9,6 +9,7 @@ import { log, debug, warn, emit } from '/common/common.js';
 import { inputDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
 import { Tree } from '/common/tree.js';
+import { Mutex } from '/common/mutex.js';
 
 
 export class TreeView extends Tree {
@@ -56,6 +57,7 @@ export class TreeView extends Tree {
 
     // table mapping keys to actions
     // TODO: let user bind keys
+    this.keyEventMutex = new Mutex();
     this.keyBindngs = {
       // test
       //'a': 'addNode',
@@ -225,7 +227,7 @@ export class TreeView extends Tree {
     return this.dispatchInputEvent(event);
   }
 
-  dispatchInputEvent (event) {
+  async dispatchInputEvent (event) {
     // look up the event name to see if it's mapped to an action
     // ... then call that action
     const handlerName = this.keyBindngs[event.processedName];
@@ -233,12 +235,16 @@ export class TreeView extends Tree {
       // bindable actions detectable by naming convention
       const handler = this[`action_${handlerName}`];
       if (handler) {
-        // actually handle the event
-        this.setStatus(`handler: ${handlerName}`);
-        handler.bind(this)(event);  // equivalent to this.handler(event);
         // unsure if necessary
         event.preventDefault();
         event.stopPropagation();
+        // actually handle the event, but only one at a time
+        const unlock = await this.keyEventMutex.lock();
+        try {
+          this.setStatus(`handler: ${handlerName}`);
+          await handler.bind(this)(event);  // equivalent to this.handler(event);
+        }
+        finally { unlock(); }
       }
       else {
         this.setStatus(`handler not found: ${handlerName}`);
@@ -303,7 +309,7 @@ export class TreeView extends Tree {
   action_cursorPgDown (event) {
   }
 
-  action_moveNodeUp (event) {
+  async action_moveNodeUp (event) {
     debug('TreeView.action_moveNodeUp()');
 
     // if root or 1st child of root, do nothing
@@ -317,10 +323,10 @@ export class TreeView extends Tree {
     const destIndex = prevRow.indexOf();
 
     // move it
-    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
-  action_moveNodeDown (event) {
+  async action_moveNodeDown (event) {
     debug('TreeView.action_moveNodeDown()');
 
     // if root or 1st child of root, do nothing
@@ -349,10 +355,10 @@ export class TreeView extends Tree {
     }
 
     // move it
-    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
-  action_moveNodeUpNoDescend (event) {
+  async action_moveNodeUpNoDescend (event) {
     debug('TreeView.action_moveNodeUpNoDescend()');
 
     // if 1st child of root, do nothing
@@ -375,14 +381,14 @@ export class TreeView extends Tree {
     }
 
     // actually move it
-    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
   action_moveNodeDownNoDescend (event) {
     // TODO: this one is somewhat more complicated
   }
 
-  action_moveNodeRight (event) {
+  async action_moveNodeRight (event) {
     // skip no-op cases
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
@@ -407,11 +413,11 @@ export class TreeView extends Tree {
       //newCursor = this.cursor.nextVisibleNode();
     }
 
-    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
     this.setCursor(newCursor);
   }
 
-  action_moveNodeLeft (event) {
+  async action_moveNodeLeft (event) {
     // skip no-op cases
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
@@ -422,7 +428,7 @@ export class TreeView extends Tree {
     const destIndex = this.cursor.parent.indexOf() + 1;
 
     // move it
-    this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
   }
 
   async addNoteAsPrevOrNextVisibleRow (position) {
