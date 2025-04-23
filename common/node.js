@@ -109,7 +109,6 @@ export class Node {
 
     // delete from tree cache
     delete this.tree.nodes[this.id];
-    if (this.isWindow()) delete this.tree.windows[this.windowId];
     // TODO: update ancestor stat info
 
     // bump timestamp
@@ -236,11 +235,26 @@ export class Node {
     return openTabs;
   }
 
-  getWindowNode () {
-    // find the nearest open window in our ancestry
-    if (this.isWindow() && this.isLoaded()) return this;
+  getWindowNode (loadedOnly = false) {
+    // find the nearest matching window in our ancestry
+    if (this.isWindow() && ((! loadedOnly) || this.isLoaded())) return this;
     if (this.isRoot()) return null;
-    return this.parent.getWindowNode();
+    return this.parent.getWindowNode(loadedOnly);
+  }
+
+  getWindowId (windowId) {
+    if (this.isWindow() && (windowId === this.windowId)) return this;
+    // breadth-first search minimizes cpu time needed
+    // since windows tend to be near the root
+    for (const node of this.nodes) {
+      if (node.isWindow() && (windowId === node.windowId)) return node;
+    }
+    // if not found, recurse
+    for (const node of this.nodes) {
+      const found = node.getWindowId(windowId);
+      if (found) return found;
+    }
+    return null;
   }
 
   getLoadedParent () {
@@ -409,14 +423,13 @@ export class Node {
     }
     // update the tree caches
     this.tree.nodes[newNode.id] = newNode;
-    if (newNode.isWindow())
-      this.tree.windows[newNode.windowId] = newNode;
     // bump timestamp
     this.bump('mtime', args);
     // tell other threads
     if ([
       'userAction',
       'onTabCreated', 'onTabAttached', 'onWindowCreated',
+      'bkgd_loadSavedNode:autoWindow',
       'importFile'
     ].includes(args.reason))
       emit('tree_nodeAdded',
@@ -465,7 +478,7 @@ export class Node {
     // notify others
     if ([
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
-      'onWindowCreated'
+      'onWindowCreated', 'onWindowFocusChanged'
     ].includes(args.reason))
       emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',
@@ -499,33 +512,12 @@ export class Node {
     // then it's finally safe to open the tab itself
     // if not already opened by browser, opened the tab
     if ('userAction' === args.reason) {
-      // actually open the tab
-      const createProperties = {};
-
-      // When loading a saved tab, we need to attach extra data
-      // while creating the tab, to tell the onTabCreated() handler
-      // that the tab is restoring a saved tab, so it should
-      // re-attach the old Node instead of making a new one.
-      // But only place to attach data is the tab URL.
-      // So we put the nodeId in the URL instead of the real URL,
-      // and attach the real URL to the Node
-      // so it can be redirected as soon as the tab is ready for a real URL.
-      //createProperties.url = this.url;  // should be this, but
-      //createProperties.url = `about:blank?nodeId=${this.id}`;
-      createProperties.url = api.runtime.getURL('/node.html')
-        + `?id=${this.id}`;
-
-      //createProperties.active = true;  // <-- unsure if it should be active
-      // TODO: handle case when node is not in a loaded window
-      createProperties.windowId = this.windowId;
-      //createProperties.windowId = this.getWindow().windowId;
-      // TODO: figure out where this tab should go in the window
-      //createProperties.index = this.getWindowTabIndex();
-      // set openerTabId if possible
-      if (this.parent && this.parent.isLoaded() && this.parent.tabId)
-        createProperties.openerTabId = this.parent.tabId;
-      const newTab = api.tabs.create(createProperties);
-      // TODO: attach newTab to this, and delete newly-created Node
+      // there's some jank involved, so it's much easier to
+      // only let the bkgd script open the actual tab
+      // (so it can keep some internal state for its onTabCreated handler
+      //  and also open a saved window if necessary)
+      await emit('bkgd_loadSavedNode',
+        { nodeId: this.id, reason: args.reason, when: this.atime });
     }
   }
 
@@ -713,7 +705,9 @@ export class Node {
 
     // TODO: recalculate stats
     if ([
-      'userAction', 'onTabMoved', 'onTabRemoved', 'onTabAttached'
+      'userAction',
+      'onTabMoved', 'onTabRemoved', 'onTabAttached',
+      'bkgd_loadSavedNode:autoWindow'
     ].includes(args.reason)) {
       emit('tree_nodeMoved',
         { nodeId: this.id,
@@ -866,7 +860,7 @@ export class Node {
     // abort on no-op
     if ((! this.isLoaded()) && (! this.hasLoadedTabs())) return;
     // find this tab's window
-    const windowNode = this.getWindowNode();
+    const windowNode = this.getWindowNode(true);
     if (! windowNode) return;
     if (! windowNode.windowId) return;
     // get a list of all loaded tabs in this window, in order

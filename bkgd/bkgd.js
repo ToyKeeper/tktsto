@@ -28,6 +28,10 @@ class Bkgd {
     this.treeLoaded = new Promise(resolve => {
       this.resolveTreeLoaded = resolve;
     });
+    // queues for saved nodes which are in the process of being loaded
+    // (empty except during brief moments before browser opens stuff)
+    this.nodesLoading = [];
+    this.windowsLoading = [];
   }
 
   init () {
@@ -59,6 +63,8 @@ class Bkgd {
 
       this.tree = new TreeStore(this);
       this.tree.init();
+      // give the tree a link to the bkgd object
+      this.tree.bkgd = this;
       // TODO: use tree node dict as idGen ID cache
       // TODO: make IdGenerator check a cache to avoid duplicates
       //this.idGen.cache = this.tree.nodes;
@@ -148,7 +154,7 @@ class Bkgd {
       debug(`Window ID: ${window.id}`);
       // TODO: detect whether window is already in tree
       // TODO: may need to detect based on tab matching
-      let winNode = this.tree.windows[window.id];
+      let winNode = this.tree.root.getWindowId(window.id);
       if (winNode) {
       }
       // TODO: if not, add new window to the tree
@@ -201,23 +207,43 @@ class Bkgd {
     //await this.configLoaded;
     await this.treeDbLoaded;
     //await this.treeLoaded;
-    const destParent = this.tree.root;
-    const destIndex = this.tree.root.nodes.length;
-    const found = this.tree.root.findNodes((node) =>
-      { return node.isWindow() && (node.windowId === window.id); });
-    if (found.length > 0) {
-      debug('bkgd.onWindowCreated() found window', found[0]);
-      const windowNode = found[0];
-      await windowNode.setTabFields({
+
+    // are we re-opening a saved window?
+    let savedWindowNode;
+    if (this.windowsLoading.length > 0) {
+      savedWindowNode = this.windowsLoading.shift();
+      debug(`Bkgd.onWindowCreated() loadingSavedWindow=${savedWindowNode.id}`);
+    }
+    // if nothing in the queue, try searching by window ID
+    // TODO: unsure if this ever actually happens
+    if (! savedWindowNode) {
+      const found = this.tree.root.findNodes((node) =>
+        { return node.isWindow() && (node.windowId === window.id); });
+      if (found.length > 0) {
+        debug('bkgd.onWindowCreated() found window', found[0]);
+        savedWindowNode = found[0];
+      }
+    }
+    // are we re-opening a saved window?
+    if (savedWindowNode) {
+      await savedWindowNode.setTabFields({
+        type: 'window',
+        windowId: window.id,
         loaded: true,
+        //windowState: window.state,  // TODO
+        //incognito: window.incognito,  // TODO
         geometry: [window.width, window.height, window.left, window.top]
       }, { reason: args.reason });
       // in case a parent tab with child tabs has *already* been moved
       // to this window (which caused the window to be created),
       // reorder the tabs to pull in the child tabs
-      await windowNode.reorderAllTabsInThisWindow();
-      return windowNode;
+      await savedWindowNode.reorderAllTabsInThisWindow();
+      return savedWindowNode;
     }
+
+    // otherwise, create a new node for this window
+    const destParent = this.tree.root;
+    const destIndex = this.tree.root.nodes.length;
     // TODO: handle window.top, .left, .width, .height
     //       so it can re-open saved windows at same size+position
     // TODO: handle window types: normal, incognito, pop-up?, ...
@@ -225,6 +251,8 @@ class Bkgd {
       type: 'window',
       windowId: window.id,
       loaded: true,
+      //windowState: window.state,  // TODO
+      //incognito: window.incognito,  // TODO
       geometry: [window.width, window.height, window.left, window.top]
     }, { reason: args.reason });
     debug('bkgd.onWindowCreated() new window node', newNode);
@@ -236,8 +264,7 @@ class Bkgd {
     // TODO: detect whether window was closed by user or by us
     await this.treeLoaded;
     // TODO
-    debug('bkgd.tree.windows', this.tree.windows);
-    const node = this.tree.windows[windowId];
+    const node = this.tree.root.getWindowId(windowId);
     if (node) {
       debug('found window node', windowId, node);
       node.windowClosed({ reason: 'onWindowRemoved' });
@@ -247,10 +274,27 @@ class Bkgd {
     }
   }
 
-  async onWindowFocusChanged (...args) {
-    debug('bkgd.onWindowFocusChanged', ...args);
+  async onWindowFocusChanged (windowId) {
+    debug(`bkgd.onWindowFocusChanged(${windowId})`);
     // TODO: set window node as 'active' and set others as just 'loaded'?
     //   (so the focused window can have a brighter row in the tree view)
+    const node = this.tree.root.getWindowId(windowId);
+    if (node) {
+      // update the window geometry and stuff
+      // (because Firefox has no onWindowBoundsChanged event, apparently)
+      // (so this is a workaround for that)
+      const win = await api.windows.get(windowId);
+      if (win) {
+        const geom = [ win.width, win.height, win.left, win.top ];
+        node.setTabFields(
+          { geometry: geom,
+            windowState: win.state,
+            incognito: win.incognito
+          },
+          { reason: 'onWindowFocusChanged' });
+      }
+    }
+    // no node = no problem, because a non-browser window may be focused
   }
 
   async onWindowBoundsChanged (...args) {
@@ -439,6 +483,85 @@ class Bkgd {
     await this.treeLoaded;  // ensure tree is loaded before sending it
     const response = {};
     response.nodes = this.tree.serializeNodes();
+    return response;
+  }
+
+  async bkgd_loadSavedNode (msg) {
+    await this.treeLoaded;  // ensure tree is loaded
+    const response = {};
+    let node = this.tree.nodes[msg.nodeId];
+    if (! node) {
+      const err = `bkgd_loadSavedNode(): no node found: "%{msg.nodeId}"`;
+      error(err);
+      return { error: err };
+    }
+    // if already loaded, do nothing
+    if (node.isLoaded()) { return response; }
+    // - if unloaded window node... grab all "wasLoaded" items and load them?
+    if (node.isWindow()) {
+      // TODO
+    }
+    // - otherwise...
+    // - get the parent window Node
+    let windowNode = node.getWindowNode(false);
+    // - if no window node, make one
+    if (! windowNode) {
+      // get parent and node index
+      const parentNode = node.parent;
+      // insert new window node in place of current node
+      windowNode = await parentNode.addChild(node.indexOf(),
+        { type: 'window' },
+        { reason: 'bkgd_loadSavedNode:autoWindow' });
+      // move current node as child of window node
+      await node.moveTo(windowNode, 0,
+        { reason: 'bkgd_loadSavedNode:autoWindow' });
+    }
+    // - if window not loaded, push window node to be loaded
+    let needsWindow = false;
+    if (! windowNode.isLoaded()) {
+      debug(`bkgd_loadSavedNode(): needsWindow`, windowNode);
+      needsWindow = true;
+      // TODO
+      this.windowsLoading.push(windowNode);
+      // TODO: actually open the window?
+    }
+    // - push node to be loaded, and open it (new window or existing window)
+    this.nodesLoading.push(node);
+    // actually open the tab
+    const createProperties = {};
+    createProperties.url = node.url;
+    // work around Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=1412498
+    if (isFirefox && ['about:newtab', 'about:home'].includes(node.url))
+      createProperties.url = 'about:blank';
+    // opening as first tab in new window
+    if (needsWindow) {
+      createProperties.type = 'normal';
+      // set window size and position
+      // TODO: save and restore 'state': fullscreen, maximized, minimized
+      if (windowNode.geometry && (4 === windowNode.geometry.length)) {
+        createProperties.width = windowNode.geometry[0];
+        createProperties.height = windowNode.geometry[1];
+        createProperties.left = windowNode.geometry[2];
+        createProperties.top = windowNode.geometry[3];
+      }
+      // TODO: set incognito?  (node doesn't check this data yet)
+      if (windowNode.incognito) createProperties.incognito = true;
+      debug('bkgd_loadSavedNode() creating saved window', createProperties);
+      api.windows.create(createProperties);
+    }
+    // opening as new tab in existing window
+    else {
+      createProperties.windowId = windowNode.windowId;
+      // assign an "openerTab" if one exists
+      const openerNode = node.getLoadedParent();
+      if (openerNode) createProperties.openerTabId = openerNode.tabId;
+      // TODO: set index
+      api.tabs.create(createProperties);
+    }
+    //response.tabId = newTab.id;  // doesn't exist yet
+    // TODO: need to modify onTabCreated and onWindowCreated
+    //   to check a queue of nodes which are in the process of being loaded
+    if (! response.result) response.result = 'ok';
     return response;
   }
 

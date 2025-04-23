@@ -44,8 +44,6 @@ export class Tree {
     this.root.nodes = [];
     // cache all nodes by ID
     this.nodes = { 'root': this.root };
-    // cache all windows by ID
-    this.windows = {};
   }
 
   nodeMarkChanged (node) {
@@ -121,7 +119,6 @@ export class Tree {
 
     // update caches
     this.nodes[node.id] = node;
-    if ('window' === node.type) this.windows[node.windowId] = node;
     // build the node
     node.fromDict(nodeDict);
     this.nodeMarkChanged(node);  // update our mark cache
@@ -217,21 +214,6 @@ export class Tree {
     return found[0];
   }
 
-  getSavedTabNodeId (tab, url) {
-    const tabNodeUrl = api.runtime.getURL('/node.html') + '?id=';
-    const minusProtocol = tabNodeUrl.split('://')[1];  // strip "protocol://"
-    let tabPendingUrl = url;
-    if (undefined === tabPendingUrl)
-      tabPendingUrl = this.getTabPendingUrl(tab);
-    if ((tabPendingUrl.startsWith(tabNodeUrl))
-      || tabPendingUrl.startsWith(minusProtocol)
-    ) {
-      const nodeId = tabPendingUrl.split('/node.html?id=')[1];
-      return nodeId;
-    }
-    return null;
-  }
-
   getTabPendingUrl (tab) {
     if (tab.pendingUrl) return tab.pendingUrl;  // chrome
     if ('about:blank' === tab.url) {  // firefox
@@ -268,42 +250,32 @@ export class Tree {
     //   which doesn't exist yet.  :(
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
 
+    // are we loading a saved tab?
+    let savedTabNode;
+    if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
+      savedTabNode = this.bkgd.nodesLoading.shift();
+      debug(`Tree.onTabCreated() loadingSavedTab=${savedTabNode.id}`);
+    }
+
+    // if we're loading a saved tab,
+    // use that node instead of making a new one
+    if (savedTabNode) {
+      debug(`Tree.onTabCreated(): restoring nodeId=${savedTabNode.id}`);
+      // re-attach this tab to the found Node
+      await savedTabNode.setTabFields({
+        tabId: tab.id,
+        loaded: true
+      }, { reason: 'onTabCreated' });
+      // put the tab in the right position
+      await savedTabNode.reorderAllTabsInThisWindow();
+      return;
+    }
+
     // figure out which URL this new tab is going to
     const tabPendingUrl = this.getTabPendingUrl(tab);
-    const loadingSavedTabNodeId = this.getSavedTabNodeId(tab);
-    debug(`Tree.onTabCreated() loadingSavedTabNodeId=${loadingSavedTabNodeId} tabPendingUrl: ${tabPendingUrl}`);
 
-    // detect whether tab was opened *BY US*
-    // if so, attach it to the existing Tree Node
-    // instead of creating a new one
-    if (loadingSavedTabNodeId) {
-      const nodeId = loadingSavedTabNodeId;
-      debug(`Tree.onTabCreated(): restoring nodeId=${nodeId}`);
-      const node = this.nodes[nodeId];
-      if (node) {
-        // re-attach this tab to the found Node
-        await node.setTabFields({
-          tabId: tab.id,
-          loaded: true
-        }, { reason: 'onTabCreated' });
-        // put the tab in the right position
-        await node.reorderAllTabsInThisWindow();
-        // restore the tab's metadata
-        // (doesn't work if we do it here)
-        // (need to wait for tab.status='complete' first)
-        // (because the request is ignored if we do it here)
-        // (so it gets redirected later,
-        //  during onTabUpdated({status:'complete'}) event)
-        // I'm sad that this doesn't work:
-        //await api.tabs.update(tab.id, { url: node.url });
-        api.tabs.update(tab.id, { url: node.url });
-        return;
-      }
-      debug(`Tree.onTabCreated(): restoring node failed`);
-    }
-    //       ... in an appropriate position
     // find the window Node
-    let winNode = this.windows[tab.windowId];
+    let winNode = this.root.getWindowId(tab.windowId);
     if (! winNode) {
       // this usually means the user just opened a new window, and
       // the browser generated onTabCreated BEFORE doing an onWindowCreated
@@ -402,9 +374,13 @@ export class Tree {
   }
 
   onTabActivated (windowId, tabId) {
-    const windowNode = this.windows[windowId];
+    const windowNode = this.root.getWindowId(windowId);
     if (! windowNode) {
-      // FIXME: WTF, shouldn't happen, big error here
+      // can happen when loading saved tab in saved window,
+      // because onWindowCreated doesn't happen until
+      // after the onTabActivated event for the first tab
+      if (this.bkgd && (this.bkgd.windowsLoading.length > 0))
+        return;  // not an error, just a browser quirk
       return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
     windowNode.setActiveTab(tabId, { reason: 'onTabActivated' });
@@ -417,7 +393,7 @@ export class Tree {
     // moveInfo.toIndex: number
     // moveInfo.windowId: number
     // get the tabNode and winNode
-    const windowNode = this.windows[moveInfo.windowId];
+    const windowNode = this.root.getWindowId(moveInfo.windowId);
     if (! windowNode) {
       // FIXME: WTF, shouldn't happen, big error here
       return error(`Tree.onTabMoved() can't find windowId="${moveInfo.windowId}"`);
@@ -547,26 +523,6 @@ export class Tree {
     // if tab doesn't exist, do nothing
     if (! tabNode) return warn(`Tree.onTabUpdated(${tabId}): no tab found`);
 
-    // if this tab was being restored, finish that process
-    const savedTabNodeId = this.getSavedTabNodeId(tab, tab.url);
-    if (savedTabNodeId) {
-      // redirect to saved tab URL as soon as the browser allows
-      if ('complete' === changeInfo.status) {
-        // work around Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=1412498
-        if (isFirefox &&
-          (('about:newtab' === tabNode.pendingUrl)
-            || ('about:home' === tabNode.pendingUrl))
-        ) tabNode.pendingUrl = 'about:blank';
-        // send tab to the correct URL
-        api.tabs.update(tab.id, { url: tabNode.pendingUrl });
-        // prevent possible infinite loop
-        tabNode.pendingUrl = undefined;
-      }
-      // don't send updates to Node while saved tab is being redirected
-      // (this eats the 'loading' and 'complete' events)
-      return;
-    }
-
     // change ... multiple things
     let changes = {};  // only changes we care about
     for (const field of
@@ -647,10 +603,6 @@ export class Tree {
       return error(`tree_nodeAdded(): failed to add node "${details.id}"`);
     }
     this.nodes[newNode.id] = newNode;
-    if (newNode.isWindow()) {
-      this.windows[newNode.windowId] = newNode;
-      debug('Tree.windows[] added', newNode.windowId, this.windows);
-    }
     debug(`tree_nodeAdded() added "${newNode.id}" to "${parent.id}"`);
     //debug('Tree root:', this.root);
   }
@@ -680,7 +632,6 @@ export class Tree {
     }
     // un-cache and delete it
     delete this.nodes[nodeId];
-    if (node.isWindow()) delete this.windows[node.windowId];
 
     msg.reason = 'tree_nodeDeleted';
 
@@ -769,7 +720,6 @@ export class Tree {
     // un-cache and delete it (?)
     // (a closed window object may just be unloaded, not deleted)
     //delete this.nodes[nodeId];
-    delete this.windows[node.windowId];
     msg.reason = 'tree_windowClosed';
     return await node.windowClosed(msg);
   }
