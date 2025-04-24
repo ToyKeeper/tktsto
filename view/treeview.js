@@ -168,6 +168,8 @@ export class TreeView extends Tree {
     // build the hover menu
     this.$renderHoverMenu();
 
+    // ensure the current tab is visible when sidepanel opens
+    this.moveCursorToActiveTab();
   }
 
   async loadTreeFromBkgd () {
@@ -941,6 +943,29 @@ export class TreeView extends Tree {
     while ((!parent.isRoot()) && (! parent.isVisible()))
       parent = parent.parent;
     this.setCursor(parent);
+  }
+
+  async moveCursorToActiveTab () {
+    // find the current window in the tree
+    const win = await api.windows.getCurrent();
+    const windowId = win.id;
+    //debug(`windowId: ${windowId}`);
+    let found = this.root.findNodes((node) => {
+      return (node.isWindow() && (windowId === node.windowId));
+    });
+    // abort if not found
+    if (found.length <= 0) return;
+
+    // make sure window node is at the top of the view
+    const windowNode = found[0];
+    windowNode.scrollToTop();
+    //debug(`windowNode: ${windowNode.windowId}`);
+    // show the active tab and put the cursor on it
+    const activeTabNode = windowNode.getActiveTab();
+    if (activeTabNode) {
+      this.setCursor(activeTabNode);
+      //activeTabNode.scrollIntoView();
+    }
   }
 
   updateDetailsBox () {
