@@ -490,6 +490,9 @@ export class NodeView extends Node {
     // (when the user moved tabs via the tab bar)
     this.tree.ensureCursorVisible();
 
+    // ensure cursor is in the viewport
+    if (this.tree.cursor) this.tree.cursor.scrollIntoView();
+
     // TODO: move tabs around
     // TODO: handle window changes
     if (this.window !== this.parent.window) {
