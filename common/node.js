@@ -323,6 +323,22 @@ export class Node {
 
   isActive () { return this.active; }
 
+  isUnloadable () {
+    if (this.loaded || this.wasLoaded) return true;
+    return false;
+  }
+
+  isMarkable () {
+    if (this.isRoot()) return false;
+    if (this.isWindow()) return false;  // TODO: unnecessary maybe?
+    return true;
+  }
+
+  isDeletable () {
+    if (this.isRoot()) return false;
+    return true;
+  }
+
   markedBy () {
     if (this.marked) return this;
     else if (this.isRoot()) return null;
@@ -714,8 +730,10 @@ export class Node {
           destParentId: destParent.id, destIndex: destIndex,
           when: destParent.mtime });
 
-      // TODO: if a loaded tab was moved so it's not in a window,
+      // TODO: if loaded tab moved to unloaded window, load the window
+      // TODO: if loaded tab moved so it's not in a window,
       //   create a new window to hold it
+      // (and in both cases, handle all loaded kids)
 
       if (this.isLoaded() || this.hasLoadedTabs())
         await destParent.reorderAllTabsInThisWindow();

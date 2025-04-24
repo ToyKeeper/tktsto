@@ -39,6 +39,9 @@ export class TreeView extends Tree {
     // count of marked nodes when non-zero
     this.$markedCount = this.document.getElementById('marked-count');
 
+    // node row hover menu
+    this.$hoverMenu = this.document.getElementById('hover-menu');
+
     // TODO: buttons to zoom this TreeView
     // https://developer.chrome.com/docs/extensions/reference/api/tabs#type-ZoomSettings
     // api.tabs.setZoom(tabId?, zoomFactor, callback?)
@@ -161,6 +164,9 @@ export class TreeView extends Tree {
 
     // apply the user's detail box setting
     this.$renderDetailsBtn();
+
+    // build the hover menu
+    this.$renderHoverMenu();
 
   }
 
@@ -288,6 +294,7 @@ export class TreeView extends Tree {
         // unsure if necessary
         event.preventDefault();
         event.stopPropagation();
+        this.hideHoverMenu();
         // actually handle the event, but only one at a time
         const unlock = await this.keyEventMutex.lock();
         try {
@@ -356,7 +363,8 @@ export class TreeView extends Tree {
     if (handlerName) {
       const handler = this[`action_${handlerName}`];
       if (handler) {
-        this.setStatus(`mouse: ${handlerName}`);
+        if ('mouseHoverMenu' !== handlerName)
+          this.setStatus(`mouse: ${handlerName}`);
         // eat default browser action unless handler wants it
         if ('none' !== handlerName) {
           event.preventDefault();
@@ -366,6 +374,13 @@ export class TreeView extends Tree {
         await handler.bind(this)(event);
       }
     }
+  }
+
+  whichCursor (event) {
+    // decide whether to act on mouse hover node or keyboard cursor node
+    // based on the event type
+    if ('click' === event.type) return this.mouseNode;
+    else return this.cursor;
   }
 
   action_none (event) { }
@@ -620,30 +635,36 @@ export class TreeView extends Tree {
   action_addChild (event) {
   }
 
-  action_deleteNode(event) {
+  async action_deleteNode(event) {
     debug('deleteNode');
     // abort if nothing to delete
     if (this.root.nodes.length <= 0) return;
-    if (! this.cursor) return;
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
+    // skip no-op cases
+    if (! cursor) return;
     // never delete root
-    if (this.cursor.isRoot()) return;
+    if (cursor.isRoot()) return;
 
     // figure out where to put the cursor after deletion
-    // move to next row when possible
-    let newCursor = this.cursor.nextVisibleNode();
-    // move to prev row if cursor is already on the last row
-    if (newCursor === this.cursor) newCursor = this.cursor.prevVisibleNode();
+    let newCursor = this.cursor;  // default if cursor === mouseNode
+    if (cursor === this.cursor) {
+      // move to next row when possible
+      newCursor = this.cursor.nextVisibleNode();
+      // move to prev row if cursor is already on the last row
+      if (newCursor === this.cursor) newCursor = this.cursor.prevVisibleNode();
+    }
 
     // delete depending on the node type and state
-    const toDelete = this.cursor;
+    const toDelete = cursor;
     // if leaf, just delete it... simple
-    if (this.cursor.isLeaf()) {
+    if (cursor.isLeaf()) {
       //debug('delete leaf node');
       toDelete.deleteSelf({ reason: 'userAction' });
     }
     // TODO: if window and has open tabs, things get complicated
     // if expanded, promote kids then delete parent
-    else if (this.cursor.isExpanded()) {
+    else if (cursor.isExpanded()) {
       //debug('promote kids and delete parent');
       // TODO: let user configure "promote all kids" or "promote 1st child"
       toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
@@ -651,9 +672,21 @@ export class TreeView extends Tree {
     }
     // if collapsed, delete entire branch
     else {
-      //toDelete.deleteRecursive();
       //debug('deleting entire branch recursively');
+      // TODO: ask the user for confirmation
+      const numToDelete = 1 + toDelete.countNodes();
+      const result = await this.inputDialog({
+        doc: document,
+        title: 'Delete Nodes',
+        input: false,
+        description: `Really delete ${numToDelete} nodes?`,
+        buttons: ['Cancel', 'OK']  // Cancel is default
+      });
+      // abort if user cancelled
+      if ((!result) || ('OK' !== result.button)) return;
+      // otherwise, actually delete it
       toDelete.deleteSelf({ reason: 'userAction' });
+      this.setStatus(`${numToDelete} nodes deleted`);
     }
 
     // update the cursor
@@ -662,11 +695,13 @@ export class TreeView extends Tree {
 
   action_unloadNode(event) {
     debug('action_unloadNode');
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
     // abort if nothing to unload
-    if (! this.cursor) return;
-    //if (! this.cursor.isLoaded()) return;
+    if (! cursor) return;
+    //if (! cursor.isLoaded()) return;
 
-    this.cursor.unload({ reason: 'userAction' });
+    cursor.unload({ reason: 'userAction' });
   }
 
   action_loadOrEditNode(event) {
@@ -702,18 +737,20 @@ export class TreeView extends Tree {
 
   async action_editNote (event) {
     debug('action_editNote()');
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
     // skip no-op cases
-    if (! this.cursor) return;
+    if (! cursor) return;
 
     // prompt for new note text
     const result = await this.inputDialog({
       doc: document,
       title: 'Edit Note',
       description: 'Title',
-      value: this.cursor.note,
+      value: cursor.note,
       textArea: true,
       textAreaLabel: 'Notes',
-      textAreaValue: this.cursor.longNote
+      textAreaValue: cursor.longNote
     });
     // abort if user cancelled
     if ((!result) || ('OK' !== result.button)) return;
@@ -721,15 +758,17 @@ export class TreeView extends Tree {
     const noteText = result.value;
     const longNoteText = result.textAreaValue;
     debug('action_editNote():', noteText, longNoteText);
-    this.cursor.setNote(noteText, longNoteText, { reason: 'userAction' });
+    cursor.setNote(noteText, longNoteText, { reason: 'userAction' });
   }
 
   action_toggleMarked (event) {
     debug('action_toggleMarked()');
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
     // skip no-op cases
-    if (! this.cursor) return;
-    const toggled = ! this.cursor.marked;
-    this.cursor.setMarked(toggled, { reason: 'userAction' });
+    if (! cursor) return;
+    const toggled = ! cursor.marked;
+    cursor.setMarked(toggled, { reason: 'userAction' });
   }
 
   async action_unmarkAll (event) {
@@ -816,6 +855,65 @@ export class TreeView extends Tree {
         await this.action_toggleExpanded(event);
       }
     }
+  }
+
+  action_mouseHoverMenu (event) {
+    if (this.mouseNode && this.$mouseRow) return this.showHoverMenu();
+    else return this.hideHoverMenu();
+  }
+
+  $renderHoverMenu () {
+    const doc = this.document;
+
+    function makeBtn (_this, className, label, funcName) {
+      const $div = doc.createElement('div');
+      $div.classList.add(className);
+      $div.innerText = label;
+      // TODO: get label from user's keybinding table
+      //let binding;
+      // make the button do something when clicked
+      const func = _this[`action_${funcName}`];
+      if (func) $div.addEventListener('click', func.bind(_this));
+      // add the button to the menu
+      _this.$hoverMenu.append($div);
+      return $div;
+    }
+    if (! this.$hoverMenuUnload) {
+      this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'U', 'unloadNode');
+    }
+    if (! this.$hoverMenuMark) {
+      this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');
+    }
+    if (! this.$hoverMenuEdit) {
+      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNote');
+    }
+    if (! this.$hoverMenuDelete) {
+      this.$hoverMenuDelete = makeBtn(this, 'delete-button', 'D', 'deleteNode');
+    }
+  }
+
+  hideHoverMenu () {
+    this.$hoverMenu.classList.add('hidden');
+  }
+
+  showHoverMenu () {
+    // adjust menu position
+    const rect = this.$mouseRow.getBoundingClientRect();
+    this.$hoverMenu.style.top = String(rect.top + window.scrollY - 3) + 'px';
+    // show or hide the 'unload' button
+    if (this.mouseNode.isUnloadable())
+      this.$hoverMenuUnload.style.display = 'inline-block';
+    else this.$hoverMenuUnload.style.display = 'none';
+    // show or hide the 'mark' button
+    if (this.mouseNode.isMarkable())
+      this.$hoverMenuMark.style.display = 'inline-block';
+    else this.$hoverMenuMark.style.display = 'none';
+    // show or hide the 'delete' button
+    if (this.mouseNode.isDeletable())
+      this.$hoverMenuDelete.style.display = 'inline-block';
+    else this.$hoverMenuDelete.style.display = 'none';
+    // show the menu
+    this.$hoverMenu.classList.remove('hidden');
   }
 
   setCursor (node) {

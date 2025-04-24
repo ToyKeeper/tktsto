@@ -484,6 +484,64 @@ html, body {
   background: #0004;
 }
 
+/******************** Node / row hover menu ********************/
+
+#hover-menu {
+  position: absolute;
+  right: 0px;
+  height: var(--row-line-height);
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 7px;
+  padding-right: 0px;
+  background: #456;
+  border-radius: 2em 0 0 2em;
+  border: 1px outset #678;
+  box-shadow: 0.2em 0.2em 0.4em #000000c0;
+}
+
+#hover-menu div {
+  display: inline-block;
+  cursor: pointer;
+  width: calc(var(--row-line-height) + 0.1rem);
+  height: calc(var(--row-line-height) - 0.1rem);
+  font-size: 133%;
+  font-weight: bold;
+  color: #abc;
+  text-align: center;
+  padding: 0 0 2px 0;
+  text-shadow: var(--fancy-text-shadow);
+}
+
+#hover-menu div:hover {
+  background: #678;
+  border-radius: 6px;
+  box-shadow: 0.1em 0.1em 0.2em #000000c0;
+  color: #fff;
+}
+
+#hover-menu div:active {
+  color: #000;
+  background: #456;
+  box-shadow: none;
+}
+
+#hover-menu .unload-button {
+  color: var(--tab-unloaded-fg);
+}
+
+#hover-menu .edit-button {
+  color: var(--note-loaded-fg);
+}
+
+#hover-menu .delete-button {
+  color: var(--delete-button-fg);
+}
+
+#hover-menu .mark-button {
+  color: var(--marked-count-color);
+}
+
 /******************** input dialogs ********************/
 
 #inputDialog {
@@ -639,6 +697,8 @@ html, body {
   --cursor-radius-expanded: 6px 6px 0 0;
   /***** marked nodes *****/
   --marked-node-shadow: 0 0 10px gold;
+  /***** hover menu *****/
+  --delete-button-fg: #f00;
   /* --marked-row-outline: 1px solid gold; */
   --marked-row-outline: 1px solid orange;
   --marked-row-shadow: 0 0 10px orange;
