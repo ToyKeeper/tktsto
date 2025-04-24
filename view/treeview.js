@@ -23,7 +23,7 @@ export class TreeView extends Tree {
     this.window = window;
 
     this.$ = this.document.getElementById('tree-view');
-    this.$ul = this.document.getElementById('tree-root');
+    this.$treeRoot = this.document.getElementById('tree-root');
 
     this.cursor = null;
     // shows info about most recent event
@@ -116,6 +116,21 @@ export class TreeView extends Tree {
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
     };
+    // mouse click bindings
+    this.mouseBindings = {
+      // mouseover should show a hover menu thingy
+      'MouseOver': 'mouseHoverMenu',
+      // do nothing on 'click' event
+      'MouseClickLeft': 'rejectEvent',
+      // double click does the same thing as 'Enter'
+      'MouseDblClickLeft': 'loadOrEditNode',
+      // place cursor and maybe expand/collapse node
+      'MousePressLeft': 'mousePressLeft',
+      // allow middle click to pass as-is, and open link in a new tab
+      'MousePressMiddle': 'none',
+      // allow right click to open normal context menu
+      'MousePressRight': 'none',
+    };
   }
 
   destroy () {
@@ -124,6 +139,7 @@ export class TreeView extends Tree {
   async init () {
     super.init();
     this.initKeyHandler();
+    this.initMouseHandler();
     this.initButtonHandlers();
     await this.initBkgdPort();
     this.initBkgdPing();
@@ -136,7 +152,7 @@ export class TreeView extends Tree {
     this.root.$render();
     this.root.$.classList.add('root-nodes');
     //this.root.$nodes.classList.remove('hidden');
-    this.$ul.appendChild(this.root.$);
+    this.$treeRoot.appendChild(this.root.$);
     //this.$.appendChild(this.root.$row);
     //this.$.appendChild(this.root.$nodes);
     //this.$root = this.document.createElement('ul');
@@ -210,20 +226,54 @@ export class TreeView extends Tree {
     );
   }
 
+  initMouseHandler () {
+    // block default click on tree nodes (left click shouldn't open links)
+    this.$treeRoot.addEventListener('click',
+      (event) => { this.mouseEvent('click', event) });
+    this.$treeRoot.addEventListener('mousedown',
+      (event) => { this.mouseEvent('mousedown',event) });
+    this.$treeRoot.addEventListener('dblclick',
+      (event) => { this.mouseEvent('dblclick', event) });
+    this.$treeRoot.addEventListener('mouseover',
+      (event) => { this.mouseEvent('mouseover', event) });
+  }
+
+  buildEventName (event) {
+    const shift = (event.shiftKey && (event.key != 'Shift')) ? 'Shift+' : '';
+    const ctrl = (event.ctrlKey && (event.key != 'Control')) ? 'Ctrl+' : '';
+    const alt = (event.altKey && (event.key != 'Alt')) ? 'Alt+' : '';
+    const meta = (event.metaKey && (event.key != 'Meta')) ? 'Meta+' : '';
+    let eventName;
+    if ('keydown' === event.type) {
+      let eventKey = event.key;
+      if (eventKey === ' ') eventKey = 'Space';
+      eventName = eventKey;
+    }
+    else if (['mousedown', 'mouseup', 'click', 'dblclick'].includes(event.type)) {
+      const buttonNames = ['Left', 'Middle', 'Right'];
+      const clickNames = { mousedown: 'Press', mouseup: 'Release',
+        click: 'Click', dblclick: 'DblClick' };
+      const buttonName = buttonNames[event.button];
+      const clickName = clickNames[event.type];
+      if (buttonName) {
+        eventName = `Mouse${clickName}${buttonName}`;
+      }
+    }
+    else if ('mouseover' === event.type) {
+      eventName = 'MouseOver';
+    }
+    const fullEventName = `${shift}${ctrl}${alt}${meta}${eventName}`;
+    event.processedName = fullEventName;
+    return fullEventName;
+  }
+
   keyHandler (event) {
     // don't try to handle key events while a dialog is visible
     if (this.dialogActive) return;
     // calculate a more complete name for this event,
     // then call the keyboard event dispatcher
-    const shift = (event.shiftKey && (event.key != 'Shift')) ? 'Shift+' : '';
-    const ctrl = (event.ctrlKey && (event.key != 'Control')) ? 'Ctrl+' : '';
-    const alt = (event.altKey && (event.key != 'Alt')) ? 'Alt+' : '';
-    const meta = (event.metaKey && (event.key != 'Meta')) ? 'Meta+' : '';
-    let eventKey = event.key;
-    if (eventKey === ' ') eventKey = 'Space';
-    const keyName = `${shift}${ctrl}${alt}${meta}${eventKey}`;
+    const keyName = this.buildEventName(event);
     this.setStatus(`keydown: ${keyName}`);
-    event.processedName = keyName;
     return this.dispatchInputEvent(event);
   }
 
@@ -241,7 +291,7 @@ export class TreeView extends Tree {
         // actually handle the event, but only one at a time
         const unlock = await this.keyEventMutex.lock();
         try {
-          this.setStatus(`handler: ${handlerName}`);
+          this.setStatus(`key: ${handlerName}`);
           await handler.bind(this)(event);  // equivalent to this.handler(event);
         }
         finally { unlock(); }
@@ -252,7 +302,78 @@ export class TreeView extends Tree {
     }
   }
 
+  async mouseEvent (eventType, event) {
+    // don't try to handle mouse events while a dialog is visible
+    if (this.dialogActive) return;
+    //debug(`mouseEvent(${eventType}):`, event);
+    // assign an event name based on modifier keys, event type, mouse button
+    const eventName = this.buildEventName(event);
+    //this.setStatus(`mouse: ${eventName}`);
+    // identify which row the event was in, if any
+    let node;  // which Tree Node object was clicked?
+    let $target = event.target;
+    let $node;  // Node's ul.node element
+    let $row;  // Node's div.row element
+    let $elem;  // most specific element we care about
+    while ($target) {
+      const className = $target.classList[0];
+      if ((! $elem) && [
+        'node-stats', 'node-link', 'node-note',
+        'row', 'node' ].includes(className)
+      ) $elem = $target;
+      if ($target.classList.contains('row')) $row = $target;
+      if ($target.classList.contains('node')) {
+        $node = $target;
+        break;  // don't search outside the current node
+      }
+      $target = $target.parentNode;
+    }
+    if ($node && $node.id.startsWith('node')) {
+      const nodeId = $node.id.slice(4);
+      node = this.nodes[nodeId];
+    }
+    // save these so event handlers can use them
+    this.mouseNode = node;
+    this.$mouseNode = $node;
+    this.$mouseRow = $row;
+    this.$mouseElem = $elem;
+    //debug(`node: ${node.id}`, node);
+    // identify which part of the row the event was in
+    let rowX, rowY, rowWid, rowHgt;
+    if ($row) {
+      rowX = event.clientX - $row.offsetLeft;
+      rowY = event.clientY - $row.offsetTop;
+      rowWid = $row.clientWidth;
+      rowHgt = $row.clientHeight;
+    }
+    this.$mouseRowX = rowX;
+    this.$mouseRowY = rowY;
+    this.$mouseRowWid = rowWid;
+    this.$mouseRowHgt = rowHgt;
+
+    // call a handler
+    const handlerName = this.mouseBindings[eventName];
+    if (handlerName) {
+      const handler = this[`action_${handlerName}`];
+      if (handler) {
+        this.setStatus(`mouse: ${handlerName}`);
+        // eat default browser action unless handler wants it
+        if ('none' !== handlerName) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        // equivalent to this.handler(event);
+        await handler.bind(this)(event);
+      }
+    }
+  }
+
   action_none (event) { }
+
+  action_rejectEvent (event) {  // block browser's default handler
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
   action_cursorUp (event) {
     if (! this.cursor) return this.setCursor(this.root);
@@ -677,6 +798,24 @@ export class TreeView extends Tree {
 
   async action_backupSession (event) {
     return await this.downloadBackupNow();
+  }
+
+  async action_mousePressLeft (event) {
+    // abort on no-op
+    if (! this.mouseNode) return;
+    // place the cursor
+    await this.setCursor(this.mouseNode);
+    // maybe toggle expanded
+    if (this.$mouseRow) {
+      // if user clicked the left ~1em of the row, toggle expand
+      // (or if they clicked the node stats widget)
+      if ((this.$mouseRowX <= this.$mouseRowHgt)
+        || (this.$mouseElem
+          && this.$mouseElem.classList.contains('node-stats'))
+      ) {
+        await this.action_toggleExpanded(event);
+      }
+    }
   }
 
   setCursor (node) {
