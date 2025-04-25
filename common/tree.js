@@ -56,6 +56,17 @@ export class Tree {
     }
   }
 
+  async unmarkAll (args) {
+    //debug('Tree.unmarkAll()');
+    // iterate over a copy of the array,
+    // since the original will be modified while iterating
+    for (const nodeId of this.markedNodes.slice()) {
+      const node = this.nodes[nodeId];
+      //debug(`unmarking "${nodeId}"`);
+      await node.setMarked(false, args);
+    }
+  }
+
   async loadTreeFromBkgd () {
     // TODO: get entire tree state from bkgd
     //   ... and populate this tree with that data

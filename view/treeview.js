@@ -144,6 +144,8 @@ export class TreeView extends Tree {
     this.initKeyHandler();
     this.initMouseHandler();
     this.initButtonHandlers();
+    this.windowObj = await api.windows.getCurrent();
+    this.windowId = this.windowObj.id;
     await this.initBkgdPort();
     this.initBkgdPing();
     // TODO: load the nodes from storage and render them
@@ -706,7 +708,11 @@ export class TreeView extends Tree {
     cursor.unload({ reason: 'userAction' });
   }
 
-  action_loadOrEditNode(event) {
+  action_loadNode(event) {
+    return this.action_loadOrEditNode(event, false);
+  }
+
+  action_loadOrEditNode(event, allowEdit = true) {
     debug('action_loadOrEditNode');
     // abort if nothing to do
     if (! this.cursor) return;
@@ -725,7 +731,7 @@ export class TreeView extends Tree {
     }
     // if note or focused tab, edit it
     else {
-      this.action_editNote(event);
+      if (allowEdit) this.action_editNote(event);
     }
   }
 
@@ -775,13 +781,7 @@ export class TreeView extends Tree {
 
   async action_unmarkAll (event) {
     debug('action_unmarkAll()');
-    // iterate over a copy of the array,
-    // since the original will be modified while iterating
-    for (const nodeId of this.markedNodes.slice()) {
-      const node = this.nodes[nodeId];
-      //debug(`unmarking "${nodeId}"`);
-      await node.setMarked(false, { reason: 'userAction' });
-    }
+    return await this.unmarkAll({ reason: 'userAction' });
   }
 
   async action_pasteMarked (event) {
@@ -1064,5 +1064,37 @@ export class TreeView extends Tree {
     msg.node.render = true;
     return super.tree_nodeAdded(msg, sender, sendResponse);
   }
+
+  async onMessage (msg, sender, sendResponse) {
+    // if message not for us, let parent class handle it
+    if (!(msg && msg.msg && msg.msg.startsWith('treeview_')))
+      return super.onMessage(msg, sender, sendResponse);
+
+    debug(`TreeView.onMessage(${msg.msg})`, this.windowId);
+
+    // ignore messages for other windows
+    if (msg.windowId !== this.windowId) return;
+
+    debug(`TreeView.onMessage(${msg.msg})`, msg);
+    if ('treeview_onCommand' === msg.msg) {
+      // don't do any of this when a dialog box exists
+      if (this.dialogActive) return;
+      // turn this off in case it's still visible
+      this.hideHoverMenu();
+      // find the matching 'action_doStuff' function
+      const actionName = `action_${msg.action}`;
+      const handler = this[actionName];
+      // actually handle the event, but only one at a time
+      const unlock = await this.keyEventMutex.lock();
+      try {
+        this.setStatus(`key: ${msg.action}`);
+        // event type tells handlers to use keyboard cursor, not mouse
+        await handler.bind(this)({ type: 'command' });
+      }
+      finally { unlock(); }
+      return;
+    }
+  }
+
 }
 

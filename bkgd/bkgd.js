@@ -95,9 +95,8 @@ class Bkgd {
     //api.action.onClicked.addListener((...args) => {
     //  this.onExtensionIconClicked(...args);
     //});
-    //api.commands.onCommand.addListener((...args) => {
-    //  this.onGlobalHotkeyCommand(...args);
-    //});
+    // global hotkey "commands"
+    api.commands.onCommand.addListener( this.onCommand.bind(this) );
   }
 
   initWindowListeners () {
@@ -857,6 +856,59 @@ class Bkgd {
     // return the root of the new subtree
     //debug('rootNode:', rootNode);
     return rootNode;
+  }
+
+  async onCommand (command, tab) {
+    debug(`Bkgd.onCommand(${command})`, tab);
+    const bkgdCommands = [
+      'unloadCurrentTab',
+      'unmarkAll',
+      'backupSession',
+    ];
+    // decide whether Bkgd or TreeView should handle the command
+    if (bkgdCommands.includes(command)) {
+      // Bkgd can handle this
+      const handler = this[`command_${command}`];
+      // actually handle the event
+      await handler.bind(this)(tab);
+      return;
+    }
+    // otherwise, send the command to the current window's TreeView
+    // get the focused window
+    const window = await chrome.windows.getLastFocused();
+    if (window) {
+      debug(`Bkgd.onCommand(${command})`, window);
+      // send a message to the sidepanel of that window
+      emit(`treeview_onCommand`, {
+        windowId: window.id,
+        action: command,
+        tab: tab
+      });
+    }
+  }
+
+  command_unloadCurrentTab (tab) {
+    debug('Bkgd.command_unloadCurrentTab()', tab);
+    let tabNode;
+    if (tab) {
+      tabNode = this.tree.getNodeByTabId(tab.id);
+    } else {
+      // TODO? find the current tab
+      // (maybe ... maybe not, because if 'tab' is undefined,
+      //  that probably means there isn't one and we should do nothing)
+    }
+    if (! tabNode) { return; }
+    return tabNode.unload({ reason: 'userAction' });
+  }
+
+  command_unmarkAll (tab) {
+    debug('Bkgd.command_unmarkAll()');
+    return this.tree.unmarkAll({ reason: 'userAction' });
+  }
+
+  command_backupSession (tab) {
+    debug('Bkgd.command_backupSession()');
+    return this.tree.downloadBackupNow();
   }
 
 }

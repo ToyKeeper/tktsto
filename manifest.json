@@ -35,74 +35,77 @@
     "commands": {
         "_execute_action": {
             "description": "Toggle Side Panel",
-            "suggested_key": { "default": "Alt+T" }
+            "suggested_key": { "default": "Ctrl+1" }
         },
-        "toggle_side_panel": {
-            "description": "Open Side Panel"
+        "backupSession": {
+            "description": "Back up session now"
         },
-        "cursor_up": {
-            "description": "Move cursor up"
-        },
-        "cursor_down": {
-            "description": "Move cursor down"
-        },
-        "cursor_pgup": {
-            "description": "Move cursor up 1 page"
-        },
-        "cursor_pgdown": {
-            "description": "Move cursor down 1 page"
-        },
-        "cursor_home": {
-            "description": "Move cursor to first sibling"
-        },
-        "cursor_end": {
-            "description": "Move cursor to last sibling"
-        },
-        "move_node_up": {
-            "description": "Move highlighted node up"
-        },
-        "move_node_down": {
-            "description": "Move highlighted node down"
-        },
-        "move_node_home": {
-            "description": "Move highlighted node up to first position"
-        },
-        "move_node_end": {
-            "description": "Move highlighted node down to last position"
-        },
-        "move_node_left": {
-            "description": "Move highlighted node left (toward parent)"
-        },
-        "move_node_left": {
-            "description": "Move highlighted node right (child of prev sibling)"
-        },
-        "toggle_current_node_expanded": {
-            "description": "Expand/Collapse current node"
-        },
-        "open_current_node": {
-            "description": "Open current node"
-        },
-        "unload_current_tab": {
+        "unloadCurrentTab": {
             "description": "Unload current tab",
             "suggested_key": { "default": "Alt+U" }
         },
-        "edit_current_note": {
-            "description": "Edit current node's note"
+        "cursorUp": {
+            "description": "Move cursor up"
         },
-        "cut_current_node": {
-            "description": "Delete/cut current node and its children"
+        "cursorDown": {
+            "description": "Move cursor down"
         },
-        "copy_current_node": {
-            "description": "Yank/copy current node and its children"
+        "cursorLeft": {
+            "description": "Move cursor left (to parent)"
         },
-        "paste_after_cursor": {
-            "description": "Paste last copied/deleted item after cursor"
+        "cursorRight": {
+            "description": "Move cursor right (to 1st child)"
         },
-        "paste_before_cursor": {
-            "description": "Paste last copied/deleted item before cursor"
+        "cursorPgUp": {
+            "description": "Move cursor up 1 page"
         },
-        "manual_backup_now": {
-            "description": "Back up session now"
+        "cursorPgDown": {
+            "description": "Move cursor down 1 page"
+        },
+        "cursorHome": {
+            "description": "Move cursor home (up to first sibling)"
+        },
+        "cursorEnd": {
+            "description": "Move cursor end (down to last sibling)"
+        },
+        "loadNode": {
+            "description": "Load or switch to highlighted node"
+        },
+        "unloadNode": {
+            "description": "Unload highlighted node"
+        },
+        "toggleExpanded": {
+            "description": "Expand/Collapse highlighted node"
+        },
+        "toggleMarked": {
+            "description": "Mark or unmark the current node"
+        },
+        "unmarkAll": {
+            "description": "Unmark all nodes"
+        },
+        "pasteMarked": {
+            "description": "Move marked nodes to after cursor"
+        },
+        "pasteMarkedBefore": {
+            "description": "Move marked nodes to before cursor"
+        },
+        "moveNodeUp": {
+            "description": "Move highlighted node up"
+        },
+        "moveNodeDown": {
+            "description": "Move highlighted node down"
+        },
+        "moveNodeLeft": {
+            "description": "Move highlighted node left (toward parent)"
+        },
+        "moveNodeRight": {
+            "description": "Move highlighted node right (child of prev sibling)"
+        },
+        "moveNodeHome": {
+            "description": "Move highlighted node home (up to first sibling)"
+        },
+        "moveNodeEnd": {
+            "description": "Move highlighted node end (down to last sibling)"
         }
     }
 }
