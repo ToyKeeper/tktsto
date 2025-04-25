@@ -1,0 +1,91 @@
+/* themes/tk-night.css: TK theme night palette
+ * Copyright (C) 2025 Selene ToyKeeper
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+/******************** vars ********************/
+
+:root {
+  /***** globals *****/
+  --shadow-color: #000000c0;
+  --fancy-text-shadow:
+    #00000060 -0.05em  0      0.02em, /* outline */
+    #00000060  0.05em  0      0.02em,
+    #00000060  0      -0.05em 0.02em,
+    #00000060  0       0.05em 0.02em,
+    #00000060 -0.03em -0.03em 0.02em,
+    #00000060 -0.03em  0.03em 0.02em,
+    #00000060  0.03em -0.03em 0.02em,
+    #00000080  0.05em 0.05em 0.10em, /* shadow */
+    #000000c0  0.07em 0.10em 0.15em,
+    #000000f0  0.10em 0.15em 0.25em;
+  --medium-text-shadow:
+    #00000040 -0.05em  0      0.02em, /* outline */
+    #00000040  0.05em  0      0.02em,
+    #00000040  0      -0.05em 0.02em,
+    #00000040  0       0.05em 0.02em,
+    #00000040 -0.03em -0.03em 0.02em,
+    #00000040 -0.03em  0.03em 0.02em,
+    #00000040  0.03em -0.03em 0.02em,
+    #00000060  0.05em 0.05em 0.10em, /* shadow */
+    #00000080  0.07em 0.10em 0.15em,
+    #000000a0  0.10em 0.15em 0.25em;
+  /***** main tree view *****/
+  --tree-view-bg: #1c1b22;
+  --note-loaded-fg: #12ee6a;
+  --note-was-loaded-fg: #e70e9d;
+  --note-unloaded-fg: #1aab54;
+  /* --note-long-fg: #5c9; */
+  --note-long-fg: var(--details-label-fg);
+  --note-title-sep-fg: #49d;
+  --tab-active-fg: #fff;
+  --tab-loaded-fg: #eee;
+  --tab-was-loaded-fg: #f73f96;
+  --tab-unloaded-fg: #999;
+  /***** tree lines *****/
+  --tree-line: #567;
+  --tree-line-med: #68a;
+  --tree-line-cursor: #aad4ee;
+  /***** window nodes *****/
+  --window-row-bg: linear-gradient(150deg, #134372, transparent);
+  --window-active-fg: #fff;
+  --window-loaded-fg: #ccc;
+  --window-unloaded-fg: #8696a7;
+  --window-title-text-shadow: var(--fancy-text-shadow);
+  --window-branch-hl: #0e0e1c;
+  --window-branch-top: #1a1a29;
+  --window-branch-bot: #16161f;
+  --window-branch-shadow: 0.10em 0.10em 0.25em var(--shadow-color);
+  /***** cursor *****/
+  --cursor-bg-top: #57b;
+  --cursor-bg-bot: #235;
+  --cursor-shadow: 0.1em 0.1em 0.2em var(--shadow-color);
+  --cursor-branch-hl: #444;
+  --cursor-branch-top: #383838;
+  --cursor-branch-bot: #2c2c2c;
+  --cursor-branch-shadow: 0.15em 0.15em 0.333em var(--shadow-color);
+  /***** marked nodes *****/
+  --marked-node-shadow: 0 0 10px gold;
+  /***** hover menu *****/
+  --delete-button-fg: #f00;
+  /* --marked-row-outline: 1px solid gold; */
+  --marked-row-outline: 1px solid orange;
+  --marked-row-shadow: 0 0 10px orange;
+  --marked-count-color: gold;
+  /***** toolbars *****/
+  --toolbar-bg: #333;
+  --toolbar-fg: #ccc;
+  --top-toolbar-edge: 5px solid #282828;
+  --bottom-toolbar-edge: 5px solid #3c3c3c;
+  /***** node stats *****/
+  /***** node detail box *****/
+  --details-box-bg: #333;
+  --details-box-fg: #ccc;
+  --details-label-fg: #ccc;
+  --details-value-fg: #aaa;
+  /***** input dialogs *****/
+  --dialog-fg: #ccc;
+  --dialog-title-fg: #fff;
+  --dialog-input-bg: #222;
+  --dialog-input-border: #444;
+}
+

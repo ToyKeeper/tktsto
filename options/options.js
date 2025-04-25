@@ -35,7 +35,7 @@ function initClientIdForm () {
   });
 }
 
-function initBackupsForm () {
+function initThemeForm () {
   // humanFriendlyBackups checkbox
   const $humanFriendlyBackups = document.getElementById('humanFriendlyBackups');
   api.storage.local.get('humanFriendlyBackups').then((result) => {
@@ -48,6 +48,34 @@ function initBackupsForm () {
     //debug(`humanFriendlyBackups: ${$humanFriendlyBackups.checked}`, $humanFriendlyBackups);
     const humanFriendlyBackups = $humanFriendlyBackups.checked;
     api.storage.local.set({ humanFriendlyBackups });
+  });
+}
+
+function initBackupsForm () {
+  // theme selector
+  const $theme = document.getElementById('theme');
+  api.storage.local.get('theme').then((result) => {
+    if (undefined !== result.theme) {
+      $theme.value = result.theme;
+    }
+  });
+  // save when changed
+  $theme.addEventListener('change', (event) => {
+    const theme = $theme.value;
+    api.storage.local.set({ theme });
+  });
+
+  // expandedRowPrefix checkbox
+  const $expandedRowPrefix = document.getElementById('expandedRowPrefix');
+  api.storage.local.get({'expandedRowPrefix': true}).then((result) => {
+    if (undefined !== result.expandedRowPrefix) {
+      $expandedRowPrefix.checked = result.expandedRowPrefix;
+    }
+  });
+  // save on click
+  $expandedRowPrefix.addEventListener('click', (event) => {
+    const expandedRowPrefix = $expandedRowPrefix.checked;
+    api.storage.local.set({ expandedRowPrefix });
   });
 }
 
@@ -133,6 +161,7 @@ function initSessionRestoreForm () {
 document.addEventListener('DOMContentLoaded', () => {
   log('options.js loaded');
   initClientIdForm();
+  initThemeForm();
   initBackupsForm();
   initSessionRestoreForm();
 });

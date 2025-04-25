@@ -25,6 +25,12 @@ export class TreeView extends Tree {
     this.$ = this.document.getElementById('tree-view');
     this.$treeRoot = this.document.getElementById('tree-root');
 
+    // stylesheets
+    this.$themeBase = this.document.getElementById('theme-base');
+    this.$themeVariant = this.document.getElementById('theme-variant');
+    this.$styleOptions = this.document.getElementById('style-options');
+    this.$userStyles = this.document.getElementById('user-styles');
+
     this.cursor = null;
     // shows info about most recent event
     //this.$statusBar = this.document.getElementById('status-bar');
@@ -144,8 +150,15 @@ export class TreeView extends Tree {
     this.initKeyHandler();
     this.initMouseHandler();
     this.initButtonHandlers();
+    this.initStorageObserver();
+    // get the window this view is attached to
     this.windowObj = await api.windows.getCurrent();
     this.windowId = this.windowObj.id;
+    // init stylesheets
+    this.updateTheme();
+    this.updateStyleOptions();
+    this.updateUserStyles();
+    // init connection to bkgd
     await this.initBkgdPort();
     this.initBkgdPing();
     // TODO: load the nodes from storage and render them
@@ -200,6 +213,53 @@ export class TreeView extends Tree {
 
   setStatus (msg) {
     this.$statusText.textContent = msg;
+  }
+
+  initStorageObserver () {
+    api.storage.onChanged.addListener( this.storageObserver.bind(this) );
+  }
+
+  storageObserver (changes) {
+    if (changes.expandedRowPrefix) {
+      this.updateStyleOptions();
+    }
+    if (changes.theme) {
+      this.updateTheme();
+    }
+  }
+
+  async updateTheme () {
+    const themes = {
+      'TK Night': ['tk', 'tk-night'],
+      'TK Day': ['tk', 'tk-day']
+    };
+    const data = await api.storage.local.get('theme');
+    if (data.theme && themes[data.theme]) {
+      const theme = themes[data.theme];
+      this.$themeBase.href = `/themes/${theme[0]}.css`;
+      this.$themeVariant.href = `/themes/${theme[1]}.css`;
+    }
+  }
+
+  async updateStyleOptions () {
+    let styleText = '';
+    let data;
+    // '+' marker drawn before expanded rows?
+    data = await api.storage.local.get({ 'expandedRowPrefix': true });
+    let expandedRowPrefix = '';
+    if (data.expandedRowPrefix) {
+      styleText = styleText
+        + "\n.expanded.row::before {"
+        + `\n  content: "+";`
+        + '\n  margin-left: -2px;'
+        + '\n  margin-right: -2px;'
+        + '\n}';
+    }
+    // apply the changes
+    this.$styleOptions.textContent = styleText;
+  }
+
+  updateUserStyles () {
   }
 
   updateMarkedCount () {

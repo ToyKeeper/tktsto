@@ -26,7 +26,7 @@ else
 fi
 
 # copy subdirs
-SUBDIRS="bkgd common docs img options view"
+SUBDIRS="bkgd common docs img options themes view"
 for d in $SUBDIRS ; do
   mkdir -p "build/$d"
   cp \
@@ -40,5 +40,7 @@ done
 
 mkdir -p dist
 cd build
-zip -r ../dist/"$PROGRAM"-"$VERSION"-"$BROWSER".zip *
+ZIPFILE=../dist/"$PROGRAM"-"$VERSION"-"$BROWSER".zip
+rm -f "$ZIPFILE"
+zip -r "$ZIPFILE" *
 

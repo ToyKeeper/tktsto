@@ -67,6 +67,25 @@
   </form>
 
 
+  <h2>Theme</h2>
+
+  <div>
+    Theme:
+    <select id="theme" name="theme">
+      <option value="TK Night">TK Night</option>
+      <option value="TK Day">TK Day</option>
+    </select>
+  </div>
+
+  <div>
+    <p>
+    <label>
+    <input type="checkbox" id="expandedRowPrefix" name="expandedRowPrefix">
+    Draw a <code>+</code> before expanded branches?
+    </label>
+    </p>
+  </div>
+
   <h2>Backups</h2>
 
   <div>
@@ -74,10 +93,10 @@
     Backup files can either be human friendly (easier to view in a text editor)
     or not (smaller files).
     </p>
-    <p>
+    <label>
     <input type="checkbox" id="humanFriendlyBackups" name="humanFriendlyBackups">
     Human readable backup files
-    </p>
+    </label>
   </div>
 
   <h2>Import Session Files</h2>
