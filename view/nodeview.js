@@ -491,17 +491,7 @@ export class NodeView extends Node {
     this.tree.ensureCursorVisible();
 
     // ensure cursor is in the viewport
-    if (this.tree.cursor) this.tree.cursor.scrollIntoView();
-
-    // TODO: move tabs around
-    // TODO: handle window changes
-    if (this.window !== this.parent.window) {
-      // moved to new window
-      this.window = this.parent.window;
-      if (this.isLoaded()) {
-        // TODO: move tab to new window
-      }
-    }
+    if (this === this.tree.cursor) this.scrollIntoView();
   }
 
   setExpanded (expanded, ...extra) {
