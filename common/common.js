@@ -51,7 +51,7 @@ export function dateTupleStrings (date) {
   const result = [
     // year, month, day, hour, minute, second, ms, weekday, tzOffsetMinutes
     String(date.getFullYear()).padStart(4,'0'),
-    String(date.getMonth()).padStart(2,'0'),
+    String(date.getMonth()+1).padStart(2,'0'),  // getMonth() is 0 to 11
     String(date.getDate()).padStart(2,'0'),
     String(date.getHours()).padStart(2,'0'),
     String(date.getMinutes()).padStart(2,'0'),
