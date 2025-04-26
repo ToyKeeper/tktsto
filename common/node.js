@@ -418,8 +418,8 @@ export class Node {
     // windows require special care
     // this shouldn't happen, but just in case, ignore non-windows
     if (! this.isWindow()) return;
-    // if window has no kids, just delete it
-    if (! this.hasKids()) {
+    // if window is boring and has no kids, just delete it
+    if ((! this.hasKids()) && (! this.shouldUnloadNotDelete())) {
       await this.deleteSelf({ reason: 'emptyWindowClosed' });
     }
     // if window has no open tabs, mark it as unloaded
