@@ -943,11 +943,11 @@ export class TreeView extends Tree {
     if (! this.$hoverMenuUnload) {
       this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'U', 'unloadNode');
     }
-    if (! this.$hoverMenuMark) {
-      this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');
-    }
     if (! this.$hoverMenuEdit) {
       this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNote');
+    }
+    if (! this.$hoverMenuMark) {
+      this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');
     }
     if (! this.$hoverMenuDelete) {
       this.$hoverMenuDelete = makeBtn(this, 'delete-button', 'D', 'deleteNode');
