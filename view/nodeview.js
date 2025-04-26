@@ -355,10 +355,10 @@ export class NodeView extends Node {
     if (! details.id) { details.id = await this.newNodeId(); }
     // create new Node object
     const newNode = await super.addChild(index, details, ...extra);
-    newNode.window = this.window;  // redundant?
+    //newNode.window = this.window;  // redundant?
 
     // display it
-    if (details.render) {
+    if (details.render && newNode.isChildOf(this.tree.viewRoot, true)) {
       //this.expandAndShow();
       this.$nodes.classList.remove('hidden');
 
@@ -489,6 +489,11 @@ export class NodeView extends Node {
     // (this can happen when a collapsed parent is becoming its own child)
     // (when the user moved tabs via the tab bar)
     this.tree.ensureCursorVisible();
+
+    // if our window node was moved and we're a window-only view,
+    // redraw the tree
+    if ((this === this.tree.viewRoot) && ('window' === this.tree.viewScope))
+      this.tree.$renderWholeTree();
 
     // ensure cursor is in the viewport
     if (this === this.tree.cursor) this.scrollIntoView();

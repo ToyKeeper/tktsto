@@ -339,6 +339,19 @@ export class Node {
     return true;
   }
 
+  isChildOf (node, includeSelf = false) {
+    if (! node) return includeSelf;
+    if (this === node) return includeSelf;
+    if (node.isRoot()) return true;
+    if (this.isRoot()) return false;
+    let search = this;
+    while (! search.isRoot()) {
+      if (node === search.parent) return true;
+      search = search.parent;
+    }
+    return false;
+  }
+
   markedBy () {
     if (this.marked) return this;
     else if (this.isRoot()) return null;
@@ -595,10 +608,12 @@ export class Node {
     return this.parent.nodes[this.parent.nodes.length - 1];
   }
 
-  prevVisibleNode () {
+  prevVisibleNode (root) {
     // TODO: check if we're visible.  If not, return nearest visible parent
     // root node has no previous row
     if (this.isRoot()) return this;
+    if (root === this) return this;
+    if (root && (! this.isChildOf(root, false))) return root;
 
     const myIndex = this.indexOf();
 
@@ -622,23 +637,27 @@ export class Node {
     return lastChild.lastVisibleDescendant();
   }
 
-  nextVisibleNode () {
+  nextVisibleNode (root) {
     // TODO: check if we're visible.  If not, return nearest visible parent
+    if (root && (! this.isChildOf(root, true))) return root;
 
     // if we have visible kids, return the first child
     if (this.hasKids() && this.isExpanded()) return this.nodes[0];
 
     // otherwise, search without looking at kids
-    const nextNode = this.nextVisibleNodeNoKids();
+    const nextNode = this.nextVisibleNodeNoKids(root);
     // avoid wrapping from last node to root
     if (nextNode.isRoot()) return this;
+    // ensure still in root
+    if (root && (! nextNode.isChildOf(root, true))) return this;
     // otherwise, assume this is correct
     return nextNode;
   }
 
-  nextVisibleNodeNoKids () {
+  nextVisibleNodeNoKids (root) {
     // if we're root, there is no next non-child row
     if (this.isRoot()) return this;
+    if (root && (this === root)) return this;
 
     // if we're not the last child, return next sibling
     const myIndex = this.indexOf();
@@ -651,11 +670,11 @@ export class Node {
     return this.parent.nextVisibleNodeNoKids();
   }
 
-  nextVisibleNodeNotMyChild () {
+  nextVisibleNodeNotMyChild (root) {
     // find next visible node... but exclude our own kids
     const wasExpanded = this.expanded;
     this.expanded = false;
-    const result = this.nextVisibleNode();
+    const result = this.nextVisibleNode(root);
     this.expanded = wasExpanded;
     return result;
   }

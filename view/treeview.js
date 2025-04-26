@@ -32,6 +32,9 @@ export class TreeView extends Tree {
     this.$userStyles = this.document.getElementById('user-styles');
 
     this.cursor = null;
+
+    this.$viewScopeBtn = this.document.getElementById('view-scope-btn');
+
     // shows info about most recent event
     //this.$statusBar = this.document.getElementById('status-bar');
     this.$statusText = this.document.getElementById('status-text');
@@ -154,6 +157,8 @@ export class TreeView extends Tree {
     // get the window this view is attached to
     this.windowObj = await api.windows.getCurrent();
     this.windowId = this.windowObj.id;
+    // TODO: load config...
+    this.nodesPerPage = 20;
     // init stylesheets
     this.updateTheme();
     this.updateStyleOptions();
@@ -162,20 +167,17 @@ export class TreeView extends Tree {
     await this.initBkgdPort();
     this.initBkgdPing();
     // TODO: load the nodes from storage and render them
-    await this.loadTreeFromBkgd();
+    await this.loadTreeFromBkgd(false);
 
     //this.root = new NodeView(this, null, this.window);
     this.root.window = this.window;
-    //this.root.$ = this.$;
-    this.root.$render();
-    this.root.$.classList.add('root-nodes');
-    //this.root.$nodes.classList.remove('hidden');
-    this.$treeRoot.appendChild(this.root.$);
-    //this.$.appendChild(this.root.$row);
-    //this.$.appendChild(this.root.$nodes);
-    //this.$root = this.document.createElement('ul');
-    //this.$root.classList.add('root-nodes');
-    //this.$.append(this.$root);
+
+    // figure out which window we are and whether to view the whole tree
+    this.windowNode = this.root.getWindowId(this.windowId);
+    this.viewScope = await this.getWindowConfig('viewScope', 'session');
+    this.$renderViewScopeBtn();
+
+    this.$renderWholeTree();
 
     // apply the user's detail box setting
     this.$renderDetailsBtn();
@@ -187,7 +189,7 @@ export class TreeView extends Tree {
     this.moveCursorToActiveTab();
   }
 
-  async loadTreeFromBkgd () {
+  async loadTreeFromBkgd (render = true) {
     // save any state which needs to be restored on new Tree
     let oldCursor;
     if (this.cursor) {
@@ -198,9 +200,7 @@ export class TreeView extends Tree {
     await super.loadTreeFromBkgd();
 
     // render ... everything
-    //this.renderWholeTree();
-    this.root.$renderChildren();
-    this.root.$render();
+    if (render) this.$renderWholeTree();
 
     this.updateMarkedCount();
 
@@ -209,6 +209,26 @@ export class TreeView extends Tree {
       const newCursor = this.nodes[oldCursor];
       this.setCursor(newCursor);
     }
+  }
+
+  $renderWholeTree () {
+    // display the entire tree
+    if (('session' === this.viewScope) || (! this.windowNode))
+      this.viewRoot = this.root;
+    // display only this window
+    else if ('window' === this.viewScope)
+      this.viewRoot = this.windowNode;
+    // show the nodes
+    this.viewRoot.$render();
+    this.viewRoot.$renderChildren();
+    if (this.root.$) this.root.$.classList.add('root-nodes');
+    // add the view root node to the page
+    if (this.$treeRoot.childNodes.length > 0) {
+      this.$treeRoot.replaceChild(
+        this.viewRoot.$,
+        this.$treeRoot.childNodes[0]);
+    }
+    else this.$treeRoot.appendChild(this.viewRoot.$);
   }
 
   setStatus (msg) {
@@ -226,6 +246,25 @@ export class TreeView extends Tree {
     if (changes.theme) {
       this.updateTheme();
     }
+  }
+
+  async getWindowConfig (varName, defaultValue) {
+    // can't do anything unless we know which window we are
+    if (! this.windowNode) return;
+    // load from config, per window
+    const key = `TreeView.${varName}.${this.windowNode.id}`;
+    const result = await api.storage.local.get(key);
+    if (undefined !== result[key]) return result[key];
+    return defaultValue;
+  }
+
+  setWindowConfig (varName, value) {
+    // can't do anything unless we know which window we are
+    if (! this.windowNode) return;
+    // save button state to config storage, per window
+    const vars = {};
+    vars[`TreeView.${varName}.${this.windowNode.id}`] = value;
+    return api.storage.local.set(vars);
   }
 
   async updateTheme () {
@@ -457,19 +496,20 @@ export class TreeView extends Tree {
   action_cursorUp (event) {
     if (! this.cursor) return this.setCursor(this.root);
     // move up one row
-    this.setCursor(this.cursor.prevVisibleNode());
+    this.setCursor(this.cursor.prevVisibleNode(this.viewRoot));
   }
 
   action_cursorDown (event) {
     if (! this.cursor) return this.setCursor(this.root);
     // move down one row
-    this.setCursor(this.cursor.nextVisibleNode());
+    this.setCursor(this.cursor.nextVisibleNode(this.viewRoot));
   }
 
   action_cursorLeft (event) {  // move cursor to parent
     if (! this.cursor) return this.setCursor(this.root);
     // ignore if root
     if (this.cursor.isRoot()) return;
+    if (this.viewRoot === this.cursor) return;
     // move to parent
     this.setCursor(this.cursor.parent);
   }
@@ -494,28 +534,46 @@ export class TreeView extends Tree {
   action_cursorHome (event) {
     if (! this.cursor) return this.setCursor(this.root);
     // move to first sibling
-    this.setCursor(this.cursor.firstSibling());
+    const node = this.cursor.firstSibling();
+    if (node.isChildOf(this.viewRoot, true))
+      this.setCursor(node);
   }
 
   action_cursorEnd (event) {
     if (! this.cursor) return this.setCursor(this.root);
     // move to last sibling
-    this.setCursor(this.cursor.lastSibling());
+    const node = this.cursor.lastSibling();
+    if (node.isChildOf(this.viewRoot, true))
+      this.setCursor(node);
   }
 
   action_cursorPgUp (event) {
+    if (! this.cursor) return this.setCursor(this.root);
+    // move up N rows
+    let node = this.cursor;
+    for (let i=0; i<this.nodesPerPage; i++)
+      node = node.prevVisibleNode(this.viewRoot);
+    this.setCursor(node);
   }
 
   action_cursorPgDown (event) {
+    if (! this.cursor) return this.setCursor(this.root);
+    // move up N rows
+    let node = this.cursor;
+    for (let i=0; i<this.nodesPerPage; i++)
+      node = node.nextVisibleNode(this.viewRoot);
+    this.setCursor(node);
   }
 
   async action_moveNodeUp (event) {
     debug('TreeView.action_moveNodeUp()');
 
-    // if root or 1st child of root, do nothing
+    // if root or 1st child of root, or if outside of root, do nothing
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
+    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
     if (this.cursor.parent.isRoot() && (0 === this.cursor.indexOf())) return;
+    if ((this.cursor.parent === this.viewRoot) && (0 === this.cursor.indexOf())) return;
 
     // node can be moved up; take position of previous visible row
     const prevRow = this.cursor.prevVisibleNode();
@@ -529,18 +587,20 @@ export class TreeView extends Tree {
   async action_moveNodeDown (event) {
     debug('TreeView.action_moveNodeDown()');
 
-    // if root or 1st child of root, do nothing
+    // if root, or outside of root, do nothing
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
+    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
 
     // take position of next visible row outside our own branch, probably
-    const nextRow = this.cursor.nextVisibleNodeNotMyChild();
+    const nextRow = this.cursor.nextVisibleNodeNotMyChild(this.viewRoot);
     // figure out where to move to
     let destParent;
     let destIndex;
     // if we're the last row in the tree, promote to last child of parent
     if (nextRow === this.cursor) {
       if (this.cursor.parent.isRoot()) return;
+      if (this.cursor.parent === this.viewRoot) return;
       destParent = this.cursor.parent.parent;
       destIndex = this.cursor.parent.indexOf() + 1;
     }
@@ -564,7 +624,9 @@ export class TreeView extends Tree {
     // if 1st child of root, do nothing
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
+    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
     if (this.cursor.parent.isRoot() && (0 === this.cursor.indexOf())) return;
+    if ((this.cursor.parent === this.viewRoot) && (0 === this.cursor.indexOf())) return;
 
     // node can be moved up
     let destParent;
@@ -592,6 +654,7 @@ export class TreeView extends Tree {
     // skip no-op cases
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
+    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
     // if already first child, do nothing
     if (0 === this.cursor.indexOf()) return;
 
@@ -622,6 +685,8 @@ export class TreeView extends Tree {
     if (! this.cursor) return;
     if (this.cursor.isRoot()) return;
     if (this.cursor.parent.isRoot()) return;
+    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
+    if (! this.cursor.parent.isChildOf(this.viewRoot, false)) return;
 
     // become next sibling of parent
     const destParent = this.cursor.parent.parent;
@@ -652,7 +717,7 @@ export class TreeView extends Tree {
     let destIndex = 0;
     if (this.cursor) {
       // if root, just make new 1st child
-      if (this.cursor.isRoot()) {
+      if (this.cursor.isRoot() || (this.cursor === this.viewRoot)) {
         destParent = this.cursor;
         destIndex = 0;
       }
@@ -695,10 +760,6 @@ export class TreeView extends Tree {
     return await this.addNoteAsPrevOrNextVisibleRow('prev');
   }
 
-  // TODO
-  action_addChild (event) {
-  }
-
   async action_deleteNode(event) {
     debug('deleteNode');
     // abort if nothing to delete
@@ -709,6 +770,11 @@ export class TreeView extends Tree {
     if (! cursor) return;
     // never delete root
     if (cursor.isRoot()) return;
+    if (cursor === this.viewRoot) return;
+    // don't delete an open window
+    if (this.cursor.isWindow() && this.cursor.isLoaded()) return;
+    // do nothing if cursor is outside of viewRoot
+    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
 
     // figure out where to put the cursor after deletion
     let newCursor = this.cursor;  // default if cursor === mouseNode
@@ -1065,6 +1131,10 @@ export class TreeView extends Tree {
   }
 
   initButtonHandlers () {
+    // when view-scope-btn clicked, toggle session vs window view mode
+    this.$viewScopeBtn.addEventListener('click', () => {
+      this.onViewScopeBtnClick();
+    });
     // when details-btn clicked, toggle the details box
     this.$detailsBtn.addEventListener('click', () => {
       this.onDetailsBtnClick();
@@ -1073,6 +1143,24 @@ export class TreeView extends Tree {
     this.$backupBtn.addEventListener('click', () => {
       this.onBackupBtnClick();
     });
+  }
+
+  onViewScopeBtnClick () {
+    if ('session' === this.viewScope) this.viewScope = 'window';
+    else this.viewScope = 'session';
+    // save button state to config storage, per window
+    this.setWindowConfig('viewScope', this.viewScope);
+    // update the display
+    this.$renderViewScopeBtn();
+    this.$renderWholeTree();
+    this.setStatus(`View scope: ${this.viewScope}`);
+  }
+
+  $renderViewScopeBtn () {
+    // Capitalize word and place it inside the button
+    const label = this.viewScope.charAt(0).toUpperCase()
+      + this.viewScope.slice(1);
+    this.$viewScopeBtn.innerText = label;
   }
 
   onDetailsBtnClick () {
