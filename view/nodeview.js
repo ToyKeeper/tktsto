@@ -388,6 +388,10 @@ export class NodeView extends Node {
     }
     // otherwise, render and insert child elements
     node.$render();
+    // rare corner case: this.$nodes is null
+    // when this gets called in a window while the window is closing
+    if (! this.$nodes) this.$render();
+    // show our node list
     this.$nodes.classList.remove('hidden');
     // attach new node in the correct location
     const prevElementAtIndex = this.$nodes.children[index];
