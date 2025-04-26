@@ -1,6 +1,6 @@
 // options/options.js: options page script
 // Copyright (C) 2025 Selene ToyKeeper
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';

@@ -1,6 +1,6 @@
 // id-generator.js: generate unique IDs
 // Copyright (C) 2025 Selene ToyKeeper
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-or-later
 
 // generates IDs in the form "abcdefghij-123-name"
 // where the first part is a timestamp (ms resolution) (base32)

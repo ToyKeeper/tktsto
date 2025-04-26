@@ -1,5 +1,7 @@
 #!/bin/sh
-# make the extension .zip file for browsers to load
+# make-zip.sh: make the extension .zip file for browsers to load
+# Copyright (C) 2025 Selene ToyKeeper
+# SPDX-License-Identifier: AGPL-3.0-or-later
 
 BROWSER=${1:-chromium}
 PROGRAM="tktsto"
