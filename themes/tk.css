@@ -377,7 +377,7 @@ html, body {
 .window.row {
   background: var(--window-row-bg);
   text-shadow: var(--window-title-text-shadow);
-  font-weight: bold;
+  font-weight: normal;
   color: var(--window-unloaded-fg);
   border-radius: var(--cursor-radius-collapsed);
 }
@@ -399,6 +399,7 @@ html, body {
 .window.row.active .node-note {
   /* the current window is brighter */
   color: var(--window-active-fg);
+  font-weight: bold;
 }
 
 /******************** cursor ********************/

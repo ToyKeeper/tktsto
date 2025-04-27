@@ -136,6 +136,8 @@ export class NodeView extends Node {
     else this.$row.classList.remove('loaded-children');
     // is the page the window's current active tab?
     if (this.active) this.$row.classList.add('active');
+    else if (this.isWindow() && (this.tree.windowId === this.windowId))
+      this.$row.classList.add('active');  // current window is "active"
     else this.$row.classList.remove('active');
     // is the tab partially unloaded?
     if (this.discarded) this.$row.classList.add('discarded');
