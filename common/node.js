@@ -519,15 +519,14 @@ export class Node {
   async load (args) {
     // abort on no-op
     if (this.isLoaded()) return;
-    if (! this.isUnloadedTab()) return;
+    if ((! this.isUnloadedTab()) && (! this.isUnloadedWindow())) return;
     if (! args) return;
-
-    // TODO: if window, load the window
 
     // Do The Thing
     this.loaded = false;  // will get set to true after tab actually loads
     this.wasLoaded = true;  // is loading
-    this.pendingUrl = this.url;  // go here when the tab is ready
+    if (! this.isWindow())
+      this.pendingUrl = this.url;  // go here when the tab is ready
 
     // bump timestamp
     this.bump('atime', args);
@@ -546,8 +545,24 @@ export class Node {
       // only let the bkgd script open the actual tab
       // (so it can keep some internal state for its onTabCreated handler
       //  and also open a saved window if necessary)
-      await emit('bkgd_loadSavedNode',
-        { nodeId: this.id, reason: args.reason, when: this.atime });
+      if (! this.isWindow())  // load a saved tab
+        await emit('bkgd_loadSavedNode',
+          { nodeId: this.id, reason: args.reason, when: this.atime });
+      // if window, load the window
+      else {
+        debug(`loading saved window: ${this.id}`);
+        // get a list of 'wasLoaded' tabs
+        const tabList = this.findNodes(
+          (node) => { return (node.wasLoaded && node.isUnloadedTab()); },
+          (node) => { return ! node.isWindow(); }  // skip nested windows
+        );
+        for (const kid of tabList) {
+          debug(`loading saved tab: ${kid.url}`);
+          const tabArgs = { ...args };
+          //tabArgs.reason = 'loadSavedWindow';  // eh, unnecessary
+          await kid.load(tabArgs);
+        }
+      }
     }
   }
 
@@ -563,6 +578,8 @@ export class Node {
     this.active = false;
     // let user toggle wasLoaded state manually
     if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
+    else if (['onWindowUnloaded', 'onWindowRemoved'].includes(args.reason))
+      this.wasLoaded = true;
     else if (wasActuallyLoaded) this.wasLoaded = false;
     else this.wasLoaded = (! this.wasLoaded);
 
@@ -571,7 +588,9 @@ export class Node {
     this.bump('mtime', args);
 
     // notify others, if event originated here
-    if (['userAction', 'onTabRemoved', 'onWindowClosed'].includes(args.reason))
+    if (['userAction',
+      'onTabRemoved', 'onWindowRemoved', 'onWindowUnloaded'
+    ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'unload',
           wasLoaded: this.wasLoaded,
@@ -583,7 +602,7 @@ export class Node {
     // AFTER everyone has unloaded the tab from the tree,
     // then it's finally safe to close the tab itself
     // if not already closed by browser, close the tab
-    if ('userAction' === args.reason) {
+    if (['userAction', 'onWindowUnloaded'].includes(args.reason)) {
       // actually close the tab
       if (this.tabId) {
         try {
@@ -593,12 +612,25 @@ export class Node {
           warn(`Node.unloaded() tried to remove tab twice: "${this.tabId}"`);
         }
       }
-      else if (this.isWindow()) {}  // a window has no tabId and it's fine
+      else if (this.isWindow()) {  // a window has no tabId and it's fine
+        // close the window (it'll unload all the tabs for us)
+        if (this.windowId) await api.windows.remove(this.windowId);
+        // unload all tabs in the window
+        else {
+          // this should never happen, but if it does, at least it works
+          warn('Window node has no windowId');
+          const tabList = this.getLoadedTabs();
+          for (const kid of tabList) {
+            const tabArgs = { ...args };
+            tabArgs.reason = 'onWindowUnloaded';
+            await kid.unload(tabArgs);
+          }
+        }
+      }
       else {
         warn(`Node.unload() called on Node with no tabId`, this);
       }
     }
-    // TODO: if window, unload all tabs in the window
   }
 
   newNodeId () {  // sub-classes should override this
@@ -886,7 +918,7 @@ export class Node {
     }
     if (! tabNode) {
       // TODO: handle the error better
-      return error(`Node.setActiveTab(): can't find tab "${tabId}"`);
+      return warn(`Node.setActiveTab(): can't find tab "${tabId}"`);
     }
 
     // mark all other active tabs in this window as not-active

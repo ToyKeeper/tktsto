@@ -365,7 +365,7 @@ export class Tree {
     // if tab closed only because its window is closing
     if (removeInfo && removeInfo.isWindowClosing) {
       // keep unloaded tab as part of the user's saved window
-      return tabNode.unload({ reason: 'onWindowClosed' });
+      return tabNode.unload({ reason: 'onWindowRemoved' });
     }
     // if tab closed manually by user, but it has notes
     else if (tabNode.shouldUnloadNotDelete()) {

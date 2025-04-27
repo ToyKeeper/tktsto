@@ -851,9 +851,10 @@ export class TreeView extends Tree {
     else if (this.cursor.isLoaded() && (!this.cursor.isActive())) {
       this.cursor.setActive(true, { reason: 'userAction' });
     }
-    // if unloaded window, load it (complicated)
+    // if unloaded window, load it
     else if (this.cursor.isUnloadedWindow()) {
-      error('Window load() not yet supported');
+      //error('Window load() not yet supported');
+      this.cursor.load({ reason: 'userAction' });
     }
     // if note or focused tab, edit it
     else {
