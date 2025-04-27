@@ -325,6 +325,7 @@ export class Node {
 
   isUnloadable () {
     if (this.loaded || this.wasLoaded) return true;
+    //if (this.url) return true;
     return false;
   }
 
@@ -553,13 +554,17 @@ export class Node {
   async unload (args) {
     // abort on no-op
     if (! args) return;
-    if (! this.isLoaded() && (! this.wasLoaded)) return;
+    //if (! this.isLoaded() && (! this.wasLoaded)) return;
+    if ((! this.url) && (! this.isWindow())) return;  // don't "unload" notes
     const wasActuallyLoaded = this.loaded;
 
     // Do The Thing
     this.loaded = false;
     this.active = false;
-    this.wasLoaded = false;
+    // let user toggle wasLoaded state manually
+    if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
+    else if (wasActuallyLoaded) this.wasLoaded = false;
+    else this.wasLoaded = (! this.wasLoaded);
 
     // bump timestamp (?)
     // TODO: (but are 'load' and 'unload' really modifications?)
@@ -569,6 +574,7 @@ export class Node {
     if (['userAction', 'onTabRemoved', 'onWindowClosed'].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'unload',
+          wasLoaded: this.wasLoaded,
           when: this.mtime });
 
     // stop, if the only change was to remove the 'wasLoaded' state

@@ -203,6 +203,8 @@ export class NodeView extends Node {
     const doc = this.tree.document;
     const mode = this.tree.detailsState;
 
+    let hasContent = false;  // true if *anything* goes into the box
+
     // set the box mode in the view
     $detailsBox.classList.remove('hidden');
     if (0 === mode) {
@@ -239,6 +241,7 @@ export class NodeView extends Node {
         $elem.classList.remove('hidden');
         if (text) $elem.innerText = text;
         else if (html) $elem.innerHTML = html;
+        hasContent = true;
       } else {
         $elem.innerHTML = '';
         $elem.classList.add('hidden');
@@ -300,6 +303,7 @@ export class NodeView extends Node {
         `<b>${tstamp}:</b>&nbsp;<span>${fmt}</span>`);
     }
 
+    if (! hasContent) $detailsBox.classList.add('hidden');
   }
 
   $refreshAncestry () {
@@ -319,7 +323,7 @@ export class NodeView extends Node {
   }
 
   $destroyChildren () {
-    this.$nodes.classList.add('hidden');
+    if (this.$nodes) this.$nodes.classList.add('hidden');
     for (const node of this.nodes) {
       node.$destroy();
       // TODO: unsure if I need to recurse

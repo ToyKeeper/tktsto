@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, emit } from '/common/common.js';
+import { log, debug, warn, error, emit } from '/common/common.js';
 import { inputDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
 import { Tree } from '/common/tree.js';
@@ -1000,8 +1000,13 @@ export class TreeView extends Tree {
       // TODO: get label from user's keybinding table
       //let binding;
       // make the button do something when clicked
-      const func = _this[`action_${funcName}`];
-      if (func) $div.addEventListener('click', func.bind(_this));
+      const func = function (event) {
+        _this[`action_${funcName}`].bind(_this)(event);
+        _this.showHoverMenu();  // update display in case style changed
+      }
+      if (func) $div.addEventListener('click', func);
+      //const func = _this[`action_${funcName}`];
+      //if (func) $div.addEventListener('click', func.bind(_this));
       // add the button to the menu
       _this.$hoverMenu.append($div);
       return $div;
@@ -1029,8 +1034,14 @@ export class TreeView extends Tree {
     const rect = this.$mouseRow.getBoundingClientRect();
     this.$hoverMenu.style.top = String(rect.top + window.scrollY - 3) + 'px';
     // show or hide the 'unload' button
-    if (this.mouseNode.isUnloadable())
+    if (this.mouseNode.isUnloadable()) {
       this.$hoverMenuUnload.style.display = 'inline-block';
+      this.$hoverMenuUnload.classList.remove('unloaded');
+    }
+    else if (this.mouseNode.isUnloadedTab()) {
+      this.$hoverMenuUnload.style.display = 'inline-block';
+      this.$hoverMenuUnload.classList.add('unloaded');
+    }
     else this.$hoverMenuUnload.style.display = 'none';
     // show or hide the 'mark' button
     if (this.mouseNode.isMarkable())
