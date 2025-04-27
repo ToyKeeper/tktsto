@@ -16,37 +16,48 @@ html, body {
 
 /******************** tree view main sections ********************/
 
+#top-area,
+#bottom-area {
+  width: 100%;
+  color: var(--toolbar-fg);
+  z-index: 1;
+}
+
+#top-area {
+  background: var(--top-area-bg);
+  border-bottom: var(--top-area-edge);
+  box-shadow: var(--top-area-shadow);
+}
+
+#bottom-area {
+  box-shadow: var(--bottom-area-shadow);
+  border-top: var(--bottom-area-edge);
+  background: var(--bottom-area-bg);
+  padding-top: 0.25em;
+}
+
 #top-bar,
 #bottom-bar {
   min-height: var(--toolbar-height);
   width: calc(100% - 0.5em);
   padding-left: 0.25em;
   padding-right: 0.25em;
-  background: var(--toolbar-bg);
-  color: var(--toolbar-fg);
-  /* box-shadow: 0 1em 1em #000; */
+}
+
+#bottom-bar {
+  padding-top: 0.2rem;
 }
 
 #status-bar {
   height: var(--toolbar-height);
   width: 100%;
+  margin-top: -5px;  /* reduce space between buttons and status text */
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
 }
 #status-text {
   line-height: var(--toolbar-height);
   padding-left: 0.5em;
-}
-
-#top-bar {
-  border-bottom: var(--top-toolbar-edge);
-}
-
-#details-box {
-  border-top: var(--bottom-toolbar-edge);
-}
-#details-box.hidden + #bottom-bar {
-  border-top: var(--bottom-toolbar-edge);
 }
 
 #tree-view {
@@ -59,16 +70,23 @@ html, body {
 /******************** node details box ********************/
 
 #details-box {
-  width: calc(100% - 0.5em);
-  padding-left: 0.25em;
-  padding-right: 0.25em;
+  width: calc(100% - 1.25rem);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   height: var(--details-box-height);
   max-height: var(--details-box-height);
   overflow-x: wrap;
   overflow-y: auto;
   background: var(--details-box-bg);
   color: var(--details-box-fg);
+  border-radius: 8px;
+  border: var(--details-box-border);
 }
+
+#details-box.hidden + #bottom-bar {
+  padding-top: none;
+}
+
 
 #details-box.notes-only {
   height: unset;
@@ -133,18 +151,19 @@ html, body {
   text-align: center;
   margin: auto;
   padding: 0.2em 0.3em;
-  border: 1px outset #555;
-  border-radius: 0.5em;
-  background: #444;
-  box-shadow: 0.1em 0.1em 0.1em #000;
+  color: var(--button-fg);
+  border: var(--button-border);
+  border-radius: var(--button-border-radius);
+  background: var(--button-bg);
+  box-shadow: var(--button-shadow);
   cursor: default;
 }
 .toolbar .button:hover,
 #inputDialogButtons button:hover {
-  background: #555;
-  border: 1px outset #777;
-  box-shadow: 0.2em 0.2em 0.2em #000;
-  color: #fff;
+  color: var(--button-hover-fg);
+  border: var(--button-hover-border);
+  background: var(--button-hover-bg);
+  box-shadow: var(--button-hover-shadow);
 }
 .toolbar .button.half-pressed {
   border: 1px solid #555;
@@ -154,9 +173,10 @@ html, body {
 .toolbar .button.pressed,
 .toolbar .button:active,
 #inputDialogButtons button:active {
-  border: 1px inset #555;
-  background: #222;
-  box-shadow: none;
+  color: var(--button-pressed-fg);
+  border: var(--button-pressed-border);
+  background: var(--button-pressed-bg);
+  box-shadow: var(--button-pressed-shadow);
 }
 /******************** lists ********************/
 
@@ -288,8 +308,8 @@ html, body {
 }
 #detail-long-note {
   color: var(--note-long-fg);
-  background: #0003;
-  border: 1px inset #444;
+  background: var(--note-long-bg);
+  border: var(--note-long-border);
   border-radius: var(--cursor-radius-collapsed);
 }
 .node-note-url-sep {
@@ -475,6 +495,7 @@ html, body {
 
 #marked-count {
   position: fixed;
+  z-index: 2;
   top: var(--toolbar-height);
   right: 5px;
   border-radius: var(--cursor-branch-radius);
@@ -514,7 +535,8 @@ html, body {
   text-shadow: var(--fancy-text-shadow);
 }
 
-#hover-menu div:hover {
+#hover-menu div:hover,
+#hover-menu .unload-button.unloaded:hover {
   background: #678;
   border-radius: 6px;
   box-shadow: 0.1em 0.1em 0.2em #000000c0;
@@ -528,7 +550,12 @@ html, body {
 }
 
 #hover-menu .unload-button {
+  /* click to unload */
   color: var(--tab-unloaded-fg);
+}
+#hover-menu .unload-button.unloaded {
+  /* click to set "wasLoaded" state */
+  color: var(--tab-was-loaded-fg);
 }
 
 #hover-menu .edit-button {
@@ -577,13 +604,14 @@ html, body {
   border-radius: 3px;
   width: calc(100% - var(--dialog-padding));
   max-width: calc(100% - var(--dialog-padding));
-  margin-bottom: var(--dialog-padding);
+  margin-top: 0.1em;
 }
 
 #inputDialog input {
   color: var(--note-loaded-fg);
   font-size: calc(var(--global-font-size) * 0.9);
   padding: 0.1em 0.2em;
+  margin-bottom: var(--dialog-padding);
 }
 
 #inputDialog textarea {
@@ -600,6 +628,7 @@ html, body {
   gap: var(--dialog-padding);
   line-height: var(--row-line-height);
   font-size: var(--global-font-size);
+  margin-top: var(--dialog-padding);
 }
 
 /* style the "submit" button differently */
@@ -609,7 +638,6 @@ html, body {
 #inputDialogButtons button:first-of-type {
   background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
   font-weight: bold;
-  border-style: none;
   box-shadow: var(--cursor-shadow);
   color: var(--dialog-title-fg);
 }
@@ -684,8 +712,8 @@ html, body {
   --node-stat-bright-color: var(--tree-line-cursor);
   --node-stat-dim-color: var(--tree-line);
   /***** node detail box *****/
-  --details-box-height: 20%;
-  --details-box-height-notes-only: 20%;
+  --details-box-height: 8rem;
+  --details-box-height-notes-only: 8rem;
   /***** input dialogs *****/
   --dialog-border-color: var(--cursor-branch-hl);
   --dialog-bg-top: var(--cursor-branch-top);

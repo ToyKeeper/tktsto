@@ -30,12 +30,14 @@
     #00000080  0.07em 0.10em 0.15em,
     #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
-  --tree-view-bg: #1c1b22;
+  --tree-view-bg: #222;
   --note-loaded-fg: #12ee6a;
   --note-was-loaded-fg: #e70e9d;
   --note-unloaded-fg: #1aab54;
   /* --note-long-fg: #5c9; */
   --note-long-fg: var(--details-label-fg);
+  --note-long-bg: linear-gradient(#0000, #0002);
+  --note-long-border: none;
   --note-title-sep-fg: #49d;
   --tab-active-fg: #fff;
   --tab-loaded-fg: #eee;
@@ -72,14 +74,33 @@
   --marked-row-shadow: 0 0 10px orange;
   --marked-count-color: gold;
   /***** toolbars *****/
-  --toolbar-bg: #333;
+  --top-area-bg: linear-gradient(#3e3e52, #2b2b3c);
+  --top-area-edge: 5px solid #242433;
+  --top-area-shadow: 0 0.2rem 0.75rem #000c;
+  --bottom-area-shadow: 0 -0.05rem 1.5rem #000c;
+  --bottom-area-edge: 5px solid #34344a;
+  --bottom-area-bg: linear-gradient(#2b2b3c, #3e3e52);
+  --toolbar-bg: unset;
   --toolbar-fg: #ccc;
-  --top-toolbar-edge: 5px solid #282828;
-  --bottom-toolbar-edge: 5px solid #3c3c3c;
+  /***** buttons *****/
+  --button-border-radius: 0.5em;
+  --button-border: 1px outset #557;
+  --button-bg: linear-gradient(#4d4d6b, #36364e);
+  --button-fg: #ddd;
+  --button-shadow: 0.1em 0.1em 0.1em #000;
+  --button-hover-border: 1px outset #557;
+  --button-hover-bg: linear-gradient(#557, #335);
+  --button-hover-fg: #fff;
+  --button-hover-shadow: 0.2em 0.2em 0.2em #000;
+  --button-pressed-border: 1px inset #446;
+  --button-pressed-bg: linear-gradient(#202030, #282838);
+  --button-pressed-fg: #ddd;
+  --button-pressed-shadow: none;
   /***** node stats *****/
   /***** node detail box *****/
-  --details-box-bg: #333;
   --details-box-fg: #ccc;
+  --details-box-bg: #0003;
+  --details-box-border: 1px inset #445;
   --details-label-fg: #ccc;
   --details-value-fg: #aaa;
   /***** input dialogs *****/
