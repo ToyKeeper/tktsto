@@ -500,10 +500,20 @@ export class NodeView extends Node {
     // (when the user moved tabs via the tab bar)
     this.tree.ensureCursorVisible();
 
-    // if our window node was moved and we're a window-only view,
-    // redraw the tree
-    if ((this === this.tree.viewRoot) && ('window' === this.tree.viewScope))
-      this.tree.$renderWholeTree();
+    // "this window only" mode needs extra care
+    if ('window' === this.tree.viewScope) {
+      const viewRoot = this.tree.viewRoot;
+      // if our window node was moved and we're a window-only view,
+      // redraw the tree
+      if (this === viewRoot) this.tree.$renderWholeTree();
+
+      // if old parent outside current view and new parent in current view,
+      // force render
+      else if (this.isChildOf(viewRoot)
+        && (! oldParent.isChildOf(viewRoot))
+      )
+        this.$renderChildren();
+    }
 
     // ensure cursor is in the viewport
     if (this === this.tree.cursor) this.scrollIntoView();
