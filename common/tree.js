@@ -499,6 +499,14 @@ export class Tree {
     const found = this.root.findNodes((node) =>
       { return node.isWindow() && (node.windowId === windowId); });
     if (found.length > 0) { windowNode = found[0]; }
+    // when moving a loaded tab to an unloaded window,
+    // the browser does onTabAttached before onWindowCreated
+    // so we have to handle part of that process here
+    else if (this.bkgd.windowsLoading.length > 0) {
+      windowNode = this.bkgd.windowsLoading[0];
+      windowNode.windowId = windowId;
+    }
+    // otherwise, create a new window node
     else {
       const destParent = this.root;
       const destIndex = destParent.nodes.length;

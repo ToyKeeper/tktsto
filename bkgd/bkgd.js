@@ -498,7 +498,8 @@ class Bkgd {
     if (node.isLoaded()) { return response; }
     // - if unloaded window node... grab all "wasLoaded" items and load them?
     if (node.isWindow()) {
-      // TODO
+      // TODO: is handled in Node.load()
+      //   so no need to handle it here
     }
     // - otherwise...
     // - get the parent window Node
@@ -560,6 +561,53 @@ class Bkgd {
     //response.tabId = newTab.id;  // doesn't exist yet
     // TODO: need to modify onTabCreated and onWindowCreated
     //   to check a queue of nodes which are in the process of being loaded
+    if (! response.result) response.result = 'ok';
+    return response;
+  }
+
+  async bkgd_loadSavedWindow (msg) {
+    await this.treeLoaded;  // ensure tree is loaded
+    const response = {};
+    // this only gets called when moving loaded tab(s) to an unloaded window
+    // so it requires the window node and the branch which got moved
+    let windowNode = this.tree.nodes[msg.windowNodeId];
+    let node = this.tree.nodes[msg.nodeId];
+    if ((! windowNode) || (! node)) {
+      const err = `bkgd_loadSavedWindow(): no nodes found`;
+      error(err);
+      return { error: err };
+    }
+    // if already loaded, do nothing
+    if (windowNode.isLoaded()) { return response; }
+    // list of open tabs in the new window
+    const loadedKids = node.getLoadedTabs();
+    if (node.isLoaded()) loadedKids.unshift(node);
+    const tabIds = loadedKids.map((n) => n.tabId);
+    // push window node to be loaded
+    this.windowsLoading.push(windowNode);
+    // actually open the window
+    const createProperties = {};
+    createProperties.tabId = tabIds[0];  // dang, it only allows one
+    // opening as first tab in new window
+    createProperties.type = 'normal';
+    // set window size and position
+    // TODO: save and restore 'state': fullscreen, maximized, minimized
+    if (windowNode.geometry && (4 === windowNode.geometry.length)) {
+      createProperties.width = windowNode.geometry[0];
+      createProperties.height = windowNode.geometry[1];
+      createProperties.left = windowNode.geometry[2];
+      createProperties.top = windowNode.geometry[3];
+    }
+    // TODO: set incognito?  (node doesn't check this data yet)
+    if (windowNode.incognito) createProperties.incognito = true;
+    debug('bkgd_loadSavedWindow() creating saved window', createProperties);
+    const winObj = await api.windows.create(createProperties);
+    debug('bkgd_loadSavedWindow() created window', winObj);
+    // pull in the other tabs
+    // (removed: other code has already done this at least once
+    //  by the time this line runs)
+    //await node.reorderAllTabsInThisWindow();
+    // return success
     if (! response.result) response.result = 'ok';
     return response;
   }

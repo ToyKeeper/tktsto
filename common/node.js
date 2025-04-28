@@ -728,11 +728,6 @@ export class Node {
     // abort on no-op
     if ((destParent === this.parent) && (destIndex === this.indexOf()))
       return;
-    // TODO: handle window nodes specially
-    //   - only do actual window operations if notify=true
-    //     (or maybe only do them if this.tree.bkgd exists?)
-    //     (meaning we are a service worker, not a view)
-    const prevWindowId = this.windowId;
     // special case: moving a parent into its own child list
     // (this happens when moving a tab to the right in the tab bar,
     //  when that tab has loaded children)
@@ -787,13 +782,26 @@ export class Node {
           destParentId: destParent.id, destIndex: destIndex,
           when: destParent.mtime });
 
-      // TODO: if loaded tab moved to unloaded window, load the window
-      // TODO: if loaded tab moved so it's not in a window,
-      //   create a new window to hold it
-      // (and in both cases, handle all loaded kids)
+      // loaded tabs need extra care when they move
+      if ((this.isLoaded() || this.hasLoadedTabs()) && (! this.isWindow()) )
+      {
+        // if loaded tab moved to unloaded window, load the window
+        const newWindow = this.getWindowNode();
+        if (newWindow && (! newWindow.isLoaded())) {
+          await emit('bkgd_loadSavedWindow', {
+            reason: 'moveTo.loadedTabToUnloadedWindow',
+            windowNodeId: newWindow.id,
+            nodeId: this.id });
+        }
+        // TODO: if loaded tab moved so it's not in a window,
+        //   create a new window to hold it
+        //   (maybe, maybe not... seems fine to not handle that case)
+        //else if (! newWindow) {
+        //}
 
-      if (this.isLoaded() || this.hasLoadedTabs())
+        // ensure tabs are in the correct order
         await destParent.reorderAllTabsInThisWindow();
+      }
 
       // update the tab's openerTabId if possible
       // (can't do this until after reordering,
