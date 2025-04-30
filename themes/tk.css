@@ -16,9 +16,18 @@ html, body {
 
 /******************** tree view main sections ********************/
 
+#tree-view {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  background: var(--tree-view-bg);
+}
+
 #top-area,
 #bottom-area {
-  width: 100%;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  width: calc(100% - 0.5rem);
   color: var(--toolbar-fg);
   z-index: 1;
 }
@@ -33,15 +42,14 @@ html, body {
   box-shadow: var(--bottom-area-shadow);
   border-top: var(--bottom-area-edge);
   background: var(--bottom-area-bg);
-  padding-top: 0.25em;
+  padding-top: 0.25rem;
 }
 
 #top-bar,
 #bottom-bar {
   min-height: var(--toolbar-height);
-  width: calc(100% - 0.5em);
-  padding-left: 0.25em;
-  padding-right: 0.25em;
+  width: calc(100% - 0.25rem);
+  /* width: 100%; */
 }
 
 #bottom-bar {
@@ -50,31 +58,25 @@ html, body {
 
 #status-bar {
   height: var(--toolbar-height);
-  width: 100%;
+  width: calc(100% - 0.25rem);
   text-wrap: nowrap;
   overflow-x: scroll;
-  margin-top: -5px;  /* reduce space between buttons and status text */
+  margin-top: -8px;  /* reduce space between buttons and status text */
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
 }
 #status-text {
   line-height: var(--toolbar-height);
-  padding-left: 0.5em;
-}
-
-#tree-view {
-  flex: 1;
-  width: 100%;
-  overflow-y: auto;
-  background: var(--tree-view-bg);
+  padding-left: 0.25em;
 }
 
 /******************** node details box ********************/
 
 #details-box {
-  width: calc(100% - 1.25rem);
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+  /* width: calc(100% - 1rem); */
+  width: calc(100% - 0.75rem);
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
   height: var(--details-box-height);
   max-height: var(--details-box-height);
   overflow-x: wrap;
