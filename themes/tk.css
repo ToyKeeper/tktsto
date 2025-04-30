@@ -418,6 +418,10 @@ html, body {
   font-weight: bold;
 }
 
+.window.row.cursor {
+  text-shadow: var(--window-title-text-shadow);
+}
+
 /******************** cursor ********************/
 
 .cursor.node .expanded.row::before {
@@ -533,10 +537,10 @@ html, body {
   padding-bottom: 2px;
   padding-left: 7px;
   padding-right: 0px;
-  background: #456;
+  background: var(--hover-menu-bg);
   border-radius: 2em 0 0 2em;
-  border: 1px outset #678;
-  box-shadow: 0.2em 0.2em 0.4em #000000c0;
+  border: var(--hover-menu-border);
+  box-shadow: var(--hover-menu-shadow);
 }
 
 #hover-menu div {
@@ -549,12 +553,12 @@ html, body {
   color: #abc;
   text-align: center;
   padding: 0 0 2px 0;
-  text-shadow: var(--fancy-text-shadow);
+  text-shadow: var(--hover-menu-button-shadow);
 }
 
 #hover-menu div:hover,
 #hover-menu .unload-button.unloaded:hover {
-  background: #678;
+  background: var(--hover-menu-button-hover-bg);
   border-radius: 6px;
   box-shadow: 0.1em 0.1em 0.2em #000000c0;
   color: #fff;
@@ -562,7 +566,7 @@ html, body {
 
 #hover-menu div:active {
   color: #000;
-  background: #456;
+  background: var(--hover-menu-bg);
   box-shadow: none;
 }
 

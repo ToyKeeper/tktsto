@@ -2,6 +2,14 @@
  * Copyright (C) 2025 Selene ToyKeeper
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
+
+/******************** overrides ********************/
+
+#hover-menu .edit-button {
+  color: var(--note-unloaded-fg);
+}
+
+
 /******************** vars ********************/
 
 :root {
@@ -29,13 +37,25 @@
     #ffffff60  0.05em 0.05em 0.10em, /* shadow */
     #ffffff80  0.07em 0.10em 0.15em,
     #ffffffa0  0.10em 0.15em 0.25em;
+  --mild-text-shadow:
+    #0004 -0.05em  0      0.02em, /* outline */
+    #0004  0.05em  0      0.02em,
+    #0004  0      -0.05em 0.02em,
+    #0004  0       0.05em 0.02em,
+    #0004 -0.03em -0.03em 0.02em,
+    #0004 -0.03em  0.03em 0.02em,
+    #0004  0.03em -0.03em 0.02em,
+    #0008  0.05em 0.05em 0.10em, /* shadow */
+    #000f  0.10em 0.15em 0.25em;
   /***** main tree view *****/
-  --tree-view-bg: #e6e6fa;
-  --tree-view-bg: #cce;
-  --note-loaded-fg: #018335;
+  --tree-view-bg: #e2e2f4;
+  --note-loaded-fg: #005400;
   --note-was-loaded-fg: #e70e9d;
-  --note-unloaded-fg: #46c97a;
+  --note-unloaded-fg: #629d62;
   --note-long-fg: var(--details-label-fg);
+  --note-long-bg: linear-gradient(#0000, #0001);
+  --note-long-border: none;
+  --note-long-border-bottom: 1px solid #eee;
   --note-title-sep-fg: #4daaf5;
   --tab-active-fg: #000;
   --tab-loaded-fg: #222;
@@ -49,16 +69,16 @@
   --window-row-bg: linear-gradient(150deg, #5b70d5, #9ab9fb);
   --window-active-fg: #fff;
   --window-loaded-fg: #eee;
-  --window-unloaded-fg: #8696a7;
+  --window-unloaded-fg: #afbdcb;
   --window-title-text-shadow: var(--fancy-text-shadow);
   --window-branch-hl: #c2ceff;
   --window-branch-top: #f8f8f8;
   --window-branch-bot: #e2e2e2;
   --window-branch-shadow: 0.10em 0.10em 0.25em #000000c0;
   /***** cursor *****/
-  --cursor-bg-top: #59c0da;
-  --cursor-bg-bot: #59fca8;
-  --cursor-shadow: 0.1em 0.1em 0.2em #000d;
+  --cursor-bg-top: #59fcfc;
+  --cursor-bg-bot: #59c0da;
+  --cursor-shadow: 0.1em 0.1em 0.2em #000b;
   --cursor-branch-hl: #ecfaff;
   --cursor-branch-top: #eaf4fb;
   --cursor-branch-bot: #dae3f3;
@@ -67,25 +87,54 @@
   --marked-node-shadow: 0 0 10px #ca0;
   /***** hover menu *****/
   --delete-button-fg: #f00;
+  --hover-menu-bg: #f8f8f8;
+  --hover-menu-border: 1px outset #fff;
+  --hover-menu-shadow: 0.2em 0.2em 0.4em #000000c0;
+  --hover-menu-button-shadow: var(--mild-text-shadow);
+  --hover-menu-button-hover-bg: #fff;
   /* --marked-row-outline: 1px solid gold; */
   --marked-row-outline: 1px solid #ea0;
   --marked-row-shadow: 0 0 10px #ea0;
   --marked-count-color: #fe0;
   /***** toolbars *****/
-  --toolbar-bg: #ddd;
+  --top-area-bg: linear-gradient(#fff, #ddd);
+  --top-area-edge: 5px solid #d3d3d3;
+  --top-area-shadow: 0 0.2rem 0.75rem #000c;
+  --bottom-area-shadow: 0 -0.05rem 1.5rem #000c;
+  --bottom-area-edge: 5px solid #e8e8e8;
+  --bottom-area-bg: linear-gradient(#ddd, #fff);
+  --toolbar-bg: unset;
   --toolbar-fg: #333;
-  --top-toolbar-edge: 5px solid #d3d3d3;
-  --bottom-toolbar-edge: 5px solid #e8e8e8;
+  /***** buttons *****/
+  --button-border-radius: 0.5em;
+  --button-border: 1px outset #eef;
+  --button-bg: linear-gradient(#dde, #cce);
+  --button-fg: #333;
+  --button-shadow: 0.1em 0.1em 0.1em #000a;
+  --button-hover-border: 1px outset #eef;
+  --button-hover-bg: linear-gradient(#eef, #ddf);
+  --button-hover-fg: #000;
+  --button-hover-shadow: 0.2em 0.2em 0.2em #000;
+  --button-pressed-border: 1px inset #eef;
+  --button-pressed-bg: linear-gradient(#bbe, #dde);
+  --button-pressed-fg: #333;
+  --button-pressed-shadow: none;
   /***** node stats *****/
+  --node-stat-bright-color: #338;
+  --node-stat-dim-color: var(--tree-line-cursor);
+
   /***** node detail box *****/
   --details-box-bg: #ddd;
   --details-box-fg: #333;
+  --details-box-border: 1px inset #fff;
   --details-label-fg: #333;
   --details-value-fg: #555;
   /***** input dialogs *****/
   --dialog-fg: #333;
-  --dialog-title-fg: #fff;
-  --dialog-input-bg: linear-gradient(#f8f8f8, e2e2e2);
+  --dialog-bg-top: var(--window-branch-top);
+  --dialog-bg-bot: var(--window-branch-bot);
+  --dialog-title-fg: #000;
+  --dialog-input-bg: linear-gradient(#eee, #ddd);
   --dialog-input-border: #fff;
 }
 

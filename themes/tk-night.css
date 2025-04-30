@@ -70,6 +70,11 @@
   --marked-node-shadow: 0 0 10px gold;
   /***** hover menu *****/
   --delete-button-fg: #f00;
+  --hover-menu-bg: var(--button-bg);
+  --hover-menu-border: var(--button-border);
+  --hover-menu-shadow: 0.2em 0.2em 0.4em #000000c0;
+  --hover-menu-button-shadow: var(--fancy-text-shadow);
+  --hover-menu-button-hover-bg: var(--button-hover-bg);
   /* --marked-row-outline: 1px solid gold; */
   --marked-row-outline: 1px solid orange;
   --marked-row-shadow: 0 0 10px orange;
