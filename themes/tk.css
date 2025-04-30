@@ -51,6 +51,8 @@ html, body {
 #status-bar {
   height: var(--toolbar-height);
   width: 100%;
+  text-wrap: nowrap;
+  overflow-x: scroll;
   margin-top: -5px;  /* reduce space between buttons and status text */
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);

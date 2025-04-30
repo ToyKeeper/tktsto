@@ -189,11 +189,15 @@ export class Tree {
     let downloadId;
     function onStarted (id) { downloadId = id; }
     function progress (delta) {
+      //debug('Download delta', delta);
       if ((delta.id === downloadId)
         && delta.state && delta.state.current === "complete")
       {
-        log(`Download succeeded: ${filename}`);
+        //log(`Download succeeded: ${filename}`);
         api.downloads.onChanged.removeListener(progress);
+        if (this.setStatus) {
+          this.setStatus(`Saved ${blob.size} bytes to "${filename}"`);
+        }
         try {
           // docs recommend cleaning this up
           // but docs also say this is unavailable in service workers
@@ -207,7 +211,7 @@ export class Tree {
       warn(`Download failed: ${err}`);
       api.downloads.onChanged.removeListener(progress);
     }
-    api.downloads.onChanged.addListener(progress);
+    api.downloads.onChanged.addListener(progress.bind(this));
     downloading.then(onStarted, onFailed);
   }
 
