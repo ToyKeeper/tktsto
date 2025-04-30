@@ -345,6 +345,9 @@ export class TreeView extends Tree {
       (event) => { this.mouseEvent('dblclick', event) });
     this.$treeRoot.addEventListener('mouseover',
       (event) => { this.mouseEvent('mouseover', event) });
+    // hide the hover menu when the mouse leaves the tree view
+    this.$treeRoot.addEventListener('mouseleave',
+      (event) => { this.hideHoverMenu(); });
   }
 
   buildEventName (event) {
