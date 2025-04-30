@@ -346,7 +346,7 @@ export class TreeView extends Tree {
     this.$treeRoot.addEventListener('mouseover',
       (event) => { this.mouseEvent('mouseover', event) });
     // hide the hover menu when the mouse leaves the tree view
-    this.$treeRoot.addEventListener('mouseleave',
+    this.$.addEventListener('mouseleave',
       (event) => { this.hideHoverMenu(); });
   }
 
@@ -450,6 +450,7 @@ export class TreeView extends Tree {
     this.$mouseNode = $node;
     this.$mouseRow = $row;
     this.$mouseElem = $elem;
+    //debug(`${eventName} ${node.id} `, node, this.$mouseRow);
     //debug(`node: ${node.id}`, node);
     // identify which part of the row the event was in
     let rowX, rowY, rowWid, rowHgt;
@@ -469,7 +470,7 @@ export class TreeView extends Tree {
     if (handlerName) {
       const handler = this[`action_${handlerName}`];
       if (handler) {
-        if ('mouseHoverMenu' !== handlerName)
+        if (! ['mouseHoverMenu', 'rejectEvent'].includes(handlerName))
           this.setStatus(`mouse: ${handlerName}`);
         // eat default browser action unless handler wants it
         if ('none' !== handlerName) {
@@ -585,6 +586,7 @@ export class TreeView extends Tree {
 
     // move it
     await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    this.setStatus(`moved up: ${this.cursor.toLine()}`);
   }
 
   async action_moveNodeDown (event) {
@@ -619,6 +621,7 @@ export class TreeView extends Tree {
 
     // move it
     await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    this.setStatus(`moved down: ${this.cursor.toLine()}`);
   }
 
   async action_moveNodeUpNoDescend (event) {
@@ -647,10 +650,12 @@ export class TreeView extends Tree {
 
     // actually move it
     await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    this.setStatus(`moved up: ${this.cursor.toLine()}`);
   }
 
   action_moveNodeDownNoDescend (event) {
     // TODO: this one is somewhat more complicated
+    //this.setStatus(`moved down: ${this.cursor.toLine()}`);
   }
 
   async action_moveNodeRight (event) {
@@ -681,6 +686,7 @@ export class TreeView extends Tree {
 
     await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
     this.setCursor(newCursor);
+    this.setStatus(`moved right: ${this.cursor.toLine()}`);
   }
 
   async action_moveNodeLeft (event) {
@@ -697,6 +703,7 @@ export class TreeView extends Tree {
 
     // move it
     await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    this.setStatus(`moved left: ${this.cursor.toLine()}`);
   }
 
   async addNoteAsPrevOrNextVisibleRow (position) {
@@ -751,8 +758,8 @@ export class TreeView extends Tree {
       { reason: 'userAction' });
     //log(destParent.nodes);
     this.setCursor(newNode);
-    debug(`added "${newNode.note}"`);
-
+    //debug(`added "${newNode.note}"`);
+    this.setStatus(`added ${this.cursor.toLine()}`);
   }
 
   async action_addNoteAsNextVisibleRow (event) {
@@ -790,18 +797,23 @@ export class TreeView extends Tree {
 
     // delete depending on the node type and state
     const toDelete = cursor;
+    const line = cursor.toLine();
     // if leaf, just delete it... simple
     if (cursor.isLeaf()) {
       //debug('delete leaf node');
       toDelete.deleteSelf({ reason: 'userAction' });
+      this.setStatus(`deleted ${line}`);
     }
     // TODO: if window and has open tabs, things get complicated
     // if expanded, promote kids then delete parent
     else if (cursor.isExpanded()) {
       //debug('promote kids and delete parent');
       // TODO: let user configure "promote all kids" or "promote 1st child"
+      const numKids = toDelete.nodes.length;
       toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
       //toDelete.deleteSelfAndPromote1stKid({ reason: 'userAction' });
+      //this.setStatus(`deleted 1 node and promoted ${numKids} sub-nodes`);
+      this.setStatus(`deleted ${line}`);
     }
     // if collapsed, delete entire branch
     else {
@@ -819,7 +831,7 @@ export class TreeView extends Tree {
       if ((!result) || ('OK' !== result.button)) return;
       // otherwise, actually delete it
       toDelete.deleteSelf({ reason: 'userAction' });
-      this.setStatus(`${numToDelete} nodes deleted`);
+      this.setStatus(`deleted ${numToDelete} nodes`);
     }
 
     // update the cursor
@@ -835,6 +847,7 @@ export class TreeView extends Tree {
     //if (! cursor.isLoaded()) return;
 
     cursor.unload({ reason: 'userAction' });
+    this.setStatus(`unloaded ${cursor.toLine()}`);
   }
 
   action_loadNode(event) {
@@ -845,21 +858,24 @@ export class TreeView extends Tree {
     debug('action_loadOrEditNode');
     // abort if nothing to do
     if (! this.cursor) return;
+    let cursor = this.cursor;
 
     // if unloaded tab, load it
-    if (this.cursor.isUnloadedTab()) {
-      this.cursor.load({ reason: 'userAction' });
+    if (cursor.isUnloadedTab()) {
+      cursor.load({ reason: 'userAction' });
+      this.setStatus(`loaded ${cursor.toLine()}`);
     }
     // if loaded tab but not focused, focus it
-    else if (this.cursor.isLoaded()
-      && (!this.cursor.isActive())
-      && (!this.cursor.isWindow())
+    else if (cursor.isLoaded()
+      && (!cursor.isActive())
+      && (!cursor.isWindow())
     ) {
-      this.cursor.setActive(true, { reason: 'userAction' });
+      cursor.setActive(true, { reason: 'userAction' });
     }
     // if unloaded window, load it
-    else if (this.cursor.isUnloadedWindow()) {
-      this.cursor.load({ reason: 'userAction' });
+    else if (cursor.isUnloadedWindow()) {
+      cursor.load({ reason: 'userAction' });
+      this.setStatus(`loaded ${cursor.toLine()}`);
     }
     // if note or focused tab or window, edit it
     else {
@@ -873,6 +889,8 @@ export class TreeView extends Tree {
     if (! this.cursor) return;
     const toggled = ! this.cursor.expanded;
     this.cursor.setExpanded(toggled, { reason: 'userAction' });
+    const verbed = toggled ? 'Expanded' : 'Collapsed';
+    this.setStatus(`${verbed} ${this.cursor.toLine()}`);
   }
 
   async action_editNote (event) {
@@ -897,8 +915,9 @@ export class TreeView extends Tree {
     // update the node
     const noteText = result.value;
     const longNoteText = result.textAreaValue;
-    debug('action_editNote():', noteText, longNoteText);
+    //debug('action_editNote():', noteText, longNoteText);
     cursor.setNote(noteText, longNoteText, { reason: 'userAction' });
+    this.setStatus(`Edited ${cursor.toLine()}`);
   }
 
   action_toggleMarked (event) {
@@ -909,11 +928,14 @@ export class TreeView extends Tree {
     if (! cursor) return;
     const toggled = ! cursor.marked;
     cursor.setMarked(toggled, { reason: 'userAction' });
+    const verbed = toggled ? 'Marked' : 'Unmarked';
+    this.setStatus(`${verbed} ${this.cursor.toLine()}`);
   }
 
   async action_unmarkAll (event) {
     debug('action_unmarkAll()');
-    return await this.unmarkAll({ reason: 'userAction' });
+    await this.unmarkAll({ reason: 'userAction' });
+    this.setStatus(`Unmarked all nodes`);
   }
 
   async action_pasteMarked (event) {
@@ -948,6 +970,7 @@ export class TreeView extends Tree {
 
     // TODO: sort the markedNodes list by order in tree
     //   instead of order added to list
+    let numMoved = 0;
     for (const nodeId of this.markedNodes) {
       const node = this.nodes[nodeId];
       // special case: moving from/to same parent can get weird
@@ -955,6 +978,7 @@ export class TreeView extends Tree {
       const oldIndex = node.indexOf();
       // move the node
       await node.moveTo(destParent, destIndex, { reason: 'userAction' });
+      numMoved ++;
       // adjust if special case was triggered
       if (pastingToSameParent) {
         if (oldIndex < destIndex)
@@ -963,6 +987,7 @@ export class TreeView extends Tree {
       // next paste goes at next slot
       destIndex ++;
     }
+    this.setStatus(`Moved ${numMoved} nodes`);
   }
 
   // TODO
@@ -992,6 +1017,7 @@ export class TreeView extends Tree {
   }
 
   action_mouseHoverMenu (event) {
+    //debug(`action_mouseHoverMenu ${this.mouseNode.toLine()}`);
     if (this.mouseNode && this.$mouseRow) return this.showHoverMenu();
     else return this.hideHoverMenu();
   }
@@ -1032,10 +1058,16 @@ export class TreeView extends Tree {
   }
 
   hideHoverMenu () {
+    //debug('hideHoverMenu');
     this.$hoverMenu.classList.add('hidden');
+    this.hoverMenuLast = undefined;
   }
 
   showHoverMenu () {
+    //debug(`showHoverMenu: ${this.mouseNode.toLine()}`);
+    // skip extra drawing if the menu hasn't changed
+    if (this.hoverMenuLast === this.mouseNode) return;
+    this.hoverMenuLast = this.mouseNode;
     // adjust menu position
     const rect = this.$mouseRow.getBoundingClientRect();
     this.$hoverMenu.style.top = String(rect.top + window.scrollY - 3) + 'px';

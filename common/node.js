@@ -359,6 +359,19 @@ export class Node {
     else return this.parent.markedBy();
   }
 
+  toLine () {
+    // return a short 1-line summary of the node
+    let line = '';
+    if (this.note) {
+      if (this.title) line = `${this.note} ~ ${this.title}`;
+      else line = this.note;
+    }
+    else if (this.title) line = this.title;
+    else if (this.isWindow()) line = `Window ${this.windowId}`;
+    if (! line) line = `node ${this.id}`;
+    return line;
+  }
+
   countNodes (filter, recurseFilter) {
     let total = 0;
     for (const node of this.nodes) {
