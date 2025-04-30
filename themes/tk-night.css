@@ -38,6 +38,7 @@
   --note-long-fg: var(--details-label-fg);
   --note-long-bg: linear-gradient(#0000, #0002);
   --note-long-border: none;
+  --note-long-border-bottom: 1px solid #fff1;
   --note-title-sep-fg: #49d;
   --tab-active-fg: #fff;
   --tab-loaded-fg: #eee;

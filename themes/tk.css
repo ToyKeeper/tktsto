@@ -117,6 +117,24 @@ html, body {
   color: var(--details-value-fg);
 }
 
+#detail-long-note {
+  /* override container padding */
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-bottom: 0.1rem;
+  /* colors */
+  color: var(--note-long-fg);
+  background: var(--note-long-bg);
+  border: var(--note-long-border);
+  border-radius: var(--cursor-radius-collapsed);
+}
+
+/* border when long note has other details afterward */
+#detail-long-note:has(+div:not(.hidden)) {
+  border-bottom: var(--note-long-border-bottom);
+}
 
 /******************** scrollbar ********************/
 
@@ -309,12 +327,6 @@ html, body {
 .row.loaded-children .node-note-icon,
 #detail-note {
   color: var(--note-loaded-fg);
-}
-#detail-long-note {
-  color: var(--note-long-fg);
-  background: var(--note-long-bg);
-  border: var(--note-long-border);
-  border-radius: var(--cursor-radius-collapsed);
 }
 .node-note-url-sep {
   color: var(--note-title-sep-fg);
