@@ -48,6 +48,7 @@
   --tree-line: #567;
   --tree-line-med: #68a;
   --tree-line-cursor: #aad4ee;
+  --tree-line-dragging: #aad4ee;
   /***** window nodes *****/
   --window-row-bg: linear-gradient(150deg, #134372, transparent);
   --window-active-fg: #fff;

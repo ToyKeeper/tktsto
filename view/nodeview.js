@@ -153,14 +153,14 @@ export class NodeView extends Node {
     // FIXME: instead of innerHTML, use safer Element creation and innerText
     if (this.label) {
       if (this.url) {  // label ~ href
-        mainText = `<span class="node-label">${this.label}</span><span class="node-label-url-sep"> ~ </span><a class="node-link" href="${this.url}">${this.title}</a>`;
+        mainText = `<span class="node-label">${this.label}</span><span class="node-label-url-sep"> ~ </span><a class="node-link" draggable="false" href="${this.url}">${this.title}</a>`;
       }
       else {  // label only
         mainText = `<span class="node-label">${this.label}</span>`;
       }
     }
     else if (this.url) {  // href only
-        mainText = `<a class="node-link" href="${this.url}">${this.title}</a>`;
+      mainText = `<a class="node-link" draggable="false" href="${this.url}">${this.title}</a>`;
     }
     else {  // totally blank
       if (this.isWindow()) {
@@ -198,6 +198,7 @@ export class NodeView extends Node {
     let faviconText = '';
     // combined output
     this.$row.innerHTML = `${statsText}${faviconText}${noteIcon}${mainText}`;
+    this.$row.setAttribute('draggable', true);
   }
 
   $renderDetails ($detailsBox) {

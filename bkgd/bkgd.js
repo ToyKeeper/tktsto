@@ -148,7 +148,14 @@ class Bkgd {
 
   async mergeOpenWindowsIntoTree () {
     log('mergeOpenWindowsIntoTree()');
-    const windows = await api.windows.getAll({ populate: true });
+    let windows;
+    try {
+      windows = await api.windows.getAll({ populate: true });
+    } catch (err) {
+      // somehow I got firefox into a weird state
+      // where it couldn't even return a list of windows...
+      return error('failed to get list of windows', err);
+    }
     for (const window of windows) {
       debug(`Window ID: ${window.id}`);
       // TODO: detect whether window is already in tree
@@ -547,16 +554,20 @@ class Bkgd {
       // TODO: set incognito?  (node doesn't check this data yet)
       if (windowNode.incognito) createProperties.incognito = true;
       debug('bkgd_loadSavedNode() creating saved window', createProperties);
-      api.windows.create(createProperties);
+      await api.windows.create(createProperties);
     }
     // opening as new tab in existing window
     else {
       createProperties.windowId = windowNode.windowId;
       // assign an "openerTab" if one exists
-      const openerNode = node.getLoadedParent();
-      if (openerNode) createProperties.openerTabId = openerNode.tabId;
-      // TODO: set index
-      api.tabs.create(createProperties);
+      // FIXME: fails sometimes and totally breaks the browser
+      //   (like, it becomes unable to return a list of windows)
+      //const openerNode = node.getLoadedParent();
+      //if (openerNode) createProperties.openerTabId = openerNode.tabId;
+      // TODO? set index
+      //   (code which executes later fixes the tab order anyway)
+      debug('bkgd_loadSavedNode() using existing window', createProperties);
+      await api.tabs.create(createProperties);
     }
     //response.tabId = newTab.id;  // doesn't exist yet
     // TODO: need to modify onTabCreated and onWindowCreated

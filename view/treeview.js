@@ -132,6 +132,12 @@ export class TreeView extends Tree {
     this.mouseBindings = {
       // mouseover should show a hover menu thingy
       'MouseOver': 'mouseHoverMenu',
+      // drag-n-drop stuff
+      'MouseDragStart': 'mouseDragStart',
+      'MouseDrag': 'mouseDrag',
+      'MouseDrop': 'mouseDrop',
+      'MouseDragEnd': 'mouseDragEnd',
+      'MouseDragOver': 'mouseDragOver',
       // do nothing on 'click' event
       'MouseClickLeft': 'rejectEvent',
       // double click does the same thing as 'Enter'
@@ -343,6 +349,18 @@ export class TreeView extends Tree {
       (event) => { this.mouseEvent('mousedown',event) });
     this.$treeRoot.addEventListener('dblclick',
       (event) => { this.mouseEvent('dblclick', event) });
+    // drag-n-drop
+    this.$treeRoot.addEventListener('dragstart',
+      (event) => { this.mouseEvent('DragStart', event) });
+    this.$treeRoot.addEventListener('drag',
+      (event) => { this.mouseEvent('Drag', event) });
+    this.$treeRoot.addEventListener('drop',
+      (event) => { this.mouseEvent('Drop', event) });
+    this.$treeRoot.addEventListener('dragend',
+      (event) => { this.mouseEvent('DragEnd', event) });
+    this.$treeRoot.addEventListener('dragover',
+      (event) => { this.mouseEvent('DragOver', event) });
+    // show/hide the hover menu
     this.$treeRoot.addEventListener('mouseover',
       (event) => { this.mouseEvent('mouseover', event) });
     // hide the hover menu when the mouse leaves the tree view
@@ -350,7 +368,7 @@ export class TreeView extends Tree {
       (event) => { this.hideHoverMenu(); });
   }
 
-  buildEventName (event) {
+  buildEventName (event, eventType) {
     const shift = (event.shiftKey && (event.key != 'Shift')) ? 'Shift+' : '';
     const ctrl = (event.ctrlKey && (event.key != 'Control')) ? 'Ctrl+' : '';
     const alt = (event.altKey && (event.key != 'Alt')) ? 'Alt+' : '';
@@ -370,6 +388,11 @@ export class TreeView extends Tree {
       if (buttonName) {
         eventName = `Mouse${clickName}${buttonName}`;
       }
+    }
+    else if (['DragStart', 'Drag', 'Drop', 'DragEnd',
+      'DragOver'].includes(eventType))
+    {
+      eventName = `Mouse${eventType}`;
     }
     else if ('mouseover' === event.type) {
       eventName = 'MouseOver';
@@ -420,7 +443,7 @@ export class TreeView extends Tree {
     if (this.dialogActive) return;
     //debug(`mouseEvent(${eventType}):`, event);
     // assign an event name based on modifier keys, event type, mouse button
-    const eventName = this.buildEventName(event);
+    const eventName = this.buildEventName(event, eventType);
     //this.setStatus(`mouse: ${eventName}`);
     // identify which row the event was in, if any
     let node;  // which Tree Node object was clicked?
@@ -428,7 +451,8 @@ export class TreeView extends Tree {
     let $node;  // Node's ul.node element
     let $row;  // Node's div.row element
     let $elem;  // most specific element we care about
-    while ($target) {
+    //debug(`mouseEvent(${eventType}):`, $target);
+    while ($target && $target.classList) {
       const className = $target.classList[0];
       if ((! $elem) && [
         'node-stats', 'node-link', 'node-label',
@@ -472,11 +496,6 @@ export class TreeView extends Tree {
       if (handler) {
         if (! ['mouseHoverMenu', 'rejectEvent'].includes(handlerName))
           this.setStatus(`mouse: ${handlerName}`);
-        // eat default browser action unless handler wants it
-        if ('none' !== handlerName) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
         // equivalent to this.handler(event);
         await handler.bind(this)(event);
       }
@@ -856,6 +875,8 @@ export class TreeView extends Tree {
 
   action_loadOrEditNode(event, allowEdit = true) {
     debug('action_loadOrEditNode');
+    event.preventDefault();
+    event.stopPropagation();
     // abort if nothing to do
     if (! this.cursor) return;
     let cursor = this.cursor;
@@ -1018,8 +1039,104 @@ export class TreeView extends Tree {
 
   action_mouseHoverMenu (event) {
     //debug(`action_mouseHoverMenu ${this.mouseNode.toLine()}`);
+    event.preventDefault();
+    event.stopPropagation();
     if (this.mouseNode && this.$mouseRow) return this.showHoverMenu();
     else return this.hideHoverMenu();
+  }
+
+  action_mouseDragStart (event) {
+    // abort on no-op
+    if (! this.mouseNode) return;
+    // save for later
+    this.mouseDragStartNode = this.mouseNode;
+    // attach a text representation in case the user drops into a text field
+    const plainText = this.mouseDragStartNode.asTextBranch();
+    event.dataTransfer.setData('text', plainText);
+    // change how the node looks
+    this.mouseDragStartNode.$.classList.add('dragging');
+    // default drag image obscures drop target, so make a smaller one
+    let dragImage = this.document.getElementById('drag-arrow');
+    event.dataTransfer.setDragImage(dragImage, 0, 12);
+  }
+
+  action_mouseDrag (event) {
+  }
+
+  getMouseDragTarget () {
+    const result = {};
+    // abort on no-op
+    if (! this.mouseDragStartNode) return result;
+    // drop target
+    let sourceNode = this.mouseDragStartNode;
+    let targetNode = this.mouseNode;
+    // don't move a parent into its own child list
+    if (targetNode.isChildOf(sourceNode)) return result;
+    // source and target confirmed
+    result.sourceNode = sourceNode;
+    result.targetNode = targetNode;
+    // if user dropped in right part of row, drop as 1st child
+    if (this.$mouseRow && (this.$mouseRowX >= (this.$mouseRowWid / 5))) {
+      result.destParent = targetNode;
+      result.destIndex = 0;
+      result.targetClass = 'drop-target-right';
+    }
+    // if user dropped outside row or in the left part of the row,
+    // drop as next sibling
+    else {
+      result.destParent = targetNode.parent;
+      result.destIndex = targetNode.indexOf() + 1;
+      result.targetClass = 'drop-target-left';
+    }
+    return result;
+  }
+
+  action_mouseDragOver (event) {
+    // apparently "drop" won't work unless we eat this event
+    event.preventDefault();
+    // figure out where to drop it
+    const drop = this.getMouseDragTarget();
+    // abort on no-op
+    if (! drop.targetNode) return;
+    // update style of drop target
+    if (this.dropTargetNode) {
+      this.dropTargetNode.$.classList.remove('drop-target-left');
+      this.dropTargetNode.$row.classList.remove('drop-target-right');
+    }
+    this.dropTargetNode = drop.targetNode;
+    if ('drop-target-left' === drop.targetClass)
+      drop.targetNode.$.classList.add(drop.targetClass);
+    else
+      drop.targetNode.$row.classList.add(drop.targetClass);
+  }
+
+  async action_mouseDrop (event) {
+    event.preventDefault();
+    // figure out where to drop it
+    const drop = this.getMouseDragTarget();
+    // abort on no-op
+    if (! drop.targetNode) return;
+    if (drop.targetNode === drop.sourceNode) return;
+    // move the node
+    await drop.sourceNode.moveTo(drop.destParent, drop.destIndex,
+      { reason: 'userAction' });
+    this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
+    // clean up, just in case
+    // (because 'dragend' event doesn't trigger sometimes)
+    this.action_mouseDragEnd(event);
+  }
+
+  action_mouseDragEnd (event) {
+    // abort on no-op
+    if (! this.mouseDragStartNode) return;
+    // fix how the node looks
+    this.mouseDragStartNode.$.classList.remove('dragging');
+    // clear data
+    this.mouseDragStartNode = undefined;
+    if (this.dropTargetNode) {
+      this.dropTargetNode.$.classList.remove('drop-target-left');
+      this.dropTargetNode.$row.classList.remove('drop-target-right');
+    }
   }
 
   $renderHoverMenu () {

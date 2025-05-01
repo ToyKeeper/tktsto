@@ -372,6 +372,46 @@ export class Node {
     return line;
   }
 
+  toFullLine () {
+    // return a longer 1-line summary of the node
+    let line = '';
+    // bullet point
+    if (this.isLoaded()) line = '- ';
+    else if (this.hasLoadedTabs()) line = '+ ';
+    else line = '* ';
+    // checkbox
+    if (this.checkbox) line = `${line}[${this.checkbox}] `;
+    // main text
+    if (this.label) {
+      if (this.title) line = `${line}${this.label} ~ [${this.title}](${this.url})`;
+      else line = `${line}${this.label}`;
+    }
+    else if (this.title) line = `${line}[${this.title}](${this.url})`;
+    else if (this.isWindow()) line = `${line}Window ${this.windowId}`;
+    // closed windows
+    if (this.isWindow() && (! this.isLoaded())) line = `${line} (Closed)`;
+    // if all else fails
+    if (! line) line = `${line}node ${this.id}`;
+    return line;
+  }
+
+  asTextBranch (depth = 0, lines) {
+    // render the entire sub-tree as text
+    if (undefined === lines) lines = [];
+    const line = '  '.repeat(depth) + this.toFullLine();
+    lines.push(line);
+    if (this.note) {
+      for (const l of this.note.split('\n'))
+        lines.push('  '.repeat(depth+1) + '> ' + l + '  ');
+    }
+    if (this.hasKids()) {
+      for (const node of this.nodes)
+        node.asTextBranch(depth+1, lines);
+    }
+    if (0 === depth) return lines.join('\n');
+    return lines;
+  }
+
   countNodes (filter, recurseFilter) {
     let total = 0;
     for (const node of this.nodes) {
@@ -754,6 +794,9 @@ export class Node {
     //     - c
     if ((this === destParent) || (this.isParentOf(destParent))) {
       debug('Node.moveTo() becoming own child, promoting kids first...');
+      // stop if becoming our own first child
+      if ((this === destParent) && (0 === destIndex)) return;
+      if (! this.hasKids()) return;  // stop if becoming self
       await this.promoteKids({ reason: 'moveTo' });
     }
     // remove

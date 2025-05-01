@@ -21,6 +21,7 @@ html, body {
   width: 100%;
   overflow-y: auto;
   background: var(--tree-view-bg);
+  user-select: none;  /* don't let user select text here */
 }
 
 #top-area,
@@ -591,6 +592,36 @@ html, body {
   color: var(--marked-count-color);
 }
 
+/******************** drag-n-drop ********************/
+
+.dragging {
+  opacity: 0.5;
+}
+
+.drop-target-left {
+  border-left: 0.25em solid var(--tree-line-dragging);
+  border-bottom: 0.5em solid var(--tree-line-dragging);
+  border-bottom-left-radius: 1rem;
+  /*
+  border-image: linear-gradient(135deg,
+    transparent 0%,
+    var(--tree-line-dragging) 5%,
+    transparent 90%
+    );
+  border-image-slice: 1;
+  */
+}
+.drop-target-right {
+  border-bottom: 0.5em solid transparent;
+  border-bottom-left-radius: 1rem;
+  border-image: linear-gradient(to right,
+    transparent 0%,
+    transparent 8%,
+    var(--tree-line-dragging) 10%
+    );
+  border-image-slice: 1;
+}
+
 /******************** input dialogs ********************/
 
 #inputDialog {
@@ -710,6 +741,7 @@ html, body {
     #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   /***** tree lines *****/
+  --tree-line-dragging: #f0f;
   /***** window nodes *****/
   --window-title-text-shadow: var(--fancy-text-shadow);
   --window-branch-shadow: 0.10em 0.10em 0.25em var(--shadow-color);
