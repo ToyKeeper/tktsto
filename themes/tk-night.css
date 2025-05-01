@@ -31,15 +31,15 @@
     #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   --tree-view-bg: #222;
-  --note-loaded-fg: #12ee6a;
-  --note-was-loaded-fg: #e70e9d;
-  --note-unloaded-fg: #1aab54;
-  /* --note-long-fg: #5c9; */
-  --note-long-fg: var(--details-label-fg);
-  --note-long-bg: linear-gradient(#0000, #0002);
-  --note-long-border: none;
-  --note-long-border-bottom: 1px solid #fff1;
-  --note-title-sep-fg: #49d;
+  --label-loaded-fg: #12ee6a;
+  --label-was-loaded-fg: #e70e9d;
+  --label-unloaded-fg: #1aab54;
+  /* --note-fg: #5c9; */
+  --note-fg: var(--details-label-fg);
+  --note-bg: linear-gradient(#0000, #0002);
+  --note-border: none;
+  --note-border-bottom: 1px solid #fff1;
+  --label-title-sep-fg: #49d;
   --tab-active-fg: #fff;
   --tab-loaded-fg: #eee;
   --tab-was-loaded-fg: #f73f96;

@@ -99,7 +99,7 @@ html, body {
 
 /*
 #detail-node-id,
-#detail-note {
+#detail-label {
   display: inline-block;
 }
 */
@@ -117,7 +117,7 @@ html, body {
   color: var(--details-value-fg);
 }
 
-#detail-long-note {
+#detail-note {
   /* override container padding */
   margin-left: -0.25rem;
   margin-right: -0.25rem;
@@ -125,15 +125,15 @@ html, body {
   padding-right: 0.25rem;
   padding-bottom: 0.1rem;
   /* colors */
-  color: var(--note-long-fg);
-  background: var(--note-long-bg);
-  border: var(--note-long-border);
+  color: var(--note-fg);
+  background: var(--note-bg);
+  border: var(--note-border);
   border-radius: var(--cursor-radius-collapsed);
 }
 
 /* border when long note has other details afterward */
-#detail-long-note:has(+div:not(.hidden)) {
-  border-bottom: var(--note-long-border-bottom);
+#detail-note:has(+div:not(.hidden)) {
+  border-bottom: var(--note-border-bottom);
 }
 
 /******************** scrollbar ********************/
@@ -311,25 +311,25 @@ html, body {
   opacity: 66%;
 }
 
-.row .node-note,
+.row .node-label,
 .row .node-note-icon {
-  color: var(--note-unloaded-fg);
+  color: var(--label-unloaded-fg);
 }
-.row.was-loaded .node-note,
-.row.was-loaded-children .node-note,
+.row.was-loaded .node-label,
+.row.was-loaded-children .node-label,
 .row.was-loaded .node-note-icon,
 .row.was-loaded-children .node-note-icon {
-  color: var(--note-was-loaded-fg);
+  color: var(--label-was-loaded-fg);
 }
-.row.loaded .node-note,
-.row.loaded-children .node-note,
+.row.loaded .node-label,
+.row.loaded-children .node-label,
 .row.loaded .node-note-icon,
 .row.loaded-children .node-note-icon,
-#detail-note {
-  color: var(--note-loaded-fg);
+#detail-label {
+  color: var(--label-loaded-fg);
 }
-.node-note-url-sep {
-  color: var(--note-title-sep-fg);
+.node-label-url-sep {
+  color: var(--label-title-sep-fg);
 }
 
 .expanded.row::before {
@@ -397,7 +397,7 @@ html, body {
   color: var(--window-unloaded-fg);
   border-radius: var(--cursor-radius-collapsed);
 }
-.window.row .node-note {
+.window.row .node-label {
   color: var(--window-unloaded-fg);
 }
 .window.row.expanded {
@@ -406,13 +406,13 @@ html, body {
 
 .window.row.loaded,
 .window.row.loaded-children,
-.window.row.loaded .node-note,
-.window.row.loaded-children .node-note {
+.window.row.loaded .node-label,
+.window.row.loaded-children .node-label {
   color: var(--window-loaded-fg);
 }
 
 .window.row.active,
-.window.row.active .node-note {
+.window.row.active .node-label {
   /* the current window is brighter */
   color: var(--window-active-fg);
   font-weight: bold;
@@ -580,7 +580,7 @@ html, body {
 }
 
 #hover-menu .edit-button {
-  color: var(--note-loaded-fg);
+  color: var(--label-loaded-fg);
 }
 
 #hover-menu .delete-button {
@@ -629,7 +629,7 @@ html, body {
 }
 
 #inputDialog input {
-  color: var(--note-loaded-fg);
+  color: var(--label-loaded-fg);
   font-size: calc(var(--global-font-size) * 0.9);
   padding: 0.1em 0.2em;
   margin-bottom: var(--dialog-padding);
@@ -638,7 +638,7 @@ html, body {
 #inputDialog textarea {
   /* height: 100%; */
   min-height: 10em;
-  color: var(--note-long-fg);
+  color: var(--note-fg);
   font-size: calc(var(--global-font-size) * 0.8);
 }
 

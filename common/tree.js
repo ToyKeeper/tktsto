@@ -371,7 +371,7 @@ export class Tree {
       // keep unloaded tab as part of the user's saved window
       return tabNode.unload({ reason: 'onWindowRemoved' });
     }
-    // if tab closed manually by user, but it has notes
+    // if tab closed manually by user, but it has label/notes
     else if (tabNode.shouldUnloadNotDelete()) {
       // keep tab in tree to preserve its metadata
       return tabNode.unload({ reason: 'onTabRemoved' });
@@ -381,7 +381,7 @@ export class Tree {
       // delete the node, but keep its kids
       return tabNode.deleteSelfAndPromoteKids({ reason: 'onTabRemoved' });
     }
-    // tab is a leaf node with no notes or anything interesting
+    // tab is a leaf node with no label or anything interesting
     else {
       // delete boring tabs on close
       return tabNode.deleteSelf({ reason: 'onTabRemoved' });
@@ -706,8 +706,8 @@ export class Tree {
     if ('setExpanded' === changeType) {
       return node.setExpanded(msg.expanded, msg);
     }
-    else if ('setNote' === changeType) {
-      return node.setNote(msg.note, msg.longNote, msg);
+    else if ('setNotes' === changeType) {
+      return node.setNotes(msg.label, msg.note, msg);
     }
     else if ('setTabFields' === changeType) {
       return node.setTabFields(msg.changes, msg);

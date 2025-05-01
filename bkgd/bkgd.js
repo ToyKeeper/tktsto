@@ -669,14 +669,14 @@ class Bkgd {
         const ctimeStr = fmtDate(json.metadata.sessionStartDate);
         const etimeStr = fmtDate(json.metadata.exportDate);
         // generate a title
-        const note = filename;
-        if (node.note) node.note = `${note} (${node.note})`;
-        else node.note = note;
+        const label = filename;
+        if (node.label) node.label = `${label} (${node.label})`;
+        else node.label = label;
         // generate a description
         const filenameStr = `Filename: ${filename}\n`;
         const importText = `${filenameStr}Session Started: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
-        if (node.longNote) node.longNote = importText + '\n' + node.longNote;
-        else node.longNote = importText;
+        if (node.note) node.note = importText + '\n' + node.note;
+        else node.note = importText;
       }
       return node;
     }
@@ -760,7 +760,7 @@ class Bkgd {
           // create session root node
           const details = {};
           details.expanded = false;  // collapse new sub-tree
-          details.note = `Tabs Outliner Session`;
+          details.label = `Tabs Outliner Session`;
           // treeId is the session creation time
           details.ctime = Number(item.node.data.treeId);
           details.sessionImportTime = Date.now();
@@ -771,13 +771,13 @@ class Bkgd {
         else if (11111 === item.type) {
           const rootNode = parsedNodes[0];
           rootNode.sessionExportTime = item.time;
-          // create the root / session node's longNote
+          // create the root / session node's long note
           const ctimeStr = fmtDate(rootNode.ctime);
           const itimeStr = fmtDate(rootNode.sessionImportTime);
           const etimeStr = fmtDate(rootNode.sessionExportTime);
           let filenameStr = '';
           if (filename) filenameStr = `Filename: ${filename}\n`;
-          rootNode.longNote = `${filenameStr}Session Started: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
+          rootNode.note = `${filenameStr}Session Started: ${ctimeStr}\nExported: ${etimeStr}\nImported: ${itimeStr}`;
         }
       }
       // regular tree items are Arrays
@@ -802,7 +802,7 @@ class Bkgd {
         // general
         if (fields.marks) {
           // parse marks.customTitle
-          details.note = fields.marks.customTitle;
+          details.label = fields.marks.customTitle;
         }
         if (fields.data) {
           const d = fields.data;
@@ -819,7 +819,7 @@ class Bkgd {
         if (['win', 'savedwin', 'group'].includes(fields.type)) {
           details.type = 'window';
           details.loaded = false;
-          if (! details.note) details.note = 'Window';
+          if (! details.label) details.label = 'Window';
           if (fields.data) {
             const d = fields.data;
             // parse data.type for window type
@@ -828,12 +828,12 @@ class Bkgd {
               // capitalize 1st letter
               winType = String(d.type).charAt(0).toUpperCase()
                 + String(d.type).slice(1);
-              details.note = `${winType} ${details.note}`;
+              details.label = `${winType} ${details.label}`;
             }
             // parse data.crashDetectedDate
             if (d.crashDetectedDate) {
               const dateStr = fmtDate(Number(d.crashDetectedDate));
-              details.note = `${details.note} (crashed ${dateStr})`;
+              details.label = `${details.label} (crashed ${dateStr})`;
             }
           }
           // TODO: parse data.rect
@@ -844,10 +844,10 @@ class Bkgd {
         else if ('tab' === fields.type) {
           details.wasLoaded = true;  // link was open in a tab
         }
-        // note-only nodes
+        // label-only nodes
         else if ('textnote' === fields.type) {
           // parse data.note
-          details.note = fields.data.note;
+          details.label = fields.data.note;
           //debug('textnote', details);
         }
         // regular nodes

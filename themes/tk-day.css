@@ -6,7 +6,7 @@
 /******************** overrides ********************/
 
 #hover-menu .edit-button {
-  color: var(--note-unloaded-fg);
+  color: var(--label-unloaded-fg);
 }
 
 
@@ -49,14 +49,14 @@
     #000f  0.10em 0.15em 0.25em;
   /***** main tree view *****/
   --tree-view-bg: #e2e2f4;
-  --note-loaded-fg: #005400;
-  --note-was-loaded-fg: #e70e9d;
-  --note-unloaded-fg: #629d62;
-  --note-long-fg: var(--details-label-fg);
-  --note-long-bg: linear-gradient(#0000, #0001);
-  --note-long-border: none;
-  --note-long-border-bottom: 1px solid #eee;
-  --note-title-sep-fg: #4daaf5;
+  --label-loaded-fg: #005400;
+  --label-was-loaded-fg: #e70e9d;
+  --label-unloaded-fg: #629d62;
+  --note-fg: var(--details-label-fg);
+  --note-bg: linear-gradient(#0000, #0001);
+  --note-border: none;
+  --note-border-bottom: 1px solid #eee;
+  --label-title-sep-fg: #4daaf5;
   --tab-active-fg: #000;
   --tab-loaded-fg: #222;
   --tab-was-loaded-fg: #f73f96;

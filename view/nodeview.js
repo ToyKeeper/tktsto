@@ -20,7 +20,7 @@ export class NodeView extends Node {
     if (undefined === window) { }  // TODO
     // DOM objects
     this.$ = null;  // outermost element is a <li>
-    this.$row = null;  // <div> for note, title+url, favicon, etc
+    this.$row = null;  // <div> for label, title+url, favicon, etc
     this.$nodes = null;  // <ul>
   }
 
@@ -147,16 +147,16 @@ export class NodeView extends Node {
     if (this.hidden) this.$row.classList.add('tab-hidden');
     else this.$row.classList.remove('tab-hidden');
     // title row text
-    // full row: [3/14] @ Note Text ~ <a href="link">Link Title</a>
+    // full row: [3/14] @ Label Text ~ <a href="link">Link Title</a>
     // ... where "[3/14]" is num children open/total, and "@" is a favicon
     let mainText = '';
     // FIXME: instead of innerHTML, use safer Element creation and innerText
-    if (this.note) {
-      if (this.url) {  // note ~ href
-        mainText = `<span class="node-note">${this.note}</span><span class="node-note-url-sep"> ~ </span><a class="node-link" href="${this.url}">${this.title}</a>`;
+    if (this.label) {
+      if (this.url) {  // label ~ href
+        mainText = `<span class="node-label">${this.label}</span><span class="node-label-url-sep"> ~ </span><a class="node-link" href="${this.url}">${this.title}</a>`;
       }
-      else {  // note only
-        mainText = `<span class="node-note">${this.note}</span>`;
+      else {  // label only
+        mainText = `<span class="node-label">${this.label}</span>`;
       }
     }
     else if (this.url) {  // href only
@@ -175,9 +175,9 @@ export class NodeView extends Node {
     if (this.isWindow() && (! this.isLoaded()))  // note closed windows
       mainText = mainText + ' (closed)';
     // indicate when there's a long note attached
-    let longNoteIcon = '';
-    if (this.longNote)
-      longNoteIcon = '<span class="node-note-icon">📎 </span>';  // paperclip
+    let noteIcon = '';
+    if (this.note)
+      noteIcon = '<span class="node-note-icon">📎 </span>';  // paperclip
     // node stats
     let statsText = '';
     // TODO: unsure if always include stats or only when collapsed
@@ -197,7 +197,7 @@ export class NodeView extends Node {
     // TODO: favicon
     let faviconText = '';
     // combined output
-    this.$row.innerHTML = `${statsText}${faviconText}${longNoteIcon}${mainText}`;
+    this.$row.innerHTML = `${statsText}${faviconText}${noteIcon}${mainText}`;
   }
 
   $renderDetails ($detailsBox) {
@@ -250,11 +250,11 @@ export class NodeView extends Node {
       }
     }
 
-    // short note
-    let $note = getOrCreate('detail-note', 'div');
-    //if (mode <= 1) hide($note);
+    // label / short note
+    let $label = getOrCreate('detail-label', 'div');
+    //if (mode <= 1) hide($label);
     //else
-    setOrHide($note, this.note, this.note);
+    setOrHide($label, this.label, this.label);
 
     // wasLoaded
     const wasLoaded = (!!this.wasLoaded) && (! this.loaded);
@@ -263,8 +263,8 @@ export class NodeView extends Node {
     else setOrHide($wasLoaded, wasLoaded, null, `<b>Was Loaded</b>`);
 
     // long note
-    let $longNote = getOrCreate('detail-long-note', 'div');
-    setOrHide($longNote, this.longNote, this.longNote);
+    let $note = getOrCreate('detail-note', 'div');
+    setOrHide($note, this.note, this.note);
 
     // link title
     let $title = getOrCreate('detail-title', 'div');
@@ -410,11 +410,11 @@ export class NodeView extends Node {
     this.$refreshAncestry();
   }
 
-  setNote (text, longNote, ...extra) {
+  setNotes (label, note, ...extra) {
     // if no change, do nothing
-    if ((text === this.note) && (longNote === this.longNote)) return;
+    if ((label === this.label) && (note === this.note)) return;
     // do it
-    super.setNote(text, longNote, ...extra);
+    super.setNotes(label, note, ...extra);
     // show it
     this.$render();
   }

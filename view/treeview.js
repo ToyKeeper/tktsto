@@ -77,17 +77,17 @@ export class TreeView extends Tree {
       'Enter': 'loadOrEditNode',
       'd': 'deleteNode',
       'u': 'unloadNode',
-      'o': 'addNoteAsNextVisibleRow',
-      'Shift+O': 'addNoteAsPrevVisibleRow',
+      'o': 'addNodeAsNextVisibleRow',
+      'Shift+O': 'addNodeAsPrevVisibleRow',
       ///// edit nodes
       'Space': 'toggleExpanded',
-      'e': 'editNote',
+      'e': 'editNotes',
       ///// task status
       //'x': 'toggleTaskDone',
       //'t': 'taskLeaderKey',
       ///// search
       //'/': 'beginSearch',
-      //'Shift+*': 'searchForCurrent',  // match current note, url, or title
+      //'Shift+*': 'searchForCurrent',  // match current label, url, or title
       //'Ctrl+f': 'beginSearch',
       //'Ctrl+g': 'nextSearchResult',
       //'n': 'nextSearchResult',
@@ -431,7 +431,7 @@ export class TreeView extends Tree {
     while ($target) {
       const className = $target.classList[0];
       if ((! $elem) && [
-        'node-stats', 'node-link', 'node-note',
+        'node-stats', 'node-link', 'node-label',
         'row', 'node' ].includes(className)
       ) $elem = $target;
       if ($target.classList.contains('row')) $row = $target;
@@ -706,21 +706,21 @@ export class TreeView extends Tree {
     this.setStatus(`moved left: ${this.cursor.toLine()}`);
   }
 
-  async addNoteAsPrevOrNextVisibleRow (position) {
+  async addNodeAsPrevOrNextVisibleRow (position) {
     // ensure valid position: prev or next
     if (undefined === position) position = 'next';
     if ('next' !== position) position = 'prev';
 
-    // prompt for new note text
+    // prompt for new label text
     const result = await this.inputDialog({
       doc: document,
-      title: 'Add Note',
-      description: 'Enter note text:',
+      title: 'Add Node',
+      description: 'Enter label text:',
       value: ''
     });
     // abort if user cancelled
     if ((!result) || ('OK' !== result.button)) return;
-    const noteText = result.value;
+    const labelText = result.value;
 
     // figure out where to put the new node (determine parent and index)
     let destParent = this.root;  // default if empty tree or no cursor
@@ -754,20 +754,20 @@ export class TreeView extends Tree {
 
     // add a new Node
     const newNode = await destParent.addChild(destIndex,
-      { note: noteText, render: true },
+      { label: labelText, render: true },
       { reason: 'userAction' });
     //log(destParent.nodes);
     this.setCursor(newNode);
-    //debug(`added "${newNode.note}"`);
+    //debug(`added "${newNode.label}"`);
     this.setStatus(`added ${this.cursor.toLine()}`);
   }
 
-  async action_addNoteAsNextVisibleRow (event) {
-    return await this.addNoteAsPrevOrNextVisibleRow('next');
+  async action_addNodeAsNextVisibleRow (event) {
+    return await this.addNodeAsPrevOrNextVisibleRow('next');
   }
 
-  async action_addNoteAsPrevVisibleRow (event) {
-    return await this.addNoteAsPrevOrNextVisibleRow('prev');
+  async action_addNodeAsPrevVisibleRow (event) {
+    return await this.addNodeAsPrevOrNextVisibleRow('prev');
   }
 
   async action_deleteNode(event) {
@@ -879,7 +879,7 @@ export class TreeView extends Tree {
     }
     // if note or focused tab or window, edit it
     else {
-      if (allowEdit) this.action_editNote(event);
+      if (allowEdit) this.action_editNotes(event);
     }
   }
 
@@ -893,30 +893,30 @@ export class TreeView extends Tree {
     this.setStatus(`${verbed} ${this.cursor.toLine()}`);
   }
 
-  async action_editNote (event) {
-    debug('action_editNote()');
+  async action_editNotes (event) {
+    debug('action_editNotes()');
     // choose mouse or keyboard cursor based on event type
     let cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
 
-    // prompt for new note text
+    // prompt for new label/note text
     const result = await this.inputDialog({
       doc: document,
-      title: 'Edit Note',
-      description: 'Title',
-      value: cursor.note,
+      title: 'Edit Notes',
+      description: 'Label',
+      value: cursor.label,
       textArea: true,
       textAreaLabel: 'Notes',
-      textAreaValue: cursor.longNote
+      textAreaValue: cursor.note
     });
     // abort if user cancelled
     if ((!result) || ('OK' !== result.button)) return;
     // update the node
-    const noteText = result.value;
-    const longNoteText = result.textAreaValue;
-    //debug('action_editNote():', noteText, longNoteText);
-    cursor.setNote(noteText, longNoteText, { reason: 'userAction' });
+    const labelText = result.value;
+    const noteText = result.textAreaValue;
+    //debug('action_editNotes():', labelText, noteText);
+    cursor.setNotes(labelText, noteText, { reason: 'userAction' });
     this.setStatus(`Edited ${cursor.toLine()}`);
   }
 
@@ -1047,7 +1047,7 @@ export class TreeView extends Tree {
       this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'U', 'unloadNode');
     }
     if (! this.$hoverMenuEdit) {
-      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNote');
+      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNotes');
     }
     if (! this.$hoverMenuMark) {
       this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');

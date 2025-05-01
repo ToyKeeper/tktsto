@@ -21,8 +21,8 @@ export class Node {
     this.windowId = undefined;
     this.tabId = undefined;
     // attributes
+    this.label = undefined;
     this.note = undefined;
-    this.longNote = undefined;
     this.title = undefined;
     this.url = undefined;
     this.faviconUrl = undefined;
@@ -36,7 +36,7 @@ export class Node {
     this.checkboxPx = undefined;  // percent complete, calculated and cached
     // timestamps
     // ctime: set when node first created only
-    // mtime: set when changed note, title, url, checkbox, ...
+    // mtime: set when changed label, title, url, checkbox, ...
     // atime: set when expanded/collapsed, moved, unloaded, tab focused, ...
     // ltime: set when url last loaded
     this.ctime = Date.now();  // creation time (NOT posix style change time)
@@ -51,8 +51,8 @@ export class Node {
       'type',
       'windowId',
       'tabId',
+      'label',
       'note',
-      'longNote',
       'title',
       'url',
       'faviconUrl',
@@ -268,15 +268,15 @@ export class Node {
 
   shouldUnloadNotDelete (recurse = true) {
     // true if node has any metadata worth keeping
-    if (this.note
-      || this.longNote
+    if (this.label
+      || this.note
       || this.checkbox
       //|| (this.type !== '')  // is a window or something
     ) return true;
     // stop if we've gone deep enough
     if (! recurse) return false;
     // true if 1st-level kids are interesting
-    // (like, if this plain tab has notes attached as children)
+    // (like, if this plain tab has labels attached as children)
     for (const node of this.nodes) {
       if (node.shouldUnloadNotDelete(false)) return true;
     }
@@ -362,9 +362,9 @@ export class Node {
   toLine () {
     // return a short 1-line summary of the node
     let line = '';
-    if (this.note) {
-      if (this.title) line = `${this.note} ~ ${this.title}`;
-      else line = this.note;
+    if (this.label) {
+      if (this.title) line = `${this.label} ~ ${this.title}`;
+      else line = this.label;
     }
     else if (this.title) line = this.title;
     else if (this.isWindow()) line = `Window ${this.windowId}`;
@@ -456,7 +456,7 @@ export class Node {
 
   async addChild (index = 0, details, args) {
     // details to pass:
-    // id, note, title, url, faviconUrl, expanded
+    // id, label, note, title, url, faviconUrl, expanded
     const newNode = new this.constructor(this.tree, this);
     this.nodes.splice(index, 0, newNode);
     for (const key in details) {
@@ -491,21 +491,21 @@ export class Node {
     return newNode;
   }
 
-  setNote (text, longNote, args) {
+  setNotes (label, note, args) {
     // abort on no-op
     if (! args) return;
-    if ((text === this.note) && (longNote === this.longNote)) return;
+    if ((label === this.label) && (note === this.note)) return;
     // Do The Thing
-    this.note = text;
-    this.longNote = longNote;
+    this.label = label;
+    this.note = note;
     // bump timestamp
     this.bump('mtime', args);
     // notify others
     if ('userAction' === args.reason)
       emit('tree_nodeChanged',
-        { nodeId: this.id, type: 'setNote',
+        { nodeId: this.id, type: 'setNotes',
+          label: this.label,
           note: this.note,
-          longNote: this.longNote,
           when: this.mtime });
   }
 
