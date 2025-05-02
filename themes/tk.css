@@ -595,23 +595,21 @@ html, body {
 /******************** drag-n-drop ********************/
 
 .dragging {
+  /* dim the drag source branch to show it's not a valid drop target */
   opacity: 0.5;
 }
 
-.drop-target-left {
+/* draw tree lines to left and bottom */
+.drop-target-left:not(.dragging),
+.window.node.expanded.drop-target-left:not(.dragging):not(.drop-external-text),
+foo {
   border-left: 0.25em solid var(--tree-line-dragging);
   border-bottom: 0.5em solid var(--tree-line-dragging);
   border-bottom-left-radius: 1rem;
-  /*
-  border-image: linear-gradient(135deg,
-    transparent 0%,
-    var(--tree-line-dragging) 5%,
-    transparent 90%
-    );
-  border-image-slice: 1;
-  */
 }
-.drop-target-right {
+/* draw tree line only below, not to left */
+.drop-target-right,
+.cursor.row.drop-target-right:not(.dragging .cursor) {
   border-bottom: 0.5em solid transparent;
   border-bottom-left-radius: 1rem;
   border-image: linear-gradient(to right,
@@ -620,6 +618,50 @@ html, body {
     var(--tree-line-dragging) 10%
     );
   border-image-slice: 1;
+}
+/* external text drops should use the label colors */
+.drop-target-right.drop-external-text,
+.cursor.row.drop-target-right.drop-external-text,
+.cursor.row.drop-target-right.drop-external-text:not(.dragging .cursor) {
+  border-image: linear-gradient(to right,
+    transparent 0%,
+    transparent 8%,
+    var(--label-unloaded-fg) 10%,
+    var(--label-loaded-fg) 100%
+    );
+  border-image-slice: 1;
+}
+
+/* attach external text to an existing node */
+.drop-external-text.drop-target-left,
+.drop-external-text.drop-target-left.cursor.row,
+foo {
+  /* remove drop target hints since we're not adding a new node */
+  border-style: unset;
+  border-left: unset;
+  border-bottom: unset;
+  border-image: unset;
+  border-bottom-left-radius: unset;
+}
+
+/* highlight target row, not some other space between nodes */
+.drop-external-text.drop-target-left.row,
+.drop-external-text.drop-target-left > .row,
+foo {
+  outline: 1px solid var(--label-loaded-fg);
+  background: linear-gradient(90deg, var(--label-unloaded-fg), transparent);
+  border-radius: var(--cursor-radius-collapsed);
+}
+
+/* make it extra clear that this will add a note to an existing node */
+.drop-external-text.drop-target-left > .row::before,
+/* override cursor node '+' prefix color */
+.cursor.node .drop-external-text.drop-target-left > .expanded.row::before,
+.cursor.node.drop-external-text.drop-target-left > .expanded.row::before,
+foo {
+  content: "Add Note ~ ";
+  color: var(--label-loaded-fg);
+  text-shadow: var(--fancy-text-shadow);
 }
 
 /******************** input dialogs ********************/

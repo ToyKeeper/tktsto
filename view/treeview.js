@@ -137,6 +137,7 @@ export class TreeView extends Tree {
       'MouseDrag': 'mouseDrag',
       'MouseDrop': 'mouseDrop',
       'MouseDragEnd': 'mouseDragEnd',
+      'MouseDragLeave': 'mouseDragLeave',
       'MouseDragOver': 'mouseDragOver',
       // do nothing on 'click' event
       'MouseClickLeft': 'rejectEvent',
@@ -358,6 +359,8 @@ export class TreeView extends Tree {
       (event) => { this.mouseEvent('Drop', event) });
     this.$treeRoot.addEventListener('dragend',
       (event) => { this.mouseEvent('DragEnd', event) });
+    this.$treeRoot.addEventListener('dragleave',
+      (event) => { this.mouseEvent('DragLeave', event) });
     this.$treeRoot.addEventListener('dragover',
       (event) => { this.mouseEvent('DragOver', event) });
     // show/hide the hover menu
@@ -389,7 +392,7 @@ export class TreeView extends Tree {
         eventName = `Mouse${clickName}${buttonName}`;
       }
     }
-    else if (['DragStart', 'Drag', 'Drop', 'DragEnd',
+    else if (['DragStart', 'Drag', 'Drop', 'DragEnd', 'DragLeave',
       'DragOver'].includes(eventType))
     {
       eventName = `Mouse${eventType}`;
@@ -1063,18 +1066,41 @@ export class TreeView extends Tree {
   action_mouseDrag (event) {
   }
 
-  getMouseDragTarget () {
+  getMouseDragTarget (event) {
     const result = {};
-    // abort on no-op
-    if (! this.mouseDragStartNode) return result;
     // drop target
     let sourceNode = this.mouseDragStartNode;
     let targetNode = this.mouseNode;
+    // abort on no-op
+    if (! targetNode) return result;
     // don't move a parent into its own child list
-    if (targetNode.isChildOf(sourceNode)) return result;
+    if (sourceNode && targetNode.isChildOf(sourceNode)) return result;
+    // where did the data come from?
+    if (this.mouseDragStartNode) result.source = 'internal';
+    else result.source = 'external';
     // source and target confirmed
     result.sourceNode = sourceNode;
     result.targetNode = targetNode;
+    // external drops are complicated
+    if ('external' === result.source) {
+      const types = event.dataTransfer.types;
+      // URL (Firefox)
+      if (types.includes('text/x-moz-url')) {
+        result.type = 'url';
+        result.title = event.dataTransfer.getData('text/x-moz-url-desc');
+        result.url = event.dataTransfer.getData('text/x-moz-url-data');
+        if (! result.url)
+          result.url = event.dataTransfer.getData('text/x-moz-url');
+        if (! result.title) result.title = result.url;
+      }
+      // plain text
+      else if (types.includes('text/plain')) {
+        result.type = 'text';
+        // apparently can't get the data until drop happens :(
+        result.text = event.dataTransfer.getData('text/plain');
+        //debug(result.text);
+      }
+    }
     // if user dropped in right part of row, drop as 1st child
     if (this.$mouseRow && (this.$mouseRowX >= (this.$mouseRowWid / 5))) {
       result.destParent = targetNode;
@@ -1091,36 +1117,106 @@ export class TreeView extends Tree {
     return result;
   }
 
+  clearDropTargetNodeStyles () {
+    if (this.dropTargetNode) {
+      for (const elem of [this.dropTargetNode.$, this.dropTargetNode.$row])
+        for (const cl of [...elem.classList])
+          if (cl.startsWith('drop-')) elem.classList.remove(cl);
+    }
+  }
+
   action_mouseDragOver (event) {
     // apparently "drop" won't work unless we eat this event
     event.preventDefault();
     // figure out where to drop it
-    const drop = this.getMouseDragTarget();
+    const drop = this.getMouseDragTarget(event);
     // abort on no-op
     if (! drop.targetNode) return;
-    // update style of drop target
-    if (this.dropTargetNode) {
-      this.dropTargetNode.$.classList.remove('drop-target-left');
-      this.dropTargetNode.$row.classList.remove('drop-target-right');
-    }
+    // remove styles of previous drop target
+    this.clearDropTargetNodeStyles();
+    // save new drop target
     this.dropTargetNode = drop.targetNode;
-    if ('drop-target-left' === drop.targetClass)
-      drop.targetNode.$.classList.add(drop.targetClass);
-    else
-      drop.targetNode.$row.classList.add(drop.targetClass);
+    // set styles on new drop target
+    let elem = ('drop-target-left' === drop.targetClass)
+      ? drop.targetNode.$ : drop.targetNode.$row;
+    elem.classList.add(drop.targetClass);
+    if ('external' === drop.source)
+      elem.classList.add(`drop-external-${drop.type}`);
   }
 
   async action_mouseDrop (event) {
     event.preventDefault();
     // figure out where to drop it
-    const drop = this.getMouseDragTarget();
+    const drop = this.getMouseDragTarget(event);
     // abort on no-op
     if (! drop.targetNode) return;
     if (drop.targetNode === drop.sourceNode) return;
-    // move the node
-    await drop.sourceNode.moveTo(drop.destParent, drop.destIndex,
-      { reason: 'userAction' });
-    this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
+    // internal source: move the node
+    if ('internal' === drop.source) {
+      await drop.sourceNode.moveTo(drop.destParent, drop.destIndex,
+        { reason: 'userAction' });
+      this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
+    }
+    // external source: try to attach external data
+    else {
+      debug('action_mouseDrop', event, event.dataTransfer.types);
+      // add links as new link nodes
+      if ('url' === drop.type) {
+        let newNode = await drop.destParent.addChild(drop.destIndex,
+          { url: drop.url, title: drop.title, render: true },
+          { reason: 'userAction' });
+        this.setStatus(`Added node: ${newNode.toLine()}`);
+      }
+      // plain text note
+      else if ('text' === drop.type) {
+        let attached = false;
+        // right edge of node: create new child node with note
+        if ('drop-target-right' === drop.targetClass) {
+          let label, note;
+          if (drop.text.includes('\n')) {
+            const lines = drop.text.split('\n');
+            label = lines[0];
+            note = lines.slice(1).join('\n');
+          }
+          else label = drop.text;
+          let newNode = await drop.destParent.addChild(drop.destIndex,
+            { label: label, note: note, render: true },
+            { reason: 'userAction' });
+          this.setStatus(`Added node: ${newNode.toLine()}`);
+          attached = true;
+        }
+        // single line: use as label, if label is empty
+        if (! drop.text.includes('\n') && (! attached)) {
+          if (! drop.targetNode.label) {
+            await drop.targetNode.setNotes(
+              drop.text, drop.targetNode.note,
+              { reason: 'userAction' });
+            this.setStatus(`Added label to ${drop.targetNode.toLine()}`);
+            attached = true;
+          }
+        }
+        // multiple lines or fall-through: add to note
+        if (! attached) {
+          let note = drop.targetNode.note;
+          if (! note) note = '';
+          // TODO: user pref for append / prepend
+          let sep, newNote;
+          const mode = 'prepend';
+          if ('append' === mode) {
+            sep = ((!note) || note.endsWith('\n')) ? '' : '\n';
+            newNote = note + sep + drop.text;
+          }
+          else {
+            sep = ((!note) || drop.text.endsWith('\n')) ? '' : '\n';
+            newNote = drop.text + sep + note;
+          }
+          await drop.targetNode.setNotes(
+            drop.targetNode.label, newNote,
+            { reason: 'userAction' });
+          this.setStatus(`Added note to ${drop.targetNode.toLine()}`);
+        }
+      }
+    }
     // clean up, just in case
     // (because 'dragend' event doesn't trigger sometimes)
     this.action_mouseDragEnd(event);
@@ -1128,15 +1224,17 @@ export class TreeView extends Tree {
 
   action_mouseDragEnd (event) {
     // abort on no-op
-    if (! this.mouseDragStartNode) return;
+    //if (! this.mouseDragStartNode) return;
     // fix how the node looks
-    this.mouseDragStartNode.$.classList.remove('dragging');
+    if (this.mouseDragStartNode)
+      this.mouseDragStartNode.$.classList.remove('dragging');
     // clear data
     this.mouseDragStartNode = undefined;
-    if (this.dropTargetNode) {
-      this.dropTargetNode.$.classList.remove('drop-target-left');
-      this.dropTargetNode.$row.classList.remove('drop-target-right');
-    }
+    this.clearDropTargetNodeStyles();
+  }
+
+  action_mouseDragLeave (event) {
+    this.clearDropTargetNodeStyles();
   }
 
   $renderHoverMenu () {
