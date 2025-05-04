@@ -173,8 +173,10 @@ export class NodeView extends Node {
       else
         mainText = `<span class="node-notitle">node ${this.id}</span>`;
     }
-    if (this.isWindow() && (! this.isLoaded()))  // note closed windows
-      mainText = mainText + ' (closed)';
+    if (this.isWindow() && (! this.isLoaded())) {  // note closed windows
+      const mtime = fmtDate(this.mtime);
+      mainText = mainText + ` (closed ${mtime})`;
+    }
     // indicate when there's a long note attached
     let noteIcon = '';
     if (this.note)
