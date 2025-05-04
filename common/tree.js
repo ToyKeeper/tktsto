@@ -246,6 +246,59 @@ export class Tree {
     return tab.url;
   }
 
+  async onWindowCreated (window, args) {
+    // are we re-opening a saved window?
+    let savedWindowNode;
+    if (this.bkgd.windowsLoading.length > 0) {
+      savedWindowNode = this.bkgd.windowsLoading.shift();
+      debug(`Tree.onWindowCreated() loadingSavedWindow=${savedWindowNode.id}`);
+    }
+    // if nothing in the queue, try searching by window ID
+    // TODO: unsure if this ever actually happens
+    if (! savedWindowNode) {
+      const found = this.root.findNodes((node) =>
+        { return node.isWindow() && (node.windowId === window.id); });
+      if (found.length > 0) {
+        debug('Tree.onWindowCreated() found window', found[0]);
+        savedWindowNode = found[0];
+      }
+    }
+    // are we re-opening a saved window?
+    if (savedWindowNode) {
+      await savedWindowNode.setTabFields({
+        type: 'window',
+        windowId: window.id,
+        loaded: true,
+        //windowState: window.state,  // TODO
+        //incognito: window.incognito,  // TODO
+        geometry: [window.width, window.height, window.left, window.top]
+      }, { reason: args.reason });
+      // in case a parent tab with child tabs has *already* been moved
+      // to this window (which caused the window to be created),
+      // reorder the tabs to pull in the child tabs
+      await savedWindowNode.reorderAllTabsInThisWindow();
+      return savedWindowNode;
+    }
+
+    // otherwise, create a new node for this window
+    const destParent = this.root;
+    // TODO: maybe insert at beginning instead of end?
+    const destIndex = this.root.nodes.length;
+    // TODO: handle window.top, .left, .width, .height
+    //       so it can re-open saved windows at same size+position
+    // TODO: handle window types: normal, incognito, pop-up?, ...
+    const newNode = await destParent.addChild(destIndex, {
+      type: 'window',
+      windowId: window.id,
+      loaded: true,
+      //windowState: window.state,  // TODO
+      //incognito: window.incognito,  // TODO
+      geometry: [window.width, window.height, window.left, window.top]
+    }, { reason: args.reason });
+    debug('Tree.onWindowCreated() new window node', newNode);
+    return newNode;
+  }
+
   async onTabCreated (tab) {
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // tab.active: boolean
@@ -271,7 +324,7 @@ export class Tree {
 
     // if tab was already created, do nothing
     const tabNode = this.getNodeByTabId(tab.id);
-    if (tabNode) return warn(`Tree.onTabCreated(${tab.id}): already exists`);
+    if (tabNode) return debug(`Tree.onTabCreated(${tab.id}): already exists`);
 
     // figure out which URL this new tab is going to
     const tabPendingUrl = this.getTabPendingUrl(tab);
