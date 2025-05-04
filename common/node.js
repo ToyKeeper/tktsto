@@ -639,6 +639,11 @@ export class Node {
     // Do The Thing
     this.loaded = false;
     this.active = false;
+    // ensure unloaded nodes are *not* attached to browser objects
+    const tabId = this.tabId;  // save for later use
+    const windowId = this.windowId;
+    this.tabId = undefined;
+    this.windowId = undefined;
     // let user toggle wasLoaded state manually
     if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
     else if (['onWindowUnloaded', 'onWindowRemoved'].includes(args.reason))
@@ -667,17 +672,17 @@ export class Node {
     // if not already closed by browser, close the tab
     if (['userAction', 'onWindowUnloaded'].includes(args.reason)) {
       // actually close the tab
-      if (this.tabId) {
+      if (tabId) {
         try {
-          await api.tabs.remove(this.tabId);
-          //debug(`Node.deleteSelf() removed tab: "${this.tabId}"`);
+          await api.tabs.remove(tabId);
+          //debug(`Node.deleteSelf() removed tab: "${tabId}"`);
         } catch (err) {
-          warn(`Node.unloaded() tried to remove tab twice: "${this.tabId}"`);
+          warn(`Node.unloaded() tried to remove tab twice: "${tabId}"`);
         }
       }
       else if (this.isWindow()) {  // a window has no tabId and it's fine
         // close the window (it'll unload all the tabs for us)
-        if (this.windowId) await api.windows.remove(this.windowId);
+        if (windowId) await api.windows.remove(windowId);
         // unload all tabs in the window
         else {
           // this should never happen, but if it does, at least it works
