@@ -269,6 +269,10 @@ export class Tree {
     //   which doesn't exist yet.  :(
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
 
+    // if tab was already created, do nothing
+    const tabNode = this.getNodeByTabId(tab.id);
+    if (tabNode) return warn(`Tree.onTabCreated(${tab.id}): already exists`);
+
     // figure out which URL this new tab is going to
     const tabPendingUrl = this.getTabPendingUrl(tab);
 
@@ -553,6 +557,7 @@ export class Tree {
     // changeInfo.audible: boolean
     // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
     // changeInfo.autoDiscardable: boolean
+    debug(`Tree.onTabUpdated(tabId=${tabId})`, changeInfo, tab);
     if (this.tabBlacklist[`${tabId}`]) {
       debug('ignoring blacklisted tab');
       return;

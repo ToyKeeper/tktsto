@@ -573,7 +573,7 @@ export class Node {
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
       'onWindowCreated', 'onWindowFocusChanged'
     ].includes(args.reason))
-      emit('tree_nodeChanged',
+      return emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',
           changes: changes,
           when: this.mtime });

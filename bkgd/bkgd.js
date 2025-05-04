@@ -170,9 +170,11 @@ class Bkgd {
       }
       for (const tab of window.tabs) {
         debug(`Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
-        // TODO: detect whether tab is already in tree
-        // TODO: if not, add new tab to the tree
-        //       ... in an appropriate position
+        // detect whether tab is already in tree
+        const tabNode = this.tree.getNodeByTabId(tab.id);
+        if (tabNode) continue;
+        // if not, add new tab to the tree
+        // TODO: ... in an appropriate position
         let destParent = winNode;
         let destIndex = winNode.nodes.length;
         if (tab.openerTabId && (tab.openerTabId !== tab.id)) {
@@ -273,7 +275,7 @@ class Bkgd {
     const node = this.tree.root.getWindowId(windowId);
     if (node) {
       debug('found window node', windowId, node);
-      node.windowClosed({ reason: 'onWindowRemoved' });
+      return node.windowClosed({ reason: 'onWindowRemoved' });
     }
     else {
       debug('no window node found', windowId);
@@ -282,6 +284,7 @@ class Bkgd {
 
   async onWindowFocusChanged (windowId) {
     debug(`bkgd.onWindowFocusChanged(${windowId})`);
+    await this.treeDbLoaded;
     // TODO: set window node as 'active' and set others as just 'loaded'?
     //   (so the focused window can have a brighter row in the tree view)
     const node = this.tree.root.getWindowId(windowId);
@@ -292,7 +295,7 @@ class Bkgd {
       const win = await api.windows.get(windowId);
       if (win) {
         const geom = [ win.width, win.height, win.left, win.top ];
-        node.setTabFields(
+        await node.setTabFields(
           { geometry: geom,
             windowState: win.state,
             incognito: win.incognito
@@ -305,6 +308,7 @@ class Bkgd {
 
   async onWindowBoundsChanged (...args) {
     debug('bkgd.onWindowBoundsChanged', ...args);
+    await this.treeDbLoaded;
     // TODO: update window geometry
   }
 
@@ -326,41 +330,46 @@ class Bkgd {
     // tab.url: string
     // tab.windowId: number
     debug(`bkgd.onTabCreated(${tab.id}): ${tab.url} : ${tab.title}`, tab);
-    await this.tree.onTabCreated(tab);
+    await this.treeDbLoaded;
+    return this.tree.onTabCreated(tab);
   }
 
-  onTabRemoved (tabId, removeInfo) {
+  async onTabRemoved (tabId, removeInfo) {
     // tabId: number
     // removeInfo.isWindowClosing: boolean
     // removeInfo.windowId: number
     debug(`bkgd.onTabRemoved(tabId=${tabId}, windowId=${removeInfo.windowId}, isWindowClosing=${removeInfo.isWindowClosing})`);
-    this.tree.onTabRemoved(tabId, removeInfo);
+    await this.treeDbLoaded;
+    return this.tree.onTabRemoved(tabId, removeInfo);
   }
 
-  onTabActivated (activeInfo) {
+  async onTabActivated (activeInfo) {
     // activeInfo.tabId: number
     // activeInfo.windowId: number
     debug(`bkgd.onTabActivated(tabId=${activeInfo.tabId}, windowId=${activeInfo.windowId})`);
-    this.tree.onTabActivated(activeInfo.windowId, activeInfo.tabId);
+    await this.treeDbLoaded;
+    return this.tree.onTabActivated(activeInfo.windowId, activeInfo.tabId);
   }
 
-  onTabMoved (tabId, moveInfo) {
+  async onTabMoved (tabId, moveInfo) {
     // tab was moved within a window
     // tabId: number
     // moveInfo.fromIndex: number
     // moveInfo.toIndex: number
     // moveInfo.windowId: number
     debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
-    this.tree.onTabMoved(tabId, moveInfo);
+    await this.treeDbLoaded;
+    return this.tree.onTabMoved(tabId, moveInfo);
   }
 
-  onTabAttached (tabId, attachInfo) {
+  async onTabAttached (tabId, attachInfo) {
     // tabId: number
     // attachInfo.newPosition: number
     // attachInfo.newWindowId: number
     //   (may refer to a window which doesn't exist yet)
     debug(`bkgd.onTabAttached(tabId=${tabId}, windowId=${attachInfo.newWindowId}, ${attachInfo.newPosition})`);
-    this.tree.onTabAttached(tabId, attachInfo);
+    await this.treeDbLoaded;
+    return this.tree.onTabAttached(tabId, attachInfo);
   }
 
   onTabDetached (tabId, detachInfo) {
@@ -372,7 +381,7 @@ class Bkgd {
     // we don't really need to do anything here
   }
 
-  onTabUpdated (tabId, changeInfo, tab) {
+  async onTabUpdated (tabId, changeInfo, tab) {
     // tabId: number
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // changeInfo.title: string
@@ -388,14 +397,16 @@ class Bkgd {
     // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
     // changeInfo.autoDiscardable: boolean
     debug(`bkgd.onTabUpdated(tabId=${tabId})`, changeInfo, tab);
-    this.tree.onTabUpdated(tabId, changeInfo, tab);
+    await this.treeDbLoaded;
+    return this.tree.onTabUpdated(tabId, changeInfo, tab);
   }
 
-  onTabReplaced (addedTabId, removedTabId) {
+  async onTabReplaced (addedTabId, removedTabId) {
     // "Fired when a tab is replaced with another tab due to prerendering or instant."
     // addedTabId: number
     // removedTabId: number
     debug(`bkgd.onTabReplaced(addedTabId=${addedTabId}, removedTabId=${removedTabId})`);
+    await this.treeDbLoaded;
     // this apparently only happens in chrome,
     // and only in some circumstances which are almost entirely undocumented
     // so I'm not sure how to even make it happen
@@ -406,7 +417,7 @@ class Bkgd {
     // I'll probably have to install a whole separate browser just to find
     // one which actually supports this feature, since all the browsers I
     // use either block it or don't implement it at all.
-    this.tree.onTabReplaced(addedTabId, removedTabId);
+    return this.tree.onTabReplaced(addedTabId, removedTabId);
   }
 
   onConnect (port) {
