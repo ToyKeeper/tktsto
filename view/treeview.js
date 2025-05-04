@@ -368,7 +368,7 @@ export class TreeView extends Tree {
       (event) => { this.mouseEvent('mouseover', event) });
     // hide the hover menu when the mouse leaves the tree view
     this.$.addEventListener('mouseleave',
-      (event) => { this.hideHoverMenu(); });
+      (event) => { this.mouseLeave(event) });
   }
 
   buildEventName (event, eventType) {
@@ -503,6 +503,10 @@ export class TreeView extends Tree {
         await handler.bind(this)(event);
       }
     }
+  }
+
+  mouseLeave (event) {
+    this.hideHoverMenu();
   }
 
   whichCursor (event) {
@@ -860,7 +864,7 @@ export class TreeView extends Tree {
     this.setCursor(newCursor);
   }
 
-  action_unloadNode(event) {
+  action_unloadNode (event) {
     debug('action_unloadNode');
     // choose mouse or keyboard cursor based on event type
     let cursor = this.whichCursor(event);
@@ -872,14 +876,17 @@ export class TreeView extends Tree {
     this.setStatus(`unloaded ${cursor.toLine()}`);
   }
 
-  action_loadNode(event) {
+  action_loadNode (event) {
+    debug('action_loadNode');
     return this.action_loadOrEditNode(event, false);
   }
 
-  action_loadOrEditNode(event, allowEdit = true) {
+  action_loadOrEditNode (event, allowEdit = true) {
     debug('action_loadOrEditNode');
-    event.preventDefault();
-    event.stopPropagation();
+    if ('command' !== event.type) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     // abort if nothing to do
     if (! this.cursor) return;
     let cursor = this.cursor;
@@ -1093,6 +1100,25 @@ export class TreeView extends Tree {
           result.url = event.dataTransfer.getData('text/x-moz-url');
         if (! result.title) result.title = result.url;
       }
+      else if (types.includes('text/uri-list')) {
+        result.type = 'url';
+        // WTF, uri-list is plain text, one URL per line, with comments
+        // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/Recommended_drag_types
+        const text = event.dataTransfer.getData('text/plain');
+        const html = event.dataTransfer.getData('text/html');
+        //const uriList = event.dataTransfer.getData('text/uri-list');
+        //debug(`drop:`, text, html, uriList);
+        if (text) result.url = text;
+        if (html) {
+          // why is this not included as a field by default??
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+          const a = doc.querySelector("a");
+          result.title = a.textContent;
+          if (result.title)  // clean up extra whitespace
+            result.title = result.title.trim().replace(/\s+/g, ' ');
+        }
+      }
       // plain text
       else if (types.includes('text/plain')) {
         result.type = 'text';
@@ -1249,7 +1275,7 @@ export class TreeView extends Tree {
       // make the button do something when clicked
       const func = function (event) {
         _this[`action_${funcName}`].bind(_this)(event);
-        _this.showHoverMenu();  // update display in case style changed
+        _this.hideHoverMenu();  // will re-appear if still over a node
       }
       if (func) $div.addEventListener('click', func);
       //const func = _this[`action_${funcName}`];

@@ -61,7 +61,7 @@ html, body {
   height: var(--toolbar-height);
   width: calc(100% - 0.25rem);
   text-wrap: nowrap;
-  overflow-x: scroll;
+  /* overflow-x: scroll; */
   margin-top: -8px;  /* reduce space between buttons and status text */
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);

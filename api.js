@@ -7,5 +7,7 @@
 // browser (Firefox) vs chrome (Chromium)
 export const isFirefox = (typeof browser !== 'undefined');
 export const isChrome = (! isFirefox);
+//export const isEdge = ???;
+//export const isVivaldi = ???;
 export const api = isFirefox ? browser : chrome;
 

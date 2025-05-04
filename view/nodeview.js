@@ -150,17 +150,18 @@ export class NodeView extends Node {
     // full row: [3/14] @ Label Text ~ <a href="link">Link Title</a>
     // ... where "[3/14]" is num children open/total, and "@" is a favicon
     let mainText = '';
+    let urlTitle = this.title ? this.title : this.url;  // handle blank title
     // FIXME: instead of innerHTML, use safer Element creation and innerText
     if (this.label) {
       if (this.url) {  // label ~ href
-        mainText = `<span class="node-label">${this.label}</span><span class="node-label-url-sep"> ~ </span><a class="node-link" draggable="false" href="${this.url}">${this.title}</a>`;
+        mainText = `<span class="node-label">${this.label}</span><span class="node-label-url-sep"> ~ </span><a class="node-link" draggable="false" href="${this.url}">${urlTitle}</a>`;
       }
       else {  // label only
         mainText = `<span class="node-label">${this.label}</span>`;
       }
     }
     else if (this.url) {  // href only
-      mainText = `<a class="node-link" draggable="false" href="${this.url}">${this.title}</a>`;
+      mainText = `<a class="node-link" draggable="false" href="${this.url}">${urlTitle}</a>`;
     }
     else {  // totally blank
       if (this.isWindow()) {
@@ -294,6 +295,12 @@ export class NodeView extends Node {
     if (mode <= 1) hide($nodeId);
     else setOrHide($nodeId, this.id, null,
       `<b>ID:</b>&nbsp;<span>${this.id}</span>`);
+
+    // tab ID
+    let $tabId = getOrCreate('detail-node-tabid', 'div');
+    if (mode <= 1) hide($tabId);
+    else setOrHide($tabId, this.tabId, null,
+      `<b>Tab:</b>&nbsp;<span>${this.tabId}</span>`);
 
     // ctime, mtime, atime, ...
     for (const tstamp of ['ctime', 'mtime', 'atime']) {

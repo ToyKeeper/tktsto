@@ -19,6 +19,10 @@ export class Tree {
 
     this.markedNodes = [];
 
+    // holds tabIds of "tabs" we need to ignore,
+    // like Vivaldi panels
+    this.tabBlacklist = {};
+
     this.createRootNode();
   }
 
@@ -265,6 +269,17 @@ export class Tree {
     //   which doesn't exist yet.  :(
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
 
+    // figure out which URL this new tab is going to
+    const tabPendingUrl = this.getTabPendingUrl(tab);
+
+    // Vivaldi sends this event for sidepanels,
+    // but they can't be used like tabs, so ignore them
+    if (('about:blank' === tabPendingUrl) && isChrome) {
+      this.tabBlacklist[`${tab.id}`] = true;
+      debug('ignoring tab which looks like a Vivaldi panel');
+      return;
+    }
+
     // are we loading a saved tab?
     let savedTabNode;
     if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
@@ -285,9 +300,6 @@ export class Tree {
       await savedTabNode.reorderAllTabsInThisWindow();
       return;
     }
-
-    // figure out which URL this new tab is going to
-    const tabPendingUrl = this.getTabPendingUrl(tab);
 
     // find the window Node
     let winNode = this.root.getWindowId(tab.windowId);
@@ -316,7 +328,7 @@ export class Tree {
       destParent = winNode.getActiveTab();
       if (! destParent) destParent = winNode;
       destIndex = 0;
-      debug(`Tree.onTabCreated() moving new tab to the right of: "${destParent.title}"`);
+      debug(`Tree.onTabCreated() moving new tab to the right of: "${destParent.toLine()}"`);
     }
     // find the right place to put this tab in the tree
     else if (tab.openerTabId) {
@@ -541,6 +553,11 @@ export class Tree {
     // changeInfo.audible: boolean
     // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
     // changeInfo.autoDiscardable: boolean
+    if (this.tabBlacklist[`${tabId}`]) {
+      debug('ignoring blacklisted tab');
+      return;
+    }
+
     const tabNode = this.getNodeByTabId(tabId);
 
     // if tab doesn't exist, do nothing
@@ -553,6 +570,9 @@ export class Tree {
         'discarded', 'frozen', 'hidden']) {
       if (undefined !== changeInfo[field]) {
         // if data actually changed, add it to the outgoing message
+        if ('title' === field) {
+          changeInfo[field] = changeInfo[field].trim().replace(/\s+/g, ' ');
+        }
         if (tabNode[field] !== changeInfo[field])
           changes[field] = changeInfo[field];
       }
@@ -762,7 +782,9 @@ function isNewTabPage (url) {
     'chrome://newtab',
     // edge
     'edge://newtab',
-    'edge://new-tab-page'
+    'edge://new-tab-page',
+    // vivaldi
+    'chrome://vivaldi-webui/startpage',
   ];
   for (const prefix of prefixes)
     if (url.startsWith(prefix)) return true;

@@ -428,6 +428,7 @@ export class Node {
   findNodes (filter, recurseFilter, found) {
     if (undefined === found) found = [];
     for (const node of this.nodes) {
+      if (node === this) return error(`Node is its own child: ${this.toLine()}`);
       //debug(`findNodes(${node.id}): ${filter(node)}`, node);
       if (filter) { if (filter(node)) found.push(node); }
       else found.push(node);
@@ -485,7 +486,10 @@ export class Node {
     // if open tabs, ... well fuck.  I don't know.
     // The browser *should* close the tabs first, right?  Right??
     else {
-      error('window closed while still having open tabs');
+      // Vivaldi does this when closing a window
+      // and it's fine... it closes the tabs afterward
+      const loadedTabs = this.getLoadedTabs();
+      warn(`Window closed with ${loadedTabs.length} open tabs: ${this.toLine()}`);
     }
     // notify others
     if ('onWindowRemoved' === args.reason)
@@ -793,10 +797,17 @@ export class Node {
     //     - a
     //     - c
     if ((this === destParent) || (this.isParentOf(destParent))) {
-      debug('Node.moveTo() becoming own child, promoting kids first...');
+      debug('Node.moveTo() becoming own child, promoting kids first...', this.toLine());
       // stop if becoming our own first child
       if ((this === destParent) && (0 === destIndex)) return;
       if (! this.hasKids()) return;  // stop if becoming self
+      // becoming our own direct child
+      if (this === destParent) {
+        // figure out new destination after promoting kids
+        destParent = destParent.parent;
+        destIndex = this.indexOf() + destIndex + 1;
+        debug(`new destination: child ${destIndex} of ${destParent.toLine()}`);
+      }
       await this.promoteKids({ reason: 'moveTo' });
     }
     // remove
@@ -831,6 +842,7 @@ export class Node {
     if ([
       'userAction',
       'onTabMoved', 'onTabRemoved', 'onTabAttached',
+      'moveTo',
       'bkgd_loadSavedNode:autoWindow'
     ].includes(args.reason)) {
       emit('tree_nodeMoved',
@@ -839,8 +851,10 @@ export class Node {
           when: destParent.mtime });
 
       // loaded tabs need extra care when they move
-      if ((this.isLoaded() || this.hasLoadedTabs()) && (! this.isWindow()) )
-      {
+      if (('moveTo' !== args.reason)
+        && (this.isLoaded() || this.hasLoadedTabs())
+        && (! this.isWindow())
+      ) {
         // if loaded tab moved to unloaded window, load the window
         const newWindow = this.getWindowNode();
         if (newWindow && (! newWindow.isLoaded())) {
@@ -1027,6 +1041,8 @@ export class Node {
       opener = nearestLoadedParent.tabId;
     else
       opener = this.tabId;
+    // Firefox needs opener = self, but in Chrome that's an error
+    if (isChrome && (opener === this.tabId)) return;
     try {
       return await api.tabs.update(this.tabId, { openerTabId: opener });
     } catch (err) {
