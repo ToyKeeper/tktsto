@@ -382,12 +382,15 @@ export class Node {
     // checkbox
     if (this.checkbox) line = `${line}[${this.checkbox}] `;
     // main text
+    let urlTitle = this.title ? this.title : this.url;
     if (this.label) {
-      if (this.title) line = `${line}${this.label} ~ [${this.title}](${this.url})`;
+      if (urlTitle) line = `${line}${this.label} ~ [${urlTitle}](${this.url})`;
       else line = `${line}${this.label}`;
     }
     else if (this.title) line = `${line}[${this.title}](${this.url})`;
+    else if (this.url) line = `${line}[${this.url}](${this.url})`;
     else if (this.isWindow()) line = `${line}Window ${this.windowId}`;
+    else if (this.isRoot()) line = `${line}Session`;
     // closed windows
     if (this.isWindow() && (! this.isLoaded())) line = `${line} (Closed)`;
     // if all else fails
@@ -408,7 +411,10 @@ export class Node {
       for (const node of this.nodes)
         node.asTextBranch(depth+1, lines);
     }
-    if (0 === depth) return lines.join('\n');
+    if (0 === depth) {
+      lines.push('');  // ensure we end with a newline
+      return lines.join('\n');
+    }
     return lines;
   }
 
