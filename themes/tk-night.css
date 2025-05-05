@@ -115,5 +115,6 @@
   --dialog-title-fg: #fff;
   --dialog-input-bg: #222;
   --dialog-input-border: #444;
+  --focus-outline: 4px inset #46a;
 }
 

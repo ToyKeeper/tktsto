@@ -137,5 +137,6 @@
   --dialog-title-fg: #000;
   --dialog-input-bg: linear-gradient(#eee, #ddd);
   --dialog-input-border: #fff;
+  --focus-outline: 4px inset var(--cursor-bg-bot);
 }
 

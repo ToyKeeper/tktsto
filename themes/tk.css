@@ -740,6 +740,11 @@ foo {
   box-shadow: var(--fancy-text-shadow);
 }
 
+#inputDialog *:focus,
+*:focus {
+  outline: var(--focus-outline);
+}
+
 
 /******************** misc ********************/
 

@@ -95,6 +95,7 @@ class Dialog {
               // clean up
               $dialog.close();
               $dialog.remove();
+              doc.activeElement.blur();  // remove "selected" element outline
               // return the user's inputs
               resolve(result);
             });
@@ -119,6 +120,7 @@ class Dialog {
         $form.removeEventListener('submit', handleSubmit);
         $dialog.close();
         $dialog.remove();
+        doc.activeElement.blur();  // remove "selected" element outline
         // return what the user entered
         resolve(result);
       }
@@ -128,6 +130,7 @@ class Dialog {
       // if the user pressed Escape to dismiss the dialog
       $dialog.addEventListener('close', () => {
         $dialog.remove();
+        doc.activeElement.blur();  // remove "selected" element outline
         resolve(null);
       });
 
