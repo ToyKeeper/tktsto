@@ -5,7 +5,9 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, warn, error, debug, emit } from '/common/common.js';
+import {
+  log, warn, error, debug, emit, isIllegalURL
+} from '/common/common.js';
 
 
 export class Node {
@@ -623,7 +625,9 @@ export class Node {
           debug(`loading saved tab: ${kid.url}`);
           const tabArgs = { ...args };
           //tabArgs.reason = 'loadSavedWindow';  // eh, unnecessary
-          await kid.load(tabArgs);
+          if (! isIllegalURL(kid.url)) {
+            await kid.load(tabArgs);
+          }
         }
       }
     }

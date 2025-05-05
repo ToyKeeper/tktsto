@@ -6,7 +6,7 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import {
-  log, debug, warn, error, fmtDate, emit, jsonSchema
+  log, debug, warn, error, fmtDate, emit, jsonSchema, isIllegalURL
 } from '/common/common.js';
 import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
@@ -468,6 +468,11 @@ class Bkgd {
       // TODO: is handled in Node.load()
       //   so no need to handle it here
     }
+    // some browsers block some types of URLs
+    if (isIllegalURL(this.url)) {
+      response.result = `Error: Can't load forbidden URL: ${this.url}`;
+      return response;
+    }
     // - otherwise...
     // - get the parent window Node
     let windowNode = node.getWindowNode(false);
@@ -514,7 +519,14 @@ class Bkgd {
       // TODO: set incognito?  (node doesn't check this data yet)
       if (windowNode.incognito) createProperties.incognito = true;
       debug('bkgd_loadSavedNode() creating saved window', createProperties);
-      await api.windows.create(createProperties);
+      try {
+        await api.windows.create(createProperties);
+      } catch (err) {
+        this.windowsLoading.pop(windowNode);
+        this.nodesLoading.pop(node);
+        warn(`loadSavedTab failed: ${err}`);
+        response.result = err;
+      }
     }
     // opening as new tab in existing window
     else {
@@ -527,7 +539,13 @@ class Bkgd {
       // TODO? set index
       //   (code which executes later fixes the tab order anyway)
       debug('bkgd_loadSavedNode() using existing window', createProperties);
-      await api.tabs.create(createProperties);
+      try {
+        await api.tabs.create(createProperties);
+      } catch (err) {
+        this.nodesLoading.pop(node);
+        warn(`loadSavedTab failed: ${err}`);
+        response.result = err;
+      }
     }
     //response.tabId = newTab.id;  // doesn't exist yet
     // TODO: need to modify onTabCreated and onWindowCreated
@@ -572,8 +590,14 @@ class Bkgd {
     // TODO: set incognito?  (node doesn't check this data yet)
     if (windowNode.incognito) createProperties.incognito = true;
     debug('bkgd_loadSavedWindow() creating saved window', createProperties);
-    const winObj = await api.windows.create(createProperties);
-    debug('bkgd_loadSavedWindow() created window', winObj);
+    try {
+      const winObj = await api.windows.create(createProperties);
+      debug('bkgd_loadSavedWindow() created window', winObj);
+    } catch (err) {
+      this.windowsLoading.pop(windowNode);
+      warn(`loadSavedWindow failed: ${err}`);
+      response.result = err;
+    }
     // pull in the other tabs
     // (removed: other code has already done this at least once
     //  by the time this line runs)

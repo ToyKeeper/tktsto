@@ -120,3 +120,44 @@ export async function emit (name, args, retry = true) {
   return response;
 }
 
+export function isIllegalURL (url) {
+  if (! url) return false;
+
+  let allowedPrefixes = [ 'http:', 'https:' ];
+  let illegalPrefixes = [];
+
+  if (isFirefox) {
+    // Firefox has some annoying limitations on what extensions can do
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1275209
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1412498
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1420405
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1864001
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/tabs/create
+    // May be allowed eventually?
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1266960
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1787179
+    allowedPrefixes = [
+      'about:blank',
+      'about:home',  // allowed, but auto-redirects to about:blank
+    ];
+    illegalPrefixes = [
+      'file:',
+      'about:',
+      'chrome:',
+      'javascript:',
+      'data:',
+    ];
+  }
+
+  // always allow these (overrides illegalPrefixes)
+  for (const prefix of allowedPrefixes)
+    if (url.startsWith(prefix)) return false;
+
+  // these are banned
+  for (const prefix of illegalPrefixes)
+    if (url.startsWith(prefix)) return true;
+
+  // if no match, assume it's allowed
+  return false;
+}
+
