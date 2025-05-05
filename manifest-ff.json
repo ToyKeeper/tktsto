@@ -1,117 +1,117 @@
 {
-    "manifest_version": 3,
-    "name": "TK Tree Style Tab Outliner",
-    "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
-    "version": "0.0.0.1",
-    "browser_specific_settings": {
-      "gecko": {
-        "id": "tktsto@toykeeper"
-      }
-    },
-    "permissions": [
-        "storage",
-        "unlimitedStorage",
-        "downloads",
-        "tabs"
-    ],
-    "optional_permissions": [
-        "clipboardRead",
-        "clipboardWrite"
-    ],
-    "optional_host_permissions": [
-        "http://localhost/*",
-        "<all_urls>"
-    ],
-    "options_page": "options/options.html",
-    "background": {
-        "scripts": ["bkgd/bkgd.js"],
-        "type": "module"
-    },
-    "sidebar_action": {
-        "default_title": "TK Tree Style Tab Outliner",
-        "default_panel": "view/sidepanel.html"
-    },
-    "action": {
-        "default_title": "TKTSTO Sidebar"
-    },
-    "commands": {
-        "_execute_sidebar_action": {
-            "description": "Toggle Side Panel",
-            "suggested_key": { "default": "Ctrl+1" }
-        },
-        "backupSession": {
-            "description": "Back up session now"
-        },
-        "unloadCurrentTab": {
-            "description": "Unload current tab",
-            "suggested_key": { "default": "Alt+U" }
-        },
-        "addNoteToCurrentTab": {
-            "description": "Add highlighted text to current tab's notes",
-            "suggested_key": { "default": "Alt+A" }
-        },
-        "cursorUp": {
-            "description": "Move cursor up"
-        },
-        "cursorDown": {
-            "description": "Move cursor down"
-        },
-        "cursorLeft": {
-            "description": "Move cursor left (to parent)"
-        },
-        "cursorRight": {
-            "description": "Move cursor right (to 1st child)"
-        },
-        "cursorPgUp": {
-            "description": "Move cursor up 1 page"
-        },
-        "cursorPgDown": {
-            "description": "Move cursor down 1 page"
-        },
-        "cursorHome": {
-            "description": "Move cursor home (up to first sibling)"
-        },
-        "cursorEnd": {
-            "description": "Move cursor end (down to last sibling)"
-        },
-        "loadNode": {
-            "description": "Load or switch to highlighted node"
-        },
-        "unloadNode": {
-            "description": "Unload highlighted node"
-        },
-        "toggleExpanded": {
-            "description": "Expand/Collapse highlighted node"
-        },
-        "toggleMarked": {
-            "description": "Mark or unmark the current node"
-        },
-        "unmarkAll": {
-            "description": "Unmark all nodes"
-        },
-        "pasteMarked": {
-            "description": "Move marked nodes to after cursor"
-        },
-        "pasteMarkedBefore": {
-            "description": "Move marked nodes to before cursor"
-        },
-        "moveNodeUp": {
-            "description": "Move highlighted node up"
-        },
-        "moveNodeDown": {
-            "description": "Move highlighted node down"
-        },
-        "moveNodeLeft": {
-            "description": "Move highlighted node left (toward parent)"
-        },
-        "moveNodeRight": {
-            "description": "Move highlighted node right (child of prev sibling)"
-        },
-        "moveNodeHome": {
-            "description": "Move highlighted node home (up to first sibling)"
-        },
-        "moveNodeEnd": {
-            "description": "Move highlighted node end (down to last sibling)"
-        }
+  "manifest_version": 3,
+  "name": "TK Tree Style Tab Outliner",
+  "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
+  "version": "0.0.0.1",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tktsto@toykeeper"
     }
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "downloads",
+    "tabs"
+  ],
+  "optional_permissions": [
+    "clipboardRead",
+    "clipboardWrite"
+  ],
+  "optional_host_permissions": [
+    "http://localhost/*",
+    "<all_urls>"
+  ],
+  "options_page": "options/options.html",
+  "background": {
+    "scripts": ["bkgd/bkgd.js"],
+    "type": "module"
+  },
+  "sidebar_action": {
+    "default_title": "TK Tree Style Tab Outliner",
+    "default_panel": "view/sidepanel.html"
+  },
+  "action": {
+    "default_title": "TKTSTO Sidebar"
+  },
+  "commands": {
+    "_execute_sidebar_action": {
+      "description": "Toggle Side Panel",
+      "suggested_key": { "default": "Ctrl+1" }
+    },
+    "backupSession": {
+      "description": "Back up session now"
+    },
+    "unloadCurrentTab": {
+      "description": "Unload current tab",
+      "suggested_key": { "default": "Alt+U" }
+    },
+    "addNoteToCurrentTab": {
+      "description": "Add highlighted text to current tab's notes",
+      "suggested_key": { "default": "Alt+A" }
+    },
+    "cursorUp": {
+      "description": "Move cursor up"
+    },
+    "cursorDown": {
+      "description": "Move cursor down"
+    },
+    "cursorLeft": {
+      "description": "Move cursor left (to parent)"
+    },
+    "cursorRight": {
+      "description": "Move cursor right (to 1st child)"
+    },
+    "cursorPgUp": {
+      "description": "Move cursor up 1 page"
+    },
+    "cursorPgDown": {
+      "description": "Move cursor down 1 page"
+    },
+    "cursorHome": {
+      "description": "Move cursor home (up to first sibling)"
+    },
+    "cursorEnd": {
+      "description": "Move cursor end (down to last sibling)"
+    },
+    "loadNode": {
+      "description": "Load or switch to highlighted node"
+    },
+    "unloadNode": {
+      "description": "Unload highlighted node"
+    },
+    "toggleExpanded": {
+      "description": "Expand/Collapse highlighted node"
+    },
+    "toggleMarked": {
+      "description": "Mark or unmark the current node"
+    },
+    "unmarkAll": {
+      "description": "Unmark all nodes"
+    },
+    "pasteMarked": {
+      "description": "Move marked nodes to after cursor"
+    },
+    "pasteMarkedBefore": {
+      "description": "Move marked nodes to before cursor"
+    },
+    "moveNodeUp": {
+      "description": "Move highlighted node up"
+    },
+    "moveNodeDown": {
+      "description": "Move highlighted node down"
+    },
+    "moveNodeLeft": {
+      "description": "Move highlighted node left (toward parent)"
+    },
+    "moveNodeRight": {
+      "description": "Move highlighted node right (child of prev sibling)"
+    },
+    "moveNodeHome": {
+      "description": "Move highlighted node home (up to first sibling)"
+    },
+    "moveNodeEnd": {
+      "description": "Move highlighted node end (down to last sibling)"
+    }
+  }
 }
