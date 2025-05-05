@@ -5,7 +5,7 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log } from '/common/common.js';
+import { debug, log, warn, error } from '/common/common.js';
 import { Node } from '/common/node.js';
 
 
@@ -21,7 +21,7 @@ export class NodeStore extends Node {
     // are totally different, and Node.newNodeId() doesn't exist
     //super.newNodeId();  // unnecessary, doesn't exist
     const nodeId = this.tree.bkgd.idGen.newId();
-    log(`NodeStore.newNodeId(): ${nodeId}`);
+    debug(`NodeStore.newNodeId(): ${nodeId}`);
     return nodeId;
   }
 
@@ -30,7 +30,7 @@ export class NodeStore extends Node {
     // index is required; assume 1st child if not given
     if (undefined === index) index = 0;
 
-    log('NodeStore.addChild()');
+    debug('NodeStore.addChild()');
     // must allocate ID before creating node and emitting notifications
     if (! details.id) { details.id = this.newNodeId(); }
     // create new Node object
