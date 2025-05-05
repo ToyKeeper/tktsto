@@ -174,8 +174,9 @@ export class NodeView extends Node {
         mainText = `<span class="node-notitle">node ${this.id}</span>`;
     }
     if (this.isWindow() && (! this.isLoaded())) {  // note closed windows
-      const mtime = fmtDate(this.mtime);
-      mainText = mainText + ` (closed ${mtime})`;
+      //const mtime = fmtDate(this.mtime);  // FIXME: mtime isn't good for this
+      //mainText = mainText + ` (closed ${mtime})`;
+      mainText = mainText + ' (closed)';
     }
     // indicate when there's a long note attached
     let noteIcon = '';
