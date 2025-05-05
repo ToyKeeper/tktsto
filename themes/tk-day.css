@@ -9,6 +9,14 @@
   color: var(--label-unloaded-fg);
 }
 
+.cursor.row *,
+.cursor.row a,
+.cursor.row span,
+.cursor.row .node-label,
+foo {
+  color: var(--cursor-fg-override);
+}
+
 
 /******************** vars ********************/
 
@@ -77,13 +85,17 @@
   --window-branch-bot: #e2e2e2;
   --window-branch-shadow: 0.10em 0.10em 0.25em #000000c0;
   /***** cursor *****/
-  --cursor-bg-top: #59fcfc;
-  --cursor-bg-bot: #59c0da;
-  --cursor-shadow: 0.1em 0.1em 0.2em #000b;
-  --cursor-branch-hl: #ecfaff;
-  --cursor-branch-top: #eaf4fb;
-  --cursor-branch-bot: #dae3f3;
-  --cursor-branch-shadow: 0.15em 0.15em 0.333em #000d;
+  --cursor-bg-top: #88f;
+  --cursor-bg-bot: #44f;
+  --cursor-fg-override: #fff !important;
+  /* --cursor-text-shadow: var(--medium-text-shadow); */
+  --cursor-text-shadow: none;
+  --cursor-shadow: 0.05em 0.1em 0.2em #000e;
+  /* --cursor-branch-hl: #a8a8ff; */
+  --cursor-branch-hl: #22f;
+  --cursor-branch-top: #fff;
+  --cursor-branch-bot: #eee;
+  --cursor-branch-shadow: 0em 0.3em 0.4em #0008;
   /***** marked nodes *****/
   --marked-node-shadow: 0 0 10px #ca0;
   /***** hover menu *****/
@@ -98,27 +110,31 @@
   --marked-row-shadow: 0 0 10px #ea0;
   --marked-count-color: #fe0;
   /***** toolbars *****/
-  --top-area-bg: linear-gradient(#fff, #ddd);
-  --top-area-edge: 5px solid #d3d3d3;
-  --top-area-shadow: 0 0.2rem 0.75rem #000c;
-  --bottom-area-shadow: 0 -0.05rem 1.5rem #000c;
-  --bottom-area-edge: 5px solid #e8e8e8;
+  --top-area-bg: linear-gradient(#f4f4f4, #ddd);
+  --top-area-edge: 4px solid #c4c4c4;
+  --top-area-shadow: 0 0.2rem 0.6rem #0008,
+                     0 0.1rem 0.3rem #0008;
+  --bottom-area-shadow: 0 0rem 2rem #0006,
+                        0 -0.05rem 1rem #0006,
+                        0 0 0.3rem #0004;
+  --bottom-area-edge: 4px solid #e6e6e6;
   --bottom-area-bg: linear-gradient(#ddd, #fff);
   --toolbar-bg: unset;
   --toolbar-fg: #333;
   /***** buttons *****/
   --button-border-radius: 0.5em;
-  --button-border: 1px outset #eef;
-  --button-bg: linear-gradient(#dde, #cce);
+  --button-border: 1px outset #fff8;
+  --button-bg: #fffc;
   --button-fg: #333;
   --button-shadow: 0.1em 0.1em 0.1em #000a;
-  --button-hover-border: 1px outset #eef;
-  --button-hover-bg: linear-gradient(#eef, #ddf);
-  --button-hover-fg: #000;
-  --button-hover-shadow: 0.2em 0.2em 0.2em #000;
-  --button-pressed-border: 1px inset #eef;
-  --button-pressed-bg: linear-gradient(#bbe, #dde);
-  --button-pressed-fg: #333;
+  --button-hover-border: 1px outset #88f;
+  /* --button-hover-bg: #6c6cff; */
+  --button-hover-bg: linear-gradient(#88f, #44f);
+  --button-hover-fg: #fff;
+  --button-hover-shadow: 0.2em 0.2em 0.4em #000;
+  --button-pressed-border: 1px inset #fffd;
+  --button-pressed-bg: linear-gradient(#0002, #0001);
+  --button-pressed-fg: #111;
   --button-pressed-shadow: none;
   /***** node stats *****/
   --node-stat-bright-color: #338;
@@ -134,7 +150,8 @@
   --dialog-fg: #333;
   --dialog-bg-top: var(--window-branch-top);
   --dialog-bg-bot: var(--window-branch-bot);
-  --dialog-title-fg: #000;
+  --dialog-border-color: #fff;
+  --dialog-title-fg: #fff;
   --dialog-input-bg: linear-gradient(#eee, #ddd);
   --dialog-input-border: #fff;
   --focus-outline: 4px inset var(--cursor-bg-bot);

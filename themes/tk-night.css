@@ -62,6 +62,7 @@
   /***** cursor *****/
   --cursor-bg-top: #57b;
   --cursor-bg-bot: #235;
+  --cursor-text-shadow: var(--medium-text-shadow);
   --cursor-shadow: 0.1em 0.1em 0.2em var(--shadow-color);
   --cursor-branch-hl: #444;
   --cursor-branch-top: #383838;

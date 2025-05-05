@@ -445,7 +445,7 @@ html, body {
   border-radius: var(--cursor-radius-expanded);
   border-style: none;
   box-shadow: var(--cursor-shadow);
-  text-shadow: var(--medium-text-shadow);
+  text-shadow: var(--cursor-text-shadow);
 }
 
 .cursor.leaf, .cursor.collapsed {
