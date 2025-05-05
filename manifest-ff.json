@@ -3,6 +3,11 @@
     "name": "TK Tree Style Tab Outliner",
     "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
     "version": "0.0.0.1",
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "tktsto@toykeeper"
+      }
+    },
     "permissions": [
         "storage",
         "unlimitedStorage",
@@ -40,6 +45,10 @@
         "unloadCurrentTab": {
             "description": "Unload current tab",
             "suggested_key": { "default": "Alt+U" }
+        },
+        "addNoteToCurrentTab": {
+            "description": "Add highlighted text to current tab's notes",
+            "suggested_key": { "default": "Alt+A" }
         },
         "cursorUp": {
             "description": "Move cursor up"

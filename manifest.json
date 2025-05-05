@@ -44,6 +44,10 @@
             "description": "Unload current tab",
             "suggested_key": { "default": "Alt+U" }
         },
+        "addNoteToCurrentTab": {
+            "description": "Add highlighted text to current tab's notes",
+            "suggested_key": { "default": "Alt+A" }
+        },
         "cursorUp": {
             "description": "Move cursor up"
         },
