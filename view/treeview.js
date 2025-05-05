@@ -445,6 +445,8 @@ export class TreeView extends Tree {
     // don't try to handle mouse events while a dialog is visible
     if (this.dialogActive) return;
     //debug(`mouseEvent(${eventType}):`, event);
+    // ensure nothing gets focused / highlighted
+    this.document.activeElement.blur();
     // assign an event name based on modifier keys, event type, mouse button
     const eventName = this.buildEventName(event, eventType);
     //this.setStatus(`mouse: ${eventName}`);
