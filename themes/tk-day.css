@@ -68,12 +68,11 @@ foo {
   --tab-active-fg: #000;
   --tab-loaded-fg: #222;
   --tab-was-loaded-fg: #f73f96;
-  --tab-unloaded-fg: #aaa;
+  --tab-unloaded-fg: #999;
   /***** tree lines *****/
-  --tree-line: #afcde0;
-  --tree-line-med: #68a;
-  --tree-line-cursor: #1898bf;
-  --tree-line-dragging: #1898bf;
+  --tree-line: #b5b5d0;
+  --tree-line-cursor: #44f;
+  --tree-line-dragging: #44f;
   /***** window nodes *****/
   --window-row-bg: linear-gradient(150deg, #5b70d5, #9ab9fb);
   --window-active-fg: #fff;
