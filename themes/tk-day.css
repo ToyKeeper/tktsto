@@ -9,7 +9,7 @@
   color: var(--label-unloaded-fg);
 }
 
-.cursor.row *,
+.cursor.row *:not(.node-checkbox),
 .cursor.row a,
 .cursor.row span,
 .cursor.row .node-label,
@@ -63,7 +63,7 @@ foo {
   --note-fg: var(--details-label-fg);
   --note-bg: linear-gradient(#0000, #0001);
   --note-border: none;
-  --note-border-bottom: 1px solid #eee;
+  --note-border-bottom: var(--1px) solid #eee;
   --label-title-sep-fg: #4daaf5;
   --tab-active-fg: #000;
   --tab-loaded-fg: #222;
@@ -100,12 +100,12 @@ foo {
   /***** hover menu *****/
   --delete-button-fg: #f00;
   --hover-menu-bg: #f8f8f8;
-  --hover-menu-border: 1px outset #fff;
+  --hover-menu-border: var(--1px) outset #fff;
   --hover-menu-shadow: 0.2em 0.2em 0.4em #000000c0;
   --hover-menu-button-shadow: var(--mild-text-shadow);
   --hover-menu-button-hover-bg: #fff;
-  /* --marked-row-outline: 1px solid gold; */
-  --marked-row-outline: 1px solid #ea0;
+  /* --marked-row-outline: var(--1px) solid gold; */
+  --marked-row-outline: var(--1px) solid #ea0;
   --marked-row-shadow: 0 0 10px #ea0;
   --marked-count-color: #fe0;
   /***** toolbars *****/
@@ -122,19 +122,31 @@ foo {
   --toolbar-fg: #333;
   /***** buttons *****/
   --button-border-radius: 0.5em;
-  --button-border: 1px outset #fff8;
+  --button-border: var(--1px) outset #fff8;
   --button-bg: #fffc;
   --button-fg: #333;
-  --button-shadow: 0.1em 0.1em 0.1em #000a;
-  --button-hover-border: 1px outset #88f;
+  --button-shadow: 0.1em 0.1em 0.2em #000a;
+  --button-hover-border: var(--1px) outset #88f;
   /* --button-hover-bg: #6c6cff; */
   --button-hover-bg: linear-gradient(#88f, #44f);
   --button-hover-fg: #fff;
   --button-hover-shadow: 0.2em 0.2em 0.4em #000;
-  --button-pressed-border: 1px inset #fffd;
-  --button-pressed-bg: linear-gradient(#0002, #0001);
+  --button-pressed-border: var(--1px) inset #fffd;
+  --button-pressed-bg: linear-gradient(#c8c8c8cc, #e8e8e8cc);
   --button-pressed-fg: #111;
-  --button-pressed-shadow: none;
+  --button-pressed-shadow: inset 0.1em 0.1em 0.2em #000a;
+  /***** checkboxes *****/
+  --checkbox-fg-important: #fff;
+  --checkbox-fg-todo: #333;
+  --checkbox-fg-half-done: #666;
+  --checkbox-fg-done: #999;
+  /* --checkbox-fg-skip: #478e70; */
+  --checkbox-fg-skip: #397;
+  --checkbox-fg-fail: #f44;
+  --checkbox-fg-unknown: #f2f;
+  --checkbox-fg-other: #a84;
+  --checkbox-shadow-todo: 0.03em 0.06em 0.15em #000;
+  --checkbox-shadow-done: inset 0.03em 0.06em 0.15em #000a;
   /***** node stats *****/
   --node-stat-bright-color: #338;
   --node-stat-dim-color: var(--tree-line-cursor);
@@ -142,7 +154,7 @@ foo {
   /***** node detail box *****/
   --details-box-bg: #ddd;
   --details-box-fg: #333;
-  --details-box-border: 1px inset #fff;
+  --details-box-border: var(--1px) inset #fff;
   --details-label-fg: #333;
   --details-value-fg: #555;
   /***** input dialogs *****/

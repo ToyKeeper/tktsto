@@ -154,7 +154,7 @@ export class NodeView extends Node {
     // FIXME: instead of innerHTML, use safer Element creation and innerText
     if (this.label) {
       if (this.url) {  // label ~ href
-        mainText = `<span class="node-label">${this.label}</span><span class="node-label-url-sep"> ~ </span><a class="node-link" draggable="false" href="${this.url}">${urlTitle}</a>`;
+        mainText = `<a class="node-link" draggable="false" href="${this.url}"><span class="node-label">${this.label}</span><span class="node-label-url-sep"></span>${urlTitle}</a>`;
       }
       else {  // label only
         mainText = `<span class="node-label">${this.label}</span>`;
@@ -182,6 +182,18 @@ export class NodeView extends Node {
     let noteIcon = '';
     if (this.note)
       noteIcon = '<span class="node-note-icon">📎 </span>';  // paperclip
+    // checkbox
+    let ckbox = '';
+    if (this.checkbox) {
+      const checkboxClass = this.tree.checkboxClasses[this.checkbox];
+      if (! checkboxClass) checkboxClass = 'other';
+      let cbText = this.checkbox;
+      if (' ' === this.checkbox) cbText = '&nbsp;';
+      if ('percent' === checkboxClass) {
+        cbText = String(Math.floor((Math.random() * 100))) + '%';
+      }
+      ckbox = `<div class="node-checkbox ${checkboxClass}">${cbText}</div>`;
+    }
     // node stats
     let statsText = '';
     // TODO: unsure if always include stats or only when collapsed
@@ -201,7 +213,7 @@ export class NodeView extends Node {
     // TODO: favicon
     let faviconText = '';
     // combined output
-    this.$row.innerHTML = `${statsText}${faviconText}${noteIcon}${mainText}`;
+    this.$row.innerHTML = `${statsText}${ckbox}${faviconText}${noteIcon}${mainText}`;
     this.$row.setAttribute('draggable', true);
   }
 

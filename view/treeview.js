@@ -22,6 +22,7 @@ export class TreeView extends Tree {
     this.document = document;
     this.window = window;
 
+    this.$body = this.document.getElementById('body');
     this.$ = this.document.getElementById('tree-view');
     this.$treeRoot = this.document.getElementById('tree-root');
 
@@ -157,6 +158,8 @@ export class TreeView extends Tree {
 
   async init () {
     super.init();
+    // misc handlers
+    this.initBodyHandlers();
     this.initKeyHandler();
     this.initMouseHandler();
     this.initButtonHandlers();
@@ -331,6 +334,18 @@ export class TreeView extends Tree {
     const result = await inputDialog(...args);
     this.dialogActive = false;
     return result;
+  }
+
+  initBodyHandlers () {
+    // absolutely NEVER scroll horizontally
+    this.$body.addEventListener('scroll', () => { this.$body.scrollLeft = 0; });
+    //
+    this.window.addEventListener('focus', () => {
+      this.$body.classList.remove('unfocused');
+    });
+    this.window.addEventListener('blur', () => {
+      this.$body.classList.add('unfocused');
+    });
   }
 
   initKeyHandler () {
@@ -962,7 +977,7 @@ export class TreeView extends Tree {
     const toggled = ! cursor.marked;
     cursor.setMarked(toggled, { reason: 'userAction' });
     const verbed = toggled ? 'Marked' : 'Unmarked';
-    this.setStatus(`${verbed} ${this.cursor.toLine()}`);
+    this.setStatus(`${verbed} ${cursor.toLine()}`);
   }
 
   async action_unmarkAll (event) {
@@ -1388,8 +1403,15 @@ export class TreeView extends Tree {
 
   updateDetailsBox () {
     if (! this.cursor) return;
+    // bugfix: preserve scroll position
+    // (if scrollbar is touching the bottom, Chrome anchors it there
+    //  and it can make the entire view position jump,
+    //  but we want the top anchored instead)
+    const scrollBefore = this.$.scrollTop;
     // only show details if its button is in a 'pressed' state
     this.cursor.$renderDetails(this.$detailsBox);
+    // restore scroll position
+    this.$.scrollTop = scrollBefore;
   }
 
   hideDetailsBox () {

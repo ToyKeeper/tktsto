@@ -20,6 +20,7 @@ html, body {
   flex: 1;
   width: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--tree-view-bg);
   user-select: none;  /* don't let user select text here */
 }
@@ -62,6 +63,7 @@ html, body {
   width: calc(100% - 0.25rem);
   text-wrap: nowrap;
   /* overflow-x: scroll; */
+  overflow-x: hidden;
   margin-top: -8px;  /* reduce space between buttons and status text */
   background: var(--toolbar-bg);
   color: var(--toolbar-fg);
@@ -189,7 +191,7 @@ html, body {
   box-shadow: var(--button-hover-shadow);
 }
 .toolbar .button.half-pressed {
-  border: 1px solid #555;
+  border: var(--1px) solid #555;
   background: #333;
   box-shadow: none;
 }
@@ -312,6 +314,71 @@ html, body {
   opacity: 66%;
 }
 
+.row .node-checkbox {
+  display: inline-block;
+  width: calc(0.7 * var(--row-line-height));
+  height: calc(0.7 * var(--row-line-height));
+  line-height: calc(0.67 * var(--row-line-height));
+  color: var(--button-fg);
+  /* background: #446a; */
+  background: var(--button-bg);
+  /* border: 2px outset #446a; */
+  border: var(--button-border);
+  border-radius: 0.25rem;
+  box-shadow: var(--checkbox-shadow-todo);
+  font-weight: bold;
+  font-family: monospace;
+  text-align: center;
+  margin-right: 0.25rem;
+}
+
+.row .node-checkbox.done,
+.row .node-checkbox.skip,
+.row .node-checkbox.fail,
+foo {
+  background: var(--button-pressed-bg);
+  border: var(--button-pressed-border);
+  box-shadow: var(--checkbox-shadow-done);
+}
+.row .node-checkbox.important {
+  background: var(--button-hover-bg);
+  border: var(--button-hover-border);
+}
+.row .node-checkbox.percent {
+  /* percent is wider than other checkboxes */
+  width: unset;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+.row .node-checkbox.important {
+  color: var(--checkbox-fg-important);
+}
+.row .node-checkbox.todo {
+  color: var(--checkbox-fg-todo);
+}
+.row .node-checkbox.half-done {
+  color: var(--checkbox-fg-half-done);
+}
+.row .node-checkbox.percent {
+  color: var(--checkbox-fg-half-done);
+}
+.row .node-checkbox.done {
+  color: var(--checkbox-fg-done);
+}
+.row .node-checkbox.skip {
+  color: var(--checkbox-fg-skip);
+}
+.row .node-checkbox.fail {
+  color: var(--checkbox-fg-fail);
+}
+.row .node-checkbox.unknown {
+  color: var(--checkbox-fg-unknown);
+}
+.row .node-checkbox.other {
+  color: var(--checkbox-fg-other);
+}
+
 .row .node-label,
 .row .node-note-icon {
   color: var(--label-unloaded-fg);
@@ -329,8 +396,9 @@ html, body {
 #detail-label {
   color: var(--label-loaded-fg);
 }
-.node-label-url-sep {
+.node-label-url-sep::after {
   color: var(--label-title-sep-fg);
+  content: " ~ ";
 }
 
 .expanded.row::before {
@@ -384,9 +452,9 @@ html, body {
 }
 
 .window.node.expanded {
-  border: 1px outset var(--window-branch-hl);
+  border: var(--1px) outset var(--window-branch-hl);
   background: linear-gradient(var(--window-branch-top), var(--window-branch-bot));
-  border-radius: var(--cursor-branch-radius);
+  border-radius: var(--window-branch-radius);
   box-shadow: var(--window-branch-shadow);
 }
 
@@ -430,7 +498,7 @@ html, body {
 }
 
 .cursor.node.expanded {
-  outline: 1px outset var(--cursor-branch-hl);
+  outline: var(--1px) outset var(--cursor-branch-hl);
   background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
   border-radius: var(--cursor-branch-radius);
   box-shadow: var(--cursor-branch-shadow);
@@ -446,6 +514,12 @@ html, body {
   border-style: none;
   box-shadow: var(--cursor-shadow);
   text-shadow: var(--cursor-text-shadow);
+}
+
+.unfocused .cursor.row {
+  /* dim the keyboard cursor when it doesn't have keyboard focus */
+  opacity: 66%;
+  filter: saturate(66%);
 }
 
 .cursor.leaf, .cursor.collapsed {
@@ -648,7 +722,7 @@ foo {
 .drop-external-text.drop-target-left.row,
 .drop-external-text.drop-target-left > .row,
 foo {
-  outline: 1px solid var(--label-loaded-fg);
+  outline: var(--1px) solid var(--label-loaded-fg);
   background: linear-gradient(90deg, var(--label-unloaded-fg), transparent);
   border-radius: var(--cursor-radius-collapsed);
 }
@@ -669,7 +743,7 @@ foo {
 #inputDialog {
   width: 85%;
   /* min-height: 33%; */
-  border: 1px outset var(--dialog-border-color);
+  border: var(--1px) outset var(--dialog-border-color);
   background: linear-gradient(var(--dialog-bg-top), var(--dialog-bg-bot));
   border-radius: var(--dialog-radius);
   box-shadow: var(--dialog-shadow);
@@ -694,7 +768,7 @@ foo {
 #inputDialog input,
 #inputDialog textarea {
   background: var(--dialog-input-bg);
-  border: 1px inset var(--dialog-input-border);
+  border: var(--1px) inset var(--dialog-input-border);
   border-radius: 3px;
   width: calc(100% - var(--dialog-padding));
   max-width: calc(100% - var(--dialog-padding));
@@ -730,7 +804,8 @@ foo {
   color: var(--dialog-fg);
 }
 #inputDialogButtons button:first-of-type {
-  background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
+  background: var(--dialog-1st-button-bg);
+  border: var(--dialog-1st-button-border);
   font-weight: bold;
   box-shadow: var(--cursor-shadow);
   color: var(--dialog-title-fg);
@@ -763,6 +838,7 @@ foo {
   --global-font-size: 1.15rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
+  --1px: 0.08rem;  /* Like 1 pixel, but scalable */
   --shadow-color: #000000c0;
   --fancy-text-shadow:
     #00000060 -0.05em  0      0.02em, /* outline */
@@ -795,15 +871,16 @@ foo {
   /***** cursor *****/
   --cursor-shadow: 0.1em 0.1em 0.2em var(--shadow-color);
   --cursor-branch-shadow: 0.15em 0.15em 0.333em var(--shadow-color);
-  --cursor-branch-radius: 6px;
-  --cursor-radius-collapsed: 6px;
-  --cursor-radius-expanded: 6px 6px 0 0;
+  --cursor-branch-radius: 0.4rem;
+  --cursor-radius-collapsed: 0.4rem;
+  --cursor-radius-expanded: 0.4rem 0.4rem 0 0;
+  --window-branch-radius: 0.5rem;
   /***** marked nodes *****/
   --marked-node-shadow: 0 0 10px gold;
   /***** hover menu *****/
   --delete-button-fg: #f00;
-  /* --marked-row-outline: 1px solid gold; */
-  --marked-row-outline: 1px solid orange;
+  /* --marked-row-outline: var(--1px) solid gold; */
+  --marked-row-outline: var(--1px) solid orange;
   --marked-row-shadow: 0 0 10px orange;
   --marked-count-color: gold;
   /***** toolbars *****/
@@ -823,5 +900,7 @@ foo {
       0.5em 0.5em 5em var(--shadow-color),
       0.5em 1.5em 2em var(--shadow-color);
   --dialog-padding: 0.5em;
+  --dialog-1st-button-bg: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
+  --dialog-1st-button-border: var(--1px) outset var(--cursor-bg-top);
 }
 

@@ -24,6 +24,23 @@ export class Tree {
     this.tabBlacklist = {};
 
     this.createRootNode();
+
+    this.checkboxClasses = {
+      ' ': 'todo',
+      '_': 'todo',
+      '+': 'half-done',
+      '%': 'percent',
+      'X': 'done',
+      'x': 'done',
+      'F': 'fail',
+      'f': 'fail',
+      'S': 'skip',
+      's': 'skip',
+      'C': 'skip',
+      'c': 'skip',
+      '!': 'important',
+      '?': 'unknown',
+    };
   }
 
   destroy () {
@@ -332,9 +349,15 @@ export class Tree {
     // Vivaldi sends this event for sidepanels,
     // but they can't be used like tabs, so ignore them
     if (('about:blank' === tabPendingUrl) && isChrome) {
-      this.tabBlacklist[`${tab.id}`] = true;
-      debug('ignoring tab which looks like a Vivaldi panel');
-      return;
+      let pendingTab;  // allow if *we* opened it; ignore otherwise
+      if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
+        pendingTab = this.bkgd.nodesLoading[0];
+      }
+      if ('about:blank' !== pendingTab) {
+        this.tabBlacklist[`${tab.id}`] = true;
+        debug('ignoring tab which looks like a Vivaldi panel');
+        return;
+      }
     }
 
     // are we loading a saved tab?
@@ -625,15 +648,16 @@ export class Tree {
     let changes = {};  // only changes we care about
     for (const field of
       ['title', 'url', 'favIconUrl',
-        'discarded', 'frozen', 'hidden']) {
-      if (undefined !== changeInfo[field]) {
-        // if data actually changed, add it to the outgoing message
-        if ('title' === field) {
-          changeInfo[field] = changeInfo[field].trim().replace(/\s+/g, ' ');
-        }
-        if (tabNode[field] !== changeInfo[field])
-          changes[field] = changeInfo[field];
-      }
+        'discarded', 'frozen', 'hidden']
+    ) {
+      // bugfix: sometimes Vivaldi gives me empty changeInfo,
+      // so pull new values from tab object if necessary
+      let value = changeInfo[field];
+      if (undefined === value) value = tab[field];
+      // clean up sloppy titles
+      if ('title' === field) value = value.trim().replace(/\s+/g, ' ');
+      // if data actually changed, add it to the outgoing message
+      if (tabNode[field] !== value) changes[field] = value;
     }
     // apply changes, if any
     if (Object.keys(changes).length > 0) {

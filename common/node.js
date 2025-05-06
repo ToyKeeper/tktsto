@@ -36,6 +36,11 @@ export class Node {
     // checkbox: task completion and other task statuses
     this.checkbox = undefined;  // null or single character
     this.checkboxPx = undefined;  // percent complete, calculated and cached
+    if (Math.random() < 0.5) {
+      const letters = ' +XSF?!%';
+      const letter = letters.charAt(Math.floor(Math.random()*letters.length));
+      this.checkbox = letter;
+    }
     // timestamps
     // ctime: set when node first created only
     // mtime: set when changed label, title, url, checkbox, ...
@@ -999,6 +1004,10 @@ export class Node {
     if (! args) return;
     // this should only be called on window nodes
     if (! this.isWindow()) return;
+    // bugfix: Vivaldi panels are briefly "active" when current tab closes
+    // and they generate spurious "setActiveTab" events
+    if (this.tree.tabBlacklist[`${tabId}`]) return;
+    // get a list of this window's tabs
     const tabList = this.getLoadedTabs();
     let tabNode;
     for (const node of tabList) { if (tabId === node.tabId) tabNode = node; }
