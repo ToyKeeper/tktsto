@@ -531,6 +531,11 @@ class Bkgd {
     // opening as new tab in existing window
     else {
       createProperties.windowId = windowNode.windowId;
+      // maybe don't fully load it?
+      if (msg.discarded) {
+        if (isFirefox) createProperties.discarded = true;
+        else createProperties.active = false;
+      }
       // assign an "openerTab" if one exists
       // FIXME: fails sometimes and totally breaks the browser
       //   (like, it becomes unable to return a list of windows)
@@ -663,6 +668,9 @@ class Bkgd {
         const itimeStr = fmtDate(Date.now());
         const ctimeStr = fmtDate(json.metadata.sessionStartDate);
         const etimeStr = fmtDate(json.metadata.exportDate);
+        // imports always start collapsed
+        // (avoids a ton of drawing during load)
+        node.expanded = false;
         // generate a title
         const label = filename;
         if (node.label) node.label = `${label} (${node.label})`;

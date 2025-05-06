@@ -374,7 +374,11 @@ export class Tree {
       // re-attach this tab to the found Node
       await savedTabNode.setTabFields({
         tabId: tab.id,
-        loaded: true
+        loaded: true,
+        discarded: tab.discarded,
+        frozen: tab.frozen,
+        hidden: tab.hidden,
+        incognito: tab.incognito
       }, { reason: 'onTabCreated' });
       // put the tab in the right position
       await savedTabNode.reorderAllTabsInThisWindow();

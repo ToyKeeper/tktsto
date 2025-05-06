@@ -71,7 +71,10 @@ export class Node {
       'checkbox',
       'ctime',
       'mtime',
-      'atime'
+      'atime',
+      'discarded',
+      'frozen',
+      'hidden',
     ];
   }
 
@@ -617,7 +620,9 @@ export class Node {
       //  and also open a saved window if necessary)
       if (! this.isWindow())  // load a saved tab
         await emit('bkgd_loadSavedNode',
-          { nodeId: this.id, reason: args.reason, when: this.atime });
+          { nodeId: this.id, reason: args.reason,
+            discarded: args.discarded,
+            when: this.atime });
       // if window, load the window
       else {
         debug(`loading saved window: ${this.id}`);
@@ -626,13 +631,18 @@ export class Node {
           (node) => { return (node.wasLoaded && node.isUnloadedTab()); },
           (node) => { return ! node.isWindow(); }  // skip nested windows
         );
+        let first = true;
         for (const kid of tabList) {
           debug(`loading saved tab: ${kid.url}`);
           const tabArgs = { ...args };
+          tabArgs.discarded = true;
           //tabArgs.reason = 'loadSavedWindow';  // eh, unnecessary
           if (! isIllegalURL(kid.url)) {
             await kid.load(tabArgs);
+            // FIXME: find a better way to wait for window to open
+            if (first) await new Promise(r => setTimeout(r, 500));
           }
+          first = false;
         }
       }
     }
