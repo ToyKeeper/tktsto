@@ -213,7 +213,7 @@ export class NodeView extends Node {
     // TODO: favicon
     let faviconText = '';
     // combined output
-    this.$row.innerHTML = `${statsText}${ckbox}${faviconText}${noteIcon}${mainText}`;
+    this.$row.innerHTML = `${statsText}${ckbox}${faviconText}${noteIcon}<span class="row-title">${mainText}</span>`;
     this.$row.setAttribute('draggable', true);
   }
 

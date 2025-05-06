@@ -9,10 +9,7 @@
   color: var(--label-unloaded-fg);
 }
 
-.cursor.row *:not(.node-checkbox),
-.cursor.row a,
-.cursor.row span,
-.cursor.row .node-label,
+.cursor.row .row-title *,
 foo {
   color: var(--cursor-fg-override);
 }
