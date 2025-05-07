@@ -250,7 +250,8 @@ export class Tree {
     );
     if (1 === found.length) return found[0];
     if (1 > found.length) return null;
-    warn(`Tree.getNodeByTabId(${tabId}) found ${found.length} matches, not 1`);
+    warn(`Tree.getNodeByTabId(${tabId}) found ${found.length} matches, not 1`,
+      found);
     return found[0];
   }
 
