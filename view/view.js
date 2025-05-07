@@ -12,24 +12,9 @@ log('/view/view.js running');
 
 
 function init() {
-  initButtonBars();
-
   let tree = new TreeView();
   tree.init();
   return tree;
-}
-
-
-function initButtonBars () {
-  // when options-btn clicked, open the options page
-  document.querySelector('#options-btn')
-    .addEventListener('click', function() {
-      if (api.runtime.openOptionsPage) {
-        api.runtime.openOptionsPage();
-      } else {
-        window.open(api.runtime.getURL('/options/options.html'));
-      }
-    });
 }
 
 

@@ -43,8 +43,14 @@ export class TreeView extends Tree {
     this.$detailsBtn = this.document.getElementById('details-btn');
     // TODO: this should load from config
     this.detailsState = 1;  // 0=off, 1=notes, 2=details
+    // open a tree view in a new tab
+    this.$treeViewInTabBtn = this.document.getElementById('tree-view-in-tab-btn');
     // click to save a session backup
     this.$backupBtn = this.document.getElementById('backup-btn');
+    // open the extension's options page
+    this.$optionsBtn = this.document.getElementById('options-btn');
+    // open the extension's help page
+    this.$helpBtn = this.document.getElementById('help-btn');
 
     // count of marked nodes when non-zero
     this.$markedCount = this.document.getElementById('marked-count');
@@ -1449,6 +1455,10 @@ export class TreeView extends Tree {
     this.$viewScopeBtn.addEventListener('click', () => {
       this.onViewScopeBtnClick();
     });
+    // open a tree view in a new tab
+    this.$treeViewInTabBtn.addEventListener('click', () => {
+      this.onTreeViewInTabBtnClick();
+    });
     // when details-btn clicked, toggle the details box
     this.$detailsBtn.addEventListener('click', () => {
       this.onDetailsBtnClick();
@@ -1456,6 +1466,14 @@ export class TreeView extends Tree {
     // save a session backup when clicked
     this.$backupBtn.addEventListener('click', () => {
       this.onBackupBtnClick();
+    });
+    // open the options page
+    this.$optionsBtn.addEventListener('click', () => {
+      this.onOptionsBtnClick();
+    });
+    // open the user manual
+    this.$helpBtn.addEventListener('click', () => {
+      this.onHelpBtnClick();
     });
   }
 
@@ -1518,8 +1536,30 @@ export class TreeView extends Tree {
     }
   }
 
+  async openInternalPage (url) {
+    const createProperties = {};
+    createProperties.url = api.runtime.getURL(url);
+    const [tab] = await api.tabs.query(
+      { active: true, windowId: this.windowId });
+    debug(`openInternalPage() parent tab:`, tab);
+    createProperties.openerTabId = tab.id;
+    api.tabs.create(createProperties);
+  }
+
+  onTreeViewInTabBtnClick () {
+    this.openInternalPage('/view/sidepanel.html');
+  }
+
   onBackupBtnClick () {
     this.action_backupSession();
+  }
+
+  onOptionsBtnClick () {
+    this.openInternalPage('/options/options.html');
+  }
+
+  onHelpBtnClick () {
+    this.openInternalPage('/docs/index.html');
   }
 
   tree_nodeAdded (msg, sender, sendResponse) {
