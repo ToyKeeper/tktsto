@@ -189,7 +189,7 @@ class Bkgd {
             destParent = found[0];
             destIndex = destParent.nodes.length;
           } else {
-            error(`tab ${tab.id} has openerTabId ${tab.openerTabId} but no parent found`);
+            warn(`tab ${tab.id} has openerTabId ${tab.openerTabId} but no parent found`);
           }
         }
         await destParent.addChild(destIndex, {
