@@ -1050,20 +1050,42 @@ export class Node {
     const windowNode = this.getWindowNode(true);
     if (! windowNode) return;
     if (! windowNode.windowId) return;
-    // get a list of all loaded tabs in this window, in order
-    const tabList = windowNode.getLoadedTabs();
-    // verify which tab is active, and deactivate all others
-    const result = await api.tabs.query(
-      { active: true, windowId: windowNode.windowId });
-    const activeTab = result[0];
-    if (activeTab) windowNode.setActiveTab(activeTab.id,
-      { reason: 'reorderAllTabsInThisWindow' });
-    // tell browser to move *all* tabs in this window to that order
-    const tabIds = [];
-    for (const node of tabList)
-      if (node.tabId) tabIds.push(node.tabId);
-    debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
-    return api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
+
+    // bugfix: prevent a "tab storm", infinite loop of tab reordering
+    // (could trigger the bug in Vivaldi by grabbing a tab in the tab bar
+    //  and "spazzing out" with the mouse to overload the browser with
+    //  tab move events... since it generates events *during* dragging)
+    if (! this.tree.bkgd) {
+      // tell the bkgd to reorder the tabs
+      await emit('bkgd_reorderAllTabsInThisWindow',
+        { nodeId: this.id });
+      return;
+    }
+
+    // actually handle the request, but only one at a time
+    // (tree-level lock seems required... bkgd-level lock wasn't enough)
+    const unlock = await this.tree.tabReorderMutex.lock();
+    try {
+      // get a list of all loaded tabs in this window, in order
+      const tabList = windowNode.getLoadedTabs();
+      // verify which tab is active, and deactivate all others
+      const result = await api.tabs.query(
+        { active: true, windowId: windowNode.windowId });
+      const activeTab = result[0];
+      if (activeTab) windowNode.setActiveTab(activeTab.id,
+        { reason: 'reorderAllTabsInThisWindow' });
+      // tell browser to move *all* tabs in this window to that order
+      const tabIds = [];
+      for (const node of tabList)
+        if (node.tabId) tabIds.push(node.tabId);
+      debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
+      await api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
+    }
+    catch (err) {
+      error(`Node.reorderAllTabsInThisWindow() error:`, err);
+    }
+    finally { unlock(); }
+    return;
   }
 
   async updateOpenerTabId () {

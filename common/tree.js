@@ -9,6 +9,7 @@ import {
   log, debug, warn, error, emit, jsonSchema, dateTupleStrings
 } from '/common/common.js';
 import { Node } from '/common/node.js';
+import { Mutex } from '/common/mutex.js';
 
 
 export class Tree {
@@ -47,6 +48,9 @@ export class Tree {
   }
 
   init () {
+    // bkgd only: prevent tab reorder storms
+    if (this.bkgd) this.tabReorderMutex = new Mutex();
+
     this.initListeners();
   }
 
@@ -497,7 +501,7 @@ export class Tree {
     windowNode.setActiveTab(tabId, { reason: 'onTabActivated' });
   }
 
-  onTabMoved (tabId, moveInfo) {
+  async onTabMoved (tabId, moveInfo) {
     // tab was moved within a window
     // tabId: number
     // moveInfo.fromIndex: number
@@ -515,15 +519,15 @@ export class Tree {
       return error(`Tree.onTabMoved() can't find tabId="${tabId}"`);
     }
     // for later use
-    function doTheMove(destParent, destIndex) {
-      return tabNode.moveTo(destParent, destIndex, { reason: 'onTabMoved' });
+    async function doTheMove(destParent, destIndex) {
+      return await tabNode.moveTo(destParent, destIndex, { reason: 'onTabMoved' });
     }
     // get the ordered list of tabs in this windowNode
     let tabList = windowNode.getLoadedTabs();
     if (tabList.length < 1) {
       // this happens if I drag a tab into nowhere to create a new window,
       // and it initially has no tabs
-      return doTheMove(windowNode, 0);
+      return await doTheMove(windowNode, 0);
     }
     if (moveInfo.toIndex >= tabList.length) {
       // this happens if I drag a tab into the end of another window
@@ -531,7 +535,7 @@ export class Tree {
       let prevNode = tabList[moveInfo.toIndex - 1];
       let destParent = prevNode.parent;
       let destIndex = prevNode.indexOf() + 1;
-      return doTheMove(destParent, destIndex);
+      return await doTheMove(destParent, destIndex);
     }
     // do nothing if the tab is already in the right place
     // (this probably means we initiated the tabMove operation)
@@ -547,7 +551,7 @@ export class Tree {
       let destIndex = prevNode.indexOf();
       // TODO: ideally should be just after the previous tab in the tree,
       // but that's a lot harder to calculate
-      return doTheMove(destParent, destIndex);
+      return await doTheMove(destParent, destIndex);
     }
     // if moving right, then move to just before the next tab
     // (Node.moveTo handles parent becoming its own child, so that's okay)
@@ -555,14 +559,14 @@ export class Tree {
     if (nextNode) {
       let destParent = nextNode.parent;
       let destIndex = nextNode.indexOf();
-      return doTheMove(destParent, destIndex);
+      return await doTheMove(destParent, destIndex);
     }
     else {
       // right-most tab
       let lastNode = tabList[tabList.length - 1];
       let destParent = lastNode.parent;
       let destIndex = lastNode.indexOf() + 1;
-      return doTheMove(destParent, destIndex);
+      return await doTheMove(destParent, destIndex);
     }
 
     // old: some thoughts on how this maybe should work

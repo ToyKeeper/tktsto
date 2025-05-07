@@ -12,6 +12,7 @@ import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
 import { base32encode } from '/common/base32.js';
+import { Mutex } from '/common/mutex.js';
 
 log('/bkgd/bkgd.js running');
 
@@ -28,10 +29,14 @@ class Bkgd {
     this.treeLoaded = new Promise(resolve => {
       this.resolveTreeLoaded = resolve;
     });
+
     // queues for saved nodes which are in the process of being loaded
     // (empty except during brief moments before browser opens stuff)
     this.nodesLoading = [];
     this.windowsLoading = [];
+
+    // prevent tab reorder storms
+    this.tabReorderMutex = new Mutex();
   }
 
   init () {
@@ -62,9 +67,9 @@ class Bkgd {
       this.resolveConfigLoaded();  // let listeners know the config is ready
 
       this.tree = new TreeStore(this);
-      this.tree.init();
       // give the tree a link to the bkgd object
       this.tree.bkgd = this;
+      this.tree.init();
       // TODO: use tree node dict as idGen ID cache
       // TODO: make IdGenerator check a cache to avoid duplicates
       //this.idGen.cache = this.tree.nodes;
@@ -308,7 +313,12 @@ class Bkgd {
     // moveInfo.windowId: number
     debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
     await this.treeLoaded;
-    return this.tree.onTabMoved(tabId, moveInfo);
+    // actually handle the request, but only one at a time
+    const unlock = await this.tabReorderMutex.lock();
+    try {
+      await this.tree.onTabMoved(tabId, moveInfo);
+    }
+    finally { unlock(); }
   }
 
   async onTabAttached (tabId, attachInfo) {
@@ -609,6 +619,33 @@ class Bkgd {
     //await node.reorderAllTabsInThisWindow();
     // return success
     if (! response.result) response.result = 'ok';
+    return response;
+  }
+
+  async bkgd_reorderAllTabsInThisWindow (msg) {
+    // This function exists to avoid race conditions caused by multiple
+    // threads trying to reorder tabs at the same time.  They are all
+    // redirected here, so the requests can be processed fully, one at
+    // a time, without interfering with each other.
+    await this.treeLoaded;  // ensure tree is loaded
+    const response = {};
+    let node = this.tree.nodes[msg.nodeId];
+    if (! node) {
+      const err = `bkgd_reorderAllTabsInThisWindow(): no node found: "%{msg.nodeId}"`;
+      error(err);
+      return { error: err };
+    }
+    // actually handle the request, but only one at a time
+    const unlock = await this.tabReorderMutex.lock();
+    try {
+      await node.reorderAllTabsInThisWindow();
+      response.result = 'ok';
+    }
+    catch (err) {
+      error(`bkgd_reorderAllTabsInThisWindow error:`, err);
+      response.error = err;
+    }
+    finally { unlock(); }
     return response;
   }
 
