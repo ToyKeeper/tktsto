@@ -182,6 +182,7 @@ html, body {
   background: var(--button-bg);
   box-shadow: var(--button-shadow);
   cursor: default;
+  transition: var(--button-transition);
 }
 .toolbar .button:hover,
 #inputDialogButtons button:hover {
@@ -189,6 +190,7 @@ html, body {
   border: var(--button-hover-border);
   background: var(--button-hover-bg);
   box-shadow: var(--button-hover-shadow);
+  transition: var(--button-transition);
 }
 .toolbar .button.half-pressed {
   border: var(--1px) solid #555;
@@ -202,6 +204,7 @@ html, body {
   border: var(--button-pressed-border);
   background: var(--button-pressed-bg);
   box-shadow: var(--button-pressed-shadow);
+  transition: var(--button-transition);
 }
 /******************** lists ********************/
 
@@ -888,6 +891,9 @@ foo {
   --marked-count-color: gold;
   /***** toolbars *****/
   --toolbar-height: 2em;
+  /***** buttons *****/
+  /* --button-transition: ease 0.3s; */
+  --button-transition: none;
   /***** node stats *****/
   --node-stat-bright-color: var(--tree-line-cursor);
   --node-stat-dim-color: var(--tree-line);
