@@ -307,7 +307,6 @@ export class TreeView extends Tree {
         + "\n.expanded.row::before {"
         + `\n  content: "+";`
         + '\n  margin-left: -2px;'
-        + '\n  margin-right: -2px;'
         + '\n}';
     }
     // apply the changes

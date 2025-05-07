@@ -409,12 +409,12 @@ foo {
 .expanded.row::before {
   font-weight: bold;
   margin: 0;
+  margin-right: 0.2em;
   padding: 0;
   color: var(--tree-line);
   overflow: visible;
   /* let the user configure whether this expansion thingy appears */
   /* content: "+"; */
-  /* margin-right: -4px; */
 }
 .expanded.row {
   /* margin-left: -4px; */
