@@ -196,9 +196,9 @@ export class NodeView extends Node {
     }
     // node stats
     let statsText = '';
-    // TODO: unsure if always include stats or only when collapsed
-    //if (this.hasKids() && this.isCollapsed()) {
-    if (this.hasKids()) {
+    // unsure if always include stats or only when collapsed
+    //if (this.hasKids()) {  // always
+    if (this.hasKids() && this.isCollapsed()) {  // only when collapsed
       //  count all open descendants
       const openChildren = this.countNodes(
         function (node) { return node.isLoaded(); }
