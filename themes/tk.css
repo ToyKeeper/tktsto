@@ -88,6 +88,7 @@ html, body {
   color: var(--details-box-fg);
   border-radius: 8px;
   border: var(--details-box-border);
+  box-shadow: var(--details-box-shadow);
 }
 
 #details-box.hidden + #bottom-bar {
@@ -142,20 +143,37 @@ html, body {
 /******************** scrollbar ********************/
 
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 0.5em;
+  border-radius: 1em;
+  background: transparent;
+}
+::-webkit-scrollbar-track-button {
+  display: none;
 }
 ::-webkit-scrollbar-track {
-  border-radius: 0px;
-  padding-left: 2px;
-  background: #1c1b22;
+  border-radius: 1em;
+  padding-left: 0.1em;
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+  background: transparent;
 }
+/*
+ * Scrollbars:
+ * - page focused,   hovering over: bright
+ * - page focused,   not hovering : dim
+ * - page unfocused, hovering over: dim
+ * - page unfocused, not hovering : invisible
+ */
 ::-webkit-scrollbar-thumb {
-  border-radius: 10px;
-  background: #68a;
-  -webkit-box-shadow: inset 0 0 1px rgba(0, 0, 0, 0.5);
+  border-radius: 1em;
+  background: transparent;
 }
-::-webkit-scrollbar-thumb:window-inactive {
-  background: #567;
+body:not(.unfocused) ::-webkit-scrollbar-thumb,
+.unfocused *:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg-unfocused);
+}
+body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-bg);
 }
 
 
@@ -845,6 +863,7 @@ foo {
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
   --1px: 0.08rem;  /* Like 1 pixel, but scalable */
+  --2px: 0.15rem;
   --shadow-color: #000000c0;
   --fancy-text-shadow:
     #00000060 -0.05em  0      0.02em, /* outline */
@@ -911,5 +930,8 @@ foo {
   --dialog-padding: 0.5em;
   --dialog-1st-button-bg: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
   --dialog-1st-button-border: var(--1px) outset var(--cursor-bg-top);
+  /***** scrollbar *****/
+  --scrollbar-thumb-bg: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
+  --scrollbar-thumb-bg-unfocused: var(--scrollbar-thumb-bg);
 }
 

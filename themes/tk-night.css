@@ -94,15 +94,18 @@
   --button-border: var(--1px) outset #557;
   --button-bg: linear-gradient(#4d4d6b, #36364e);
   --button-fg: #ddd;
-  --button-shadow: 0.1em 0.1em 0.2em #000;
-  --button-hover-border: var(--1px) outset #557;
-  --button-hover-bg: linear-gradient(#557, #335);
+  --button-shadow: 0.1em 0.1em 0.2em #000c;
+  --button-hover-border: var(--1px) outset #779;
+  --button-hover-bg: linear-gradient(#668, #446);
   --button-hover-fg: #fff;
-  --button-hover-shadow: 0.2em 0.2em 0.2em #000;
+  --button-hover-shadow: 0.2em 0.2em 0.4em #000;
   --button-pressed-border: var(--1px) inset #446;
   --button-pressed-bg: linear-gradient(#202030, #282838);
-  --button-pressed-fg: #ddd;
-  --button-pressed-shadow: inset 0.1em 0.1em 0.2em #000c;
+  --button-pressed-fg: #bbb;
+  --button-pressed-shadow:
+    inset 0.1em 0.1em 0.2em #000c,
+    inset 0.2em 0.2em 0.4em #0006,
+    inset -0.2em -0.4em 0.8em #ccf1;
   /***** checkboxes *****/
   --checkbox-fg-important: #fff;
   --checkbox-fg-todo: #ccc;
@@ -119,6 +122,7 @@
   --details-box-fg: #ccc;
   --details-box-bg: #0003;
   --details-box-border: var(--1px) inset #445;
+  --details-box-shadow: none;
   --details-label-fg: #ccc;
   --details-value-fg: #aaa;
   /***** input dialogs *****/
@@ -127,5 +131,8 @@
   --dialog-input-bg: #222;
   --dialog-input-border: #444;
   --focus-outline: 4px inset #46a;
+  /***** scrollbar *****/
+  --scrollbar-thumb-bg: linear-gradient(#57b, #347);
+  --scrollbar-thumb-bg-unfocused: linear-gradient(#357, #235);
 }
 
