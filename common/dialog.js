@@ -240,7 +240,7 @@ class Dialog {
       // new checkbox value
       const $newLabel = doc.createElement('span');
       $newLabel.id = 'newValue';
-      $newLabel.textContent = 'New value:';
+      $newLabel.innerHTML = 'New value: <small>(click or type letter)</small>';
       $form.appendChild($newLabel);
 
       // checkbox classes available

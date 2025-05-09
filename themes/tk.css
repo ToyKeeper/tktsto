@@ -247,6 +247,11 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
  *     .row (root node title)
  *     .nodes (top-level items)
  */
+/* first visible node needs a bit of top margin */
+#tree-root {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
 /* less padding on top-level items */
 .nodes.root-nodes {
   border: none;
@@ -873,6 +878,7 @@ foo {
   white-space: nowrap;
   vertical-align: middle;
   display: inline-block;
+  cursor: default;
 }
 .checkboxPreview span {
   text-wrap-mode: nowrap;

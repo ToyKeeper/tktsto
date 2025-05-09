@@ -955,6 +955,7 @@ export class TreeView extends Tree {
     let cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
+    if (cursor.isRoot()) return;
 
     // prompt for new label/note text
     const result = await this.checkboxDialog({
@@ -1371,7 +1372,7 @@ export class TreeView extends Tree {
     }
     else this.$hoverMenuUnload.style.display = 'none';
     // show or hide the 'task' button
-    if (undefined === this.mouseNode.checkbox)
+    if ((! this.mouseNode.hasCheckbox()) && (! this.mouseNode.isRoot()))
       this.$hoverMenuTask.style.display = 'inline-block';
     else this.$hoverMenuTask.style.display = 'none';
     // show or hide the 'mark' button
