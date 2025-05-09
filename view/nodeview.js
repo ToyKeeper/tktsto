@@ -184,17 +184,16 @@ export class NodeView extends Node {
       noteIcon = '<span class="node-note-icon">📎 </span>';  // paperclip
     // checkbox
     let ckbox = '';
-    if (this.checkbox) {
-      let checkboxClass = this.tree.checkboxClasses.get(this.checkbox);
-      if (! checkboxClass) checkboxClass = 'other';
+    if (this.hasCheckbox()) {
+      let cbType = this.getCheckboxType();
       let cbText = this.checkbox;
       if (' ' === this.checkbox) cbText = '&nbsp;';
-      if ('percent' === checkboxClass) {
+      if ('percent' === cbType) {
         if (! this.checkboxPx) this.checkboxPx = 0.0;
         cbText = String(Math.floor((this.checkboxPx * 100))) + '%';
-        if (this.checkboxPx > 0.999) checkboxClass = checkboxClass + ' done';
+        if (this.checkboxPx > 0.999) cbType = cbType + ' done';
       }
-      ckbox = `<div class="node-checkbox ${checkboxClass}">${cbText}</div>`;
+      ckbox = `<div class="node-checkbox ${cbType}">${cbText}</div>`;
     }
     // node stats
     let statsText = '';

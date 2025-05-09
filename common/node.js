@@ -188,6 +188,13 @@ export class Node {
     return (0 < this.nodes.length);
   }
 
+  hasKidsWithCheckboxes () {
+    if (! this.hasKids()) return false;
+    for (const kid of this.nodes)
+      if (kid.hasCheckbox()) return true;
+    return false;
+  }
+
   isParentOf (childNode) {
     if (this.isRoot()) return true;
     while (! childNode.isRoot()) {
@@ -262,7 +269,7 @@ export class Node {
     //  this.label, this.note, this.checkbox);
     if (this.label
       || this.note
-      || this.checkbox
+      || this.hasCheckbox()
       //|| (this.type !== '')  // is a window or something
     ) return true;
     // stop if we've gone deep enough
@@ -372,7 +379,7 @@ export class Node {
     else if (this.hasLoadedTabs()) line = '+ ';
     else line = '* ';
     // checkbox
-    if (this.checkbox) line = `${line}[${this.checkbox}] `;
+    if (this.hasCheckbox()) line = `${line}[${this.checkbox}] `;
     // main text
     let urlTitle = this.title ? this.title : this.url;
     if (this.label) {
@@ -551,19 +558,36 @@ export class Node {
           when: this.mtime });
   }
 
+  hasCheckbox () {
+    return (undefined !== this.checkbox);
+  }
+
+  getCheckboxType () {
+    let cbType = this.tree.checkboxClasses.get(this.checkbox);
+    if (! cbType) cbType = 'other';
+    return cbType;
+  }
+
   setCheckbox (value, args) {
     // abort on no-op
     if (! args) return;
-    if ((value === this.checkbox) && (undefined === args.checkboxPx)) return;
     // Do The Thing
     const before = this.checkbox;
+    const beforePx = this.checkboxPx;
     if (null === value) this.checkbox = undefined;
     else this.checkbox = value;
-    const changed = (before !== this.checkbox);
     // calculate percent
     if (undefined !== args.checkboxPx) this.checkboxPx = args.checkboxPx;
-    else if (undefined !== this.checkbox)
+    let changed = ((before !== this.checkbox)
+      || (beforePx !== args.checkboxPx));
+    if ((undefined === args.checkboxPx) && this.hasCheckbox())
       this.checkboxPx = this.getCompletion(changed);
+
+    // after everything, did it actually change?
+    changed = ((before !== this.checkbox)
+      || (beforePx !== this.checkboxPx));
+    if (! changed) return;
+
     // update other nodes
     this.updateCheckboxes();
     // bump timestamp
@@ -582,17 +606,17 @@ export class Node {
     if (this.isRoot()) return;
     const parent = this.parent;
     // recalculate percentage
-    if (undefined !== parent.checkbox) {
-      const cbType = this.tree.checkboxClasses.get(parent.checkbox);
-      // parent percent is the average completion of its children
+    if (this.hasCheckbox()) {
+      const cbType = this.getCheckboxType();
+      // percent is the average completion of its children
       //if ('percent' === cbType) {
       //if (['percent', 'todo', 'done', 'half-done'].includes(cbType)) {
       if (! ['', 'other', 'skip', 'fail'].includes(cbType)) {
         let total = 0;
         let complete = 0;
-        for (const kid of parent.nodes) {
-          if (undefined === kid.checkbox) continue;
-          let kidType = this.tree.checkboxClasses.get(kid.checkbox);
+        for (const kid of this.nodes) {
+          if (! kid.hasCheckbox()) continue;
+          let kidType = kid.getCheckboxType();
           if (! kidType) kidType = 'other';
           total ++;
           complete += kid.getCompletion();
@@ -600,14 +624,14 @@ export class Node {
         let completion = 0;
         if (total > 0) {
           completion = complete / total;
-          parent.checkboxPx = completion;
+          this.checkboxPx = completion;
           // automatically change between todo, half-done, and done
           if (['todo', 'half-done', 'done'].includes(cbType)) {
             if (completion < 0.5)
-              parent.checkbox = this.tree.checkboxTodoType;
+              this.checkbox = this.tree.checkboxTodoType;
             else if (completion < 0.9999)
-              parent.checkbox = this.tree.checkboxHalfDoneType;
-            else parent.checkbox = this.tree.checkboxDoneType;
+              this.checkbox = this.tree.checkboxHalfDoneType;
+            else this.checkbox = this.tree.checkboxDoneType;
           }
         }
       }
@@ -616,8 +640,8 @@ export class Node {
   }
 
   getCompletion (changed = false) {
-    if (undefined === this.checkbox) return 0;
-    const cbType = this.tree.checkboxClasses.get(this.checkbox);
+    if (! this.hasCheckbox()) return 0;
+    const cbType = this.getCheckboxType();
     switch (cbType) {
       case '':
       case 'other':
@@ -626,9 +650,13 @@ export class Node {
       case 'skip':
       case 'fail':
         return 1;  // always 1 even if checkboxPx is set
+      case 'percent':
+        return this.checkboxPx;
       default:
-        if ((! changed) && (undefined !== this.checkboxPx))
-          return this.checkboxPx;
+        if ((! changed)
+          && (undefined !== this.checkboxPx)
+          && this.hasKidsWithCheckboxes()
+        ) { return this.checkboxPx; }
         else if ('half-done' === cbType) return 0.5;
         else return 0;
     }
@@ -917,6 +945,11 @@ export class Node {
         if ((prevParent === destParent) && (destIndex > oldIndex)) {
           newIndex -= 1;
         }
+
+        // checkboxes might need recalculation
+        // TODO: user config option to toggle this behavior
+        if (this.hasCheckbox()) { prevParent.updateCheckboxes(); }
+
         // bump old parent timestamp
         prevParent.bump('mtime', args);
       }
@@ -932,6 +965,10 @@ export class Node {
       const markedParent = this.findParent((n) => n.marked);
       if (markedParent) this.setMarked(false, { reason: 'moveTo' });
     }
+
+    // checkboxes might need recalculation
+    // TODO: user config option to toggle this behavior
+    if (this.hasCheckbox()) { this.updateCheckboxes(); }
 
     // TODO: recalculate stats
     if ([
