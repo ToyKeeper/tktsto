@@ -188,7 +188,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
 }
 
 .toolbar .button,
-#inputDialogButtons button {
+#dialogButtons button {
   display: inline-block;
   flex: 1 1 auto;
   text-align: center;
@@ -203,7 +203,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   transition: var(--button-transition);
 }
 .toolbar .button:hover,
-#inputDialogButtons button:hover {
+#dialogButtons button:hover {
   color: var(--button-hover-fg);
   border: var(--button-hover-border);
   background: var(--button-hover-bg);
@@ -217,7 +217,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
 }
 .toolbar .button.pressed,
 .toolbar .button:active,
-#inputDialogButtons button:active {
+#dialogButtons button:active {
   color: var(--button-pressed-fg);
   border: var(--button-pressed-border);
   background: var(--button-pressed-bg);
@@ -337,7 +337,9 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   opacity: 66%;
 }
 
-.row .node-checkbox {
+.node-checkbox,
+#hover-menu .task-button,
+foo {
   display: inline-block;
   width: calc(0.7 * var(--row-line-height));
   height: calc(0.7 * var(--row-line-height));
@@ -355,52 +357,61 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   margin-right: 0.25rem;
 }
 
-.row .node-checkbox.done,
-.row .node-checkbox.skip,
-.row .node-checkbox.fail,
+.node-checkbox.done,
+.node-checkbox.skip,
+.node-checkbox.fail,
 foo {
   background: var(--button-pressed-bg);
   border: var(--button-pressed-border);
   box-shadow: var(--checkbox-shadow-done);
 }
-.row .node-checkbox.important {
+.node-checkbox.important {
   background: var(--button-hover-bg);
   border: var(--button-hover-border);
 }
-.row .node-checkbox.percent {
+.node-checkbox.percent {
   /* percent is wider than other checkboxes */
   width: unset;
   padding-left: 0.2rem;
   padding-right: 0.2rem;
 }
 
-.row .node-checkbox.important {
+.node-checkbox.important {
   color: var(--checkbox-fg-important);
 }
-.row .node-checkbox.todo {
+.node-checkbox.todo {
   color: var(--checkbox-fg-todo);
 }
-.row .node-checkbox.half-done {
+.node-checkbox.half-done {
   color: var(--checkbox-fg-half-done);
 }
-.row .node-checkbox.percent {
+.node-checkbox.percent {
   color: var(--checkbox-fg-half-done);
 }
-.row .node-checkbox.done {
+.node-checkbox.done {
   color: var(--checkbox-fg-done);
 }
-.row .node-checkbox.skip {
+.node-checkbox.skip {
   color: var(--checkbox-fg-skip);
 }
-.row .node-checkbox.fail {
+.node-checkbox.fail {
   color: var(--checkbox-fg-fail);
 }
-.row .node-checkbox.unknown {
+.node-checkbox.unknown {
   color: var(--checkbox-fg-unknown);
 }
-.row .node-checkbox.other {
+.node-checkbox.other {
   color: var(--checkbox-fg-other);
 }
+.node-checkbox.n1 { color: var(--checkbox-fg-1); }
+.node-checkbox.n2 { color: var(--checkbox-fg-2); }
+.node-checkbox.n3 { color: var(--checkbox-fg-3); }
+.node-checkbox.n4 { color: var(--checkbox-fg-4); }
+.node-checkbox.n5 { color: var(--checkbox-fg-5); }
+.node-checkbox.n6 { color: var(--checkbox-fg-6); }
+.node-checkbox.n7 { color: var(--checkbox-fg-7); }
+.node-checkbox.n8 { color: var(--checkbox-fg-8); }
+.node-checkbox.n9 { color: var(--checkbox-fg-9); }
 
 .row .node-label,
 .row .node-note-icon {
@@ -678,6 +689,16 @@ foo {
   color: var(--tab-was-loaded-fg);
 }
 
+#hover-menu .task-button {
+  color: var(--checkbox-fg-todo);
+  text-shadow: none;
+  vertical-align: top;
+  width: calc(var(--row-line-height) - 0.2rem);
+  height: calc(var(--row-line-height) - 0.5rem);
+  font-size: calc(var(--row-line-height) - 0.1em);
+  padding-top: 0.1em;
+}
+
 #hover-menu .edit-button {
   color: var(--label-loaded-fg);
 }
@@ -764,7 +785,7 @@ foo {
 
 /******************** input dialogs ********************/
 
-#inputDialog {
+.dialog {
   width: 85%;
   /* min-height: 33%; */
   border: var(--1px) outset var(--dialog-border-color);
@@ -776,7 +797,7 @@ foo {
   font-size: var(--global-font-size);
 }
 
-#inputDialogTitle {
+#dialogTitle {
   background: linear-gradient(var(--cursor-bg-top), var(--cursor-bg-bot));
   font-weight: bold;
   font-size: calc(var(--global-font-size) * 1.1);
@@ -789,8 +810,8 @@ foo {
   margin-bottom: var(--dialog-padding);
 }
 
-#inputDialog input,
-#inputDialog textarea {
+.dialog input,
+.dialog textarea {
   background: var(--dialog-input-bg);
   border: var(--1px) inset var(--dialog-input-border);
   border-radius: 3px;
@@ -799,21 +820,21 @@ foo {
   margin-top: 0.1em;
 }
 
-#inputDialog input {
+.dialog input {
   color: var(--label-loaded-fg);
   font-size: calc(var(--global-font-size) * 0.9);
   padding: 0.1em 0.2em;
   margin-bottom: var(--dialog-padding);
 }
 
-#inputDialog textarea {
+.dialog textarea {
   /* height: 100%; */
   min-height: 10em;
   color: var(--note-fg);
   font-size: calc(var(--global-font-size) * 0.8);
 }
 
-#inputDialogButtons {
+#dialogButtons {
   display: flex;
   flex-direction: row-reverse;
   flex-wrap: wrap;
@@ -824,22 +845,64 @@ foo {
 }
 
 /* style the "submit" button differently */
-#inputDialogButtons button {
+#dialogButtons button {
   color: var(--dialog-fg);
 }
-#inputDialogButtons button:first-of-type {
+#dialogButtons button:first-of-type {
   background: var(--dialog-1st-button-bg);
   border: var(--dialog-1st-button-border);
   font-weight: bold;
   box-shadow: var(--cursor-shadow);
   color: var(--dialog-title-fg);
 }
-#inputDialogButtons button:first-of-type:hover {
+#dialogButtons button:first-of-type:hover {
   text-shadow: var(--fancy-text-shadow);
   box-shadow: var(--fancy-text-shadow);
 }
 
-#inputDialog *:focus,
+.checkboxTable {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(auto-fill, minmax(var(--row-line-height), 1fr));
+  max-height: 60vh;
+  overflow: wrap;
+  /* gap: 0.1em; */
+}
+
+.checkboxPreview {
+  white-space: nowrap;
+  vertical-align: middle;
+  display: inline-block;
+}
+.checkboxPreview span {
+  text-wrap-mode: nowrap;
+  vertical-align: top;
+  padding-left: 0.25em;
+}
+
+#checkboxDialog #dialogDescription {
+  text-wrap-mode: nowrap;
+  text-overflow: ellipsis;
+  overflow-x: clip;
+  margin-bottom: 0.25rem;
+  /* copied from details-box */
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  background: var(--details-box-bg);
+  color: var(--details-box-fg);
+  border-radius: 8px;
+  border: var(--details-box-border);
+  box-shadow: var(--details-box-shadow);
+}
+
+#checkboxDialog #oldValue {
+  margin-right: 0.5em;
+}
+#checkboxDialog #newValue {
+  display: block;
+}
+
+.dialog *:focus,
 *:focus {
   outline: var(--focus-outline);
 }

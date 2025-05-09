@@ -6,9 +6,12 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug } from '/common/common.js';
+import { buildEventName } from '/common/events.js';
 
 
 class Dialog {
+
+  // TODO: de-duplicate code, make a more generic dialog function
 
   async inputDialog({
     doc = document,  // maybe unnecessary?
@@ -24,11 +27,12 @@ class Dialog {
     const promise = new Promise((resolve) => {
       const $dialog = doc.createElement('dialog');
       $dialog.id = 'inputDialog';
+      $dialog.className = 'dialog';
 
       // optional title widget
       if (title) {
         const $title = doc.createElement('div');
-        $title.id = 'inputDialogTitle';
+        $title.id = 'dialogTitle';
         $title.innerText = title;
         $dialog.appendChild($title);
       }
@@ -38,7 +42,7 @@ class Dialog {
       // optional description widget
       if (description) {
         const $description = doc.createElement('div');
-        $description.id = 'inputDialogDescription';
+        $description.id = 'dialogDescription';
         $description.innerHTML = description;
         $form.appendChild($description);
       }
@@ -47,7 +51,7 @@ class Dialog {
       let $input;
       if (input) {
         $input = doc.createElement('input');
-        $input.id = 'inputDialogInput';
+        $input.id = 'dialogInput';
         $input.type = 'text';
         $input.value = value;
         $input.select();
@@ -61,13 +65,13 @@ class Dialog {
         // optional label
         if (textAreaLabel) {
           const $label = doc.createElement('div');
-          $label.id = 'inputDialogTextAreaLabel';
+          $label.id = 'dialogTextAreaLabel';
           $label.innerHTML = textAreaLabel;
           $form.appendChild($label);
         }
 
         $textArea = doc.createElement('textarea');
-        $textArea.id = 'inputDialogTextArea';
+        $textArea.id = 'dialogTextArea';
         $textArea.value = textAreaValue;
         $form.appendChild($textArea);
       }
@@ -75,12 +79,12 @@ class Dialog {
       // add the buttons
       if (Array.isArray(buttons) && (buttons.length > 0)) {
         const $buttons = doc.createElement('div');
-        $buttons.id = 'inputDialogButtons';
+        $buttons.id = 'dialogButtons';
         let first = true;
         for (const label of buttons) {
           const $btn = doc.createElement('button');
           $btn.innerText = label;
-          //$btn.id = `inputDialogButton${label}`;  // FIXME: unsafe
+          //$btn.id = `dialogButton${label}`;  // FIXME: unsafe
           // first button is the 'submit' button
           // and emits its own special event when clicked
           if (first) $btn.type = 'submit';
@@ -142,11 +146,224 @@ class Dialog {
     return promise;
   }
 
+  async checkboxDialog({
+    doc = document,  // maybe unnecessary?
+    title = '',
+    description = '',
+    value = '',
+    classes,  // should be a Map()
+    buttons = ['OK', 'Cancel']
+  }={}) {
+    this.oldValue = value;
+    this.newValue = '';
+    const promise = new Promise((resolve) => {
+      function finish (value, event) {
+        if (undefined !== event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        //$dialog.removeEventListener('keydown', this.keyHandler);
+        // clean up
+        $dialog.close();
+        $dialog.remove();
+        doc.activeElement.blur();  // remove "selected" element outline
+        // return the user's inputs
+        resolve(value);
+      }
+
+      const $dialog = doc.createElement('dialog');
+      $dialog.id = 'checkboxDialog';
+      $dialog.className = 'dialog';
+
+      // optional title widget
+      if (title) {
+        const $title = doc.createElement('div');
+        $title.id = 'dialogTitle';
+        $title.innerText = title;
+        $dialog.appendChild($title);
+      }
+
+      if (description) {
+        const $description = doc.createElement('div');
+        $description.id = 'dialogDescription';
+        $description.innerText = description;
+        $dialog.appendChild($description);
+      }
+
+      const $form = doc.createElement('form');
+
+      function labelledCheckbox (val) {
+        if (! val) {
+          const $elem = doc.createElement('span');
+          $elem.textContent = 'None';
+          return $elem;
+        }
+        let cboxClass = classes.get(val);
+        if (! cboxClass) cboxClass = 'other';
+
+        const $div = doc.createElement('div');
+        $div.className = 'checkboxPreview';
+
+        const $ckbox = doc.createElement('div');
+        $ckbox.classList.add('node-checkbox');
+        $ckbox.classList.add(cboxClass);
+        $ckbox.textContent = val;
+        $div.appendChild($ckbox);
+
+        const $span = doc.createElement('span');
+        $span.textContent = cboxClass;
+        $div.appendChild($span);
+
+        $div.addEventListener('click', (ev) => {
+          // return which button was pressed
+          const result = { checkbox: val };
+          // clean up
+          $dialog.close();
+          $dialog.remove();
+          doc.activeElement.blur();  // remove "selected" element outline
+          // return the user's inputs
+          finish(result);
+        });
+
+        return $div;
+      }
+
+      // checkbox current value
+      const $oldLabel = doc.createElement('span');
+      $oldLabel.id = 'oldValue';
+      $oldLabel.textContent = 'Old value:';
+      $form.appendChild($oldLabel);
+
+      const $nodeCkbox = labelledCheckbox(value);
+      $form.appendChild($nodeCkbox);
+
+      // new checkbox value
+      const $newLabel = doc.createElement('span');
+      $newLabel.id = 'newValue';
+      $newLabel.textContent = 'New value:';
+      $form.appendChild($newLabel);
+
+      // checkbox classes available
+      const $preview = doc.createElement('div');
+      $preview.className = 'checkboxTable';
+      for (const key of classes.keys()) {
+        const $item = labelledCheckbox(key);
+        $preview.appendChild($item);
+      }
+
+      $form.appendChild($preview);
+
+      // add the buttons
+      if (Array.isArray(buttons) && (buttons.length > 0)) {
+        const $buttons = doc.createElement('div');
+        $buttons.id = 'dialogButtons';
+        let first = true;
+        for (const label of buttons) {
+          const $btn = doc.createElement('button');
+          $btn.innerText = label;
+          // first button is the 'submit' button
+          // and emits its own special event when clicked
+          if (first) $btn.type = 'submit';
+          // handle clicks on all other buttons
+          else {
+            $btn.type = 'button';
+            $btn.addEventListener('click', (ev) => {
+              // return which button was pressed
+              const result = { button: label, checkbox: oldValue };
+              // return the user's inputs
+              finish(result);
+            });
+          }
+          first = false;
+          // show the button
+          $buttons.appendChild($btn);
+        }
+        // show all buttons
+        $form.appendChild($buttons);
+      }
+
+      // user pressed Enter to submit the form
+      const handleSubmit = (ev) => {
+        ev.preventDefault();
+        const result = {
+          button: buttons[0],  // pretend 1st/default button was clicked
+          checkbox: oldValue
+        };
+        // clean up
+        $form.removeEventListener('submit', handleSubmit);
+        // return what the user entered
+        finish(result);
+      }
+      $form.addEventListener('submit', handleSubmit);
+      $dialog.appendChild($form);
+
+      // if the user pressed Escape to dismiss the dialog
+      $dialog.addEventListener('close', () => {
+        finish(null);
+      });
+
+      // finally, show the actual dialog box
+      doc.body.appendChild($dialog);
+      $dialog.showModal();
+
+      // needs a special keystroke handler for faster keyboard access
+      $dialog.addEventListener('keydown',
+        (event) => {
+          // figure out what key was pressed
+          const keyName = buildEventName(event);
+          if (! keyName) return;
+          const parts = keyName.split('+');
+          let last = parts[parts.length-1];
+          // special cases
+          const map = { '': '+', 'Space': ' ' };
+          if (map[last]) last = map[last];
+          // handle some special keys
+          if ('Escape' === last) return finish(null, event);
+          if ('Enter' === last) {
+            // TODO: test what happens if press Enter while Delete is focused
+            if (this.newValue) finish({ checkbox: this.newValue }, event);
+            else finish(null, event);
+            return;
+          }
+          if (['Delete', 'Backspace'].includes(last)) {
+            // delete / un-set the checkbox
+            return finish({ checkbox: null }, event);
+          }
+          // manually entering a percent
+          if ('1234567890'.includes(last)) {
+            this.newValue = this.newValue + last;
+            if (2 == this.newValue.length)
+              finish({ checkbox: '%', checkboxPx: this.newValue / 100.0 }, event);
+            return;
+          }
+          // invert case
+          // so user can enter capitals with one key,
+          // or lowercase with shift+key
+          const lower = last.toLowerCase();
+          const upper = last.toUpperCase();
+          if (lower === last) last = upper;
+          else last = lower;
+          // any single-character key simply becomes a new checkbox value
+          if (1 === last.length) return finish({checkbox: last }, event);
+          // ... and other keys are simply ignored
+        }
+      );
+
+    });
+
+    return promise;
+  }
+
 }
 
 
 export async function inputDialog(...args) {
   const dia = new Dialog();
   return dia.inputDialog(...args);
+}
+
+export async function checkboxDialog(...args) {
+  const dia = new Dialog();
+  return dia.checkboxDialog(...args);
 }
 

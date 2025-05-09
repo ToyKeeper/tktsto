@@ -185,12 +185,14 @@ export class NodeView extends Node {
     // checkbox
     let ckbox = '';
     if (this.checkbox) {
-      const checkboxClass = this.tree.checkboxClasses[this.checkbox];
+      let checkboxClass = this.tree.checkboxClasses.get(this.checkbox);
       if (! checkboxClass) checkboxClass = 'other';
       let cbText = this.checkbox;
       if (' ' === this.checkbox) cbText = '&nbsp;';
       if ('percent' === checkboxClass) {
-        cbText = String(Math.floor((Math.random() * 100))) + '%';
+        if (! this.checkboxPx) this.checkboxPx = 0.0;
+        cbText = String(Math.floor((this.checkboxPx * 100))) + '%';
+        if (this.checkboxPx > 0.999) checkboxClass = checkboxClass + ' done';
       }
       ckbox = `<div class="node-checkbox ${checkboxClass}">${cbText}</div>`;
     }
@@ -439,6 +441,18 @@ export class NodeView extends Node {
     // do it
     super.setNotes(label, note, ...extra);
     // show it
+    this.$render();
+  }
+
+  setCheckbox (...extra) {
+    // do it
+    super.setCheckbox(...extra);
+    // show it
+    this.$render();
+  }
+
+  updateCheckboxes (...args) {
+    super.updateCheckboxes(...args);
     this.$render();
   }
 

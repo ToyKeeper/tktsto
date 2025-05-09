@@ -6,7 +6,8 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug, warn, error, emit } from '/common/common.js';
-import { inputDialog } from '/common/dialog.js';
+import { buildEventName } from '/common/events.js';
+import { inputDialog, checkboxDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
 import { Tree } from '/common/tree.js';
 import { Mutex } from '/common/mutex.js';
@@ -92,6 +93,7 @@ export class TreeView extends Tree {
       ///// task status
       //'x': 'toggleTaskDone',
       //'t': 'taskLeaderKey',
+      't': 'taskEdit',
       ///// search
       //'/': 'beginSearch',
       //'Shift+*': 'searchForCurrent',  // match current label, url, or title
@@ -341,6 +343,14 @@ export class TreeView extends Tree {
     return result;
   }
 
+  async checkboxDialog (...args) {
+    // disable key event handling while dialog is active
+    this.dialogActive = true;
+    const result = await checkboxDialog(...args);
+    this.dialogActive = false;
+    return result;
+  }
+
   initBodyHandlers () {
     // absolutely NEVER scroll horizontally
     this.$body.addEventListener('scroll', () => { this.$body.scrollLeft = 0; });
@@ -391,46 +401,12 @@ export class TreeView extends Tree {
       (event) => { this.mouseLeave(event) });
   }
 
-  buildEventName (event, eventType) {
-    const shift = (event.shiftKey && (event.key != 'Shift')) ? 'Shift+' : '';
-    const ctrl = (event.ctrlKey && (event.key != 'Control')) ? 'Ctrl+' : '';
-    const alt = (event.altKey && (event.key != 'Alt')) ? 'Alt+' : '';
-    const meta = (event.metaKey && (event.key != 'Meta')) ? 'Meta+' : '';
-    let eventName;
-    if ('keydown' === event.type) {
-      let eventKey = event.key;
-      if (eventKey === ' ') eventKey = 'Space';
-      eventName = eventKey;
-    }
-    else if (['mousedown', 'mouseup', 'click', 'dblclick'].includes(event.type)) {
-      const buttonNames = ['Left', 'Middle', 'Right'];
-      const clickNames = { mousedown: 'Press', mouseup: 'Release',
-        click: 'Click', dblclick: 'DblClick' };
-      const buttonName = buttonNames[event.button];
-      const clickName = clickNames[event.type];
-      if (buttonName) {
-        eventName = `Mouse${clickName}${buttonName}`;
-      }
-    }
-    else if (['DragStart', 'Drag', 'Drop', 'DragEnd', 'DragLeave',
-      'DragOver'].includes(eventType))
-    {
-      eventName = `Mouse${eventType}`;
-    }
-    else if ('mouseover' === event.type) {
-      eventName = 'MouseOver';
-    }
-    const fullEventName = `${shift}${ctrl}${alt}${meta}${eventName}`;
-    event.processedName = fullEventName;
-    return fullEventName;
-  }
-
   keyHandler (event) {
     // don't try to handle key events while a dialog is visible
     if (this.dialogActive) return;
     // calculate a more complete name for this event,
     // then call the keyboard event dispatcher
-    const keyName = this.buildEventName(event);
+    const keyName = buildEventName(event);
     this.setStatus(`keydown: ${keyName}`);
     return this.dispatchInputEvent(event);
   }
@@ -468,7 +444,7 @@ export class TreeView extends Tree {
     // ensure nothing gets focused / highlighted
     this.document.activeElement.blur();
     // assign an event name based on modifier keys, event type, mouse button
-    const eventName = this.buildEventName(event, eventType);
+    const eventName = buildEventName(event, eventType);
     //this.setStatus(`mouse: ${eventName}`);
     // identify which row the event was in, if any
     let node;  // which Tree Node object was clicked?
@@ -480,7 +456,7 @@ export class TreeView extends Tree {
     while ($target && $target.classList) {
       const className = $target.classList[0];
       if ((! $elem) && [
-        'node-stats', 'node-link', 'node-label',
+        'node-stats', 'node-link', 'node-label', 'node-checkbox',
         'row', 'node' ].includes(className)
       ) $elem = $target;
       if ($target.classList.contains('row')) $row = $target;
@@ -973,6 +949,38 @@ export class TreeView extends Tree {
     this.setStatus(`Edited ${cursor.toLine()}`);
   }
 
+  async action_taskEdit (event) {
+    debug('action_taskEdit()');
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
+    // skip no-op cases
+    if (! cursor) return;
+
+    // prompt for new label/note text
+    const result = await this.checkboxDialog({
+      doc: document,
+      title: 'Edit Task',
+      description: cursor.toLine(),
+      value: cursor.checkbox,
+      classes: this.checkboxClasses,
+      buttons: ['OK', 'Delete']
+    });
+    // abort if user cancelled
+    if (!result) return;
+
+    // update the node
+    let newValue = result.checkbox;
+    if ('OK' === result.button) return;
+    else if ('Delete' === result.button) newValue = undefined;
+    const px = result.checkboxPx;
+    // user manually set a numeric percent value
+    if (undefined !== px) cursor.setCheckbox(newValue,
+      { checkboxPx: px, reason: 'userAction' });
+    // user didn't set a percent value
+    else cursor.setCheckbox(newValue, { reason: 'userAction' });
+    this.setStatus(`Edited ${cursor.toLine()}`);
+  }
+
   action_toggleMarked (event) {
     debug('action_toggleMarked()');
     // choose mouse or keyboard cursor based on event type
@@ -1056,11 +1064,26 @@ export class TreeView extends Tree {
     if (! this.mouseNode) return;
     // place the cursor
     await this.setCursor(this.mouseNode);
+    // maybe modify a checkbox
+    if (this.$mouseElem.classList.contains('node-checkbox')) {
+      await this.action_taskEdit(event);
+      return;
+    }
     // maybe toggle expanded
     if (this.$mouseRow) {
+      let leftWidth = this.$mouseRowHgt;
+      // wider target area when a checkbox exists and node-stats doesn't
+      if (this.mouseNode.checkbox
+        && this.mouseNode.isExpanded()
+        && this.mouseNode.hasKids())
+      {
+        const $cb = this.mouseNode.$.querySelector('.node-checkbox');
+        if ($cb) leftWidth += $cb.offsetWidth;
+      }
+      debug(`mouseRowX (${this.$mouseRowX}), leftWidth (${leftWidth})`);
       // if user clicked the left ~1em of the row, toggle expand
       // (or if they clicked the node stats widget)
-      if ((this.$mouseRowX <= this.$mouseRowHgt)
+      if ((this.$mouseRowX <= leftWidth)
         || (this.$mouseElem
           && this.$mouseElem.classList.contains('node-stats'))
       ) {
@@ -1309,6 +1332,9 @@ export class TreeView extends Tree {
     if (! this.$hoverMenuUnload) {
       this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'U', 'unloadNode');
     }
+    if (! this.$hoverMenuTask) {
+      this.$hoverMenuTask = makeBtn(this, 'task-button', 'T', 'taskEdit');
+    }
     if (! this.$hoverMenuEdit) {
       this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNotes');
     }
@@ -1344,6 +1370,10 @@ export class TreeView extends Tree {
       this.$hoverMenuUnload.classList.add('unloaded');
     }
     else this.$hoverMenuUnload.style.display = 'none';
+    // show or hide the 'task' button
+    if (undefined === this.mouseNode.checkbox)
+      this.$hoverMenuTask.style.display = 'inline-block';
+    else this.$hoverMenuTask.style.display = 'none';
     // show or hide the 'mark' button
     if (this.mouseNode.isMarkable())
       this.$hoverMenuMark.style.display = 'inline-block';

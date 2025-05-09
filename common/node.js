@@ -36,11 +36,6 @@ export class Node {
     // checkbox: task completion and other task statuses
     this.checkbox = undefined;  // null or single character
     this.checkboxPx = undefined;  // percent complete, calculated and cached
-    if (Math.random() < 0.5) {
-      const letters = ' +XSF?!%';
-      const letter = letters.charAt(Math.floor(Math.random()*letters.length));
-      this.checkbox = letter;
-    }
     // timestamps
     // ctime: set when node first created only
     // mtime: set when changed label, title, url, checkbox, ...
@@ -52,30 +47,6 @@ export class Node {
     this.ltime = undefined;  // loaded time (urls only)
     // children
     this.nodes = [];
-    // fields to copy when serializing to/from dict
-    this.dictable = [
-      'id',
-      'type',
-      'windowId',
-      'tabId',
-      'label',
-      'note',
-      'title',
-      'url',
-      'faviconUrl',
-      'expanded',
-      'loaded',
-      'wasLoaded',
-      'active',
-      'marked',
-      'checkbox',
-      'ctime',
-      'mtime',
-      'atime',
-      'discarded',
-      'frozen',
-      'hidden',
-    ];
   }
 
   destroy () {
@@ -84,7 +55,7 @@ export class Node {
   toDict () {
     // make this object serializable for runtime.sendMessage()
     const d = {};
-    for (const key of this.dictable) d[key] = this[key];
+    for (const key of this.tree.dictable) d[key] = this[key];
     d.parent = this.parent.id;
     d.nodes = this.nodes.map((n) => n.id);
     return d;
@@ -92,7 +63,7 @@ export class Node {
 
   fromDict (d) {
     // restore values from a previously-dicted copy
-    for (const key of this.dictable) this[key] = d[key];
+    for (const key of this.tree.dictable) this[key] = d[key];
     //this.parent.id = d.parent;  // restore this elsewhere
     //this.nodes = [];  // restore this elsewhere
   }
@@ -191,6 +162,15 @@ export class Node {
     return this.parent.nodes.indexOf(this);
   }
 
+  //indexOfTab () {
+  //  if (! this.parent) return 0;
+  //  const windowNode = this.getWindowNode();
+  //  if (! windowNode) return 0;
+  //  const tabList = windowNode.getLoadedTabs();
+  //  if (! tabList) return 0;
+  //  return tabList.indexOf(this);
+  //}
+
   isRoot () {
     // root has no parent, or is its own parent
     return ((! this.parent) || (this.parent === this));
@@ -278,6 +258,8 @@ export class Node {
 
   shouldUnloadNotDelete (recurse = true) {
     // true if node has any metadata worth keeping
+    //debug(`Node.shouldUnloadNotDelete: ${this.toLine()}`,
+    //  this.label, this.note, this.checkbox);
     if (this.label
       || this.note
       || this.checkbox
@@ -567,6 +549,89 @@ export class Node {
           label: this.label,
           note: this.note,
           when: this.mtime });
+  }
+
+  setCheckbox (value, args) {
+    // abort on no-op
+    if (! args) return;
+    if ((value === this.checkbox) && (undefined === args.checkboxPx)) return;
+    // Do The Thing
+    const before = this.checkbox;
+    if (null === value) this.checkbox = undefined;
+    else this.checkbox = value;
+    const changed = (before !== this.checkbox);
+    // calculate percent
+    if (undefined !== args.checkboxPx) this.checkboxPx = args.checkboxPx;
+    else if (undefined !== this.checkbox)
+      this.checkboxPx = this.getCompletion(changed);
+    // update other nodes
+    this.updateCheckboxes();
+    // bump timestamp
+    this.bump('mtime', args);
+    // notify others
+    if ('userAction' === args.reason)
+      emit('tree_nodeChanged',
+        { nodeId: this.id, type: 'setCheckbox',
+          checkbox: this.checkbox,
+          checkboxPx: this.checkboxPx,
+          when: this.mtime });
+  }
+
+  updateCheckboxes () {
+    // stop checking parents if we don't have any
+    if (this.isRoot()) return;
+    const parent = this.parent;
+    // recalculate percentage
+    if (undefined !== parent.checkbox) {
+      const cbType = this.tree.checkboxClasses.get(parent.checkbox);
+      // parent percent is the average completion of its children
+      //if ('percent' === cbType) {
+      //if (['percent', 'todo', 'done', 'half-done'].includes(cbType)) {
+      if (! ['', 'other', 'skip', 'fail'].includes(cbType)) {
+        let total = 0;
+        let complete = 0;
+        for (const kid of parent.nodes) {
+          if (undefined === kid.checkbox) continue;
+          let kidType = this.tree.checkboxClasses.get(kid.checkbox);
+          if (! kidType) kidType = 'other';
+          total ++;
+          complete += kid.getCompletion();
+        }
+        let completion = 0;
+        if (total > 0) {
+          completion = complete / total;
+          parent.checkboxPx = completion;
+          // automatically change between todo, half-done, and done
+          if (['todo', 'half-done', 'done'].includes(cbType)) {
+            if (completion < 0.5)
+              parent.checkbox = this.tree.checkboxTodoType;
+            else if (completion < 0.9999)
+              parent.checkbox = this.tree.checkboxHalfDoneType;
+            else parent.checkbox = this.tree.checkboxDoneType;
+          }
+        }
+      }
+    }
+    parent.updateCheckboxes();
+  }
+
+  getCompletion (changed = false) {
+    if (undefined === this.checkbox) return 0;
+    const cbType = this.tree.checkboxClasses.get(this.checkbox);
+    switch (cbType) {
+      case '':
+      case 'other':
+        return 0;  // always 0 even if checkboxPx is set
+      case 'done':
+      case 'skip':
+      case 'fail':
+        return 1;  // always 1 even if checkboxPx is set
+      default:
+        if ((! changed) && (undefined !== this.checkboxPx))
+          return this.checkboxPx;
+        else if ('half-done' === cbType) return 0.5;
+        else return 0;
+    }
   }
 
   setTabFields (changes, args) {

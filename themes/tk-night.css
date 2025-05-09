@@ -109,12 +109,21 @@
   /***** checkboxes *****/
   --checkbox-fg-important: #fff;
   --checkbox-fg-todo: #ccc;
-  --checkbox-fg-half-done: #ccc;
+  --checkbox-fg-half-done: #999;
   --checkbox-fg-done: #666;
   --checkbox-fg-skip: #6a8;
   --checkbox-fg-fail: #f44;
   --checkbox-fg-unknown: #f4f;
   --checkbox-fg-other: #a84;
+  --checkbox-fg-1: #666;
+  --checkbox-fg-2: #777;
+  --checkbox-fg-3: #888;
+  --checkbox-fg-4: #999;
+  --checkbox-fg-5: #aaa;
+  --checkbox-fg-6: #bbb;
+  --checkbox-fg-7: #ccc;
+  --checkbox-fg-8: #ddd;
+  --checkbox-fg-9: #eee;
   --checkbox-shadow-todo: 0.03em 0.06em 0.15em #000;
   --checkbox-shadow-done: inset 0.03em 0.06em 0.15em #000a;
   /***** node stats *****/

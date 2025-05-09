@@ -26,22 +26,66 @@ export class Tree {
 
     this.createRootNode();
 
-    this.checkboxClasses = {
-      ' ': 'todo',
-      '_': 'todo',
-      '+': 'half-done',
-      '%': 'percent',
-      'X': 'done',
-      'x': 'done',
-      'F': 'fail',
-      'f': 'fail',
-      'S': 'skip',
-      's': 'skip',
-      'C': 'skip',
-      'c': 'skip',
-      '!': 'important',
-      '?': 'unknown',
-    };
+    // fields to copy when serializing Nodes to/from dict
+    this.dictable = [
+      'id',
+      'type',
+      'windowId',
+      'tabId',
+      'label',
+      'note',
+      'title',
+      'url',
+      'faviconUrl',
+      'expanded',
+      'loaded',
+      'wasLoaded',
+      'active',
+      'marked',
+      'checkbox',
+      'checkboxPx',
+      'ctime',
+      'mtime',
+      'atime',
+      'discarded',
+      'frozen',
+      'hidden',
+    ];
+
+    // TODO: make user-configurable
+    this.checkboxTodoType = ' ';
+    this.checkboxHalfDoneType = '+';
+    this.checkboxDoneType = 'X';
+    // map because a plain object gets confused about order
+    // when some of the keys look like numbers
+    this.checkboxClasses = new Map();
+    for (const [key, value] of [
+      [' ', 'todo'],
+      ['-', 'todo'],
+      ['+', 'half-done'],
+      ['=', 'half-done'],
+      ['%', 'percent'],
+      ['X', 'done'],
+      ['*', 'done'],
+      ['F', 'fail'],
+      ['S', 'skip'],
+      ['C', 'skip'],
+      ['O', 'other'],
+      ['!', 'important'],
+      ['?', 'unknown'],
+      //['0': 'n0'],
+      ['1', 'n1'],
+      ['2', 'n2'],
+      ['3', 'n3'],
+      ['4', 'n4'],
+      ['5', 'n5'],
+      ['6', 'n6'],
+      ['7', 'n7'],
+      ['8', 'n8'],
+      ['9', 'n9'],
+    ]) {
+      this.checkboxClasses.set(key, value);
+    }
   }
 
   destroy () {
@@ -819,6 +863,9 @@ export class Tree {
     }
     else if ('setNotes' === changeType) {
       return node.setNotes(msg.label, msg.note, msg);
+    }
+    else if ('setCheckbox' === changeType) {
+      return node.setCheckbox(msg.checkbox, msg);
     }
     else if ('setTabFields' === changeType) {
       return node.setTabFields(msg.changes, msg);
