@@ -379,7 +379,12 @@ export class Node {
     else if (this.hasLoadedTabs()) line = '+ ';
     else line = '* ';
     // checkbox
-    if (this.hasCheckbox()) line = `${line}[${this.checkbox}] `;
+    if (this.hasCheckbox()) {
+      if ('percent' === this.getCheckboxType()) {
+        const px = Math.floor(this.checkboxPx * 100);
+        line = `${line}[${px}%] `;
+      } else line = `${line}[${this.checkbox}] `;
+    }
     // main text
     let urlTitle = this.title ? this.title : this.url;
     if (this.label) {
