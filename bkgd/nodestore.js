@@ -25,18 +25,119 @@ export class NodeStore extends Node {
     return nodeId;
   }
 
+  async saveIfChanged (promise) {
+    const changed = await promise;
+    if (changed) await this.tree.db.saveNode(this);
+  }
+
+  async deleteSelf (args) {
+    debug(`NodeStore.deleteSelf(${args.reason}, ${this.id})`, args);
+    const nodeId = this.id;  // save for later
+    const parent = this.parent;
+
+    // let parent class do its thing
+    const changed = await super.deleteSelf(args);
+    // if delete failed, abort
+    if (! changed) return;
+
+    // parent child list changed
+    if (parent && parent.id && (parent.id !== nodeId))
+      await this.tree.db.saveNode(parent);
+    // remove from database
+    await this.tree.db.deleteNode(nodeId);
+  }
+
   async addChild (index, details, ...extra) {
-    //debug('NodeStore.addChild():', details);
     // index is required; assume 1st child if not given
     if (undefined === index) index = 0;
 
-    debug('NodeStore.addChild()');
+    debug(`NodeStore.addChild(${index})`, details);
     // must allocate ID before creating node and emitting notifications
     if (! details.id) { details.id = this.newNodeId(); }
     // create new Node object
     const newNode = await super.addChild(index, details, ...extra);
 
+    // add child to database
+    await this.tree.db.saveNode(newNode);
+    // parent changed too
+    await this.tree.db.saveNode(this);
+
     return newNode;
+  }
+
+  async setNotes (label, note, args) {
+    debug(`NodeStore.setNotes(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.setNotes(label, note, args));
+  }
+
+  async setCheckbox (value, args) {
+    debug(`NodeStore.setCheckbox(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.setCheckbox(value, args));
+  }
+
+  async updateCheckboxes () {
+    debug(`NodeStore.updateCheckboxes(${this.id})`);
+
+    // save checkbox states before
+    const parents = [];
+    let node = this;
+    while (! node.isRoot()) {
+      parents.push([node, node.checkbox, node.checkboxPx]);
+      node = node.parent;
+    }
+
+    const changed = await super.updateCheckboxes();
+    if (! changed) return;
+
+    // if any parents changed, save them too
+    for (const [n, checkbox, checkboxPx] of parents) {
+      if ((n.checkbox !== checkbox) || (n.checkboxPx !== checkboxPx))
+        await this.tree.db.saveNode(n);
+    }
+  }
+
+  async setTabFields (changes, args) {
+    debug(`NodeStore.setTabFields(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.setTabFields(changes, args));
+  }
+
+  async load (args) {
+    debug(`NodeStore.load(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.load(args));
+  }
+
+  async unload (args) {
+    debug(`NodeStore.unload(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.unload(args));
+  }
+
+  async moveTo (destParent, destIndex, args) {
+    debug(`NodeStore.moveTo(${args.reason}, ${this.id})`, args);
+    const prevParent = this.parent;
+
+    const changed = await super.moveTo(destParent, destIndex, args);
+    if (! changed) return;
+
+    await this.tree.db.saveNode(this);
+    if (destParent)
+      await this.tree.db.saveNode(destParent);
+    if (prevParent && (prevParent !== destParent))
+      await this.tree.db.saveNode(prevParent);
+  }
+
+  async setExpanded (expanded, args) {
+    debug(`NodeStore.setExpanded(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.setExpanded(expanded, args));
+  }
+
+  async setMarked (marked, args) {
+    debug(`NodeStore.setMarked(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.setMarked(marked, args));
+  }
+
+  async setActive (active, args) {
+    debug(`NodeStore.setActive(${args.reason}, ${this.id})`, args);
+    await this.saveIfChanged(super.setActive(active, args));
   }
 
 }

@@ -18,6 +18,10 @@ export class Tree {
     if (undefined === NodeClass) NodeClass = Node;
     this.NodeClass = NodeClass;
 
+    this.treeLoaded = new Promise(resolve => {
+      this.resolveTreeLoaded = resolve;
+    });
+
     this.markedNodes = [];
 
     // holds tabIds of "tabs" we need to ignore,
@@ -154,6 +158,9 @@ export class Tree {
     this.createRootNode();
     const numLoaded = this.rebuildNodeFromSerializedHash(
       this.root, response.nodes);
+    // tree is ready to use
+    debug('Tree.resolveTreeLoaded()');
+    this.resolveTreeLoaded();  // let listeners know the tree is loaded
     log(`loadTreeFromBkgd(): loaded ${numLoaded} nodes`);
   }
 
@@ -192,8 +199,8 @@ export class Tree {
     let numLoaded = 0;
     const nodeDict = hash[node.id];
     if (! nodeDict) {
-      error(`rebuildNodeFromSerializedHash(): no nodeId "${node.id}"`);
-      return 0;
+      warn(`rebuildNodeFromSerializedHash(): no nodeId "${node.id}"`);
+      return 1;
     }
     //debug('nodeDict()', nodeDict);
 
@@ -208,6 +215,7 @@ export class Tree {
       //debug('nodeDict() childId', nodeId);
       const child = new this.NodeClass(this, node);
       child.id = nodeId;
+      this.nodes[nodeId] = child;
       node.nodes.push(child);
       numLoaded += this.rebuildNodeFromSerializedHash(child, hash);
     }
@@ -765,6 +773,8 @@ export class Tree {
   }
 
   async tree_nodeAdded (msg, sender, sendResponse) {
+    await this.treeLoaded;  // wait until tree is ready
+
     const parentId = msg.parentId;
     const index = msg.index;
     const details = msg.node;
@@ -786,6 +796,8 @@ export class Tree {
   }
 
   async tree_nodeDeleted (msg, sender, sendResponse) {
+    await this.treeLoaded;  // wait until tree is ready
+
     const nodeId = msg.nodeId;
     debug('tree_nodeDeleted()', nodeId);
     let node = this.nodes[nodeId];
@@ -824,6 +836,8 @@ export class Tree {
   }
 
   async tree_nodeMoved (msg, sender, sendResponse) {
+    await this.treeLoaded;  // wait until tree is ready
+
     // unpack
     const nodeId = msg.nodeId;
     const destParentId = msg.destParentId;
@@ -843,6 +857,8 @@ export class Tree {
   }
 
   async tree_nodeChanged (msg, sender, sendResponse) {
+    await this.treeLoaded;  // wait until tree is ready
+
     // unpack
     const nodeId = msg.nodeId;
     const changeType = msg.type;
@@ -888,6 +904,8 @@ export class Tree {
   }
 
   async tree_windowClosed (msg, sender, sendResponse) {
+    await this.treeLoaded;  // wait until tree is ready
+
     const nodeId = msg.nodeId;
     const windowId = msg.windowId;
     const node = this.nodes[nodeId];
@@ -905,7 +923,206 @@ export class Tree {
     return await node.windowClosed(msg);
   }
 
+  // Search the entire tree and try to find a window node
+  // which matches the contents of this window...
+  // ... and merge its tabs into the tree.
+  // Matches have a category and a score.
+  // Lowest-numbered category wins, and ties are broken by score.
+  // Further tie-breaking prefers the window with the most metadata,
+  // so a window with a label beats one without... and further ties are
+  // broken by which window occurs first in the session tree.
+  findMatchingWindow (window) {
+    // find the "needle" (realTabList) in the "haystack"
+    //const realTabList = [...window.tabs];
+    const realTabList = [];
+    for (const realTab of window.tabs) {
+      // make an object we can safely modify
+      const tabCopy = { ...realTab };
+      realTabList.push(tabCopy);
+    }
+    const haystack = [];
+    const winNodeList = this.root.findNodes(
+      (node) => { return node.isWindow(); }
+    );
+    for (const winNode of winNodeList) {
+      const tabList = winNode.getLoadedAndUnloadedTabs();
+      haystack.push({ winNode, tabList });
+    }
+    // evaluate each candidate to find the best one
+    const bestMatch = findClosestWindowMatch(realTabList, haystack);
+    // bestMatch may be null if nothing good was found
+    if (bestMatch) {
+      // attach the window node to the browser window
+      bestMatch.winNode.windowId = window.id;
+      // update the tabId and loaded / wasLoaded state of this window's tabs
+      for (const tabNode of bestMatch.winNode.findNodes(
+        (n) => { return (n.isLoadedTab() || n.isUnloadedTab()); },
+        (n) => { return (! n.isWindow()); }
+      )) {
+        let found = false;
+        for (const realTab of realTabList) {
+          // skip tabs we've already assigned to a node
+          if (realTab.attached) continue;
+          // this node matches the real tab
+          if (tabNode.url === realTab.url) {
+            found = true;
+            realTab.attached = true;
+            // FIXME: use setTabFields()
+            tabNode.tabId = realTab.id;
+            tabNode.loaded = true;
+            tabNode.wasLoaded = false;
+            break;  // stop searching realTabList for this tabNode
+          }
+        }
+        // if a "loaded" tab node wasn't found, assign it as "wasLoaded"
+        if ((! found) && tabNode.isLoaded()) {
+          // FIXME: use tabNode.setWasLoaded()
+          // (that would allow for any syncing and stuff to happen)
+          tabNode.loaded = false;
+          tabNode.wasLoaded = true;
+        }
+      }
+      return bestMatch.winNode;
+    }
+    return null;
+  }
 }
+
+
+// check if two tab arrays are identical (same length, same values in order)
+function tabArraysEqual(a, b) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].url !== b[i].url) return false;
+  }
+  return true;
+}
+
+
+// check if 'sub' is a subsequence of 'arr'
+function isTabSubSequence(sub, arr) {
+  let subIndex = 0;
+  for (let i = 0; i < arr.length && subIndex < sub.length; i++) {
+    if (sub[subIndex].url === arr[i].url) {
+      subIndex++;
+    }
+  }
+  return subIndex === sub.length;
+}
+
+
+// check if two Tab arrays are identical (same length, same values in order)
+function tabArrayIncludes(arr, value) {
+  for (const item of arr)
+    if (item.url === value.url) return true;
+  return false;
+}
+
+
+// Compute a "score" for a candidate array relative to the needle array.
+// Args are both [ tab1, tab2, ... ] arrays where each tab has a url.
+// Values are compared by tab.url.
+// Returns { category (lower is better), matchCount (higher is better) }
+// Returns null if the candidate matches fewer than half the needle's values.
+function getWindowCandidateScore(candidate, needle) {
+  // count how many elements of needle occur in candidate
+  const matchCount = needle.reduce(
+    (acc, v) => acc + (tabArrayIncludes(candidate, v) ? 1 : 0),
+    0);
+  const minMatches = Math.ceil(needle.length / 2);
+  // disqualify if fewer than half the values are present
+  //if (matchCount < minMatches) return null;
+  if (matchCount < 1) return null;
+
+  // check if candidate covers all of needle
+  const fullMatch = needle.every(v => tabArrayIncludes(candidate, v));
+  // check if candidate is exclusively built from needle values
+  const candidateIsSubset = candidate.every(v => tabArrayIncludes(needle, v));
+
+  // category 1: exact match
+  if (tabArraysEqual(candidate, needle))
+    return { category: 1, matchCount };
+
+  // category 2 or 3: candidate contains all needle elements
+  if (fullMatch) {
+    // if the needle appears in order in the candidate,
+    // it's a superset in order
+    if (isTabSubSequence(needle, candidate))
+      return { category: 2, matchCount };
+    else
+      return { category: 3, matchCount };
+  }
+
+  // category 4 or 5: candidate is made up solely of needle values
+  if (candidateIsSubset) {
+    if (isTabSubSequence(candidate, needle))
+      return { category: 4, matchCount };
+    else
+      return { category: 5, matchCount };
+  }
+
+  // otherwise, candidate is a partial match that doesn't fit a category
+  return { category: 6, matchCount };
+}
+
+
+// iterate over the haystack to choose the closest match
+// needle: an array of tabs, where each tab has a tab.url
+// haystack: an array of { winNode, tabList } objects
+function findClosestWindowMatch(needle, haystack) {
+  let bestCandidate = null;
+  let bestScore = null;
+
+  for (const candidate of haystack) {
+    const score = getWindowCandidateScore(candidate.tabList, needle);
+    const scoreText = score ? `${score.category}, ${score.matchCount}` : 'null';
+    debug(`findClosestWindowMatch(${scoreText}): ${candidate.winNode.toLine()}`);
+    // skip candidates that don't meet minimum matching criteria
+    if (score === null) continue;
+
+    // first non-null match is an automatic best score
+    if (null === bestScore) {
+      bestScore = score;
+      bestCandidate = candidate;
+    } else {
+      // lower category number wins
+      if (score.category < bestScore.category) {
+        bestScore = score;
+        bestCandidate = candidate;
+      }
+      // if same category, take the candidate with more matches
+      else if ((score.category === bestScore.category)
+        && (score.matchCount > bestScore.matchCount)
+      ) {
+        bestScore = score;
+        bestCandidate = candidate;
+      }
+      // if same category and same number of matches,
+      // take the candidate with more metadata and children
+      else if ((score.category === bestScore.category)
+        && (score.matchCount === bestScore.matchCount)
+      ) {
+        const sMeta = (bestCandidate.winNode.label ? 1 : 0)
+          + (bestCandidate.winNode.note ? 1 : 0)
+          + (bestCandidate.winNode.checkbox ? 1 : 0)
+          + bestCandidate.winNode.countNodes();
+        const cMeta = (candidate.winNode.label ? 1 : 0)
+          + (candidate.winNode.note ? 1 : 0)
+          + (candidate.winNode.checkbox ? 1 : 0)
+          + candidate.winNode.countNodes();
+        if (cMeta > sMeta) {
+          bestScore = score;
+          bestCandidate = candidate;
+        }
+      }
+    }
+  }
+
+  const line = bestCandidate ? bestCandidate.winNode.toLine() : '';
+  debug(`findClosestWindowMatch() => ${bestScore}: ${line}`);
+  return bestCandidate;
+}
+
 
 function isNewTabPage (url) {
   const prefixes = [

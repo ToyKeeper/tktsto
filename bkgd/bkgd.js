@@ -64,24 +64,26 @@ class Bkgd {
 
     this.initConfig().then(() => {
       this.idGen = new IdGenerator(this.clientId, 9, 2);
+      debug('Bkgd.resolveConfigLoaded()');
       this.resolveConfigLoaded();  // let listeners know the config is ready
 
       this.tree = new TreeStore(this);
       // give the tree a link to the bkgd object
       this.tree.bkgd = this;
-      this.tree.init();
-      // TODO: use tree node dict as idGen ID cache
-      // TODO: make IdGenerator check a cache to avoid duplicates
-      //this.idGen.cache = this.tree.nodes;
-      //  TODO: actually load the tree from storage
-      // this.tree.loadFromIDB().then(() => {
-      //   this.resolveTreeLoaded();
-      // });
-      this.resolveTreeDbLoaded();  // let listeners know the IDB is loaded
-      // grab all the open windows and tabs, and put them in the tree
-      this.mergeOpenWindowsIntoTree().then(() => {
-        // tree is ready to use
-        this.resolveTreeLoaded();  // let listeners know the tree is loaded
+      //  actually load the tree from storage
+      this.tree.init().then(() => {
+        debug('Bkgd.resolveTreeDbLoaded()');
+        this.resolveTreeDbLoaded();  // let listeners know the IDB is loaded
+        // TODO: use tree node dict as idGen ID cache
+        // TODO: make IdGenerator check a cache to avoid duplicates
+        //this.idGen.cache = this.tree.nodes;
+        // grab all the open windows and tabs, and put them in the tree
+        this.mergeOpenWindowsIntoTree().then(() => {
+          // tree is ready to use
+          debug('Bkgd.resolveTreeLoaded()');
+          this.resolveTreeLoaded();  // let listeners know the tree is loaded
+          this.tree.resolveTreeLoaded();
+        });
       });
     });
 
@@ -161,21 +163,52 @@ class Bkgd {
       // where it couldn't even return a list of windows...
       return error('failed to get list of windows', err);
     }
+
+    console.time('mergeOpenWindowsIntoTree');
+    // attach browser windows to window nodes
+    let attached = [];
     for (const window of windows) {
       debug(`Window ID: ${window.id}`);
-      // TODO: detect whether window is already in tree
-      // TODO: may need to detect based on tab matching
-      let winNode = this.tree.root.getWindowId(window.id);
+      // detect whether window is already in tree
+      // match by windowId (old, unreliable, windowId changes or goes stale)
+      //let winNode = this.tree.root.getWindowId(window.id);
+      // search for a Window in the tree with matching tabs
+      let winNode = this.tree.findMatchingWindow(window);
       if (winNode) {
+        winNode.load({ reason: 'mergeOpenWindowsIntoTree' });
       }
-      // TODO: if not, add new window to the tree
+      // if nothing found, add new window node to the tree
       else {
+        log(`couldn't find window ${window.id} node, making new node`);
         winNode = await this.tree.onWindowCreated(window,
           { reason: 'mergeOpenWindowsIntoTree' });
       }
+      // mark this winNode as actually attached to a real window
+      attached.push({ winNode, window });
+    }
+
+    // remove "loaded" status from window nodes which didn't get attached
+    // (also affects their 'loaded' tab nodes)
+    const winNodeList = this.tree.root.findNodes(
+      (n) => { return n.isWindow(); });
+    for (const node of winNodeList) {
+      let found = false;
+      for (const obj of attached) {
+        if (node.id === obj.winNode.id) found = true;
+      }
+      if ((! found) && (node.isLoaded() || node.hasLoadedTabs())) {
+        node.unload({ reason: 'mergeOpenWindowsIntoTree' });
+      }
+    }
+
+    // attach tabs now
+    for (const obj of attached) {
+      const winNode = obj.winNode;
+      const window = obj.window;
       for (const tab of window.tabs) {
         debug(`Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
         // detect whether tab is already in tree
+        // (it usually should be, since findMatchingWindow() attaches tabIds)
         const tabNode = this.tree.getNodeByTabId(tab.id);
         if (tabNode) continue;
         // if not, add new tab to the tree
@@ -207,6 +240,8 @@ class Bkgd {
           }, { reason: 'mergeOpenWindowsIntoTree' });
       }
     }
+
+    console.timeEnd('mergeOpenWindowsIntoTree');
     log('mergeOpenWindowsIntoTree() done');
   }
 

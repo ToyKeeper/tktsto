@@ -356,6 +356,17 @@ export class NodeView extends Node {
     }
   }
 
+  async renderIfChanged (promise, updateParents = false) {
+    // do it
+    const changed = await promise;
+    // show it
+    if (changed) {
+      this.$render();
+      // update affected parents
+      if (updateParents) this.$refreshAncestry();
+    }
+  }
+
   async deleteSelf (...extra) {
     if (this.isRoot()) return;  // never delete root
     let newCursor;
@@ -366,7 +377,9 @@ export class NodeView extends Node {
       if (newCursor === this) newCursor = this.prevVisibleNode();
     }
     const oldParent = this.parent;
-    await super.deleteSelf(...extra);
+    const changed = await super.deleteSelf(...extra);
+    if (! changed) return;
+
     this.$destroy();  // un-render
     // update parent node stats and decorations
     if (oldParent) oldParent.$refreshAncestry();
@@ -434,56 +447,28 @@ export class NodeView extends Node {
     this.$refreshAncestry();
   }
 
-  setNotes (label, note, ...extra) {
-    // if no change, do nothing
-    if ((label === this.label) && (note === this.note)) return;
-    // do it
-    super.setNotes(label, note, ...extra);
-    // show it
-    this.$render();
+  async setNotes (...args) {
+    await this.renderIfChanged(super.setNotes(...args));
   }
 
-  setCheckbox (...extra) {
-    // do it
-    super.setCheckbox(...extra);
-    // show it
-    this.$render();
+  async setCheckbox (...args) {
+    await this.renderIfChanged(super.setCheckbox(...args));
   }
 
-  updateCheckboxes (...args) {
-    super.updateCheckboxes(...args);
-    this.$render();
+  async updateCheckboxes (...args) {
+    await this.renderIfChanged(super.updateCheckboxes(...args));
   }
 
-  setTabFields (...args) {
-    // do it
-    super.setTabFields(...args);
-    // show it
-    this.$render();
-    // update affected parents
-    this.$refreshAncestry();
+  async setTabFields (...args) {
+    await this.renderIfChanged(super.setTabFields(...args), true);
   }
 
-  load (...extra) {
-    // abort on no-op
-    if (this.isLoaded()) return;
-    // Do The Thing
-    super.load(...extra);
-    // show it
-    this.$render();
-    // update affected parents
-    this.$refreshAncestry();
+  async load (...args) {
+    await this.renderIfChanged(super.load(...args), true);
   }
 
-  unload (...extra) {
-    // abort on no-op
-    //if (! this.isLoaded()) return;
-    // Do The Thing
-    super.unload(...extra);
-    // show it
-    this.$render();
-    // update affected parents
-    this.$refreshAncestry();
+  async unload (...args) {
+    await this.renderIfChanged(super.unload(...args), true);
   }
 
   scrollIntoView () {
@@ -520,7 +505,8 @@ export class NodeView extends Node {
 
   async moveTo (destParent, destIndex, ...extra) {
     const oldParent = this.parent;
-    await super.moveTo(destParent, destIndex, ...extra);
+    const changed = await super.moveTo(destParent, destIndex, ...extra);
+    if (! changed) return;
 
     destParent.$insertChild(this, destIndex);
     // refresh old parent if needed
@@ -555,9 +541,9 @@ export class NodeView extends Node {
     if (this === this.tree.cursor) this.scrollIntoView();
   }
 
-  setExpanded (expanded, ...extra) {
+  async setExpanded (expanded, ...extra) {
     const wasExpanded = this.expanded;
-    super.setExpanded(expanded, ...extra);
+    await super.setExpanded(expanded, ...extra);
 
     // if no change, do nothing
     if (wasExpanded === this.expanded) return;
@@ -578,23 +564,14 @@ export class NodeView extends Node {
     }
   }
 
-  setMarked (marked, ...extra) {
-    // if no change, do nothing
-    if (marked === this.marked) return;
-    super.setMarked(marked, ...extra);
-
-    this.$render();
-
+  async setMarked (...args) {
+    await this.renderIfChanged(super.setMarked(...args));
     // update the #marked-count widget
     this.tree.updateMarkedCount();
   }
 
-  setActive (active, ...extra) {
-    // if no change, do nothing
-    if (active === this.active) return;
-    super.setActive(active, ...extra);
-
-    this.$render();
+  async setActive (...args) {
+    await this.renderIfChanged(super.setActive(...args));
   }
 
 }  // end class NodeView

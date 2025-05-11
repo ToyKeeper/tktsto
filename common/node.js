@@ -56,7 +56,8 @@ export class Node {
     // make this object serializable for runtime.sendMessage()
     const d = {};
     for (const key of this.tree.dictable) d[key] = this[key];
-    d.parent = this.parent.id;
+    if (this.parent) d.parent = this.parent.id;
+    else d.parent = this.id;
     d.nodes = this.nodes.map((n) => n.id);
     return d;
   }
@@ -81,7 +82,7 @@ export class Node {
     }
 
     // unmark if necessary
-    this.setMarked(false, { reason: 'deleteSelf' });
+    await this.setMarked(false, { reason: 'deleteSelf' });
 
     // remove this node from its parent
     this.parent.bump('mtime', args);
@@ -120,6 +121,7 @@ export class Node {
       else warn(`Node.deleteSelf() can't close tab because no tabId`, this);
     }
 
+    return true;  // node was deleted
   }
 
   async deleteSelfAndPromoteKids (args) {
@@ -232,6 +234,19 @@ export class Node {
     return openTabs;
   }
 
+  getLoadedAndUnloadedTabs () {
+    const openTabs = this.findNodes(
+      function (node) {
+        return (
+          (node.isLoaded() || node.isUnloadedTab())
+          && (! node.isWindow())
+        ); },
+      // don't recurse into nested windows
+      function (node) { return ! node.isWindow(); }
+    );
+    return openTabs;
+  }
+
   getWindowNode (loadedOnly = false) {
     // find the nearest matching window in our ancestry
     if (this.isWindow() && ((! loadedOnly) || this.isLoaded())) return this;
@@ -303,6 +318,10 @@ export class Node {
 
   isLoaded () {
     return this.loaded;
+  }
+
+  isLoadedTab () {
+    return (this.url && this.loaded && (! this.isWindow()));
   }
 
   isUnloadedTab () {
@@ -545,7 +564,7 @@ export class Node {
     return newNode;
   }
 
-  setNotes (label, note, args) {
+  async setNotes (label, note, args) {
     // abort on no-op
     if (! args) return;
     if ((label === this.label) && (note === this.note)) return;
@@ -556,11 +575,12 @@ export class Node {
     this.bump('mtime', args);
     // notify others
     if ('userAction' === args.reason)
-      emit('tree_nodeChanged',
+      await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setNotes',
           label: this.label,
           note: this.note,
           when: this.mtime });
+    return true;  // the data changed
   }
 
   hasCheckbox () {
@@ -573,7 +593,7 @@ export class Node {
     return cbType;
   }
 
-  setCheckbox (value, args) {
+  async setCheckbox (value, args) {
     // abort on no-op
     if (! args) return;
     // Do The Thing
@@ -599,11 +619,12 @@ export class Node {
     this.bump('mtime', args);
     // notify others
     if ('userAction' === args.reason)
-      emit('tree_nodeChanged',
+      await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setCheckbox',
           checkbox: this.checkbox,
           checkboxPx: this.checkboxPx,
           when: this.mtime });
+    return true;  // the data changed
   }
 
   updateCheckboxes () {
@@ -642,6 +663,7 @@ export class Node {
       }
     }
     parent.updateCheckboxes();
+    return true;
   }
 
   getCompletion (changed = false) {
@@ -667,7 +689,7 @@ export class Node {
     }
   }
 
-  setTabFields (changes, args) {
+  async setTabFields (changes, args) {
     if (! args) return;
     // abort on no-op
     if ({} === changes) return;
@@ -681,10 +703,11 @@ export class Node {
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
       'onWindowCreated', 'onWindowFocusChanged'
     ].includes(args.reason))
-      return emit('tree_nodeChanged',
+      await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',
           changes: changes,
           when: this.mtime });
+    return true;  // the data changed
   }
 
   async load (args) {
@@ -698,12 +721,15 @@ export class Node {
     this.wasLoaded = true;  // is loading
     if (! this.isWindow())
       this.pendingUrl = this.url;  // go here when the tab is ready
+    if ('mergeOpenWindowsIntoTree' === args.reason)
+      this.loaded = true;  // window/tab is already open
 
     // bump timestamp
     this.bump('atime', args);
 
     // notify others, if event originated here
-    if (['userAction', 'onTabCreated'].includes(args.reason))
+    if (['userAction', 'onTabCreated', 'mergeOpenWindowsIntoTree'
+    ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'load',
           when: this.atime });
@@ -744,6 +770,7 @@ export class Node {
         }
       }
     }
+    return true;  // the data changed
   }
 
   async unload (args) {
@@ -774,15 +801,25 @@ export class Node {
 
     // notify others, if event originated here
     if (['userAction',
-      'onTabRemoved', 'onWindowRemoved', 'onWindowUnloaded'
+      'onTabRemoved', 'onWindowRemoved', 'onWindowUnloaded',
+      'mergeOpenWindowsIntoTree'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'unload',
           wasLoaded: this.wasLoaded,
           when: this.mtime });
 
+    // if this was a window merge operation, ensure kids are unloaded
+    if ('mergeOpenWindowsIntoTree' === args.reason) {
+      const tabList = this.getLoadedTabs();
+      for (const kid of tabList) {
+        await kid.unload(args);
+      }
+      return true;
+    }
+
     // stop, if the only change was to remove the 'wasLoaded' state
-    if (! wasActuallyLoaded) return;
+    if (! wasActuallyLoaded) return true;
 
     // AFTER everyone has unloaded the tab from the tree,
     // then it's finally safe to close the tab itself
@@ -816,6 +853,7 @@ export class Node {
         warn(`Node.unload() called on Node with no tabId`, this);
       }
     }
+    return true;  // the data changed
   }
 
   newNodeId () {  // sub-classes should override this
@@ -968,7 +1006,7 @@ export class Node {
     // if new parent is marked, unmark self
     if (this.marked) {
       const markedParent = this.findParent((n) => n.marked);
-      if (markedParent) this.setMarked(false, { reason: 'moveTo' });
+      if (markedParent) await this.setMarked(false, { reason: 'moveTo' });
     }
 
     // checkboxes might need recalculation
@@ -1021,9 +1059,10 @@ export class Node {
       for (const kid of loadedKids) kid.updateOpenerTabId();
 
     }
+    return true;  // the data changed
   }
 
-  setExpanded (expanded, args) {
+  async setExpanded (expanded, args) {
     if (! args) return;
     // abort on no-op
     if (expanded === this.expanded) return;
@@ -1039,12 +1078,14 @@ export class Node {
 
     // TODO? recalculate stats
     if (changed && ('userAction' === args.reason))
-      emit('tree_nodeChanged',
+      await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setExpanded', expanded: this.expanded,
           when: this.atime });
+
+    return true;
   }
 
-  setMarked (marked, args) {
+  async setMarked (marked, args) {
     if (! args) return;
     // abort on no-op
     if (marked === this.marked) return;
@@ -1078,12 +1119,14 @@ export class Node {
 
     // TODO? recalculate stats
     if ('userAction' === args.reason)
-      emit('tree_nodeChanged',
+      await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setMarked', marked: this.marked,
           when: when });
+
+    return true;
   }
 
-  setActive (active, args) {
+  async setActive (active, args) {
     if (! args) return;
     // abort on no-op
     if (active === this.active) return;
@@ -1095,13 +1138,15 @@ export class Node {
     if (['userAction', 'onTabActivated',
       'reorderAllTabsInThisWindow'
     ].includes(args.reason))
-      emit('tree_nodeChanged',
+      await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setActive', active: this.active,
           when: this.atime });
 
     // if we're the originator and the tab isn't focused, focus it
     if (active && ('userAction' === args.reason))
-      api.tabs.update(this.tabId, { active: true });
+      await api.tabs.update(this.tabId, { active: true });
+
+    return true;
   }
 
   getActiveTab () {
