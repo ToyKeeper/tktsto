@@ -154,14 +154,14 @@ export class NodeView extends Node {
     // FIXME: instead of innerHTML, use safer Element creation and innerText
     if (this.label) {
       if (this.url) {  // label ~ href
-        mainText = `<a class="node-link" draggable="false" href="${this.url}"><span class="node-label">${this.label}</span><span class="node-label-url-sep"></span>${urlTitle}</a>`;
+        mainText = `<a class="node-link" draggable="false" href="${this.url}"><span class="node-label">${this.label}</span><span class="node-label-url-sep"></span><span class="url-title">${urlTitle}</span></a>`;
       }
       else {  // label only
         mainText = `<span class="node-label">${this.label}</span>`;
       }
     }
     else if (this.url) {  // href only
-      mainText = `<a class="node-link" draggable="false" href="${this.url}">${urlTitle}</a>`;
+      mainText = `<a class="node-link" draggable="false" href="${this.url}"><span class="url-title">${urlTitle}</span></a>`;
     }
     else {  // totally blank
       if (this.isWindow()) {

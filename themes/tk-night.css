@@ -4,6 +4,14 @@
  */
 /******************** vars ********************/
 
+.cursor.row .row-title .node-label,
+.cursor.row .row-title .url-title,
+.cursor.row .node-stats,
+foo {
+  /* color: var(--cursor-fg-override); */
+  filter: saturate(0.666) brightness(1.75);
+}
+
 :root {
   /***** globals *****/
   --shadow-color: #000000c0;
@@ -30,7 +38,7 @@
     #00000080  0.07em 0.10em 0.15em,
     #000000a0  0.10em 0.15em 0.25em;
   /***** main tree view *****/
-  --tree-view-bg: #222;
+  --tree-view-bg: #191919;
   --label-loaded-fg: #12ee6a;
   --label-was-loaded-fg: #e70e9d;
   --label-unloaded-fg: #1aab54;
@@ -61,11 +69,12 @@
   /***** cursor *****/
   --cursor-bg-top: #57b;
   --cursor-bg-bot: #235;
+  /* --cursor-fg-override: #fff; */
   --cursor-text-shadow: var(--medium-text-shadow);
   --cursor-shadow: 0.1em 0.1em 0.2em var(--shadow-color);
   --cursor-branch-hl: #444;
-  --cursor-branch-top: #383838;
-  --cursor-branch-bot: #2c2c2c;
+  --cursor-branch-top: #333;
+  --cursor-branch-bot: #222;
   --cursor-branch-shadow: 0.15em 0.15em 0.333em var(--shadow-color);
   /***** marked nodes *****/
   --marked-node-shadow: 0 0 10px gold;

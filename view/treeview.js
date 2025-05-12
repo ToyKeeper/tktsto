@@ -1317,6 +1317,9 @@ export class TreeView extends Tree {
       const $div = doc.createElement('div');
       $div.classList.add(className);
       $div.innerText = label;
+      // add a tooltip
+      $div['title'] = funcName;
+      $div['data-toggle'] = 'tooltip';
       // TODO: get label from user's keybinding table
       //let binding;
       // make the button do something when clicked

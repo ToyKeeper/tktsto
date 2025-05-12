@@ -10,10 +10,22 @@
 }
 
 .cursor.row .row-title *,
+.cursor.row .node-stats,
+.cursor.row .node-stats *,
 foo {
   color: var(--cursor-fg-override);
 }
 
+/* make node stats easier to read on window nodes */
+.window.row .node-stats * {
+  color: var(--window-loaded-fg);
+}
+.window.row.active .node-stats * {
+  color: var(--window-active-fg);
+}
+.window.row * {
+  text-shadow: var(--window-title-text-shadow);
+}
 
 /******************** vars ********************/
 

@@ -277,6 +277,9 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   font-weight: bold;
   text-shadow: var(--fancy-text-shadow);
 }
+#noderoot > .row * {
+  color: var(--window-loaded-fg);
+}
 .node.root-nodes > .row::before {
   /* root node needs no "+" marker */
   display: none;
@@ -308,19 +311,22 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
 
 .row a {
   text-decoration: none;
+}
+
+.row .url-title {
   color: var(--tab-unloaded-fg);
 }
 
-.row.was-loaded a,
+.row.was-loaded .url-title,
 #detail-was-loaded b {
   color: var(--tab-was-loaded-fg);
 }
-.row.loaded a {
+.row.loaded .url-title {
   color: var(--tab-loaded-fg);
 }
 
 
-.row.active a {
+.row.active .url-title {
   color: var(--tab-active-fg);
 }
 .row.active .row-title {
@@ -521,7 +527,9 @@ foo {
   color: var(--window-loaded-fg);
 }
 
-.window.row.active .row-title {
+.window.row.active .row-title,
+.window.row.active .node-label,
+foo {
   /* the current window is brighter */
   color: var(--window-active-fg);
   font-weight: bold;
@@ -558,8 +566,11 @@ foo {
 
 .unfocused .cursor.row {
   /* dim the keyboard cursor when it doesn't have keyboard focus */
+  /* too much, makes it look like the tab isn't loaded
   opacity: 66%;
   filter: saturate(66%);
+  */
+  filter: saturate(33%);
 }
 
 .cursor.leaf, .cursor.collapsed {
@@ -661,7 +672,7 @@ foo {
 #hover-menu div {
   display: inline-block;
   cursor: pointer;
-  width: calc(var(--row-line-height) + 0.1rem);
+  width: calc(var(--row-line-height) - 0.1rem);
   height: calc(var(--row-line-height) - 0.1rem);
   font-size: 133%;
   font-weight: bold;
@@ -698,10 +709,13 @@ foo {
   color: var(--checkbox-fg-todo);
   text-shadow: none;
   vertical-align: top;
-  width: calc(var(--row-line-height) - 0.2rem);
-  height: calc(var(--row-line-height) - 0.5rem);
-  font-size: calc(var(--row-line-height) - 0.1em);
-  padding-top: 0.1em;
+  width: calc(var(--row-line-height) - 0.25rem);
+  height: calc(var(--row-line-height) - 0.6rem);
+  font-size: calc(var(--row-line-height) - 0.20em);
+  padding-top: 0.07em;
+  padding-bottom: 0.2em;
+  margin-left: 0.05rem;
+  margin-right: 0.05rem;
 }
 
 #hover-menu .edit-button {
