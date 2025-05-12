@@ -34,7 +34,7 @@ export class TreeStore extends Tree {
     // (to make sure root is the first node in the DB)
     const saved = await this.db.loadNode(this.root.id);
     if (! saved) {
-      warn(`TreeStore.createRootNode couldn't load root: ${err}`);
+      warn(`TreeStore.createRootNode couldn't load root, fresh install?`);
       await this.db.saveNode(this.root);
     }
 
