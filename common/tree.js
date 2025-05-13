@@ -955,10 +955,26 @@ export class Tree {
       // attach the window node to the browser window
       bestMatch.winNode.windowId = window.id;
       // update the tabId and loaded / wasLoaded state of this window's tabs
+      // search loaded tabs first, then wasLoaded, then unloaded
+      // (to avoid attaching to an unloaded tab when a loaded tab exists)
+      const tabNodeList = [];
+      // loaded
       for (const tabNode of bestMatch.winNode.findNodes(
-        (n) => { return (n.isLoadedTab() || n.isUnloadedTab()); },
+        (n) => { return n.isLoadedTab(); },
         (n) => { return (! n.isWindow()); }
-      )) {
+      )) { tabNodeList.push(tabNode); }
+      // wasLoaded
+      for (const tabNode of bestMatch.winNode.findNodes(
+        (n) => { return n.isWasLoadedTab(); },
+        (n) => { return (! n.isWindow()); }
+      )) { tabNodeList.push(tabNode); }
+      // unloaded
+      for (const tabNode of bestMatch.winNode.findNodes(
+        (n) => { return n.isUnloadedTab(); },
+        (n) => { return (! n.isWindow()); }
+      )) { if (! tabNodeList.includes(tabNode)) tabNodeList.push(tabNode); }
+      // now attach browser tab IDs to nodes
+      for (const tabNode of tabNodeList) {
         let found = false;
         for (const realTab of realTabList) {
           // skip tabs we've already assigned to a node

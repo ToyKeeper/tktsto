@@ -321,7 +321,16 @@ export class Node {
   }
 
   isLoadedTab () {
-    return (this.url && this.loaded && (! this.isWindow()));
+    return (this.url
+      && this.loaded
+      && (! this.isWindow()));
+  }
+
+  isWasLoadedTab () {
+    return (this.url
+      && this.wasLoaded
+      && (! this.loaded)
+      && (! this.isWindow()));
   }
 
   isUnloadedTab () {
