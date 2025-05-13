@@ -797,7 +797,8 @@ foo {
 .cursor.node .drop-external-text.drop-target-left > .expanded.row::before,
 .cursor.node.drop-external-text.drop-target-left > .expanded.row::before,
 foo {
-  content: "Add Note ~ ";
+  /* this "content" bit makes multiple browsers spaz out  */
+  /* content: "Add Note ~ "; */
   color: var(--label-loaded-fg);
   text-shadow: var(--fancy-text-shadow);
 }
