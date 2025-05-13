@@ -1,0 +1,96 @@
+<html>
+<head>
+<title>Checkboxes</title>
+<style><!--
+p {
+  font-size: 1.5rem;
+}
+--></style>
+</head>
+<body>
+
+  <p>
+  Checkboxes let you make "ToDo" lists.
+  </p>
+
+  <p>
+  Expand the "Checkboxes" branch if you haven't already.  Looks like somebody
+  is doing some grocery shopping... but they didn't organize their list yet!
+  Let's help them out, and try 3 different ways of moving nodes around.
+  </p>
+
+  <p>
+  1. First, try using the mouse to drag the "Milk" item into the "Cold aisle"
+  branch.
+  </p>
+
+  <p>
+  2. Second, press the Up arrow a few times to move the cursor to "Crackers".
+  Then press <code>Shift+Down</code> to move it down one row.  It should now be
+  in the "Dry / Canned" branch.
+  </p>
+
+  <p>
+  3. Third, mark the nodes for "Ice cream" and "Popsicles", since they both
+  need to be frozen.  You can mark them by pressing the "M" button in the hover
+  menu, or by pressing the "M" key while the cursor is on those rows.  Then
+  move the cursor down to "Frozen" and press "P" to paste.  Then press
+  <code>Shift+M</code> to unmark them.
+  </p>
+
+  <p>
+  That just leaves "Soup" remaining to be sorted.  Use whatever method you
+  like.
+  </p>
+
+  <p>
+  Then you remember you also need butter.  Put the cursor somewhere in the
+  "Cold aisle" branch and press the "o" key to make a new n<b>o</b>de.  It'll
+  ask you for a label, so type in "Butter" and press Enter.
+  <small><i>(the "o" and "Shift+O" keys are mapped by default to
+      "addNodeAsNextVisibleRow" and "addNodeAsPrevVisibleRow", which match the
+      keys used in Vim, a popular editor)</i></small>
+  </p>
+
+  <p>
+  But "Butter" doesn't have a checkbox like all the other items.
+  </p>
+
+  <p>
+  To add a checkbox, you can either press the "T" key or click the "T" button
+  in the hover menu.  This brings up the "taskEdit" widget.
+  </p>
+
+  <p>
+  Next, either click on the style of checkbox you want, or press a key on the
+  keyboard with a printable letter on it.  It can be any letter or symbol.  For
+  a simple "todo" checkbox, just press "Space".
+  </p>
+
+  <p>
+  For quick edits, put the cursor on a row and then press a short key sequence,
+  like "t" and then "Space" to add a "todo" checkbox... or "tx" to mark a task
+  as "done".  Or "t" then "Backspace" to remove the checkbox.  ("t" then
+  "Delete" also works)
+  </p>
+
+  <p>
+  The "percent" checkboxes calculate their own number if they have any children
+  with checkboxes.  Otherwise, you can set the value manually by typing
+  something like "t42" for <code>42%</code> or "t07" for <code>7%</code>.
+  To set a priority of 1 to 9 instead, try "t7" then press "Enter" to set a
+  task to priority 7.
+  </p>
+
+  <p>
+  Maybe you already have cheese, for example.  Everyone should have cheese,
+  which is why it is marked as "important".  But you already have some.  So
+  move the cursor to "Cheese" and type "tx" to mark it as "done".  Note how the
+  percent boxes change in response to this.
+  </p>
+
+  <p>
+  </p>
+
+</body>
+</html>

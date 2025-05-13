@@ -20,60 +20,19 @@ export class TreeView extends Tree {
 
     // TODO: determine whether full view or single-window
 
-    this.document = document;
-    this.window = window;
+    try {
+      this.document = document;
+      this.window = window;
+    } catch (err) {
+      // This instance is NOT a real tree view...
+      // ... just an instance created for some other purpose
+      // (like during the tutorial, to get a list of keyBindngs)
+      this.isInert = true;
+    }
 
-    this.$body = this.document.getElementById('body');
-    this.$ = this.document.getElementById('tree-view');
-    this.$treeRoot = this.document.getElementById('tree-root');
-
-    // stylesheets
-    this.$themeBase = this.document.getElementById('theme-base');
-    this.$themeVariant = this.document.getElementById('theme-variant');
-    this.$styleOptions = this.document.getElementById('style-options');
-    this.$userStyles = this.document.getElementById('user-styles');
-
-    this.cursor = null;
-
-    this.$viewScopeBtn = this.document.getElementById('view-scope-btn');
-
-    // shows info about most recent event
-    //this.$statusBar = this.document.getElementById('status-bar');
-    this.$statusText = this.document.getElementById('status-text');
-    this.$detailsBox = this.document.getElementById('details-box');
-    this.$detailsBtn = this.document.getElementById('details-btn');
-    // TODO: this should load from config
-    this.detailsState = 1;  // 0=off, 1=notes, 2=details
-    // open a tree view in a new tab
-    this.$treeViewInTabBtn = this.document.getElementById('tree-view-in-tab-btn');
-    // click to save a session backup
-    this.$backupBtn = this.document.getElementById('backup-btn');
-    // open the extension's options page
-    this.$optionsBtn = this.document.getElementById('options-btn');
-    // open the extension's help page
-    this.$helpBtn = this.document.getElementById('help-btn');
-
-    // count of marked nodes when non-zero
-    this.$markedCount = this.document.getElementById('marked-count');
-
-    // node row hover menu
-    this.$hoverMenu = this.document.getElementById('hover-menu');
-
-    // TODO: buttons to zoom this TreeView
-    // https://developer.chrome.com/docs/extensions/reference/api/tabs#type-ZoomSettings
-    // api.tabs.setZoom(tabId?, zoomFactor, callback?)
-    // api.tabs.getZoom(tabId?, callback?)
-    //   cb(zoomFactor)
-    // api.tabs.onZoomChange.addListener(cb)
-    //   cb(ZoomChangeInfo)
-    //     zci.newZoomFactor
-    //     zci.oldZoomFactor
-    //     zci.tabId
-    //     zci.zoomSettings
-    // Must get the sidepanel's tabId first though?
-    // await api.tabs.query({active:true, currentWindow:true})
-    // await api.tabs.query({active:true, windowId:(await api.windows.getCurrent()).id})
-    // https://stackoverflow.com/questions/76456744/chrome-extension-get-tab-id-in-sidepanel
+    if (! this.isInert) {
+      this.initElements();
+    }
 
     // table mapping keys to actions
     // TODO: let user bind keys
@@ -134,6 +93,7 @@ export class TreeView extends Tree {
       ///// buttons
       'b': 'backupSession',
       ///// misc
+      'Shift+?': 'generateTutorial',
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
     };
@@ -162,6 +122,63 @@ export class TreeView extends Tree {
   }
 
   destroy () {
+  }
+
+  initElements () {
+    this.$body = this.document.getElementById('body');
+    this.$ = this.document.getElementById('tree-view');
+    this.$treeRoot = this.document.getElementById('tree-root');
+
+    // stylesheets
+    this.$themeBase = this.document.getElementById('theme-base');
+    this.$themeVariant = this.document.getElementById('theme-variant');
+    this.$styleOptions = this.document.getElementById('style-options');
+    this.$userStyles = this.document.getElementById('user-styles');
+
+    this.cursor = null;
+
+    this.$viewScopeBtn = this.document.getElementById('view-scope-btn');
+
+    // shows info about most recent event
+    //this.$statusBar = this.document.getElementById('status-bar');
+    this.$statusText = this.document.getElementById('status-text');
+    this.$detailsBox = this.document.getElementById('details-box');
+    this.$detailsBtn = this.document.getElementById('details-btn');
+    // TODO: this should load from config
+    this.detailsState = 1;  // 0=off, 1=notes, 2=details
+    // open a tree view in a new tab
+    this.$treeViewInTabBtn = this.document.getElementById('tree-view-in-tab-btn');
+    // click to save a session backup
+    this.$backupBtn = this.document.getElementById('backup-btn');
+    // open the extension's options page
+    this.$optionsBtn = this.document.getElementById('options-btn');
+    // help the project survive, and help me pay rent
+    this.$donateBtn = this.document.getElementById('donate-btn');
+    // open the extension's help page
+    this.$helpBtn = this.document.getElementById('help-btn');
+
+    // count of marked nodes when non-zero
+    this.$markedCount = this.document.getElementById('marked-count');
+
+    // node row hover menu
+    this.$hoverMenu = this.document.getElementById('hover-menu');
+
+    // TODO: buttons to zoom this TreeView
+    // https://developer.chrome.com/docs/extensions/reference/api/tabs#type-ZoomSettings
+    // api.tabs.setZoom(tabId?, zoomFactor, callback?)
+    // api.tabs.getZoom(tabId?, callback?)
+    //   cb(zoomFactor)
+    // api.tabs.onZoomChange.addListener(cb)
+    //   cb(ZoomChangeInfo)
+    //     zci.newZoomFactor
+    //     zci.oldZoomFactor
+    //     zci.tabId
+    //     zci.zoomSettings
+    // Must get the sidepanel's tabId first though?
+    // await api.tabs.query({active:true, currentWindow:true})
+    // await api.tabs.query({active:true, windowId:(await api.windows.getCurrent()).id})
+    // https://stackoverflow.com/questions/76456744/chrome-extension-get-tab-id-in-sidepanel
+
   }
 
   async init () {
@@ -1061,6 +1078,14 @@ export class TreeView extends Tree {
     return await this.downloadBackupNow();
   }
 
+  async action_generateTutorial (event) {
+    let parentId;
+    if (this.windowNode) parentId = this.windowNode.id;
+    else if (this.root.nodes.length > 0) parentId = this.root.nodes[0].id;
+    else parentId = this.root.id;
+    return await emit('bkgd_generateTutorial', { parentId });
+  }
+
   async action_mousePressLeft (event) {
     // abort on no-op
     if (! this.mouseNode) return;
@@ -1505,6 +1530,10 @@ export class TreeView extends Tree {
     this.$optionsBtn.addEventListener('click', () => {
       this.onOptionsBtnClick();
     });
+    // help me survive
+    this.$donateBtn.addEventListener('click', () => {
+      this.onDonateBtnClick();
+    });
     // open the user manual
     this.$helpBtn.addEventListener('click', () => {
       this.onHelpBtnClick();
@@ -1570,14 +1599,25 @@ export class TreeView extends Tree {
     }
   }
 
-  async openInternalPage (url) {
+  async openLinkInNewTab (url, internal=true) {
     const createProperties = {};
-    createProperties.url = api.runtime.getURL(url);
+    if (internal)
+      createProperties.url = api.runtime.getURL(url);
+    else
+      createProperties.url = url;
     const [tab] = await api.tabs.query(
       { active: true, windowId: this.windowId });
-    debug(`openInternalPage() parent tab:`, tab);
+    debug(`openLinkInNewTab() parent tab:`, tab);
     createProperties.openerTabId = tab.id;
     api.tabs.create(createProperties);
+  }
+
+  openInternalPage (url) {
+    return this.openLinkInNewTab(url, true);
+  }
+
+  openExternalPage (url) {
+    return this.openLinkInNewTab(url, false);
   }
 
   onTreeViewInTabBtnClick () {
@@ -1590,6 +1630,12 @@ export class TreeView extends Tree {
 
   onOptionsBtnClick () {
     this.openInternalPage('/options/options.html');
+  }
+
+  onDonateBtnClick () {
+    // redirects to the correct page,
+    // handy if I need to change platforms
+    this.openExternalPage('https://toykeeper.net/tktsto/donate');
   }
 
   onHelpBtnClick () {

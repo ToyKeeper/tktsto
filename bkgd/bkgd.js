@@ -13,6 +13,7 @@ import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
 import { base32encode } from '/common/base32.js';
 import { Mutex } from '/common/mutex.js';
+import { createNewUserTutorialNodes } from '/bkgd/new-user.js';
 
 log('/bkgd/bkgd.js running');
 
@@ -79,6 +80,10 @@ class Bkgd {
         //this.idGen.cache = this.tree.nodes;
         // grab all the open windows and tabs, and put them in the tree
         this.mergeOpenWindowsIntoTree().then(() => {
+          // and if this is the first boot, add tutorial nodes
+          if (this.tree.needsTutorial) {
+            createNewUserTutorialNodes(this.tree);
+          }
           // tree is ready to use
           debug('Bkgd.resolveTreeLoaded()');
           this.resolveTreeLoaded();  // let listeners know the tree is loaded
@@ -495,6 +500,14 @@ class Bkgd {
     const response = {};
     response.nodes = this.tree.serializeNodes();
     return response;
+  }
+
+  async bkgd_generateTutorial (msg) {
+    await this.treeLoaded;
+    let parentNode = this.tree.root;
+    if (msg.parentId) parentNode = this.tree.nodes[msg.parentId];
+    await createNewUserTutorialNodes(this.tree, parentNode);
+    return {};
   }
 
   async bkgd_loadSavedNode (msg) {
