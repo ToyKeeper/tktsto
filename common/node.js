@@ -1170,7 +1170,7 @@ export class Node {
     // and they generate spurious "setActiveTab" events
     if (this.tree.tabBlacklist[`${tabId}`]) return;
     // get a list of this window's tabs
-    const tabList = this.getLoadedTabs();
+    const tabList = this.getLoadedAndUnloadedTabs();
     let tabNode;
     for (const node of tabList) { if (tabId === node.tabId) tabNode = node; }
     // if it wasn't found, check the entire tree
