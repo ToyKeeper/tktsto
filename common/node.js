@@ -1174,46 +1174,71 @@ export class Node {
     return tabNode;
   }
 
-  async setActiveTab (tabId, args) {
+  async setActiveTab (args) {
+    // this syncs a window node's 'active' states based on browser window state
+    // changes are debounced, executed only after changes stop happening
+    // skip no-op cases
     if (! args) return;
     // this should only be called on window nodes
     if (! this.isWindow()) return;
-    // bugfix: Vivaldi panels are briefly "active" when current tab closes
-    // and they generate spurious "setActiveTab" events
-    if (this.tree.tabBlacklist[`${tabId}`]) return;
-    // get a list of this window's tabs
-    const tabList = this.getLoadedAndUnloadedTabs();
-    let tabNode;
-    for (const node of tabList) { if (tabId === node.tabId) tabNode = node; }
-    // if it wasn't found, check the entire tree
-    if (! tabNode) {  // FIXME: remove this, it shouldn't happen
-      //const nodes = this.findNodes((node) =>
-      const nodes = this.tree.root.findNodes((node) =>
-        { return node.isLoaded() && (tabId === node.tabId); });
-      tabNode = nodes[0];
-    }
-    if (! tabNode) {
-      // TODO: handle the error better
-      warn(`Node.setActiveTab(): can't find tab "${tabId}"`);
-      return;
+
+    // handle the changes after no events have occurred for this long
+    const delayTime = 100;  // ms
+    // reset our timer on each new event
+    // so it only fires after events stop coming in
+    if (this.setActiveTabTimer) {
+      clearTimeout(this.setActiveTabTimer);
     }
 
-    let changed = false;
+    this.setActiveTabTimer = setTimeout(async () => {
+      let changed = false;
 
-    // mark all other active tabs in this window as not-active
-    for (const node of tabList) {
-      if (node.isActive()) {
-        await node.setActive(false, args);
-        changed = true;
+      try {
+        // auto-detect which tab is active
+        const [tab] = await chrome.tabs.query(
+          { active: true, windowId: this.windowId });
+        if (! tab) return;
+
+        // get a list of this window's tabs
+        const tabList = this.getLoadedAndUnloadedTabs();
+        // find the newly-active tab node
+        let tabNode;
+        for (const node of tabList) {
+          if (tab.id === node.tabId) tabNode = node;
+        }
+        if (! tabNode) {
+          // bugfix: Vivaldi panels are briefly "active" when current tab closes
+          // and they generate spurious "setActiveTab" events
+          // so ignore errors on those
+          if (! this.tree.tabBlacklist[`${tab.id}`])
+            warn(`Node.setActiveTab(): can't find tab "${tab.id}"`);
+        }
+
+        // mark all other active tabs in this window as not-active
+        for (const node of tabList) {
+          if ((node !== tabNode) && node.isActive()) {
+            await node.setActive(false, args);
+            changed = true;
+          }
+        }
+
+        // mark the new tab as active
+        if (tabNode && (! tabNode.active)) {
+          await tabNode.setActive(true, args);
+          changed = true;
+        }
+        return changed;
+
       }
-    }
+      finally {
+        // get ready for next time
+        this.setActiveTabTimer = null;
+        return changed;
+      }
+    }, delayTime);
 
-    // mark the new tab as active
-    if (! tabNode.active) {
-      await tabNode.setActive(true, args);
-      changed = true;
-    }
-    return changed;
+    const result = await this.setActiveTabTimer;
+    return result;
   }
 
   async reorderAllTabsInThisWindow () {
@@ -1252,7 +1277,7 @@ export class Node {
       // verify which tab is active, and deactivate all others
       //const [activeTab] = await api.tabs.query(
       //  { active: true, windowId: windowNode.windowId });
-      //if (activeTab) windowNode.setActiveTab(activeTab.id,
+      //if (activeTab) windowNode.setActiveTab(
       //  { reason: 'reorderAllTabsInThisWindow' });
 
       // try to move the tabs... maybe try a few times

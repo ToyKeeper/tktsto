@@ -551,7 +551,7 @@ export class Tree {
         return;  // not an error, just a browser quirk
       return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
-    await windowNode.setActiveTab(tabId, { reason: 'onTabActivated' });
+    await windowNode.setActiveTab({ reason: 'onTabActivated' });
   }
 
   async onTabMoved (tabId, moveInfo) {
@@ -720,11 +720,8 @@ export class Tree {
     }
 
     // ensure only one tab is 'active'
-    const [tab] = await chrome.tabs.query({ active: true, windowId });
-    if (tab) {
-      debug(`onTabAttached(): active tab: ${tab.id}, ${tab.title}`);
-      await windowNode.setActiveTab(tab.id, { reason: 'onTabAttached' });
-    }
+    debug(`onTabAttached(): active tab: auto`);
+    await windowNode.setActiveTab({ reason: 'onTabAttached' });
   }
 
   onTabUpdated(tabId, changeInfo, tab) {
