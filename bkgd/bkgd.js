@@ -12,7 +12,6 @@ import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
 import { base32encode } from '/common/base32.js';
-import { Mutex } from '/common/mutex.js';
 import { createNewUserTutorialNodes } from '/bkgd/new-user.js';
 
 log('/bkgd/bkgd.js running');
@@ -35,9 +34,6 @@ class Bkgd {
     // (empty except during brief moments before browser opens stuff)
     this.nodesLoading = [];
     this.windowsLoading = [];
-
-    // prevent tab reorder storms
-    this.tabReorderMutex = new Mutex();
   }
 
   init () {
@@ -353,12 +349,7 @@ class Bkgd {
     // moveInfo.windowId: number
     debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
     await this.treeLoaded;
-    // actually handle the request, but only one at a time
-    const unlock = await this.tabReorderMutex.lock();
-    try {
-      await this.tree.onTabMoved(tabId, moveInfo);
-    }
-    finally { unlock(); }
+    await this.tree.onTabMoved(tabId, moveInfo);
   }
 
   async onTabAttached (tabId, attachInfo) {
@@ -578,7 +569,20 @@ class Bkgd {
       if (windowNode.incognito) createProperties.incognito = true;
       debug('bkgd_loadSavedNode() creating saved window', createProperties);
       try {
-        await api.windows.create(createProperties);
+        try {
+          await api.windows.create(createProperties);
+        } catch (err) {
+          // handle "Error: Invalid value for bounds. Bounds must be at least 50% within visible screen space."
+          if (err.message.includes('Invalid value for bounds')) {
+            // if user left the window somewhere forbidden,
+            // ignore their saved position
+            // It's stupid that we have to do this, instead of the browser just
+            // moving the window to an allowed position+size.
+            delete createProperties.geometry;
+            await api.windows.create(createProperties);
+          }
+          else { throw err; }
+        }
       } catch (err) {
         this.windowsLoading.pop(windowNode);
         this.nodesLoading.pop(node);
@@ -673,28 +677,39 @@ class Bkgd {
   async bkgd_reorderAllTabsInThisWindow (msg) {
     // This function exists to avoid race conditions caused by multiple
     // threads trying to reorder tabs at the same time.  They are all
-    // redirected here, so the requests can be processed fully, one at
-    // a time, without interfering with each other.
+    // redirected here, so the requests can be processed without interfering
+    // with each other.
+    // Duplicate requests are ignored / debounced, since it only needs
+    // to handle *one* event.
     await this.treeLoaded;  // ensure tree is loaded
-    const response = {};
     let node = this.tree.nodes[msg.nodeId];
     if (! node) {
       const err = `bkgd_reorderAllTabsInThisWindow(): no node found: "%{msg.nodeId}"`;
       error(err);
       return { error: err };
     }
-    // actually handle the request, but only one at a time
-    const unlock = await this.tabReorderMutex.lock();
-    try {
-      await node.reorderAllTabsInThisWindow();
-      response.result = 'ok';
-    }
-    catch (err) {
-      error(`bkgd_reorderAllTabsInThisWindow error:`, err);
-      response.error = err;
-    }
-    finally { unlock(); }
-    return response;
+
+    // event is already scheduled for handling, nothing further to do
+    if (this.needsTabReorder) return { result: 'ok pending' };
+
+    // debounce new requests until event is handled
+    this.needsTabReorder = true;
+    this.tabReorderDebounceTime = 100;  // ms
+
+    // actually handle the event, but delayed, and only once per batch
+    this.tabReorderTimeout = setTimeout(async () => {
+      try {
+        await node.reorderAllTabsInThisWindow();
+      }
+      //catch (err) {
+      //  error(`bkgd_reorderAllTabsInThisWindow error:`, err);
+      //}
+      finally {
+        this.needsTabReorder = false;
+      }
+    }, this.tabReorderDebounceTime);
+
+    return { result: 'ok scheduled' };
   }
 
   async bkgd_importBackupFile (msg) {

@@ -541,7 +541,7 @@ export class Tree {
     }
   }
 
-  onTabActivated (windowId, tabId) {
+  async onTabActivated (windowId, tabId) {
     const windowNode = this.root.getWindowId(windowId);
     if (! windowNode) {
       // can happen when loading saved tab in saved window,
@@ -551,7 +551,7 @@ export class Tree {
         return;  // not an error, just a browser quirk
       return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
-    windowNode.setActiveTab(tabId, { reason: 'onTabActivated' });
+    await windowNode.setActiveTab(tabId, { reason: 'onTabActivated' });
   }
 
   async onTabMoved (tabId, moveInfo) {
@@ -567,6 +567,7 @@ export class Tree {
       return error(`Tree.onTabMoved() can't find windowId="${moveInfo.windowId}"`);
     }
     const tabNode = this.getNodeByTabId(tabId);
+    debug(`Tree.onTabMoved(): ${tabNode.toLine()}`);
     if (! tabNode) {
       // FIXME: also shouldn't happen
       return error(`Tree.onTabMoved() can't find tabId="${tabId}"`);
@@ -580,6 +581,7 @@ export class Tree {
     if (tabList.length < 1) {
       // this happens if I drag a tab into nowhere to create a new window,
       // and it initially has no tabs
+      debug('Tree.onTabMoved(): new window?', moveInfo.fromIndex, moveInfo.toIndex);
       return await doTheMove(windowNode, 0);
     }
     if (moveInfo.toIndex >= tabList.length) {
@@ -588,12 +590,13 @@ export class Tree {
       let prevNode = tabList[moveInfo.toIndex - 1];
       let destParent = prevNode.parent;
       let destIndex = prevNode.indexOf() + 1;
+      debug('Tree.onTabMoved(): past end of window', moveInfo.fromIndex, moveInfo.toIndex);
       return await doTheMove(destParent, destIndex);
     }
     // do nothing if the tab is already in the right place
     // (this probably means we initiated the tabMove operation)
     if (tabId === tabList[moveInfo.toIndex]) {
-      debug('Tree.onTabMoved(): tab already at correct index');
+      debug('Tree.onTabMoved(): tab already at correct index', moveInfo.fromIndex, moveInfo.toIndex);
       return;
     }
     // if moving left, things are surprisingly easy...
@@ -604,6 +607,7 @@ export class Tree {
       let destIndex = prevNode.indexOf();
       // TODO: ideally should be just after the previous tab in the tree,
       // but that's a lot harder to calculate
+      debug('Tree.onTabMoved(): moving left', moveInfo.fromIndex, moveInfo.toIndex);
       return await doTheMove(destParent, destIndex);
     }
     // if moving right, then move to just before the next tab
@@ -612,6 +616,7 @@ export class Tree {
     if (nextNode) {
       let destParent = nextNode.parent;
       let destIndex = nextNode.indexOf();
+      debug('Tree.onTabMoved(): moving right', moveInfo.fromIndex, moveInfo.toIndex);
       return await doTheMove(destParent, destIndex);
     }
     else {
@@ -619,6 +624,7 @@ export class Tree {
       let lastNode = tabList[tabList.length - 1];
       let destParent = lastNode.parent;
       let destIndex = lastNode.indexOf() + 1;
+      debug('Tree.onTabMoved(): right-most tab', moveInfo.fromIndex, moveInfo.toIndex);
       return await doTheMove(destParent, destIndex);
     }
 
@@ -645,6 +651,7 @@ export class Tree {
     //   (may refer to a window which doesn't exist yet)
     const newIndex = attachInfo.newPosition;
     const windowId = attachInfo.newWindowId;
+    debug(`Tree.onTabAttached(${tabId}) -> ${windowId}, ${newIndex}`);
 
     // find the tab node
     const tabNode = this.getNodeByTabId(tabId);
@@ -671,12 +678,53 @@ export class Tree {
         type: 'window',
         windowId: windowId
       }, { reason: 'onTabAttached' });
+      // this happens if I drag a tab into nowhere to create a new window,
+      // and it initially has no tabs
+      debug('Tree.onTabAttached(new window)');
+      // is handled below
+      //await tabNode.moveTo(windowNode, 0, { reason: 'onTabAttached' });
+      //return;
     }
 
-    // now that the tab node and window node are guaranteed to exist,
-    // onTabMoved() can handle the rest
-    return this.onTabMoved(tabId,
-      { windowId: windowId, toIndex: newIndex, fromIndex: 9999999 });
+    // get the ordered list of tabs in this windowNode
+    let tabList = windowNode.getLoadedTabs();
+    let destParent;
+    let destIndex;
+    let skip = false;
+    // already moved internally
+    // (like, user moved it in the tree view, and the browser is catching up)
+    if (tabNode === tabList[newIndex]) {
+      debug('Tree.onTabAttached(): already correct:', tabNode.toLine());
+      skip = true;
+    }
+    // empty window
+    else if (0 === tabList.length) {
+      destParent = windowNode;
+      destIndex = 0;
+    }
+    // right-most tab
+    else if (newIndex >= tabList.length) {
+      const lastNode = tabList[tabList.length - 1];
+      destParent = lastNode.parent;
+      destIndex = lastNode.indexOf() + 1;
+    }
+    // middle or first tab
+    else {
+      const nextNode = tabList[newIndex];
+      destParent = nextNode.parent;
+      destIndex = nextNode.indexOf();
+    }
+    if (! skip) {
+      debug('Tree.onTabAttached(): moving', tabNode.toLine(), destParent.toLine(), destIndex);
+      await tabNode.moveTo(destParent, destIndex, { reason: 'onTabAttached' });
+    }
+
+    // ensure only one tab is 'active'
+    const [tab] = await chrome.tabs.query({ active: true, windowId });
+    if (tab) {
+      debug(`onTabAttached(): active tab: ${tab.id}, ${tab.title}`);
+      await windowNode.setActiveTab(tab.id, { reason: 'onTabAttached' });
+    }
   }
 
   onTabUpdated(tabId, changeInfo, tab) {

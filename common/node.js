@@ -513,12 +513,14 @@ export class Node {
     if (! this.isWindow()) return;
     // if window is boring and has no kids, just delete it
     if ((! this.hasKids()) && (! this.shouldUnloadNotDelete())) {
+      debug('Node.windowClosed(): emptyWindowClosed');
       await this.deleteSelf({ reason: 'emptyWindowClosed' });
     }
     // if window has no open tabs, mark it as unloaded
     else if (! this.hasLoadedTabs()) {
       //args.reason = 'windowClosed';
       // args.reason should already exist: tree_windowClosed or onWindowRemoved
+      debug('Node.windowClosed(): unload');
       await this.unload(args);
     }
     // if open tabs, ... well fuck.  I don't know.
@@ -956,6 +958,7 @@ export class Node {
   }
 
   async moveTo (destParent, destIndex, args) {
+    if (! args) return error(`Node.moveTo(): no args`);
     debug(`Node.moveTo(${args.reason})`, this, destParent, destIndex);
     // abort on no-op
     if ((destParent === this.parent) && (destIndex === this.indexOf()))
@@ -1144,7 +1147,7 @@ export class Node {
     // bump timestamp
     if (active) this.bump('atime', args);
     // let others know
-    if (['userAction', 'onTabActivated',
+    if (['userAction', 'onTabActivated', 'onTabAttached',
       'reorderAllTabsInThisWindow'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
@@ -1171,7 +1174,7 @@ export class Node {
     return tabNode;
   }
 
-  setActiveTab (tabId, args) {
+  async setActiveTab (tabId, args) {
     if (! args) return;
     // this should only be called on window nodes
     if (! this.isWindow()) return;
@@ -1191,20 +1194,35 @@ export class Node {
     }
     if (! tabNode) {
       // TODO: handle the error better
-      return warn(`Node.setActiveTab(): can't find tab "${tabId}"`);
+      warn(`Node.setActiveTab(): can't find tab "${tabId}"`);
+      return;
     }
+
+    let changed = false;
 
     // mark all other active tabs in this window as not-active
     for (const node of tabList) {
-      if (node.isActive()) node.setActive(false, args);
+      if (node.isActive()) {
+        await node.setActive(false, args);
+        changed = true;
+      }
     }
 
     // mark the new tab as active
-    tabNode.setActive(true, args);
+    if (! tabNode.active) {
+      await tabNode.setActive(true, args);
+      changed = true;
+    }
+    return changed;
   }
 
   async reorderAllTabsInThisWindow () {
-    debug(`Node.reorderAllTabsInThisWindow():`, this);
+    debug(`Node.reorderAllTabsInThisWindow(${this.tabReorderInProgress}):`, this);
+    // drop reorder requests when one is already pending
+    // TODO? figure out correct place to attach this flag
+    // (on the node being dragged, or on the window node?  or both?)
+    // (using the dragged node because the window changes mid-drag)
+    if (this.tabReorderInProgress) return;
     // abort on no-op
     if ((! this.isLoaded()) && (! this.hasLoadedTabs())) return;
     // find this tab's window
@@ -1223,29 +1241,62 @@ export class Node {
       return;
     }
 
-    // actually handle the request, but only one at a time
-    // (tree-level lock seems required... bkgd-level lock wasn't enough)
-    const unlock = await this.tree.tabReorderMutex.lock();
+    // actually handle the request
     try {
-      // get a list of all loaded tabs in this window, in order
-      const tabList = windowNode.getLoadedTabs();
+      this.tabReorderInProgress = true;
+      // wait a moment; Firefox wants this sometimes
+      // (like, when dragging a tab to the void,
+      //  it needs to create a window before the tabs can be reordered)
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       // verify which tab is active, and deactivate all others
-      const result = await api.tabs.query(
-        { active: true, windowId: windowNode.windowId });
-      const activeTab = result[0];
-      if (activeTab) windowNode.setActiveTab(activeTab.id,
-        { reason: 'reorderAllTabsInThisWindow' });
-      // tell browser to move *all* tabs in this window to that order
-      const tabIds = [];
-      for (const node of tabList)
-        if (node.tabId) tabIds.push(node.tabId);
-      debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
-      await api.tabs.move(tabIds, { index: 0, windowId: windowNode.windowId });
+      //const [activeTab] = await api.tabs.query(
+      //  { active: true, windowId: windowNode.windowId });
+      //if (activeTab) windowNode.setActiveTab(activeTab.id,
+      //  { reason: 'reorderAllTabsInThisWindow' });
+
+      // try to move the tabs... maybe try a few times
+      // (keep trying until the browser stops blocking reorder requests)
+      let success = false;
+      let tries = 0;
+      const msPerTry = 500;
+      const maxTrySeconds = 30;
+      while ((! success) && (tries < (maxTrySeconds * 1000 / msPerTry))) {
+        try {
+          // get a list of all loaded tab nodes in this window node, in order
+          const tabNodeList = windowNode.getLoadedTabs();
+
+          // tell browser to move *all* tabs in this window to that order
+          const tabIds = [];
+          for (const node of tabNodeList)
+            if (node.tabId) tabIds.push(node.tabId);
+
+          debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
+
+          // attempt to reorder the tabs
+          if (tabIds.length > 0)
+            await api.tabs.move(tabIds,
+              { index: 0, windowId: windowNode.windowId });
+          debug('tab reorder success');
+          success = true;
+          tries ++;
+        } catch (err) {
+          // handle Brave's "Error: Tabs cannot be edited right now (user may be dragging a tab)."
+          if (err.message.includes('Tabs cannot be edited right now')) {
+            // wait before trying again
+            debug(`Tab reorder blocked, trying again in ${msPerTry}ms...`, err);
+            await new Promise(resolve => setTimeout(resolve, msPerTry));
+          } else { throw err; }
+        }
+      }
     }
+    // all other errors should still be allowed
     catch (err) {
       error(`Node.reorderAllTabsInThisWindow() error:`, err);
     }
-    finally { unlock(); }
+    finally {
+      this.tabReorderInProgress = false;
+    }
     return;
   }
 
@@ -1263,9 +1314,15 @@ export class Node {
     try {
       return await api.tabs.update(this.tabId, { openerTabId: opener });
     } catch (err) {
-      // can happen if tab just moved to a new window, and its parent
-      // hasn't been officially marked as part of the new window yet
-      warn(`Node.updateOpenerTabId(): ${err}`);
+      if (err.message.includes('Tabs cannot be edited right now')) {
+        // Brave does this in the middle of moving a tab,
+        // and we need to just ignore it
+      }
+      else {
+        // can happen if tab just moved to a new window, and its parent
+        // hasn't been officially marked as part of the new window yet
+        warn(`Node.updateOpenerTabId(): ${err}`);
+      }
     }
   }
 
