@@ -194,6 +194,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   text-align: center;
   margin: auto;
   padding: 0.2em 0.3em;
+  font-size: var(--button-font-size);
   color: var(--button-fg);
   border: var(--button-border);
   border-radius: var(--button-border-radius);
@@ -859,8 +860,6 @@ foo {
   flex-direction: row-reverse;
   flex-wrap: wrap;
   gap: var(--dialog-padding);
-  line-height: var(--row-line-height);
-  font-size: var(--global-font-size);
   margin-top: var(--dialog-padding);
 }
 
@@ -944,6 +943,7 @@ foo {
   --font-family: "DejaVu Sans", Arial, sans-serif;
   --font-family: Arial, Tahoma, Geneva, sans-serif;
   --global-font-size: 1.15rem;
+  --button-font-size: 1rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
   --1px: 0.08rem;  /* Like 1 pixel, but scalable */
