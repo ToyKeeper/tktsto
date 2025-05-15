@@ -1485,9 +1485,10 @@ export class TreeView extends Tree {
 
   initBkgdPort () {
     this.port = api.runtime.connect();
-    this.port.onDisconnect.addListener(() => {
+    this.port.onDisconnect.addListener(async () => {
       debug("TreeView.port disconnected, reconnecting...");
-      setTimeout(this.initBkgdPort, 100);
+      await new Promise(r => setTimeout(r, 100));
+      this.initBkgdPort();
     });
   }
 
