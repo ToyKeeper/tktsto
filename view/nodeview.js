@@ -402,6 +402,9 @@ export class NodeView extends Node {
 
     // display it
     if (details.render && newNode.isChildOf(this.tree.viewRoot, true)) {
+      // ensure our elements exist before modifying them
+      if (! this.$nodes) this.$render();
+
       //this.expandAndShow();
       this.$nodes.classList.remove('hidden');
 
