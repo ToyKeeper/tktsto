@@ -771,7 +771,7 @@ export class Tree {
     }
   }
 
-  onTabReplaced (addedTabId, removedTabId) {
+  async onTabReplaced (addedTabId, removedTabId) {
     // "Fired when a tab is replaced with another tab due to prerendering or instant."
     // addedTabId: number
     // removedTabId: number
@@ -786,7 +786,23 @@ export class Tree {
 
     // it's like a onTabUpdated(), but only the tabId changes?
     const changes = { 'tabId': addedTabId };
-    return tabNode.setTabFields(changes, { reason: 'onTabReplaced' });
+
+    // get the actual tab, to check if anything else changed
+    const tab = await api.tabs.get(addedTabId);
+    if (tab) {
+      // check for other changes too
+      for (const field of
+        ['title', 'url', 'favIconUrl',
+          'discarded', 'frozen', 'hidden']
+      ) {
+        let value = tab[field];
+        // clean up sloppy titles
+        if ('title' === field) value = value.trim().replace(/\s+/g, ' ');
+        // if data actually changed, add it to the outgoing message
+        if (tabNode[field] !== value) changes[field] = value;
+      }
+    }
+    await tabNode.setTabFields(changes, { reason: 'onTabReplaced' });
   }
 
   onMessage (msg, sender, sendResponse) {
