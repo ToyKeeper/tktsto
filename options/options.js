@@ -35,7 +35,7 @@ function initClientIdForm () {
   });
 }
 
-function initThemeForm () {
+function initBackupsForm () {
   // humanFriendlyBackups checkbox
   const $humanFriendlyBackups = document.getElementById('humanFriendlyBackups');
   api.storage.local.get('humanFriendlyBackups').then((result) => {
@@ -49,9 +49,35 @@ function initThemeForm () {
     const humanFriendlyBackups = $humanFriendlyBackups.checked;
     api.storage.local.set({ humanFriendlyBackups });
   });
+
+  // automatic local backup interval
+  const $localBackupHours = document.getElementById('localBackupHours');
+  api.storage.local.get(['localBackupInterval'], (result) => {
+    if (undefined !== result.localBackupInterval) {
+      $localBackupHours.value = result.localBackupInterval / 60;
+    }
+  });
+  let localBackupHoursDebounceTimer;
+  $localBackupHours.addEventListener("input", () => {
+    clearTimeout(localBackupHoursDebounceTimer);
+
+    localBackupHoursDebounceTimer = setTimeout(() => {
+      const hours = parseFloat($localBackupHours.value);
+
+      // validate the input
+      if (isNaN(hours) || hours < 0 || hours > 1000) {
+        warn('User entered invalid data into localBackupHours input');
+        return;
+      }
+
+      const minutes = hours * 60;
+      api.storage.local.set({ localBackupInterval: minutes });
+      debug(`User set localBackupInterval = ${minutes} minutes`);
+    }, 3000); // 3 second debounce delay
+  });
 }
 
-function initBackupsForm () {
+function initThemeForm () {
   // theme selector
   const $theme = document.getElementById('theme');
   api.storage.local.get('theme').then((result) => {

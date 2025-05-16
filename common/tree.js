@@ -241,6 +241,8 @@ export class Tree {
   }
 
   async downloadBackupNow () {
+    await this.treeLoaded;  // wait until tree is ready
+
     const when = new Date();
     // determine whether to pretty-print the data
     let prettyPrint = 0;
@@ -250,7 +252,23 @@ export class Tree {
     const backup = await this.makeBackupObject(this.root, when);
     const jsonString = JSON.stringify(backup, null, prettyPrint);
     const blob = new Blob([jsonString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+    // generate the URL to download
+    let url;
+    if ((! this.bkgd) || (isFirefox)) {
+      // simple, but only works in Firefox or in views (like the sidepanel)
+      url = URL.createObjectURL(blob);
+    }
+    else {
+      // more complex, but works in Chrome service workers:
+      const buffer = await blob.arrayBuffer();
+      // hello, stack overflow:
+      //const base64String = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+      // avoid a stack overflow:
+      const binaryString = new Uint8Array(buffer)
+        .reduce((acc, byte) => acc + String.fromCharCode(byte), "");
+      const base64String = btoa(binaryString);
+      url = `data:application/json;base64,${base64String}`;
+    }
     // build a filename
     const clientId = backup.metadata.clientId;
     const date = dateTupleStrings(when);

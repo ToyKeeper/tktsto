@@ -34,6 +34,9 @@ class Bkgd {
     // (empty except during brief moments before browser opens stuff)
     this.nodesLoading = [];
     this.windowsLoading = [];
+
+    // local backups
+    this.localBackupAlarmName = 'periodicLocalBackup';
   }
 
   init () {
@@ -99,12 +102,19 @@ class Bkgd {
   }
 
   initMiscListeners () {
+    api.storage.onChanged.addListener( this.onStorageChanged.bind(this) );
+
     // TODO
     //api.action.onClicked.addListener((...args) => {
     //  this.onExtensionIconClicked(...args);
     //});
+
     // global hotkey "commands"
     api.commands.onCommand.addListener( this.onCommand.bind(this) );
+
+    // automatic scheduled backups
+    this.initLocalBackupAlarm();
+    api.alarms.onAlarm.addListener( this.onAlarm.bind(this) );
   }
 
   initWindowListeners () {
@@ -151,6 +161,56 @@ class Bkgd {
       this.clientId = base32encode(num, 2);
       await api.storage.local.set({ 'clientId': this.clientId });
       log(`rand clientId: ${this.clientId}`);
+    }
+  }
+
+  async initLocalBackupAlarm (reset = false) {
+    const stored = await api.storage.local.get('localBackupInterval');
+    let interval = stored.localBackupInterval;
+    const alarm = await api.alarms.get(this.localBackupAlarmName);
+    // 0.5 minutes is the shortest the browser allows
+    const backupDisabled = (! interval) || (interval < 0.5);
+
+    // TODO: check last backup time, and if last + interval < now, backup now
+    // because sometimes alarms don't persist across browser restarts, and
+    // if a user sets interval=24h but they restart daily, it may never fire
+
+    debug(`Bkgd.initLocalBackupAlarm: reset=${reset} interval=${interval}, alarm=${alarm}, backupDisabled=${backupDisabled}`);
+
+    // disable alarm if it exists and user doesn't want it
+    // or if they changed the interval
+    if (reset || backupDisabled) {
+      if (alarm) {
+        await api.alarms.clear(this.localBackupAlarmName);
+        log(`${this.localBackupAlarmName} cancelled`);
+      }
+    }
+
+    // we're done, if the user doesn't want backups
+    if (backupDisabled) return;
+
+    // create alarm if user wants it and it isn't scheduled yet
+    if (reset || (! alarm)) {
+      await api.alarms.create(this.localBackupAlarmName, {
+        periodInMinutes: interval
+      });
+      log(`${this.localBackupAlarmName} interval set to ${interval/60} hour(s)`);
+    }
+  }
+
+  onAlarm (alarm) {
+    debug(`Bkgd.onAlarm(${alarm.name})`, alarm);
+    if (this.localBackupAlarmName === alarm.name) {
+      debug(this.localBackupAlarmName);
+      this.tree.downloadBackupNow();
+    }
+  }
+
+  onStorageChanged (changes, areaName) {
+    if ('local' === areaName) {
+      if (undefined !== changes.localBackupInterval) {
+        this.initLocalBackupAlarm(true);
+      }
     }
   }
 
@@ -407,7 +467,7 @@ class Bkgd {
     // I'll probably have to install a whole separate browser just to find
     // one which actually supports this feature, since all the browsers I
     // use either block it or don't implement it at all.
-    return this.tree.onTabReplaced(addedTabId, removedTabId);
+    await this.tree.onTabReplaced(addedTabId, removedTabId);
   }
 
   onConnect (port) {

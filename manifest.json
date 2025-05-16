@@ -7,9 +7,9 @@
   "permissions": [
     "sidePanel",
     "storage",
-    "unlimitedStorage",
     "downloads",
     "tabs",
+    "alarms",
     "favicon"
   ],
   "optional_permissions": [

@@ -10,8 +10,8 @@
   },
   "permissions": [
     "storage",
-    "unlimitedStorage",
     "downloads",
+    "alarms",
     "tabs"
   ],
   "optional_permissions": [
