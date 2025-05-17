@@ -4,6 +4,13 @@
   "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
   "version": "0.0.0.1",
   "minimum_chrome_version": "114.0.0.0",
+  "icons": {
+    "16": "img/icon-16.png",
+    "32": "img/icon-32.png",
+    "48": "img/icon-48.png",
+    "64": "img/icon-64.png",
+    "128": "img/icon-128.png"
+  },
   "permissions": [
     "sidePanel",
     "storage",
@@ -30,12 +37,19 @@
     "default_path": "view/sidepanel.html"
   },
   "action": {
-    "default_title": "TKTSTO Sidebar"
+    "default_title": "TKTSTO Sidebar",
+    "default_icon": {
+      "16": "img/icon-16.png",
+      "32": "img/icon-32.png",
+      "48": "img/icon-48.png",
+      "64": "img/icon-64.png",
+      "128": "img/icon-128.png"
+    }
   },
   "commands": {
     "_execute_action": {
       "description": "Toggle Side Panel",
-      "suggested_key": { "default": "Ctrl+1" }
+      "suggested_key": { "default": "Alt+T" }
     },
     "backupSession": {
       "description": "Back up session now"
