@@ -18,6 +18,7 @@ cp -v \
   *.js \
   *.md \
   *.html \
+  make-zip.sh \
   build
 
 # manifest differs per browser
