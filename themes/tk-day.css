@@ -175,15 +175,15 @@ foo {
   --checkbox-fg-fail: #f44;
   --checkbox-fg-unknown: #f2f;
   --checkbox-fg-other: #a84;
-  --checkbox-fg-1: #cccccc;
-  --checkbox-fg-2: #b4b4b4;
-  --checkbox-fg-3: #9d9d9d;
-  --checkbox-fg-4: #858585;
+  --checkbox-fg-1: #111111;
+  --checkbox-fg-2: #282828;
+  --checkbox-fg-3: #3f3f3f;
+  --checkbox-fg-4: #575757;
   --checkbox-fg-5: #6e6e6e;
-  --checkbox-fg-6: #575757;
-  --checkbox-fg-7: #3f3f3f;
-  --checkbox-fg-8: #282828;
-  --checkbox-fg-9: #111111;
+  --checkbox-fg-6: #858585;
+  --checkbox-fg-7: #9d9d9d;
+  --checkbox-fg-8: #b4b4b4;
+  --checkbox-fg-9: #cccccc;
   --checkbox-shadow-todo: 0.03em 0.06em 0.15em #000;
   --checkbox-shadow-done: inset 0.03em 0.06em 0.15em #000a;
   /***** node stats *****/
