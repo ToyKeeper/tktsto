@@ -225,6 +225,9 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   box-shadow: var(--button-pressed-shadow);
   transition: var(--button-transition);
 }
+.button.greyed-out {
+  opacity: 50%;
+}
 /******************** lists ********************/
 
 .nodes {
