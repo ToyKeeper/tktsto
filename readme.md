@@ -144,11 +144,20 @@ between browsers.  This is covered in [the server's readme
 file](server/readme.md).
 
 Then maybe go into the "Extension hotkeys" page of your browser to configure
-global command hotkeys.  The browser doesn't allow extensions to define more
-than 4 recommended global hotkeys.  So you should set those up.  I recommend
-assigning keys which match the key bindings for the sidepanel's normal usage,
-like when it has keyboard focus...  but add "Alt" to each one so you can
-perform those same functions without having to focus the sidepanel first.
+global command hotkeys.
+
+- Firefox: Go to `about:addons`, then click the gear icon, then "Manage
+  Extension Shortcuts".
+- Chrome: `chrome://extensions/shortcuts`
+- Edge: `edge://extensions/shortcuts`
+- Brave: `brave://extensions/shortcuts`
+- Vivaldi: `vivaldi:extensions` then "Keyboard shortcuts".
+
+The browser doesn't allow extensions to define more than 4 recommended global
+hotkeys.  So you should set those up.  I recommend assigning keys which match
+the key bindings for the sidepanel's normal usage, like when it has keyboard
+focus...  but add "Alt" to each one so you can perform those same functions
+without having to focus the sidepanel first.
 
 For example, when the sidepanel is focused, some of the default hotkeys
 include...
