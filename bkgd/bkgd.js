@@ -198,7 +198,8 @@ class Bkgd {
     }
   }
 
-  onAlarm (alarm) {
+  async onAlarm (alarm) {
+    await this.treeLoaded;
     debug(`Bkgd.onAlarm(${alarm.name})`, alarm);
     if (this.localBackupAlarmName === alarm.name) {
       debug(this.localBackupAlarmName);
