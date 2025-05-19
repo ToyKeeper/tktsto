@@ -2,10 +2,11 @@
   "manifest_version": 3,
   "name": "TK Tree Style Tab Outliner",
   "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
-  "version": "0.0.0.1",
+  "version": "0.0.1.0",
   "browser_specific_settings": {
     "gecko": {
-      "id": "tktsto@toykeeper"
+      "id": "tktsto@toykeeper.net",
+      "strict_min_version": "115.0"
     }
   },
   "icons": {

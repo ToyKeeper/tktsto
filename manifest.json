@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "TK Tree Style Tab Outliner",
   "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
-  "version": "0.0.0.1",
+  "version": "0.0.1.0",
   "minimum_chrome_version": "114.0.0.0",
   "icons": {
     "16": "img/icon-16.png",
