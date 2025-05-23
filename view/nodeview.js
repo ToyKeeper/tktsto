@@ -2,7 +2,6 @@
 // Copyright (C) 2025 Selene ToyKeeper
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-"use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug, emit, fmtDate } from '/common/common.js';
@@ -150,7 +149,7 @@ export class NodeView extends Node {
     // full row: [3/14] @ Label Text ~ <a href="link">Link Title</a>
     // ... where "[3/14]" is num children open/total, and "@" is a favicon
     let mainText = '';
-    let urlTitle = this.title ? this.title : this.url;  // handle blank title
+    const urlTitle = this.title ? this.title : this.url;  // Changed let to const, handle blank title
     // FIXME: instead of innerHTML, use safer Element creation and innerText
     if (this.label) {
       if (this.url) {  // label ~ href
@@ -165,7 +164,7 @@ export class NodeView extends Node {
     }
     else {  // totally blank
       if (this.isWindow()) {
-        const windowIdMaybe = this.windowId ? ' ' + this.windowId : '';
+        const windowIdMaybe = this.windowId ? ` ${this.windowId}` : '';
         mainText = `<span class="node-notitle">Window${windowIdMaybe}</span>`;
       }
       else if (this.isRoot())
@@ -176,7 +175,7 @@ export class NodeView extends Node {
     if (this.isWindow() && (! this.isLoaded())) {  // note closed windows
       //const mtime = fmtDate(this.mtime);  // FIXME: mtime isn't good for this
       //mainText = mainText + ` (closed ${mtime})`;
-      mainText = mainText + ' (closed)';
+      mainText += ' (closed)';
     }
     // indicate when there's a long note attached
     let noteIcon = '';
@@ -190,8 +189,8 @@ export class NodeView extends Node {
       if (' ' === this.checkbox) cbText = '&nbsp;';
       if ('percent' === cbType) {
         if (! this.checkboxPx) this.checkboxPx = 0.0;
-        cbText = String(Math.floor((this.checkboxPx * 100))) + '%';
-        if (this.checkboxPx > 0.999) cbType = cbType + ' done';
+        cbText = `${String(Math.floor((this.checkboxPx * 100)))}%`;
+        if (this.checkboxPx > 0.999) cbType += ' done';
       }
       ckbox = `<div class="node-checkbox ${cbType}">${cbText}</div>`;
     }
@@ -202,7 +201,7 @@ export class NodeView extends Node {
     if (this.hasKids() && this.isCollapsed()) {  // only when collapsed
       //  count all open descendants
       const openChildren = this.countNodes(
-        function (node) { return node.isLoaded(); }
+        (node) => node.isLoaded()
       );
       const totalChildren = this.countNodes();
       // only show "open" if non-zero
@@ -212,7 +211,7 @@ export class NodeView extends Node {
         statsText = `<span class="node-stats">[<span class="node-stat-total">${totalChildren}</span>]</span> `;
     }
     // TODO: favicon
-    let faviconText = '';
+    const faviconText = '';
     // combined output
     this.$row.innerHTML = `${statsText}${ckbox}${faviconText}${noteIcon}<span class="row-title">${mainText}</span>`;
     this.$row.setAttribute('draggable', true);
@@ -269,51 +268,51 @@ export class NodeView extends Node {
     }
 
     // label / short note
-    let $label = getOrCreate('detail-label', 'div');
+    const $label = getOrCreate('detail-label', 'div');
     //if (mode <= 1) hide($label);
     //else
     setOrHide($label, this.label, this.label);
 
     // wasLoaded
     const wasLoaded = (!!this.wasLoaded) && (! this.loaded);
-    let $wasLoaded = getOrCreate('detail-was-loaded', 'div');
+    const $wasLoaded = getOrCreate('detail-was-loaded', 'div');
     if (mode <= 1) hide($wasLoaded);
-    else setOrHide($wasLoaded, wasLoaded, null, `<b>Was Loaded</b>`);
+    else setOrHide($wasLoaded, wasLoaded, null, '<b>Was Loaded</b>');
 
     // long note
-    let $note = getOrCreate('detail-note', 'div');
+    const $note = getOrCreate('detail-note', 'div');
     setOrHide($note, this.note, this.note);
 
     // link title
-    let $title = getOrCreate('detail-title', 'div');
+    const $title = getOrCreate('detail-title', 'div');
     if (mode <= 1) hide($title);
     else {
-      let $titleLabel = getOrCreate('detail-title-label', 'b', $title);
-      let $titleValue = getOrCreate('detail-title-value', 'span', $title);
+      const $titleLabel = getOrCreate('detail-title-label', 'b', $title);
+      const $titleValue = getOrCreate('detail-title-value', 'span', $title);
       setOrHide($title, this.title);
       setOrHide($titleLabel, true, '', 'Title:&nbsp;');
       setOrHide($titleValue, this.title, this.title);
     }
 
     // link URL
-    let $url = getOrCreate('detail-url', 'div');
+    const $url = getOrCreate('detail-url', 'div');
     if (mode <= 1) hide($url);
     else {
-      let $urlLabel = getOrCreate('detail-url-label', 'b', $url);
-      let $urlValue = getOrCreate('detail-url-value', 'span', $url);
+      const $urlLabel = getOrCreate('detail-url-label', 'b', $url);
+      const $urlValue = getOrCreate('detail-url-value', 'span', $url);
       setOrHide($url, this.url);
       setOrHide($urlLabel, true, '', 'URL:&nbsp;');
       setOrHide($urlValue, this.url, this.url);
     }
 
     // node ID
-    let $nodeId = getOrCreate('detail-node-id', 'div');
+    const $nodeId = getOrCreate('detail-node-id', 'div');
     if (mode <= 1) hide($nodeId);
     else setOrHide($nodeId, this.id, null,
       `<b>ID:</b>&nbsp;<span>${this.id}</span>`);
 
     // tab ID
-    let $tabId = getOrCreate('detail-node-tabid', 'div');
+    const $tabId = getOrCreate('detail-node-tabid', 'div');
     if (mode <= 1) hide($tabId);
     else setOrHide($tabId, this.tabId, null,
       `<b>Tab:</b>&nbsp;<span>${this.tabId}</span>`);
@@ -387,17 +386,18 @@ export class NodeView extends Node {
     if (newCursor) this.tree.setCursor(newCursor);
   }
 
-  async addChild (index, details, ...extra) {
+  async addChild (indexParam, details, ...extra) {
     //debug('NodeView.addChild():', details);
     // index is required; assume 1st child if not given
-    if (undefined === index) index = 0;
+    let localIndex = indexParam;
+    if (undefined === localIndex) localIndex = 0;
     // save for later
-    const prevNodeAtIndex = this.nodes[index];
+    const prevNodeAtIndex = this.nodes[localIndex];
 
     // must allocate ID before creating node and emitting notifications
     if (! details.id) { details.id = await this.newNodeId(); }
     // create new Node object
-    const newNode = await super.addChild(index, details, ...extra);
+    const newNode = await super.addChild(localIndex, details, ...extra);
     //newNode.window = this.window;  // redundant?
 
     // display it
@@ -513,7 +513,7 @@ export class NodeView extends Node {
 
     destParent.$insertChild(this, destIndex);
     // refresh old parent if needed
-    if (oldParent != destParent) oldParent.$refreshAncestry();
+    if (oldParent !== destParent) oldParent.$refreshAncestry();
 
     // update the #marked-count widget
     // (can change when nodes move into / out of marked nodes)
@@ -575,6 +575,30 @@ export class NodeView extends Node {
 
   async setActive (...args) {
     await this.renderIfChanged(super.setActive(...args));
+  }
+
+  matchesSearch(searchTerm) {
+    if (!searchTerm) return true; // Show all if search is empty
+    
+    // Ensure we're working with strings and lowercase them
+    const term = String(searchTerm).toLowerCase();
+    const label = this.label ? String(this.label).toLowerCase() : '';
+    const title = this.title ? String(this.title).toLowerCase() : '';
+    const url = this.url ? String(this.url).toLowerCase() : '';
+    
+    // Check if any of the node's properties match the search term
+    const labelMatch = label.includes(term);
+    const titleMatch = title.includes(term);
+    const urlMatch = url.includes(term);
+    
+    const match = labelMatch || titleMatch || urlMatch;
+    
+    // Only log when there's a match to reduce noise
+    if (match) {
+      debug(`Search match: Node ${this.id} "${this.label}" (Label: ${labelMatch}, Title: ${titleMatch}, URL: ${urlMatch})`);
+    }
+    
+    return match;
   }
 
 }  // end class NodeView

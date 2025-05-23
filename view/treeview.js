@@ -2,7 +2,6 @@
 // Copyright (C) 2025 Selene ToyKeeper
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-"use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug, warn, error, emit } from '/common/common.js';
@@ -17,6 +16,8 @@ export class TreeView extends Tree {
 
   constructor () {
     super(NodeView);
+    this.currentSearchTerm = "";
+    this.isDisposed = false; // Initialize isDisposed flag
 
     // TODO: determine whether full view or single-window
 
@@ -122,12 +123,23 @@ export class TreeView extends Tree {
   }
 
   destroy () {
+    this.isDisposed = true; // Set flag on destroy
+    // Potentially add other cleanup logic here if needed in the future
+  }
+
+  ensureNotDisposed() {
+    if (this.isDisposed) {
+      const errorMessage = 'TreeView operation called after it was disposed.';
+      error(errorMessage); // Log an error
+      throw new Error(errorMessage); // Throw an error to stop execution
+    }
   }
 
   initElements () {
     this.$body = this.document.getElementById('body');
     this.$ = this.document.getElementById('tree-view');
     this.$treeRoot = this.document.getElementById('tree-root');
+    this.$searchInput = this.document.getElementById('search-input'); // Get reference to search input
 
     // stylesheets
     this.$themeBase = this.document.getElementById('theme-base');
@@ -248,23 +260,120 @@ export class TreeView extends Tree {
   }
 
   $renderWholeTree () {
-    // display the entire tree
-    if (('session' === this.viewScope) || (! this.windowNode))
-      this.viewRoot = this.root;
-    // display only this window
-    else if ('window' === this.viewScope)
+    this.ensureNotDisposed();
+    log('$renderWholeTree');
+    this.$treeRoot.innerHTML = ''; // Clear existing nodes from tree-root
+
+    // Set the viewRoot property based on current view scope
+    this.viewRoot = this.root;
+    if (this.viewScope === 'window' && this.windowNode) {
       this.viewRoot = this.windowNode;
-    // show the nodes
-    this.viewRoot.$render();
-    this.viewRoot.$renderChildren();
-    if (this.root.$) this.root.$.classList.add('root-nodes');
-    // add the view root node to the page
-    if (this.$treeRoot.childNodes.length > 0) {
-      this.$treeRoot.replaceChild(
-        this.viewRoot.$,
-        this.$treeRoot.childNodes[0]);
     }
-    else this.$treeRoot.appendChild(this.viewRoot.$);
+
+    // Now render the tree starting from the viewRoot
+    if (this.viewRoot) {
+      debug(`Rendering tree from root node: ${this.viewRoot.id}`);
+      
+      // Render the root node itself
+      this.viewRoot.$render();
+      
+      // Render all children recursively
+      this.viewRoot.$renderChildren();
+
+      // Attach the root node to the DOM if not already attached
+      if (this.viewRoot.$ && !this.$treeRoot.contains(this.viewRoot.$)) {
+        this.$treeRoot.appendChild(this.viewRoot.$);
+      }
+      
+      // Ensure the main root UL has the 'root-nodes' class if it's the one being used
+      if (this.viewRoot === this.root && this.root.$) {
+        this.root.$.classList.add('root-nodes');
+      }
+    }
+    
+    // Apply search filtering AFTER rendering
+    if (this.currentSearchTerm) {
+      debug(`Applying search filter for term: "${this.currentSearchTerm}"`);
+      this.applySearchFilterRecursive(this.viewRoot, this.currentSearchTerm.toLowerCase());
+    } else {
+      debug('No search term, clearing filters');
+      this.clearSearchFilterRecursive(this.viewRoot);
+    }
+    
+    this.ensureCursorVisible();
+  }
+
+  applySearchFilterRecursive(node, searchTerm) {
+    // Check if this node matches the search
+    const nodeItselfMatches = node.matchesSearch ? node.matchesSearch(searchTerm) : false;
+    
+    // Check if any children match the search (recursive)
+    let anyChildMatches = false;
+    
+    // Fix: Use node.nodes instead of node.children
+    if (node.nodes && node.nodes.length > 0) {
+      for (const child of node.nodes) {
+        // Apply search filter to child and check if it matched
+        if (this.applySearchFilterRecursive(child, searchTerm)) {
+          anyChildMatches = true;
+        }
+      }
+    }
+    
+    // A node should be visible if it matches the search term OR any of its children match
+    const shouldBeVisible = nodeItselfMatches || anyChildMatches;
+    
+    // Apply visibility based on search results
+    if (node.$) { // Check if the node's DOM element exists
+      if (shouldBeVisible) {
+        node.$.classList.remove('hidden-by-search');
+      } else {
+        node.$.classList.add('hidden-by-search');
+      }
+    }
+    
+    // Apply search highlighting to matching nodes
+    if (node.$row) {
+      if (nodeItselfMatches) {
+        node.$row.classList.add('search-match');
+      } else {
+        node.$row.classList.remove('search-match');
+      }
+    }
+    
+    // If any child matches but the node itself doesn't match, expand the node
+    // to show the matching children
+    if (anyChildMatches && !nodeItselfMatches && node.isCollapsible && node.isCollapsible() && 
+        node.isCollapsed && node.isCollapsed() && node.setExpanded) {
+      debug(`Auto-expanding parent Node ID: ${node.id} due to child match`);
+      node.setExpanded(true, { reason: 'searchReveal' });
+    }
+    
+    return shouldBeVisible;
+  }
+
+  clearSearchFilterRecursive(node) {
+    if (node.$) {
+      node.$.classList.remove('hidden-by-search');
+    }
+    if (node.$row) {
+      node.$row.classList.remove('search-match');
+    }
+    // Fix: Use node.nodes instead of node.children
+    if (node.nodes && node.nodes.length > 0) {
+      for (const child of node.nodes) {
+        this.clearSearchFilterRecursive(child);
+      }
+    }
+  }
+
+  handleSearch(searchTerm) {
+    this.ensureNotDisposed();
+    this.currentSearchTerm = searchTerm.trim(); // Trim whitespace
+    debug(`Search: "${this.currentSearchTerm}" (${this.currentSearchTerm.length} chars)`);
+    
+    // Re-render the whole tree which will apply search filtering during rendering
+    this.$renderWholeTree();
   }
 
   setStatus (msg) {
@@ -318,16 +427,13 @@ export class TreeView extends Tree {
 
   async updateStyleOptions () {
     let styleText = '';
-    let data;
-    // '+' marker drawn before expanded rows?
-    data = await api.storage.local.get({ 'expandedRowPrefix': true });
-    let expandedRowPrefix = '';
+    const data = await api.storage.local.get({ 'expandedRowPrefix': true });
     if (data.expandedRowPrefix) {
-      styleText = styleText
-        + "\n.expanded.row::before {"
-        + `\n  content: "+";`
-        + '\n  margin-left: -2px;'
-        + '\n}';
+      styleText += `
+.expanded.row::before {
+  content: "+";
+  margin-left: -2px;
+}`;
     }
     // apply the changes
     this.$styleOptions.textContent = styleText;
@@ -420,7 +526,11 @@ export class TreeView extends Tree {
   }
 
   keyHandler (event) {
-    // don't try to handle key events while a dialog is visible
+    // If the event target is the search input, do not process keybindings
+    if (event.target === this.$searchInput) {
+      return;
+    }
+    // don't try to handle key events while a dialog is active
     if (this.dialogActive) return;
     // calculate a more complete name for this event,
     // then call the keyboard event dispatcher
@@ -460,7 +570,7 @@ export class TreeView extends Tree {
     if (this.dialogActive) return;
     //debug(`mouseEvent(${eventType}):`, event);
     // ensure nothing gets focused / highlighted
-    this.document.activeElement.blur();
+    this.document.activeElement?.blur();
     // assign an event name based on modifier keys, event type, mouse button
     const eventName = buildEventName(event, eventType);
     //this.setStatus(`mouse: ${eventName}`);
@@ -471,7 +581,7 @@ export class TreeView extends Tree {
     let $row;  // Node's div.row element
     let $elem;  // most specific element we care about
     //debug(`mouseEvent(${eventType}):`, $target);
-    while ($target && $target.classList) {
+    while ($target?.classList) {
       const className = $target.classList[0];
       if ((! $elem) && [
         'node-stats', 'node-link', 'node-label', 'node-checkbox',
@@ -484,7 +594,7 @@ export class TreeView extends Tree {
       }
       $target = $target.parentNode;
     }
-    if ($node && $node.id.startsWith('node')) {
+    if ($node?.id.startsWith('node')) {
       const nodeId = $node.id.slice(4);
       node = this.nodes[nodeId];
     }
@@ -493,10 +603,13 @@ export class TreeView extends Tree {
     this.$mouseNode = $node;
     this.$mouseRow = $row;
     this.$mouseElem = $elem;
-    //debug(`${eventName} ${node.id} `, node, this.$mouseRow);
-    //debug(`node: ${node.id}`, node);
+    //debug(`${eventName} ${node?.id} `, node, this.$mouseRow);
+    //debug(`node: ${node?.id}`, node);
     // identify which part of the row the event was in
-    let rowX, rowY, rowWid, rowHgt;
+    let rowX;
+    let rowY;
+    let rowWid;
+    let rowHgt;
     if ($row) {
       rowX = event.clientX - $row.offsetLeft;
       rowY = event.clientY - $row.offsetTop;
@@ -529,7 +642,7 @@ export class TreeView extends Tree {
     // decide whether to act on mouse hover node or keyboard cursor node
     // based on the event type
     if ('click' === event.type) return this.mouseNode;
-    else return this.cursor;
+    return this.cursor;
   }
 
   action_none (event) { }
@@ -748,10 +861,11 @@ export class TreeView extends Tree {
     this.setStatus(`moved left: ${this.cursor.toLine()}`);
   }
 
-  async addNodeAsPrevOrNextVisibleRow (position) {
+  async addNodeAsPrevOrNextVisibleRow (positionParam) {
     // ensure valid position: prev or next
-    if (undefined === position) position = 'next';
-    if ('next' !== position) position = 'prev';
+    let localPosition = positionParam;
+    if (undefined === localPosition) localPosition = 'next';
+    if ('next' !== localPosition) localPosition = 'prev';
 
     // prompt for new label text
     const result = await this.inputDialog({
@@ -774,7 +888,7 @@ export class TreeView extends Tree {
         destIndex = 0;
       }
       // add new row before this one
-      else if ('prev' === position) {
+      else if ('prev' === localPosition) {
         // in all 'prev' cases, just insert a new sibling before self
         destParent = this.cursor.parent;
         destIndex = this.cursor.indexOf();
@@ -817,7 +931,7 @@ export class TreeView extends Tree {
     // abort if nothing to delete
     if (this.root.nodes.length <= 0) return;
     // choose mouse or keyboard cursor based on event type
-    let cursor = this.whichCursor(event);
+    const cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
     // never delete root
@@ -883,7 +997,7 @@ export class TreeView extends Tree {
   action_unloadNode (event) {
     debug('action_unloadNode');
     // choose mouse or keyboard cursor based on event type
-    let cursor = this.whichCursor(event);
+    const cursor = this.whichCursor(event);
     // abort if nothing to unload
     if (! cursor) return;
     //if (! cursor.isLoaded()) return;
@@ -905,7 +1019,7 @@ export class TreeView extends Tree {
     }
     // abort if nothing to do
     if (! this.cursor) return;
-    let cursor = this.cursor;
+    const cursor = this.cursor;
 
     // if unloaded tab, load it
     if (cursor.isUnloadedTab()) {
@@ -943,7 +1057,7 @@ export class TreeView extends Tree {
   async action_editNotes (event) {
     debug('action_editNotes()');
     // choose mouse or keyboard cursor based on event type
-    let cursor = this.whichCursor(event);
+    const cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
 
@@ -970,7 +1084,7 @@ export class TreeView extends Tree {
   async action_taskEdit (event) {
     debug('action_taskEdit()');
     // choose mouse or keyboard cursor based on event type
-    let cursor = this.whichCursor(event);
+    const cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
     if (cursor.isRoot()) return;
@@ -990,7 +1104,9 @@ export class TreeView extends Tree {
     // update the node
     let newValue = result.checkbox;
     if ('OK' === result.button) return;
-    else if ('Delete' === result.button) newValue = undefined;
+    if ('Delete' === result.button) {
+        newValue = undefined;
+    }
     const px = result.checkboxPx;
     // user manually set a numeric percent value
     if (undefined !== px) cursor.setCheckbox(newValue,
@@ -1003,7 +1119,7 @@ export class TreeView extends Tree {
   action_toggleMarked (event) {
     debug('action_toggleMarked()');
     // choose mouse or keyboard cursor based on event type
-    let cursor = this.whichCursor(event);
+    const cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
     const toggled = ! cursor.marked;
@@ -1015,7 +1131,7 @@ export class TreeView extends Tree {
   async action_unmarkAll (event) {
     debug('action_unmarkAll()');
     await this.unmarkAll({ reason: 'userAction' });
-    this.setStatus(`Unmarked all nodes`);
+    this.setStatus('Unmarked all nodes');
   }
 
   async action_pasteMarked (event) {
@@ -1111,8 +1227,7 @@ export class TreeView extends Tree {
       // if user clicked the left ~1em of the row, toggle expand
       // (or if they clicked the node stats widget)
       if ((this.$mouseRowX <= leftWidth)
-        || (this.$mouseElem
-          && this.$mouseElem.classList.contains('node-stats'))
+        || (this.$mouseElem?.classList.contains('node-stats'))
       ) {
         await this.action_toggleExpanded(event);
       }
@@ -1124,7 +1239,7 @@ export class TreeView extends Tree {
     event.preventDefault();
     event.stopPropagation();
     if (this.mouseNode && this.$mouseRow) return this.showHoverMenu();
-    else return this.hideHoverMenu();
+    return this.hideHoverMenu();
   }
 
   action_mouseDragStart (event) {
@@ -1138,7 +1253,7 @@ export class TreeView extends Tree {
     // change how the node looks
     this.mouseDragStartNode.$.classList.add('dragging');
     // default drag image obscures drop target, so make a smaller one
-    let dragImage = this.document.getElementById('drag-arrow');
+    const dragImage = this.document.getElementById('drag-arrow');
     event.dataTransfer.setDragImage(dragImage, 0, 12);
   }
 
@@ -1148,8 +1263,8 @@ export class TreeView extends Tree {
   getMouseDragTarget (event) {
     const result = {};
     // drop target
-    let sourceNode = this.mouseDragStartNode;
-    let targetNode = this.mouseNode;
+    const sourceNode = this.mouseDragStartNode;
+    const targetNode = this.mouseNode;
     // abort on no-op
     if (! targetNode) return result;
     // don't move a parent into its own child list
@@ -1235,7 +1350,7 @@ export class TreeView extends Tree {
     // save new drop target
     this.dropTargetNode = drop.targetNode;
     // set styles on new drop target
-    let elem = ('drop-target-left' === drop.targetClass)
+    const elem = ('drop-target-left' === drop.targetClass)
       ? drop.targetNode.$ : drop.targetNode.$row;
     elem.classList.add(drop.targetClass);
     if ('external' === drop.source)
@@ -1260,7 +1375,7 @@ export class TreeView extends Tree {
       debug('action_mouseDrop', event, event.dataTransfer.types);
       // add links as new link nodes
       if ('url' === drop.type) {
-        let newNode = await drop.destParent.addChild(drop.destIndex,
+        const newNode = await drop.destParent.addChild(drop.destIndex,
           { url: drop.url, title: drop.title, render: true },
           { reason: 'userAction' });
         this.setStatus(`Added node: ${newNode.toLine()}`);
@@ -1270,14 +1385,15 @@ export class TreeView extends Tree {
         let attached = false;
         // right edge of node: create new child node with note
         if ('drop-target-right' === drop.targetClass) {
-          let label, note;
+          let label;
+          let note;
           if (drop.text.includes('\n')) {
             const lines = drop.text.split('\n');
             label = lines[0];
             note = lines.slice(1).join('\n');
           }
           else label = drop.text;
-          let newNode = await drop.destParent.addChild(drop.destIndex,
+          const newNode = await drop.destParent.addChild(drop.destIndex,
             { label: label, note: note, render: true },
             { reason: 'userAction' });
           this.setStatus(`Added node: ${newNode.toLine()}`);
@@ -1298,7 +1414,8 @@ export class TreeView extends Tree {
           let note = drop.targetNode.note;
           if (! note) note = '';
           // TODO: user pref for append / prepend
-          let sep, newNote;
+          let sep;
+          let newNote;
           const mode = 'prepend';
           if ('append' === mode) {
             sep = ((!note) || note.endsWith('\n')) ? '' : '\n';
@@ -1343,15 +1460,15 @@ export class TreeView extends Tree {
       $div.classList.add(className);
       $div.innerText = label;
       // add a tooltip
-      $div['title'] = funcName;
-      $div['data-toggle'] = 'tooltip';
+      $div.title = funcName;
+      $div.dataset.toggle = 'tooltip';
       // TODO: get label from user's keybinding table
       //let binding;
       // make the button do something when clicked
-      const func = function (event) {
+      const func = (event) => {
         _this[`action_${funcName}`].bind(_this)(event);
         _this.hideHoverMenu();  // will re-appear if still over a node
-      }
+      };
       if (func) $div.addEventListener('click', func);
       //const func = _this[`action_${funcName}`];
       //if (func) $div.addEventListener('click', func.bind(_this));
@@ -1389,7 +1506,7 @@ export class TreeView extends Tree {
     this.hoverMenuLast = this.mouseNode;
     // adjust menu position
     const rect = this.$mouseRow.getBoundingClientRect();
-    this.$hoverMenu.style.top = String(rect.top + window.scrollY - 3) + 'px';
+    this.$hoverMenu.style.top = `${String(rect.top + window.scrollY - 3)}px`;
     // show or hide the 'unload' button
     if (this.mouseNode.isUnloadable()) {
       this.$hoverMenuUnload.style.display = 'inline-block';
@@ -1448,7 +1565,7 @@ export class TreeView extends Tree {
     const win = await api.windows.getCurrent();
     const windowId = win.id;
     //debug(`windowId: ${windowId}`);
-    let found = this.root.findNodes((node) => {
+    const found = this.root.findNodes((node) => {
       return (node.isWindow() && (windowId === node.windowId));
     });
     // abort if not found
@@ -1589,7 +1706,6 @@ export class TreeView extends Tree {
         if (this.cursor) this.cursor.scrollIntoView();
         break;
       // 2 = full / all details
-      case 2:
       default:
         this.$detailsBtn.classList.add('pressed');
         //this.$detailsBtn.classList.remove('half-pressed');
@@ -1608,7 +1724,7 @@ export class TreeView extends Tree {
       createProperties.url = url;
     const [tab] = await api.tabs.query(
       { active: true, windowId: this.windowId });
-    debug(`openLinkInNewTab() parent tab:`, tab);
+    debug('openLinkInNewTab() parent tab:', tab);
     createProperties.openerTabId = tab.id;
     api.tabs.create(createProperties);
   }
@@ -1650,8 +1766,9 @@ export class TreeView extends Tree {
 
   async onMessage (msg, sender, sendResponse) {
     // if message not for us, let parent class handle it
-    if (!(msg && msg.msg && msg.msg.startsWith('treeview_')))
+    if (!(msg?.msg?.startsWith('treeview_'))) {
       return super.onMessage(msg, sender, sendResponse);
+    }
 
     debug(`TreeView.onMessage(${msg.msg})`, this.windowId);
 

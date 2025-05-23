@@ -1,0 +1,43 @@
+/* Add styles for the search bar */
+#search-bar-container {
+  padding: 5px;
+  background-color: var(--bg-color, #2b2b2b); /* Use theme background color with fallback */
+}
+
+#search-input {
+  width: calc(100% - 10px); /* Full width minus padding */
+  padding: 5px 10px;
+  border: 1px solid var(--border-color, #444);
+  border-radius: 4px;
+  background-color: var(--input-bg-color, #333);
+  color: var(--text-color, #eee);
+  font-size: 14px;
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: var(--highlight-color, #6a8ed4);
+  box-shadow: 0 0 3px var(--highlight-color, #6a8ed4);
+}
+
+#search-input::placeholder {
+  color: var(--placeholder-color, #999);
+  opacity: 0.7;
+}
+
+/* Search results styling */
+.hidden-by-search {
+  display: none !important; /* Ensure items hidden by search are not displayed */
+}
+
+/* Optional: Highlight matched nodes with a subtle background */
+.row.search-match {
+  background-color: rgba(var(--highlight-rgb, 106, 142, 212), 0.15);
+}
+
+/* When a parent is only visible because its children match */
+.node:not(.search-match) > .row:has(+ ul:not(.hidden) .search-match) {
+  background-color: rgba(var(--highlight-rgb, 106, 142, 212), 0.05);
+}
