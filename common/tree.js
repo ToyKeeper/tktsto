@@ -22,6 +22,8 @@ export class Tree {
       this.resolveTreeLoaded = resolve;
     });
 
+    this.onTabReplacedMutex = new Mutex();
+
     this.markedNodes = [];
 
     // holds tabIds of "tabs" we need to ignore,
@@ -742,7 +744,7 @@ export class Tree {
     await windowNode.setActiveTab({ reason: 'onTabAttached' });
   }
 
-  onTabUpdated(tabId, changeInfo, tab) {
+  async onTabUpdated(tabId, changeInfo, tab) {
     // tabId: number
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // changeInfo.title: string
@@ -758,6 +760,11 @@ export class Tree {
     // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
     // changeInfo.autoDiscardable: boolean
     debug(`Tree.onTabUpdated(tabId=${tabId})`, changeInfo, tab);
+
+    // wait, if a tab is currently being replaced
+    const otrUnlock = await this.onTabReplacedMutex.lock();  otrUnlock();
+
+    // ignore Vivaldi sidepanels and other non-tab "tabs"
     if (this.tabBlacklist[`${tabId}`]) {
       debug('ignoring blacklisted tab');
       return;
@@ -785,7 +792,7 @@ export class Tree {
     }
     // apply changes, if any
     if (Object.keys(changes).length > 0) {
-      return tabNode.setTabFields(changes, { reason: 'onTabUpdated' });
+      await tabNode.setTabFields(changes, { reason: 'onTabUpdated' });
     }
   }
 
@@ -805,22 +812,26 @@ export class Tree {
     // it's like a onTabUpdated(), but only the tabId changes?
     const changes = { 'tabId': addedTabId };
 
-    // get the actual tab, to check if anything else changed
-    const tab = await api.tabs.get(addedTabId);
-    if (tab) {
-      // check for other changes too
-      for (const field of
-        ['title', 'url', 'favIconUrl',
-          'discarded', 'frozen', 'hidden']
-      ) {
-        let value = tab[field];
-        // clean up sloppy titles
-        if ('title' === field) value = value.trim().replace(/\s+/g, ' ');
-        // if data actually changed, add it to the outgoing message
-        if (tabNode[field] !== value) changes[field] = value;
+    const unlock = await this.onTabReplacedMutex.lock();
+    try {
+      // get the actual tab, to check if anything else changed
+      const tab = await api.tabs.get(addedTabId);
+      if (tab) {
+        // check for other changes too
+        for (const field of
+          ['title', 'url', 'favIconUrl',
+            'discarded', 'frozen', 'hidden']
+        ) {
+          let value = tab[field];
+          // clean up sloppy titles
+          if ('title' === field) value = value.trim().replace(/\s+/g, ' ');
+          // if data actually changed, add it to the outgoing message
+          if (tabNode[field] !== value) changes[field] = value;
+        }
       }
+      await tabNode.setTabFields(changes, { reason: 'onTabReplaced' });
     }
-    await tabNode.setTabFields(changes, { reason: 'onTabReplaced' });
+    finally { unlock(); }
   }
 
   onMessage (msg, sender, sendResponse) {
