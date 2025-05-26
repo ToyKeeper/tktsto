@@ -1,6 +1,7 @@
 *~
 *.old
 .*.sw?
+active/
 build/
 dist/
 ignore/
