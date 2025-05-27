@@ -313,12 +313,10 @@ export class Tree {
   }
 
   getNodeByTabId(tabId, root)  {
-    // TODO: cache loaded tabs in Tree.tabIds
-    //       instead of searching the whole damn tree every time
     // TODO: maybe move this function to Node.getNodeByTabId() ?
     if (! root) root = this.root;
     const found = root.findNodes((node) =>
-      { return (node.isLoaded() && (node.tabId === tabId));}
+      { return ((node.tabId === tabId) || (node.oldTabId === tabId));}
     );
     if (1 === found.length) return found[0];
     if (1 > found.length) return null;
@@ -539,8 +537,13 @@ export class Tree {
     // TODO: if tab was last Node in the window and it's boring,
     //   delete the tab node...
     //   and if the window was boring too, delete it too
+    // if tab unloaded manually by user, and we're just cleaning up
+    if (! tabNode.isLoaded()) {
+      // finalize the unload now that the browser tab is actually closed
+      return tabNode.unload({ reason: 'onTabRemoved' });
+    }
     // if tab closed only because its window is closing
-    if (removeInfo && removeInfo.isWindowClosing) {
+    else if (removeInfo && removeInfo.isWindowClosing) {
       // keep unloaded tab as part of the user's saved window
       return tabNode.unload({ reason: 'onWindowRemoved' });
     }

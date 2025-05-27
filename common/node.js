@@ -789,7 +789,7 @@ export class Node {
     if (! args) return;
     //if (! this.isLoaded() && (! this.wasLoaded)) return;
     if ((! this.url) && (! this.isWindow())) return;  // don't "unload" notes
-    const wasActuallyLoaded = this.loaded;
+    const wasActuallyLoaded = this.loaded || this.tabId;
 
     // Do The Thing
     this.loaded = false;
@@ -799,12 +799,16 @@ export class Node {
     const windowId = this.windowId;
     this.tabId = undefined;
     this.windowId = undefined;
+    // save briefly so onTabRemoved can find it in a few milliseconds
+    this.oldTabId = tabId;
+
     // let user toggle wasLoaded state manually
     if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
     else if (['onWindowUnloaded', 'onWindowRemoved'].includes(args.reason))
       this.wasLoaded = true;
     else if (wasActuallyLoaded) this.wasLoaded = false;
-    else this.wasLoaded = (! this.wasLoaded);
+    else if ('userAction' === args.reason)
+      this.wasLoaded = (! this.wasLoaded);
 
     // bump timestamp (?)
     // TODO: (but are 'load' and 'unload' really modifications?)
