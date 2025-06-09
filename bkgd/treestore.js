@@ -71,19 +71,54 @@ export class TreeStore extends Tree {
 
     // if there's stale data in the DB
     // (happens sometimes during development)
-    // delete all nodes which weren't linked into the tree
+    // re-attach all orphaned nodes
     if (numLoaded !== numIds) {
-      let numDeleted = 0;
-      let numKept = 0;
-      for (const nodeId of Object.keys(nodeIds)) {
-        if (this.nodes[nodeId]) { numKept ++; }
-        else {
-          await this.db.deleteNode(nodeId);
-          numDeleted ++;
-        }
-      }
-      log(`loadTreeFromDB(): deleted ${numDeleted} stale nodes, kept ${numKept}`);
+      await this.reattachOrphanedNodes(nodeIds);
     }
+  }
+
+  async reattachOrphanedNodes (nodeIds) {
+    const newParentName = 'lost+found';
+
+    // first, find or create a 'lost+found/' node to hold others
+    let lostFound;
+    for (const node of this.root.nodes) {
+      if (newParentName === node.label) {
+        lostFound = node;
+        break;
+      }
+    }
+    if (! lostFound) {
+      lostFound = await this.root.addChild(this.root.nodes.length,
+        { label: newParentName, note: 'orphaned nodes found during fsck' },
+        { reason: 'reattachOrphanedNodes' });
+    }
+    const lfDict = lostFound.toDict();
+    const modifiedNodes = [lostFound.id];
+
+    // second, attach orphans to lost+found
+    for (const nodeId of Object.keys(nodeIds)) {
+      const parentId = nodeIds[nodeId].parent;
+      // if parent id not in the database, attach it as an orphan
+      if (undefined === nodeIds[parentId]) {
+        nodeIds[nodeId].parent = lostFound.id;
+        lfDict.nodes.push(nodeId);
+        modifiedNodes.push(nodeId);
+      }
+    }
+
+    // actually load the orphaned nodes now
+    nodeIds[lostFound.id] = lfDict;
+    const numAttached = this.rebuildNodeFromSerializedHash(lostFound, nodeIds);
+    //log(`reattachOrphanedNodes: attached ${numAttached} orphans`);
+
+    // write changes to database
+    for (const nodeId of modifiedNodes) {
+      const node = this.nodes[nodeId];
+      await this.db.saveNode(node);
+    }
+
+    warn(`reattachOrphanedNodes(): attached ${numAttached} orphans under ${newParentName}`);
   }
 
 }

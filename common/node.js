@@ -557,7 +557,7 @@ export class Node {
       'userAction',
       'onTabCreated', 'onTabAttached', 'onWindowCreated',
       'bkgd_loadSavedNode:autoWindow',
-      'importFile', 'tutorial'
+      'importFile', 'tutorial', 'reattachOrphanedNodes'
     ].includes(args.reason))
       emit('tree_nodeAdded',
         { parentId: this.id, index: index, node: newNode,
