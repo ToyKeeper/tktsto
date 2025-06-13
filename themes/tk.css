@@ -618,9 +618,12 @@ foo {
   animation: shine 5.1s infinite linear;
   */
   /* without the animation */
+  /*
   background: linear-gradient(350deg,
     rgba(255,215,0,0.20),
     rgba(255,215,0,0.10));
+  */
+  background: var(--marked-node-bg);
 }
 
 /* let cursor background override marked background */
@@ -647,15 +650,24 @@ foo {
 #marked-count {
   position: fixed;
   z-index: 2;
-  top: var(--toolbar-height);
-  right: 5px;
+  top: calc(var(--toolbar-height) + 0.5rem);
+  right: 1rem;
   border-radius: var(--cursor-branch-radius);
-  padding: 0.1em 0.25em;
+  padding: 0.1em 0.35em;
   font-size: 133%;
-  color: var(--marked-count-color);
-  /* background: var(--tree-view-bg); */
-  background: #0004;
+  color: var(--marked-count-fg);
+  background: var(--marked-count-bg);
+  box-shadow: var(--marked-count-shadow);
+  text-shadow: var(--marked-count-text-shadow);
 }
+
+#marked-count:hover {
+  color: var(--marked-count-fg-hover);
+  background: var(--marked-count-bg-hover);
+  box-shadow: var(--marked-count-shadow-hover);
+  outline: var(--marked-count-outline-hover);
+}
+
 
 /******************** Node / row hover menu ********************/
 

@@ -78,6 +78,9 @@ foo {
   --cursor-branch-shadow: 0.15em 0.15em 0.333em var(--shadow-color);
   /***** marked nodes *****/
   --marked-node-shadow: 0 0 10px gold;
+  --marked-node-bg: linear-gradient(350deg,
+    rgba(255,215,0,0.20),
+    rgba(255,215,0,0.10));
   /***** hover menu *****/
   --delete-button-fg: #f00;
   --hover-menu-bg: var(--button-bg);
@@ -85,10 +88,18 @@ foo {
   --hover-menu-shadow: 0.2em 0.2em 0.4em #000000c0;
   --hover-menu-button-shadow: var(--fancy-text-shadow);
   --hover-menu-button-hover-bg: var(--button-hover-bg);
-  /* --marked-row-outline: var(--1px) solid gold; */
   --marked-row-outline: var(--1px) solid orange;
+  --marked-count-outline-hover: var(--1px) outset #fb0;
   --marked-row-shadow: 0 0 10px orange;
   --marked-count-color: gold;
+  --marked-count-fg: #fe0;
+  --marked-count-text-shadow: none;
+  --marked-count-bg: linear-gradient(#302c1e, #433c1a);
+  --marked-count-fg-hover: #000;
+  --marked-count-bg-hover: linear-gradient(#ed0, #980);
+  --marked-count-shadow: 0 0 10px orange;
+  --marked-count-shadow-hover: var(--marked-count-shadow),
+    var(--button-hover-shadow);
   /***** toolbars *****/
   --top-area-bg: linear-gradient(#3e3e52, #2b2b3c);
   --top-area-edge: 4px solid #242433;

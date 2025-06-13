@@ -353,6 +353,14 @@ export class TreeView extends Tree {
     else this.$markedCount.classList.remove('hidden');
   }
 
+  onMarkedCountHover () {
+    this.hideHoverMenu();
+  }
+
+  onMarkedCountClick (event) {
+    this.action_pasteMarked(event);
+  }
+
   async inputDialog (...args) {
     // disable key event handling while dialog is active
     this.dialogActive = true;
@@ -1538,6 +1546,13 @@ export class TreeView extends Tree {
     // open the user manual
     this.$helpBtn.addEventListener('click', () => {
       this.onHelpBtnClick();
+    });
+    // "marked count" widget
+    this.$markedCount.addEventListener('mouseover', () => {
+      this.onMarkedCountHover();
+    });
+    this.$markedCount.addEventListener('click', () => {
+      this.onMarkedCountClick();
     });
   }
 
