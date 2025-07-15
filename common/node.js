@@ -150,9 +150,11 @@ export class Node {
     // TODO: if deleting a window node, handle any loaded tabs specially
     //   (since loaded tabs cannot exist outside a window)
     if (this.hasKids()) {
-      let newIndex = this.indexOf();
-      for (const node of this.nodes.slice()) {
-        newIndex ++;
+      let newIndex = this.indexOf() + 1;
+      // do it last-first so open tabs won't change order during the move
+      // (forward order has issues with race conditions for open tabs)
+      const reversed = [...this.nodes].reverse();
+      for (const node of reversed) {
         await node.moveTo(this.parent, newIndex, args);
       }
     }
