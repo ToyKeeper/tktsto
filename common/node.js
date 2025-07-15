@@ -1152,13 +1152,21 @@ export class Node {
     this.active = active;
     // bump timestamp
     if (active) this.bump('atime', args);
+    // sync loaded state, maybe
+    if (undefined !== args.loaded) this.loaded = args.loaded;
     // let others know
     if (['userAction', 'onTabActivated', 'onTabAttached',
       'reorderAllTabsInThisWindow'
-    ].includes(args.reason))
+    ].includes(args.reason)) {
+      // in case the 'loaded' state somehow got desynced or corrupted,
+      // this event means we know it *must* be in a loaded state
+      this.loaded = true;
+      // let others know
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setActive', active: this.active,
+          loaded: this.loaded,
           when: this.atime });
+    }
 
     // if we're the originator and the tab isn't focused, focus it
     if (active && ('userAction' === args.reason))
