@@ -118,6 +118,8 @@ def json2tree(jsn):
     for nodeId in jsn['nodes']:
         node = Empty(jsn['nodes'][nodeId])
         nodes[nodeId] = node
+
+    for nodeId, node in nodes.items():
         if 'window' == node.type:
             node.tabs = []
             windows.append(node)
