@@ -337,11 +337,12 @@ General project stuff:
 
 - [x] Git repo
 - [x] Chat / community server
-- [ ] GitHub project
+- [x] GitHub project
 - [ ] GitHub bug template
-- [ ] Code of conduct
-- [ ] Contributor agreement (like, verify you actually wrote the code you're
-  contributing, and agree to the code of conduct)
+- [x] Code of conduct, DCO, etc
+- [ ] Contributor agreement signed by each contributor (like, verify you
+  actually wrote the code you're contributing, and agree to the code of
+  conduct)
 - [ ] Upload official builds to extension stores for each browser
 
 
