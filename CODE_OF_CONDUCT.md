@@ -69,7 +69,7 @@ Conduct.
    which includes, links or describes any other restricted behaviors.
 5. **Irresponsible use of AI.** Submitting AI-generated code or other content
    without understanding it, testing it, confirming it is not plagiarized,
-   confirming you have the right to distribute it under this project's license,
+   confirming you have the right to distribute it under a suitable license,
    etc.  Don't waste people's time with code (or other content) you didn't
    write, don't understand, didn't test, or don't have rights to.
 
