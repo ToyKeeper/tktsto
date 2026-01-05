@@ -105,14 +105,54 @@ Install from your browser's app store, ideally.  It boosts the numbers in the
 app store and helps this extension gain more visibility.  It also allows easier
 updates, in case you want updates when a new version is released.
 
-However, installing from source is easy:
+However, installing from source is possible too:
 
-- In Chromium-based browsers, you can "load unpacked extension" straight from
-  a fresh git source repository, without compiling or installing anything.
+### Chrome
 
-- In Firefox, just run `make` to generate a compatible .zip file.  All it does
-  is copy some files and zip them.  Then you should be able to load that .zip
-  file as an extension.
+In Chromium-based browsers:
+
+- Enable "developer mode" in the browser's extensions page.
+- `git clone --tags https://github.com/ToyKeeper/tktsto.git`
+- `cd tktsto`
+- `make chrome-zip`
+- `rm -rf active` if you already have an `active/` dir.
+- `mv build active`
+- Use "load unpacked extension" in the browser, to load the copy in the
+  `active/` dir.
+
+This process mostly just copies all the files into `active/`, but also inserts
+required values into the `manifest.json` file.  Chrome can run extensions
+in-place from source, but this repository's manifest needs a few values filled
+in first, and that is done by `make`.
+
+### Firefox
+
+In Firefox, it's necessary to sign the extension because most 2025-and-later
+versions won't run unsigned extensions even if you configure it to not require
+signatures.  If you're lucky enough to be able to run unsigned extensions, then
+just run `make` to generate a compatible .zip file, and load it from the
+`dist/` dir.  Otherwise, try the following...
+
+Create an account and API keys at https://addons.mozilla.org/developers/
+(under "API Keys").
+
+Create a `.env` file containing a few settings:
+
+```sh
+# get these from your account at addons.mozilla.org/developers
+JWT_ISSUER='MYUSER'
+JWT_SECRET='MYSECRET'
+
+# set your own extension ID and name here
+EXT_NAME="TK Tree Style Tab Outliner (My Name's personal build)"
+FF_EXT_ID="your-email-address+tktsto@your-email-domain.com"
+```
+
+Run `make firefox-xpi`.
+
+Install the `.xpi` file.
+
+### Server
 
 FUTURE: I also recommend installing [the backup/sync server](server/readme.md),
 so you can automatically save snapshots of your session, sync your session
