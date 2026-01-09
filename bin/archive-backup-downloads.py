@@ -35,8 +35,8 @@ except:
 download_dir = Path.home() / 'Downloads'
 infile_pattern = re.compile(
         r'^tktsto\.'
-        '(\d{4})-(\d{2})-(\d{2})_'
-        '(\d{2})-(\d{2})-(\d{2})\.(.+)\.json$')
+        r'(\d{4})-(\d{2})-(\d{2})_'
+        r'(\d{2})-(\d{2})-(\d{2})\.(.+)\.json$')
 
 
 def main(args):
