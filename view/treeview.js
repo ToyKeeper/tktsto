@@ -209,8 +209,13 @@ export class TreeView extends Tree {
 
     // figure out which window we are and whether to view the whole tree
     this.windowNode = this.root.getWindowId(this.windowId);
-    this.viewScope = await this.getWindowConfig('viewScope', 'session');
-    if (! this.viewScope) this.viewScope = 'session';
+    let defaultViewScope = 'window';
+    // 1st window defaults to Session mode, others use Window mode
+    if (this.windowNode.parent.isRoot() && (0 === this.windowNode.indexOf()))
+    { defaultViewScope = 'session'; }
+    this.viewScope = await this.getWindowConfig('viewScope', defaultViewScope);
+    if (! this.viewScope) this.viewScope = defaultViewScope;
+
     this.$renderViewScopeBtn();
 
     this.$renderWholeTree();
