@@ -214,6 +214,7 @@ export class Tree {
     node.nodes = [];
     numLoaded ++;
     for (const nodeId of nodeDict.nodes) {
+      if ('root' === nodeId) continue;  // root can't be a child
       //debug('nodeDict() childId', nodeId);
       const child = new this.NodeClass(this, node);
       child.id = nodeId;

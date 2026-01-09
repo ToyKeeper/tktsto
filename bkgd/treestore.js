@@ -79,6 +79,7 @@ export class TreeStore extends Tree {
 
   async reattachOrphanedNodes (nodeIds) {
     const newParentName = 'lost+found';
+    let numToReattach = 1;  // start with 1 for the lost+found node
 
     // first, find or create a 'lost+found/' node to hold others
     let lostFound;
@@ -89,6 +90,7 @@ export class TreeStore extends Tree {
       }
     }
     if (! lostFound) {
+      log(`fsck: making new ${newParentName} node`);
       lostFound = await this.root.addChild(this.root.nodes.length,
         { label: newParentName, note: 'orphaned nodes found during fsck' },
         { reason: 'reattachOrphanedNodes' });
@@ -96,21 +98,44 @@ export class TreeStore extends Tree {
     const lfDict = lostFound.toDict();
     const modifiedNodes = [lostFound.id];
 
+    // warn about nodes not attached to the tree
+    // and list some human-readable info about them
+    for (const nodeId of Object.keys(nodeIds)) {
+      let n = nodeIds[nodeId];
+      if (undefined === this.nodes[nodeId]) {
+        numToReattach ++;
+        let summary = `${n.label} ~ ${n.title} [${n.url}]`;
+        log(`fsck: detached node: ${summary}`, n);
+      }
+    }
+
     // second, attach orphans to lost+found
+    // (entire branches may have been detached, and attaching the top-most
+    //  node of each detached branch should recover the whole thing)
     for (const nodeId of Object.keys(nodeIds)) {
       const parentId = nodeIds[nodeId].parent;
-      // if parent id not in the database, attach it as an orphan
-      if (undefined === nodeIds[parentId]) {
+      const n = nodeIds[nodeId];
+      const p = nodeIds[parentId];
+      // attach to lost+found if:
+      // - parent ID not in the database
+      // - node is its own parent
+      // - parent doesn't recognize child
+      if ((undefined === p)  // parent ID not in database
+        || ((parentId === nodeId) && ('root' !== nodeId))  // is own parent
+        || (! p.nodes.includes(nodeId))  // parent doesn't expect this child
+      ) {
+        log('fsck: attaching orphan to lost+found:', nodeIds[nodeId]);
         nodeIds[nodeId].parent = lostFound.id;
+        nodeIds[nodeId].loaded = false;
+        nodeIds[nodeId].wasLoaded = false;
         lfDict.nodes.push(nodeId);
         modifiedNodes.push(nodeId);
       }
     }
 
-    // actually load the orphaned nodes now
+    // actually attach the orphaned nodes now
     nodeIds[lostFound.id] = lfDict;
     const numAttached = this.rebuildNodeFromSerializedHash(lostFound, nodeIds);
-    //log(`reattachOrphanedNodes: attached ${numAttached} orphans`);
 
     // write changes to database
     for (const nodeId of modifiedNodes) {
@@ -118,7 +143,11 @@ export class TreeStore extends Tree {
       await this.db.saveNode(node);
     }
 
-    warn(`reattachOrphanedNodes(): attached ${numAttached} orphans under ${newParentName}`);
+    // summary
+    warn(`fsck: reattachOrphanedNodes() attached ${numAttached} orphans under ${newParentName}`);
+    if (numToReattach !== numAttached) {
+      warn(`fsck: attached ${numAttached} nodes but expected ${numToReattach}`);
+    }
   }
 
 }
