@@ -803,6 +803,9 @@ export class Node {
     this.windowId = undefined;
     // save briefly so onTabRemoved can find it in a few milliseconds
     this.oldTabId = tabId;
+    // distinguish between manual unload and "bkgd woken up by onTabRemoved"
+    if (wasActuallyLoaded && (undefined !== tabId))
+      this.tabClosedReason = 'unload';
 
     // let user toggle wasLoaded state manually
     if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;

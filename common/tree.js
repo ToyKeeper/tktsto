@@ -181,7 +181,7 @@ export class Tree {
           //if ((null === v) || ('' === v))
           //  delete node[k];
           // remove data which shouldn't persist
-          if (['tabId', 'windowId', 'marked'].includes(k))
+          if (['tabId', 'oldTabId', 'windowId', 'marked'].includes(k))
             delete node[k];
           // remove values which haven't changed from default
           if (defaultNode[k] === node[k])
@@ -313,7 +313,7 @@ export class Tree {
     downloading.then(onStarted, onFailed);
   }
 
-  getNodeByTabId(tabId, root)  {
+  getNodeByTabId (tabId, root)  {
     // TODO: maybe move this function to Node.getNodeByTabId() ?
     if (! root) root = this.root;
     const found = root.findNodes((node) =>
@@ -323,6 +323,7 @@ export class Tree {
     if (1 > found.length) return null;
     warn(`Tree.getNodeByTabId(${tabId}) found ${found.length} matches, not 1`,
       found);
+    // FIXME: prefer matching tabId over oldTabId
     return found[0];
   }
 
@@ -532,36 +533,44 @@ export class Tree {
     // tabId: number
     // removeInfo.isWindowClosing: boolean
     // removeInfo.windowId: number
+    debug(`tree.onTabRemoved(tabId=${tabId}, windowId=${removeInfo.windowId}, isWindowClosing=${removeInfo.isWindowClosing})`);
     const tabNode = this.getNodeByTabId(tabId);
     // if tab doesn't exist, do nothing
-    if (! tabNode) return;
+    if (! tabNode) {
+      log(`onTabRemoved(${tabId}): couldn't find node`, removeInfo);
+      return;
+    }
     // TODO: if tab was last Node in the window and it's boring,
     //   delete the tab node...
     //   and if the window was boring too, delete it too
+
     // if tab unloaded manually by user, and we're just cleaning up
-    if (! tabNode.isLoaded()) {
+    // (without tabClosedReason, it's likely the user closed the tab
+    //  and caused a new service worker to spawn)
+    if ('unload' === tabNode.tabClosedReason) {
       // finalize the unload now that the browser tab is actually closed
-      return tabNode.unload({ reason: 'onTabRemoved' });
+      tabNode.tabClosedReason = undefined;  // message received, reset it
+      return tabNode.unload({ reason: 'onTabRemoved', detail: 'manualUnload' });
     }
     // if tab closed only because its window is closing
     else if (removeInfo && removeInfo.isWindowClosing) {
       // keep unloaded tab as part of the user's saved window
-      return tabNode.unload({ reason: 'onWindowRemoved' });
+      return tabNode.unload({ reason: 'onWindowRemoved', detail: 'saveWindow' });
     }
     // if tab closed manually by user, but it has label/notes
     else if (tabNode.shouldUnloadNotDelete()) {
       // keep tab in tree to preserve its metadata
-      return tabNode.unload({ reason: 'onTabRemoved' });
+      return tabNode.unload({ reason: 'onTabRemoved', detail: 'hasMetadata' });
     }
     // if tab is boring but has kids
     else if (tabNode.hasKids()) {
       // delete the node, but keep its kids
-      return tabNode.deleteSelfAndPromoteKids({ reason: 'onTabRemoved' });
+      return tabNode.deleteSelfAndPromoteKids({ reason: 'onTabRemoved', detail: 'hasKids' });
     }
     // tab is a leaf node with no label or anything interesting
     else {
       // delete boring tabs on close
-      return tabNode.deleteSelf({ reason: 'onTabRemoved' });
+      return tabNode.deleteSelf({ reason: 'onTabRemoved', detail: 'boringLeaf' });
     }
   }
 
