@@ -13,13 +13,13 @@ BUILD_FILE="$REPO"/.build
 main () {
   [ "bump" = "$1" ] && DO_BUMP=1
 
-  # convert 'v1.2.3-4-g987abcd' into '1.2.3.4'
-  # and 'v1.2-3-g987abcd' into '1.2.3'
+  # convert 'v1.2-3-g987abcd' into '1.2.3.0'
   VERSION=$(git describe --tags --long --match='v*' \
     | sed -E '
       s/^v//;
       s/-g[0-9a-f]+$//;
       s/-([0-9]+)/.\1/;
+      s/$/.0/;
       ' \
     )
   echo "$VERSION" > "$VERSION_FILE"
@@ -32,7 +32,7 @@ main () {
   #       (like if you "git co v0.5 ; make ; git co v0.2 ; make")
   compare_versions "$VERSION" "$BUILD_VERSION"
   if [ 1 = "$?" ]; then
-    echo "$VERSION".0 > "$BUILD_FILE"
+    echo "$VERSION" > "$BUILD_FILE"
   fi
 
   [ 1 = "$DO_BUMP" ] && bump
@@ -70,8 +70,8 @@ compare_versions () {
     fi
 
     # drop the first field
-    [ "$a" = "$x" ] || a=${a#*.}
-    [ "$b" = "$y" ] || b=${b#*.}
+    a=${a#*.}
+    b=${b#*.}
 
     # stop if there are no more fields
     [ 0 = "$a" ] && [ 0 = "$b" ] && return 0
