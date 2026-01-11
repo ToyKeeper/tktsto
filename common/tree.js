@@ -483,13 +483,21 @@ export class Tree {
     let destParent = winNode;
     let destIndex = winNode.nodes.length;
 
+    // find the active tab so we can compare to the new tab
+    // (some browsers (Maxthon) set tab.index *instead of* tab.openerTabId,
+    //  so detecting parent must be done by index in those browsers)
+    const activeTabs = await api.tabs.query({
+      active: true, windowId: tab.windowId });
+    const activeTab = activeTabs[0];
+    const activeTabNode = winNode.getActiveTab();
+
     // if the tab is a blank created by the user with C-t...
     // ... make it the 1st child of the active tab
     if (isNewTabPage(tabPendingUrl)) {
-      destParent = winNode.getActiveTab();
+      destParent = activeTabNode;
       if (! destParent) destParent = winNode;
       destIndex = 0;
-      debug(`Tree.onTabCreated() moving new tab to the right of: "${destParent.toLine()}"`);
+      debug(`Tree.onTabCreated(newTabPage) moving new tab to the right of: "${destParent.toLine()}"`);
     }
     // find the right place to put this tab in the tree
     else if (tab.openerTabId) {
@@ -502,16 +510,25 @@ export class Tree {
         //     or open as next sibling
         //destIndex = destParent.nodes.length;
         destIndex = 0;  // always insert as 1st child of current tab
-        //debug(`Tree.onTabCreated: destParent(${destIndex})`, destParent);
+        debug(`Tree.onTabCreated(openerTabId): destParent:`, destParent);
       }
       else {
         // if parent not found, open tab as 1st child of current/active tab
-        const activeTabNode = winNode.getActiveTab();
         if (activeTabNode) {
           destParent = activeTabNode;
           destIndex = 0;
+          debug(`Tree.onTabCreated(openerTabId not found): destParent:`, destParent);
         }
       }
+    }
+    // Maxthon doesn't set openerTabId, so detect it by index
+    else if ((activeTab.index + 1) === tab.index) {
+      // first child of current tab
+      // (assume user clicked a link on the current page, to open a new tab)
+      destParent = activeTabNode;
+      if (! destParent) destParent = winNode;
+      destIndex = 0;
+      debug(`Tree.onTabCreated(parentByIndex) moving new tab to the right of: "${destParent.toLine()}"`);
     }
     // create the tree node
     await destParent.addChild(destIndex, {
