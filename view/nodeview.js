@@ -115,6 +115,9 @@ export class NodeView extends Node {
   }
 
   $renderTitle () {
+    const doc = this.tree.document;
+    this.$row.innerHTML = '';  // start empty
+
     // reset classes
     //this.$row.className = 'row';
     this.$row.classList.add('row');
@@ -146,57 +149,13 @@ export class NodeView extends Node {
     else this.$row.classList.remove('frozen');
     if (this.hidden) this.$row.classList.add('tab-hidden');
     else this.$row.classList.remove('tab-hidden');
+
     // title row text
-    // full row: [3/14] @ Label Text ~ <a href="link">Link Title</a>
-    // ... where "[3/14]" is num children open/total, and "@" is a favicon
-    let mainText = '';
-    let urlTitle = this.title ? this.title : this.url;  // handle blank title
-    // FIXME: instead of innerHTML, use safer Element creation and innerText
-    if (this.label) {
-      if (this.url) {  // label ~ href
-        mainText = `<a class="node-link" draggable="false" href="${this.url}"><span class="node-label">${this.label}</span><span class="node-label-url-sep"></span><span class="url-title">${urlTitle}</span></a>`;
-      }
-      else {  // label only
-        mainText = `<span class="node-label">${this.label}</span>`;
-      }
-    }
-    else if (this.url) {  // href only
-      mainText = `<a class="node-link" draggable="false" href="${this.url}"><span class="url-title">${urlTitle}</span></a>`;
-    }
-    else {  // totally blank
-      if (this.isWindow()) {
-        const windowIdMaybe = this.windowId ? ' ' + this.windowId : '';
-        mainText = `<span class="node-notitle">Window${windowIdMaybe}</span>`;
-      }
-      else if (this.isRoot())
-        mainText = `<span class="node-notitle">Session</span>`;
-      else
-        mainText = `<span class="node-notitle">node ${this.id}</span>`;
-    }
-    if (this.isWindow() && (! this.isLoaded())) {  // note closed windows
-      //const mtime = fmtDate(this.mtime);  // FIXME: mtime isn't good for this
-      //mainText = mainText + ` (closed ${mtime})`;
-      mainText = mainText + ' (closed)';
-    }
-    // indicate when there's a long note attached
-    let noteIcon = '';
-    if (this.note)
-      noteIcon = '<span class="node-note-icon">📎 </span>';  // paperclip
-    // checkbox
-    let ckbox = '';
-    if (this.hasCheckbox()) {
-      let cbType = this.getCheckboxType();
-      let cbText = this.checkbox;
-      if (' ' === this.checkbox) cbText = '&nbsp;';
-      if ('percent' === cbType) {
-        if (! this.checkboxPx) this.checkboxPx = 0.0;
-        cbText = String(Math.floor((this.checkboxPx * 100))) + '%';
-        if (this.checkboxPx > 0.999) cbType = cbType + ' done';
-      }
-      ckbox = `<div class="node-checkbox ${cbType}">${cbText}</div>`;
-    }
+    // full row: [3/14] [X] & @ Label Text ~ <a href="link">Link Title</a>
+    // ... where "[3/14]" is num children open/total,
+    // "[X]" is a checkbox, "&" is a note icon, and "@" is a favicon
+
     // node stats
-    let statsText = '';
     // unsure if always include stats or only when collapsed
     //if (this.hasKids()) {  // always
     if (this.hasKids() && this.isCollapsed()) {  // only when collapsed
@@ -205,16 +164,111 @@ export class NodeView extends Node {
         function (node) { return node.isLoaded(); }
       );
       const totalChildren = this.countNodes();
+      const $nodeStats = doc.createElement('span');
+      $nodeStats.className = 'node-stats';
+      $nodeStats.append('[');
+      const $statTotal = doc.createElement('span');
+      $statTotal.className = 'node-stat-total';
+      $statTotal.textContent = totalChildren;
       // only show "open" if non-zero
-      if (openChildren > 0)
-        statsText = `<span class="node-stats">[<span class="node-stat-open">${openChildren}</span>/<span class="node-stat-total">${totalChildren}</span>]</span> `;
-      else
-        statsText = `<span class="node-stats">[<span class="node-stat-total">${totalChildren}</span>]</span> `;
+      if (openChildren > 0) {
+        const $statOpen = doc.createElement('span');
+        $statOpen.className = 'node-stat-open';
+        $statOpen.textContent = openChildren;
+        $nodeStats.append($statOpen, '/', $statTotal);
+      } else {
+        $nodeStats.append($statTotal);
+      }
+      $nodeStats.append('] ');
+      this.$row.append($nodeStats);
     }
+
+    // checkbox
+    let ckbox = '';
+    if (this.hasCheckbox()) {
+      let cbType = this.getCheckboxType();
+      let cbText = this.checkbox;
+      if (' ' === this.checkbox) cbText = '\u00A0';  // &nbsp;
+      if ('percent' === cbType) {
+        if (! this.checkboxPx) this.checkboxPx = 0.0;
+        cbText = String(Math.floor((this.checkboxPx * 100))) + '%';
+        if (this.checkboxPx > 0.999) cbType = cbType + ' done';
+      }
+      const $ckbox = doc.createElement('div');
+      $ckbox.className = `node-checkbox ${cbType}`;
+      $ckbox.textContent = cbText;
+      this.$row.append($ckbox);
+    }
+
+    // indicate when there's a long note attached
+    if (this.note) {
+      const $noteIcon = doc.createElement('span');
+      $noteIcon.className = 'node-note-icon';
+      $noteIcon.textContent = '📎 ';  // paperclip
+      this.$row.append($noteIcon);
+    }
+
     // TODO: favicon
     let faviconText = '';
-    // combined output
-    this.$row.innerHTML = `${statsText}${ckbox}${faviconText}${noteIcon}<span class="row-title">${mainText}</span>`;
+
+    // main node text
+    const $rowTitle = doc.createElement('span');
+    $rowTitle.className = 'row-title';
+    let urlTitle = this.title ? this.title : this.url;  // handle blank title
+    let $nodeLink, $urlTitle;
+    if (this.url) {  // will be needed later
+      $nodeLink = doc.createElement('a');
+      $nodeLink.className = 'node-link';
+      $nodeLink.draggable = false;
+      $nodeLink.href = this.url;
+      $urlTitle = doc.createElement('span');
+      $urlTitle.className = 'url-title';
+      $urlTitle.textContent = urlTitle;
+    }
+    if (this.label) {
+      const $label = doc.createElement('span');
+      $label.className = 'node-label';
+      $label.textContent = this.label;
+      if (this.url) {  // label ~ href
+        const $sep = doc.createElement('span');
+        $sep.className = 'node-label-url-sep';
+        $nodeLink.append($label, $sep, $urlTitle);
+        $rowTitle.append($nodeLink);
+      }
+      else {  // label only
+        $rowTitle.append($label);
+      }
+    }
+    else if (this.url) {  // href only
+      $nodeLink.append($urlTitle);
+      $rowTitle.append($nodeLink);
+    }
+    else {  // totally blank
+      const $noTitle = doc.createElement('span');
+      $noTitle.className = 'node-notitle';
+      if (this.isWindow()) {
+        const windowIdMaybe = this.windowId ? ' ' + this.windowId : '';
+        $noTitle.textContent = `Window${windowIdMaybe}`;
+      }
+      else if (this.isRoot())
+        $noTitle.textContent = 'Session';
+      else
+        $noTitle.textContent = `node ${this.id}`;
+
+      $rowTitle.append($noTitle);
+    }
+
+    // note closed windows
+    if (this.isWindow() && (! this.isLoaded())) {
+      // TODO: show when windows was last open
+      // (but ctime / mtime / atime aren't quite right)
+      $rowTitle.append(' (closed)');
+    }
+
+    // whatever the row "title" was, add it
+    this.$row.append($rowTitle);
+
+    // let user drag-n-drop rows to reorganize the tree
     this.$row.setAttribute('draggable', true);
   }
 
@@ -256,29 +310,37 @@ export class NodeView extends Node {
       $elem.classList.add('hidden');
     }
 
-    function setOrHide ($elem, val, text, html) {
+    function setOrHide ($elem, show, text, key, val) {
+      if (! show) return hide($elem);
+      hasContent = true;
+      $elem.classList.remove('hidden');
+
+      // simple text label
+      if (text) { $elem.innerText = text; return; }
+
+      // otherwise, do a "<b>Key:</b> <span>Value</span>"
+      const $key = doc.createElement('b');
+      $key.textContent = key;
+      let sep = '';
+      let $val = '';
       if (val) {
-        $elem.classList.remove('hidden');
-        if (text) $elem.innerText = text;
-        else if (html) $elem.innerHTML = html;
-        hasContent = true;
-      } else {
-        $elem.innerHTML = '';
-        $elem.classList.add('hidden');
+        $val = doc.createElement('span');
+        $val.textContent = val;
+        sep = ':\u00A0';  // ':&nbsp;'
       }
+      $elem.innerHTML = '';
+      $elem.append($key, sep, $val);
     }
 
     // label / short note
     let $label = getOrCreate('detail-label', 'div');
-    //if (mode <= 1) hide($label);
-    //else
     setOrHide($label, this.label, this.label);
 
     // wasLoaded
     const wasLoaded = (!!this.wasLoaded) && (! this.loaded);
     let $wasLoaded = getOrCreate('detail-was-loaded', 'div');
     if (mode <= 1) hide($wasLoaded);
-    else setOrHide($wasLoaded, wasLoaded, null, `<b>Was Loaded</b>`);
+    else setOrHide($wasLoaded, wasLoaded, null, 'Was Loaded');
 
     // long note
     let $note = getOrCreate('detail-note', 'div');
@@ -287,48 +349,34 @@ export class NodeView extends Node {
     // link title
     let $title = getOrCreate('detail-title', 'div');
     if (mode <= 1) hide($title);
-    else {
-      let $titleLabel = getOrCreate('detail-title-label', 'b', $title);
-      let $titleValue = getOrCreate('detail-title-value', 'span', $title);
-      setOrHide($title, this.title);
-      setOrHide($titleLabel, true, '', 'Title:&nbsp;');
-      setOrHide($titleValue, this.title, this.title);
-    }
+    else setOrHide($title, this.title, '', 'Title', this.title);
 
     // link URL
     let $url = getOrCreate('detail-url', 'div');
     if (mode <= 1) hide($url);
-    else {
-      let $urlLabel = getOrCreate('detail-url-label', 'b', $url);
-      let $urlValue = getOrCreate('detail-url-value', 'span', $url);
-      setOrHide($url, this.url);
-      setOrHide($urlLabel, true, '', 'URL:&nbsp;');
-      setOrHide($urlValue, this.url, this.url);
-    }
+    else setOrHide($url, this.url, '', 'URL', this.url);
 
     // node ID
     let $nodeId = getOrCreate('detail-node-id', 'div');
     if (mode <= 1) hide($nodeId);
-    else setOrHide($nodeId, this.id, null,
-      `<b>ID:</b>&nbsp;<span>${this.id}</span>`);
+    else setOrHide($nodeId, this.id, null, 'ID', `${this.id}`);
 
     // tab ID
     let $tabId = getOrCreate('detail-node-tabid', 'div');
     if (mode <= 1) hide($tabId);
-    else setOrHide($tabId, this.tabId, null,
-      `<b>Tab:</b>&nbsp;<span>${this.tabId}</span>`);
+    else setOrHide($tabId, this.tabId, null, 'Tab', `${this.tabId}`);
 
     // ctime, mtime, atime, ...
-    for (const tstamp of ['ctime', 'mtime', 'atime']) {
-      const $tstampDiv = getOrCreate(`detail-${tstamp}`, 'div');
+    for (const tName of ['ctime', 'mtime', 'atime']) {
+      const $tstampDiv = getOrCreate(`detail-${tName}`, 'div');
       if (mode <= 1) { hide($tstampDiv); continue; }
-      const fmt = fmtDate(this[tstamp]);
+      const dateText = fmtDate(this[tName]);
       // always show ctime, show others only if they're different
-      const toShow = (tstamp === 'ctime') || (this[tstamp] !== this.ctime);
-      setOrHide($tstampDiv, toShow, null,
-        `<b>${tstamp}:</b>&nbsp;<span>${fmt}</span>`);
+      const toShow = (tName === 'ctime') || (this[tName] !== this.ctime);
+      setOrHide($tstampDiv, toShow, null, tName, dateText);
     }
 
+    // hide if empty
     if (! hasContent) $detailsBox.classList.add('hidden');
   }
 
@@ -340,6 +388,8 @@ export class NodeView extends Node {
 
   $renderChildren () {
     this.$render();
+    // FIXME: if ('window' === viewScope),
+    // render and behave as if all child windows are collapsed
     if (this.isExpanded()) {
       for (const node of this.nodes) {
         this.$insertChild(node, node.indexOf());
