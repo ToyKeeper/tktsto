@@ -525,11 +525,35 @@ export class NodeView extends Node {
   }
 
   scrollIntoView () {
-    if (this.$row) this.$row.scrollIntoView({
-      behavior: "instant",  // smooth or instant
-      block: "nearest",  // vertical scroll policy, "nearest" or "center"
-      inline: "start"  // horizontal, left
-    });
+    if (! this.$row) return;
+    // ensure row is visible,
+    // and has a sufficient margin
+    // between the row and the edge of the tree view
+    const $container = this.tree.$;  // div#tree-view
+    const rowRect = this.$row.getBoundingClientRect();
+    const containerRect = $container.getBoundingClientRect();
+
+    const rowTop = rowRect.top;
+    const rowBottom = rowRect.bottom;
+    const cTop = containerRect.top;
+    const cBottom = containerRect.bottom;
+
+    // TODO: make scroll margin configurable
+    // percent of the view height
+    const margin = Math.floor(0.25 * (cBottom - cTop));
+
+    // if row is above the visible area, scroll down
+    if (rowTop < cTop + margin) {
+      $container.scrollTop -= (cTop + margin - rowTop);
+    }
+
+    // if row is below the visible area, scroll up
+    else if (rowBottom > cBottom - margin) {
+      $container.scrollTop += (rowBottom - (cBottom - margin));
+    }
+
+    // always stay scrolled all the way to the left
+    $container.scrollLeft = 0;
   }
 
   scrollToTop () {
