@@ -87,7 +87,7 @@ export class TreeView extends Tree {
       'm': 'toggleMarked',
       'Shift+M': 'unmarkAll',
       'p': 'pasteMarked',
-      //'Shift+P': 'pasteMarkedBefore',
+      'Shift+P': 'pasteMarkedBefore',
       // TODO: leader key for batch processing of other things,
       //   like delete and maybe sort and checkbox actions and ...
       ///// buttons
@@ -1031,10 +1031,10 @@ export class TreeView extends Tree {
     this.setStatus(`Unmarked all nodes`);
   }
 
-  async action_pasteMarked (event) {
+  async action_pasteMarked (event, before=false) {
     // skip no-op cases
     if (! this.cursor) return;
-    debug('action_pasteMarked()');
+    debug(`action_pasteMarked(before=${before})`);
 
     // find the right place to put the marked nodes
     let destParent;
@@ -1050,6 +1050,11 @@ export class TreeView extends Tree {
       destParent = markedParent.parent;
       destIndex = markedParent.indexOf();
     }
+    else if (before) {
+      // if pasting before, just paste at the cursor's position
+      destParent = this.cursor.parent;
+      destIndex = this.cursor.indexOf();
+    }
     else if (this.cursor.hasKids() && this.cursor.isExpanded()) {
       // if expanded with kids, paste as new first children
       destParent = this.cursor;
@@ -1061,8 +1066,11 @@ export class TreeView extends Tree {
       destIndex = this.cursor.indexOf() + 1;
     }
 
-    // TODO: sort the markedNodes list by order in tree
-    //   instead of order added to list
+    // markedNodes are pasted in the order marked,
+    // NOT the order they appear in the tree...
+    // because this makes it easy to do manual sorting
+    // (like, to reverse a set, just mark them in reverse order
+    //  then paste in-place to change the order)
     let numMoved = 0;
     for (const nodeId of this.markedNodes) {
       const node = this.nodes[nodeId];
@@ -1083,8 +1091,8 @@ export class TreeView extends Tree {
     this.setStatus(`Moved ${numMoved} nodes`);
   }
 
-  // TODO
   async action_pasteMarkedBefore (event) {
+    return await this.action_pasteMarked(event, true);
   }
 
   async action_backupSession (event) {
