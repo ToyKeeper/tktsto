@@ -573,7 +573,7 @@ export class TreeView extends Tree {
     this.setCursor(this.cursor.parent);
   }
 
-  action_cursorRight (event) {
+  async action_cursorRight (event) {
     // expand current node and move cursor to 1st child
     // default
     if (! this.cursor) return this.setCursor(this.root);
@@ -581,9 +581,14 @@ export class TreeView extends Tree {
     // if no kids, do nothing
     if (this.cursor.isLeaf()) return;
 
+    // don't go into sub-windows in Window view mode
+    if (('window' === this.viewScope)
+      && (this.cursor !== this.viewRoot)
+      && (this.cursor.isWindow())) return;
+
     // expand if necessary
     if (! this.cursor.isExpanded()) {
-      this.cursor.setExpanded(true, { reason: 'userAction' });
+      await this.cursor.setExpanded(true, { reason: 'userAction' });
     }
 
     // move to 1st child
@@ -947,6 +952,11 @@ export class TreeView extends Tree {
     debug('action_toggleExpanded()');
     // skip no-op cases
     if (! this.cursor) return;
+    // don't act on sub-windows in Window view mode
+    if (('window' === this.viewScope)
+      && (this.cursor.isWindow())
+      && (this.cursor !== this.viewRoot)) return;
+    // otherwise, twiddle the state
     const toggled = ! this.cursor.expanded;
     this.cursor.setExpanded(toggled, { reason: 'userAction' });
     const verbed = toggled ? 'Expanded' : 'Collapsed';
@@ -1453,9 +1463,18 @@ export class TreeView extends Tree {
   }
 
   ensureCursorVisible () {
-    if (! this.cursor) return this.setCursor(this.root);
+    const viewRoot = this.viewRoot;
+    const activeTabNode = viewRoot.getActiveTab();
 
-    if (this.cursor.isVisible()) return;
+    // ensure cursor exists and is inside our view scope
+    if ((! this.cursor) || (! this.cursor.isInViewScope())) {
+      debug('TreeView.ensureCursorVisible(): no cursor or out of scope');
+      if (activeTabNode && this.viewRoot.expanded)
+        return this.setCursor(activeTabNode);
+      else return this.setCursor(this.viewRoot);
+    }
+
+    if (this.cursor.isVisible(viewRoot)) return;
 
     debug('TreeView.ensureCursorVisible(): fixing invisible cursor');
     let parent = this.cursor.parent;
@@ -1577,6 +1596,7 @@ export class TreeView extends Tree {
     // update the display
     this.$renderViewScopeBtn();
     this.$renderWholeTree();
+    this.ensureCursorVisible();
     this.setStatus(`View scope: ${this.viewScope}`);
   }
 

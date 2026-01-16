@@ -308,12 +308,20 @@ export class Node {
     return (! this.expanded);
   }
 
-  isVisible () {
+  isVisible (root) {
     // check if entire ancestry is expanded
+    // and exists within the given root node
+    if (undefined === root) root = this.tree.root;
+    if (this === root) return true;  // root is "visible" by definition
     let parent = this.parent;
     while (true) {
       if (parent.isCollapsed()) return false;
-      if (parent.isRoot()) return true;
+      // we've looked far enough, stop the search
+      else if (parent === root) return true;
+      // we've hit the true root instead of the viewRoot,
+      // so assume we're outside of the viewScope and thus not visible
+      else if (parent.isRoot()) return false;
+      // look one level higher up
       parent = parent.parent;
     }
   }
@@ -1179,8 +1187,10 @@ export class Node {
   }
 
   getActiveTab () {
-    const nodes = this.findNodes(function (node)
-      { return node.isActive() && node.isLoaded(); });
+    const nodes = this.findNodes(
+      function (node) { return node.isActive() && node.isLoaded(); },
+      function (node) { return ! node.isWindow(); }
+    );
     const tabNode = nodes[0];
     if (! tabNode) {
       // this happens when opening a new window,

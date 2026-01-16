@@ -43,13 +43,14 @@ export class NodeView extends Node {
     if (! this.$) this.$ = doc.createElement('li');
     this.$.id = `node${this.id}`;
     this.$.classList.add('node');
-    if (this.hasKids() && this.isExpanded()) {
-      this.$.classList.add('expanded');
-      this.$.classList.remove('collapsed', 'leaf');
-    }
-    else if (this.hasKids() && this.isCollapsed()) {
-      this.$.classList.add('collapsed');
-      this.$.classList.remove('expanded', 'leaf');
+    if (this.hasKids()) {
+      if (this.isExpanded()) {
+        this.$.classList.add('expanded');
+        this.$.classList.remove('collapsed', 'leaf');
+      } else {
+        this.$.classList.add('collapsed');
+        this.$.classList.remove('expanded', 'leaf');
+      }
     }
     else {
       this.$.classList.add('leaf');
@@ -388,8 +389,7 @@ export class NodeView extends Node {
 
   $renderChildren () {
     this.$render();
-    // FIXME: if ('window' === viewScope),
-    // render and behave as if all child windows are collapsed
+    // this.isExpanded() handles viewScope modes for us
     if (this.isExpanded()) {
       for (const node of this.nodes) {
         this.$insertChild(node, node.indexOf());
@@ -620,7 +620,14 @@ export class NodeView extends Node {
   }
 
   async moveTo (destParent, destIndex, ...extra) {
+    const viewRoot = this.tree.viewRoot;
+    const viewScope = this.tree.viewScope;
+    // save some info before moving...
     const oldParent = this.parent;
+    let wasInViewScope = true;
+    if ('window' === viewScope) wasInViewScope = this.isInViewScope();
+
+    // move it
     const changed = await super.moveTo(destParent, destIndex, ...extra);
     if (! changed) return;
 
@@ -639,22 +646,61 @@ export class NodeView extends Node {
     this.tree.ensureCursorVisible();
 
     // "this window only" mode needs extra care
-    if ('window' === this.tree.viewScope) {
-      const viewRoot = this.tree.viewRoot;
+    if ('window' === viewScope) {
       // if our window node was moved and we're a window-only view,
       // redraw the tree
       if (this === viewRoot) this.tree.$renderWholeTree();
 
       // if old parent outside current view and new parent in current view,
       // force render
-      else if (this.isChildOf(viewRoot)
-        && (! oldParent.isChildOf(viewRoot))
-      )
+      else if (this.isInViewScope() && (! wasInViewScope)) {
+        debug(`NodeView.moveTo(): moved into viewScope`);
         this.$renderChildren();
+      }
     }
 
     // ensure cursor is in the viewport
     if (this === this.tree.cursor) this.scrollIntoView();
+  }
+
+  isInViewScope () {
+    // check if this node is contained in the viewRoot,
+    // and (in Window mode) is not in one of our sub-windows
+
+    const viewScope = this.tree.viewScope;
+
+    // in Session mode, everything is in scope
+    if ('window' !== viewScope) return true;
+
+    const viewRoot = this.tree.viewRoot;
+    // our root is always visible, by definition
+    if (this === viewRoot) return true;
+
+    // if it's in the current window and not in a sub-window, it's in scope
+    // (getWindowNode(winNode) returns winNode, so check one level up)
+    const windowNode = this.parent.getWindowNode();
+    if (windowNode === viewRoot) return true;
+    else if (this === viewRoot) return true;
+
+    // otherwise not in scope
+    return false;
+  }
+
+  isExpanded () {
+    // Session mode is simple, no overrides needed
+    if ('window' !== this.tree.viewScope) return this.expanded;
+
+    // in "Window" view mode, all our sub-windows are treated as "collapsed"
+    // and all parents of the viewRoot are treated as "expanded"
+    else if (this === this.tree.viewRoot) return this.expanded;
+    else if (this.isParentOf(this.tree.viewRoot)) return true;
+    else if (! this.isWindow()) return this.expanded;
+    // assume this is a window, and our child
+    else return false;
+  }
+
+  isCollapsed () {
+    return (! this.isExpanded());
   }
 
   async setExpanded (expanded, ...extra) {
@@ -664,19 +710,20 @@ export class NodeView extends Node {
     // if no change, do nothing
     if (wasExpanded === this.expanded) return;
 
-    // if collapsing, delete subtree and show stats
-    if (wasExpanded) {
-      this.$destroyChildren();
-      // TODO: update + show stats
-      this.$render();
-      // promote the cursor if we just hid it in a fold
-      this.tree.ensureCursorVisible();
-    }
-    // if expanding, create subtree and hide stats
-    else {
-      this.$renderChildren();
-      // TODO: hide stats
-      this.$render();
+    // only render stuff which is in scope
+    if (this.isInViewScope()) {
+      // if collapsing, delete subtree and show stats
+      if (wasExpanded) {
+        this.$destroyChildren();
+        this.$render();
+        // promote the cursor if we just hid it in a fold
+        this.tree.ensureCursorVisible();
+      }
+      // if expanding, create subtree and hide stats
+      else {
+        this.$renderChildren();
+        this.$render();
+      }
     }
   }
 
