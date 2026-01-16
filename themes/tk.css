@@ -538,6 +538,14 @@ foo {
   color: var(--window-active-fg);
   font-weight: bold;
 }
+.window.row.active:not(.cursor) {
+  /* make focused window stand out more */
+  background: var(--window-active-row-bg, var(--window-row-bg));
+  box-shadow: var(--window-active-row-shadow);
+}
+.window.row.active {
+  padding: 0.1em 0.2em;
+}
 
 .window.row.cursor .row-title {
   text-shadow: var(--window-title-text-shadow);

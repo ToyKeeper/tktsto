@@ -58,6 +58,8 @@ foo {
   --tree-line-dragging: #aad4ee;
   /***** window nodes *****/
   --window-row-bg: linear-gradient(150deg, #134372, transparent);
+  --window-active-row-bg: linear-gradient(150deg, #259, transparent);
+  --window-active-row-shadow: inset 0.07em 0.07em 0.20em #49d;
   --window-active-fg: #fff;
   --window-loaded-fg: #ccc;
   --window-unloaded-fg: #8696a7;
