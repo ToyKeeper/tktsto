@@ -248,7 +248,7 @@ export class TreeView extends Tree {
     // restore state
     if (oldCursor) {
       const newCursor = this.nodes[oldCursor];
-      this.setCursor(newCursor);
+      this.setCursor(newCursor, true);
     }
   }
 
@@ -1437,7 +1437,7 @@ export class TreeView extends Tree {
     this.$hoverMenu.classList.remove('hidden');
   }
 
-  setCursor (node) {
+  setCursor (node, instant=false) {
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();
     this.cursor = node;
@@ -1445,7 +1445,7 @@ export class TreeView extends Tree {
       // show and update node detail box
       this.updateDetailsBox();
       // ensure node is visible
-      node.scrollIntoView();
+      node.scrollIntoView(instant);
     }
     else {
       this.hideDetailsBox();
@@ -1482,7 +1482,7 @@ export class TreeView extends Tree {
     // show the active tab and put the cursor on it
     const activeTabNode = windowNode.getActiveTab();
     if (activeTabNode) {
-      this.setCursor(activeTabNode);
+      this.setCursor(activeTabNode, true);
       //activeTabNode.scrollIntoView();
     }
   }

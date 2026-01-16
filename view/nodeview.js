@@ -524,7 +524,33 @@ export class NodeView extends Node {
     await this.renderIfChanged(super.unload(...args), true);
   }
 
-  scrollIntoView () {
+  smoothScrollTo ($container, scrollTop, duration = 200) {
+    // adjust vertical scroll position gradually,
+    // animating for "duration" ms
+    const start = $container.scrollTop;
+    const distance = scrollTop - start;
+    const startTime = performance.now();
+
+    function easeOutQuad (t) {
+      return t * (2 - t);
+    }
+
+    function step (now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easeOutQuad(progress);
+
+      $container.scrollTop = start + distance * eased;
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  scrollIntoView (instant = false) {
     if (! this.$row) return;
     // ensure row is visible,
     // and has a sufficient margin
@@ -542,18 +568,31 @@ export class NodeView extends Node {
     // percent of the view height
     const margin = Math.floor(0.25 * (cBottom - cTop));
 
+    let newScrollTop = $container.scrollTop;
+
     // if row is above the visible area, scroll down
     if (rowTop < cTop + margin) {
-      $container.scrollTop -= (cTop + margin - rowTop);
+      newScrollTop -= (cTop + margin - rowTop);
     }
 
     // if row is below the visible area, scroll up
     else if (rowBottom > cBottom - margin) {
-      $container.scrollTop += (rowBottom - (cBottom - margin));
+      newScrollTop += (rowBottom - (cBottom - margin));
     }
+
+    // bounds check
+    const maxScrollTop = $container.scrollHeight - $container.clientHeight;
+    newScrollTop = Math.max(0, Math.min(newScrollTop, maxScrollTop));
 
     // always stay scrolled all the way to the left
     $container.scrollLeft = 0;
+
+    // instant
+    if (instant) $container.scrollTop = newScrollTop;
+    // smooth
+    // (helps reduce jitter from details box appearing and disappearing)
+    else if (newScrollTop != $container.scrollTop)
+      this.smoothScrollTo($container, newScrollTop);
   }
 
   scrollToTop () {
