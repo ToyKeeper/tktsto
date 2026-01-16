@@ -490,6 +490,8 @@ export class Tree {
       active: true, windowId: tab.windowId });
     const activeTab = activeTabs[0];
     const activeTabNode = winNode.getActiveTab();
+    const loadedTabNodes = winNode.getLoadedTabs();
+    //debug(`Tree.onTabCreated(): new tab is ${tab.index+1} of ${loadedTabNodes.length}`);
 
     // if the tab is a blank created by the user with C-t...
     // ... make it the 1st child of the active tab
@@ -529,6 +531,26 @@ export class Tree {
       if (! destParent) destParent = winNode;
       destIndex = 0;
       debug(`Tree.onTabCreated(parentByIndex) moving new tab to the right of: "${destParent.toLine()}"`);
+    }
+    // if a tab is opened at the far right edge, claim it
+    else if (tab.index >= loadedTabNodes.length) {
+      // become first child of current tab
+      destParent = activeTabNode;
+      if (! destParent) destParent = winNode;
+      destIndex = 0;
+      debug(`Tree.onTabCreated(farRightCapture) moving new tab to the right of: "${destParent.toLine()}"`);
+    }
+    // if a tab is otherwise opened in the middle somewhere,
+    // like with "restore last closed tab" in browser
+    else if (undefined !== tab.index) {
+      if (0 === tab.index) destParent = winNode;
+      else destParent = loadedTabNodes[tab.index - 1];
+      destIndex = 0;
+      debug(`Tree.onTabCreated(tabIndex) new tab is first child of: "${destParent.toLine()}"`);
+    }
+    // unsure how a tab would have no index, but note it
+    else {
+      debug('Tree.onTabCreated(default) not moving new tab');
     }
     // create the tree node
     await destParent.addChild(destIndex, {
