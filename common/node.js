@@ -96,9 +96,14 @@ export class Node {
     // bump timestamp
     this.bump('mtime', args);
     // notify others
-    if (['userAction', 'onTabRemoved'].includes(args.reason))
+    if ([
+      'userAction', 'onTabRemoved', 'emptyWindowClosed'
+    ].includes(args.reason)) {
+      //debug(`Node.deleteSelf(${args.reason}): emitting`);
       await emit('tree_nodeDeleted',
         { nodeId: this.id, when: this.mtime });
+    }
+    //else debug(`Node.deleteSelf(${args.reason}): not emitting`);
 
     // TODO: ideally, this should wait until all threads have finished
     //       handling the tree_nodeDeleted event, but await only waits
