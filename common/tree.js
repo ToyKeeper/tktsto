@@ -593,6 +593,20 @@ export class Tree {
     }
     // if tab closed only because its window is closing
     else if (removeInfo && removeInfo.isWindowClosing) {
+      // special case: Firefox closing last boring tab in a boring window
+      if (isFirefox) {
+        const winNode = tabNode.getWindowNode();
+        if (winNode) {
+          const numKids = winNode.countNodes();
+          // last node in a boring window is a boring tab
+          if ((1 === numKids)
+            && (! winNode.shouldUnloadNotDelete())
+            && (! tabNode.shouldUnloadNotDelete())
+          ) {
+            return tabNode.deleteSelf({ reason: 'onTabRemoved', detail: 'boringFinalLeafInBoringWindow' });
+          }
+        }
+      }
       // keep unloaded tab as part of the user's saved window
       return tabNode.unload({ reason: 'onWindowRemoved', detail: 'saveWindow' });
     }
