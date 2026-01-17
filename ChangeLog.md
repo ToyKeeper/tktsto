@@ -2,9 +2,64 @@
 
 What changed, and when?  You know the drill.
 
-# Next
+## Next
 
-# 0.1.10.0 (2026-01-14)
+
+## 0.1.24.0 (2026-01-17)
+
+Changes:
+
+- Made this window's title row stand out more.
+- Implemented `Shift+P` for pasteMarkedBefore.  Press `p` to paste below
+  cursor, or `Shift+P` to paste above cursor.
+- Added a scroll margin around the tree view cursor.
+- Added smooth scrolling to the tree view.
+- Added window ID in node details area.
+- "Window" mode in the tree view no longer shows contents of sub-windows.  They
+  appear as a single row instead, as if collapsed.  That way, you can have
+  a bunch of expanded sub-windows without using a ton of space in the parent's
+  tree view.
+
+Bug fixes:
+
+- Fixed multiple cases of tabs opening at far right edge when they should be
+  placed elsewhere.
+- Fixed missing cursor after opening a new tree view, when active tab node was
+  hidden in a collapsed branch.
+- Fixed incorrect tab "wasLoaded" state which sometimes happened when closing
+  and saving a window.
+- Fixed failure to mark active tab node as active in Firefox, when loading
+  a saved window.
+- Fixed orphaned ("lost+found") nodes in Brave when closing boring windows.
+- Fixed attempt to delete window nodes twice in Chromium while closing a boring
+  window.
+- Fixed Firefox not deleting boring windows when closed.
+- Reduced some unimportant "errors" to warnings, logs, or just silence.
+- Fixed missing cursor when pressing `Right Arrow` on a collapsed node which
+  hasn't previously been expanded in this tree view.
+- Fixed a bunch of cases where the tree view cursor could get lost, like when
+  mark+pasting nodes between windows, or into collapsed branches, or when
+  changing view modes.
+- Fixed a bunch of issues with "Window" mode in tree view...
+  - Collapsing the session root node would break all tree views in "Window"
+    mode.  More generally, collapsing the window's parents doesn't break the
+    tree view any more.
+  - In "Window" mode, `cursorRight` action no longer descends into sub-windows.
+  - Fixed rare case of render failure when expanding a collapsed node.
+  - Fixed issue where a sub-window's active tab could sometimes be returned
+    when looking for parent window's active tab.
+
+Browsers known to work, or mostly work:
+
+- Firefox ESR 115 .. 140
+- Chromium (and Ungoogled Chromium) 134 .. 143
+- Edge 136 .. 143
+- Vivaldi 7.3
+- Brave 1.78
+- Maxthon 7.3.1
+
+
+## 0.1.10.0 (2026-01-14)
 
 Changes:
 
@@ -53,7 +108,7 @@ Browsers known to work, or mostly work:
 - Maxthon 7.3.1
 
 
-# 0.0.1.0 (2025-05-19)
+## 0.0.1.0 (2025-05-19)
 
 First public release.
 
