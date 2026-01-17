@@ -614,14 +614,33 @@ export class Tree {
   }
 
   async onTabActivated (windowId, tabId) {
-    const windowNode = this.root.getWindowId(windowId);
+    // do everything we can to find the correct tab and window nodes...
+    // ... but if that fails, it's almost certainly not an issue
+    // (because for some reason, browsers like Vivaldi fire off this event
+    //  after the tab and window are already closed, so there's nothing to do)
+    let windowNode = this.root.getWindowId(windowId);
+    // look up by tabId if windowId failed
     if (! windowNode) {
+      const tabNode = this.getNodeByTabId(tabId);
+      if (tabNode) { windowNode = tabNode.getWindowNode(); }
+      //debug(`Tree.onTabActivated(${windowId}, ${tabId}):`, windowNode, tabNode);
+    }
+    let tries = 5;
+    while ((! windowNode) && (tries > 0)) {
       // can happen when loading saved tab in saved window,
       // because onWindowCreated doesn't happen until
       // after the onTabActivated event for the first tab
+      debug(`Tree.onTabActivated() waiting for windowId="${windowId}"`);
+      tries --;
+      // wait a few ms
+      await new Promise(resolve => setTimeout(resolve, 10));
+      windowNode = this.root.getWindowId(windowId);
+    }
+    if (! windowNode) {
       if (this.bkgd && (this.bkgd.windowsLoading.length > 0))
         return;  // not an error, just a browser quirk
-      return error(`Tree.onTabActivated() can't find windowId="${windowId}"`);
+      // probably not an error
+      return log(`Tree.onTabActivated() can't find windowId="${windowId}"`);
     }
     await windowNode.setActiveTab({ reason: 'onTabActivated' });
   }
