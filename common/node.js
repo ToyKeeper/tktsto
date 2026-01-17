@@ -800,6 +800,7 @@ export class Node {
     //if (! this.isLoaded() && (! this.wasLoaded)) return;
     if ((! this.url) && (! this.isWindow())) return;  // don't "unload" notes
     const wasActuallyLoaded = this.loaded || this.tabId;
+    const isWindowClosing = ['onWindowUnloaded', 'onWindowRemoved'].includes(args.reason);
 
     // Do The Thing
     this.loaded = false;
@@ -812,15 +813,17 @@ export class Node {
     // save briefly so onTabRemoved can find it in a few milliseconds
     this.oldTabId = tabId;
     // distinguish between manual unload and "bkgd woken up by onTabRemoved"
-    if (wasActuallyLoaded && (undefined !== tabId))
+    if (wasActuallyLoaded && (undefined !== tabId) && (! isWindowClosing))
       this.tabClosedReason = 'unload';
 
-    // let user toggle wasLoaded state manually
-    if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
-    else if (['onWindowUnloaded', 'onWindowRemoved'].includes(args.reason))
-      this.wasLoaded = true;
+    // save loaded tabs on window close
+    if (isWindowClosing) this.wasLoaded = true;
+    // propagate changes from other threads
+    else if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
+    // when unloading a tab manually, mark it as fully unloaded
     else if (wasActuallyLoaded) this.wasLoaded = false;
-    else if ('userAction' === args.reason)
+    // let user toggle wasLoaded state manually
+    else if (('userAction' === args.reason) && (! wasActuallyLoaded))
       this.wasLoaded = (! this.wasLoaded);
 
     // bump timestamp (?)
@@ -863,17 +866,27 @@ export class Node {
         }
       }
       else if (this.isWindow()) {  // a window has no tabId and it's fine
-        // close the window (it'll unload all the tabs for us)
-        if (windowId) await api.windows.remove(windowId);
-        // unload all tabs in the window
-        else {
-          // this should never happen, but if it does, at least it works
-          warn('Window node has no windowId');
-          const tabList = this.getLoadedTabs();
-          for (const kid of tabList) {
-            const tabArgs = { ...args };
-            tabArgs.reason = 'onWindowUnloaded';
-            await kid.unload(tabArgs);
+        debug(`unloading window ${windowId}: ${this.toLine()}`);
+        // unload tabs manually, because some browsers report false
+        // "isWindowClosing" state when a window is closing,
+        // and then we end up with incorrect "wasLoaded" states
+        const tabList = this.getLoadedTabs();
+        // move focused tab to the end, so we'll close it last
+        const activeTab = this.getActiveTab();
+        const index = tabList.indexOf(activeTab);
+        if (index > -1) { tabList.push(tabList.splice(index, 1)[0]); }
+        // close the tabs
+        for (const kid of tabList) {
+          const tabArgs = { ...args };
+          tabArgs.reason = 'onWindowUnloaded';
+          await kid.unload(tabArgs);
+        }
+        // close the window too
+        if (windowId) {
+          try { await api.windows.remove(windowId); }
+          catch (err) {
+            // not actually an error, window was already closed
+            // (and Firefox generates an error for that, while Chrome doesn't)
           }
         }
       }
