@@ -898,12 +898,18 @@ export class Node {
   }
 
   prevVisibleNode (root) {
-    // TODO: check if we're visible.  If not, return nearest visible parent
     // root node has no previous row
     if (this.isRoot()) return this;
     if (root === this) return this;
     if (root && (! this.isChildOf(root, false))) return root;
 
+    // if not visible, find nearest visible parent
+    let node = this;
+    while ((! node.isRoot()) && (node !== root) && (! node.isVisible(root)))
+    { node = node.parent; }
+    if (node !== this) return node;
+
+    // otherwise, we were visible and need to go up one row
     const myIndex = this.indexOf();
 
     // if we're the first child, return parent

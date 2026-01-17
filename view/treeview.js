@@ -226,8 +226,8 @@ export class TreeView extends Tree {
     // build the hover menu
     this.$renderHoverMenu();
 
-    // ensure the current tab is visible when sidepanel opens
-    this.moveCursorToActiveTab();
+    // ensure the cursor is somewhere sane when sidepanel opens
+    this.ensureCursorVisible();
   }
 
   async loadTreeFromBkgd (render = true) {
@@ -1462,47 +1462,40 @@ export class TreeView extends Tree {
     }
   }
 
-  ensureCursorVisible () {
+  async ensureCursorVisible () {
     const viewRoot = this.viewRoot;
-    const activeTabNode = viewRoot.getActiveTab();
+    //debug(`TreeView.ensureCursorVisible(cursor):`, this.cursor);
+    //debug(`TreeView.ensureCursorVisible(viewRoot):`, viewRoot);
+
+    // find our window
+    let winNode = viewRoot;
+    if ('session' === this.viewScope) {
+      // find the current window in the tree
+      const win = await api.windows.getCurrent();
+      let found = viewRoot.findNodes((node) => {
+        return (node.isWindow() && (win.id === node.windowId));
+      });
+      if (found.length > 0) winNode = found[0];
+    }
+    //winNode.scrollToTop();
+    // show the active tab and put the cursor on it
+    const activeTabNode = winNode.getActiveTab();
+    //debug(`TreeView.ensureCursorVisible(activeTabNode):`, activeTabNode);
 
     // ensure cursor exists and is inside our view scope
-    if ((! this.cursor) || (! this.cursor.isInViewScope())) {
-      debug('TreeView.ensureCursorVisible(): no cursor or out of scope');
-      if (activeTabNode && this.viewRoot.expanded)
-        return this.setCursor(activeTabNode);
-      else return this.setCursor(this.viewRoot);
-    }
-
-    if (this.cursor.isVisible(viewRoot)) return;
-
-    debug('TreeView.ensureCursorVisible(): fixing invisible cursor');
-    let parent = this.cursor.parent;
-    while ((!parent.isRoot()) && (! parent.isVisible()))
-      parent = parent.parent;
-    this.setCursor(parent);
-  }
-
-  async moveCursorToActiveTab () {
-    // find the current window in the tree
-    const win = await api.windows.getCurrent();
-    const windowId = win.id;
-    //debug(`windowId: ${windowId}`);
-    let found = this.root.findNodes((node) => {
-      return (node.isWindow() && (windowId === node.windowId));
-    });
-    // abort if not found
-    if (found.length <= 0) return;
-
-    // make sure window node is at the top of the view
-    const windowNode = found[0];
-    windowNode.scrollToTop();
-    //debug(`windowNode: ${windowNode.windowId}`);
-    // show the active tab and put the cursor on it
-    const activeTabNode = windowNode.getActiveTab();
-    if (activeTabNode) {
-      this.setCursor(activeTabNode, true);
-      //activeTabNode.scrollIntoView();
+    if ((! this.cursor)
+      || (! this.cursor.isInViewScope())
+      || (! this.cursor.isVisible(viewRoot))
+    ) {
+      //debug('TreeView.ensureCursorVisible(): no cursor or out of scope');
+      // if active tab visible, put cursor on it
+      // if active tab exists but is hidden, put cursor on visible parent
+      // otherwise put cursor on window node
+      let visibleNode = activeTabNode ? activeTabNode : viewRoot;
+      if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot)))
+        visibleNode = visibleNode.prevVisibleNode(viewRoot);
+      debug(`TreeView.ensureCursorVisible(visibleNode)`, visibleNode);
+      return this.setCursor(visibleNode);
     }
   }
 
