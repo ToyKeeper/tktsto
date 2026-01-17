@@ -367,6 +367,12 @@ export class NodeView extends Node {
     if (mode <= 1) hide($tabId);
     else setOrHide($tabId, this.tabId, null, 'Tab', `${this.tabId}`);
 
+    // window ID
+    let $windowId = getOrCreate('detail-node-windowid', 'div');
+    if (mode <= 1) hide($windowId);
+    else setOrHide($windowId, this.windowId, null, 'Window',
+      `${this.windowId}`);
+
     // ctime, mtime, atime, ...
     for (const tName of ['ctime', 'mtime', 'atime']) {
       const $tstampDiv = getOrCreate(`detail-${tName}`, 'div');
