@@ -427,10 +427,11 @@ export class NodeView extends Node {
     if (this.isRoot()) return;  // never delete root
     let newCursor;
     if (this.isCursor()) {
+      const viewRoot = this.tree.viewRoot;
       // move to next row when possible
-      newCursor = this.nextVisibleNode();
+      newCursor = this.nextVisibleNode(viewRoot);
       // move to prev row if cursor is already on the last row
-      if (newCursor === this) newCursor = this.prevVisibleNode();
+      if (newCursor === this) newCursor = this.prevVisibleNode(viewRoot);
     }
     const oldParent = this.parent;
     const changed = await super.deleteSelf(...extra);
