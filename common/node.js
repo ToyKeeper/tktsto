@@ -529,7 +529,7 @@ export class Node {
     // if window is boring and has no kids, just delete it
     if ((! this.hasKids()) && (! this.shouldUnloadNotDelete())) {
       debug('Node.windowClosed(): emptyWindowClosed');
-      await this.deleteSelf({ reason: 'emptyWindowClosed' });
+      return await this.deleteSelf({ reason: 'emptyWindowClosed' });
     }
     // if window has no open tabs, mark it as unloaded
     else if (! this.hasLoadedTabs()) {
