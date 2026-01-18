@@ -165,15 +165,26 @@ class Bkgd {
   }
 
   async initLocalBackupAlarm (reset = false) {
-    const stored = await api.storage.local.get('localBackupInterval');
+    const stored = await api.storage.local.get([
+      'localBackupInterval',
+      'localBackupLastTimeCompleted',
+    ]);
     let interval = stored.localBackupInterval;
     const alarm = await api.alarms.get(this.localBackupAlarmName);
     // 0.5 minutes is the shortest the browser allows
     const backupDisabled = (! interval) || (interval < 0.5);
 
-    // TODO: check last backup time, and if last + interval < now, backup now
+    // check last backup time, and if last + interval < now, backup now
     // because sometimes alarms don't persist across browser restarts, and
     // if a user sets interval=24h but they restart daily, it may never fire
+    if (! backupDisabled) {
+      let lastBackupTime = stored.localBackupLastTimeCompleted;
+      if (! lastBackupTime) lastBackupTime = 0;
+      if ((lastBackupTime + (interval * 1000 * 60)) < Date.now()) {
+        debug(`Bkgd.initLocalBackupAlarm: overdue, backing up now`);
+        await this.tree.downloadBackupNow();
+      }
+    }
 
     debug(`Bkgd.initLocalBackupAlarm: reset=${reset} interval=${interval}, alarm=${alarm}, backupDisabled=${backupDisabled}`);
 

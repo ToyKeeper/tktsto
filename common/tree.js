@@ -24,6 +24,9 @@ export class Tree {
 
     this.onTabReplacedMutex = new Mutex();
 
+    // don't run more than one backup simultaneously
+    this.localBackupInProgress = false;
+
     this.markedNodes = [];
 
     // holds tabIds of "tabs" we need to ignore,
@@ -244,6 +247,10 @@ export class Tree {
   }
 
   async downloadBackupNow () {
+    // abort if backup already running
+    if (this.localBackupInProgress) return;
+    this.localBackupInProgress = true;
+
     await this.treeLoaded;  // wait until tree is ready
 
     const when = new Date();
@@ -293,6 +300,8 @@ export class Tree {
       {
         //log(`Download succeeded: ${filename}`);
         api.downloads.onChanged.removeListener(progress);
+        api.storage.local.set({ localBackupLastTimeCompleted: Date.now() });
+        this.localBackupInProgress = false;
         if (this.setStatus) {
           this.setStatus(`Saved ${blob.size} bytes to "${filename}"`);
         }
@@ -308,6 +317,7 @@ export class Tree {
     function onFailed (err) {
       warn(`Download failed: ${err}`);
       api.downloads.onChanged.removeListener(progress);
+      this.localBackupInProgress = false;
     }
     api.downloads.onChanged.addListener(progress.bind(this));
     downloading.then(onStarted, onFailed);
