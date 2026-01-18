@@ -379,6 +379,7 @@ export class Node {
 
   isDeletable () {
     if (this.isRoot()) return false;
+    if (this.isWindow() && this.isLoaded()) return false;
     return true;
   }
 

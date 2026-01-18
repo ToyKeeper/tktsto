@@ -542,6 +542,9 @@ export class TreeView extends Tree {
     // decide whether to act on mouse hover node or keyboard cursor node
     // based on the event type
     if ('click' === event.type) return this.mouseNode;
+    // do nothing if cursor is outside of viewRoot
+    else if (! this.cursor.isInViewScope()) return null;
+    // normal keyboard event
     else return this.cursor;
   }
 
@@ -840,20 +843,9 @@ export class TreeView extends Tree {
     if (! cursor) return;
     // never delete root
     if (cursor.isRoot()) return;
-    if (cursor === this.viewRoot) return;
-    // don't delete an open window
-    if (this.cursor.isWindow() && this.cursor.isLoaded()) return;
-    // do nothing if cursor is outside of viewRoot
-    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
 
-    // figure out where to put the cursor after deletion
-    let newCursor = this.cursor;  // default if cursor === mouseNode
-    if (cursor === this.cursor) {
-      // move to next row when possible
-      newCursor = this.cursor.nextVisibleNode();
-      // move to prev row if cursor is already on the last row
-      if (newCursor === this.cursor) newCursor = this.cursor.prevVisibleNode();
-    }
+    // move keyboard cursor if this was a mouse click
+    if (cursor !== this.cursor) await this.setCursor(cursor);
 
     // delete depending on the node type and state
     const toDelete = cursor;
@@ -863,6 +855,10 @@ export class TreeView extends Tree {
       //debug('delete leaf node');
       toDelete.deleteSelf({ reason: 'userAction' });
       this.setStatus(`deleted ${line}`);
+    }
+    // don't delete an open window; unload it instead
+    else if (cursor.isWindow() && cursor.isLoaded()) {
+      return await this.action_unloadNode(event);
     }
     // TODO: if window and has open tabs, things get complicated
     // if expanded, promote kids then delete parent
@@ -893,9 +889,6 @@ export class TreeView extends Tree {
       toDelete.deleteSelf({ reason: 'userAction' });
       this.setStatus(`deleted ${numToDelete} nodes`);
     }
-
-    // update the cursor
-    this.setCursor(newCursor);
   }
 
   action_unloadNode (event) {
@@ -1448,6 +1441,13 @@ export class TreeView extends Tree {
   }
 
   setCursor (node, instant=false) {
+    if ('window' === this.viewScope) {
+      // keep cursor in window
+      const viewRoot = this.viewRoot;
+      if (node &&
+        ( (! node.isInViewScope()) || (! node.isVisible(viewRoot)) )
+      ) { node = viewRoot; }
+    }
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();
     this.cursor = node;
