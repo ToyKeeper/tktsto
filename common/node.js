@@ -373,7 +373,8 @@ export class Node {
 
   isMarkable () {
     if (this.isRoot()) return false;
-    if (this.isWindow()) return false;  // TODO: unnecessary maybe?
+    //if (this.isWindow()) return false;  // seems unnecessary
+    //if (this.isWindow() && this.isLoaded()) return false;
     return true;
   }
 
@@ -1146,7 +1147,8 @@ export class Node {
     // refuse to mark root node
     if (this.isRoot()) return;
     // refuse to mark window nodes
-    if (this.isWindow()) return;
+    //if (this.isWindow()) return;
+    //if (this.isWindow() && this.isLoaded()) return;
 
     if (marked) {
       // reject mark request if ancestor is already marked,

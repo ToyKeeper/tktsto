@@ -612,7 +612,8 @@ foo {
   100% { background-position: -50% 50%; }
 }
 
-.node.marked, #marked-count {
+.node.marked, #marked-count,
+.window.node.marked.expanded {
   box-shadow: var(--marked-node-shadow);
   border-radius: var(--cursor-branch-radius);
 
@@ -632,6 +633,9 @@ foo {
     rgba(255,215,0,0.10));
   */
   background: var(--marked-node-bg);
+}
+.window.node.marked.expanded {
+  background: linear-gradient(var(--window-branch-top), var(--window-branch-bot));
 }
 
 /* let cursor background override marked background */
