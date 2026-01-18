@@ -962,7 +962,7 @@ export class Node {
     // otherwise, search without looking at kids
     const nextNode = this.nextVisibleNodeNoKids(root);
     // avoid wrapping from last node to root
-    if (nextNode.isRoot()) return this;
+    if (nextNode.isRoot() || (nextNode === root)) return this;
     // ensure still in root
     if (root && (! nextNode.isChildOf(root, true))) return this;
     // otherwise, assume this is correct
@@ -982,7 +982,12 @@ export class Node {
     }
 
     // we're the last child, so escalate to the parent
-    return this.parent.nextVisibleNodeNoKids();
+    // but don't wrap around from bottom to top
+    const candidate = this.parent.nextVisibleNodeNoKids(root);
+    if (candidate.isRoot()
+      || (candidate === root)
+      || (candidate === this.parent)) return this;
+    return candidate;
   }
 
   nextVisibleNodeNotMyChild (root) {

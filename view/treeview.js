@@ -690,35 +690,56 @@ export class TreeView extends Tree {
   async action_moveNodeUpNoDescend (event) {
     debug('TreeView.action_moveNodeUpNoDescend()');
 
-    // if 1st child of root, do nothing
-    if (! this.cursor) return;
-    if (this.cursor.isRoot()) return;
-    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
-    if (this.cursor.parent.isRoot() && (0 === this.cursor.indexOf())) return;
-    if ((this.cursor.parent === this.viewRoot) && (0 === this.cursor.indexOf())) return;
+    const cursor = this.cursor;
+    const viewRoot = this.viewRoot;
+
+    // if root, or 1st child of root, do nothing
+    if (! cursor) return;
+    if (cursor.isRoot() || (cursor === viewRoot)) return;
+    if ((cursor.parent.isRoot() || (cursor.parent === viewRoot))
+      && (0 === cursor.indexOf())) return;
+    if (! cursor.isInViewScope()) return;
 
     // node can be moved up
     let destParent;
     let destIndex;
     // if 1st child, take parent's parent and index
-    if (0 === this.cursor.indexOf()) {
-      destParent = this.cursor.parent.parent;
-      destIndex = destParent.indexOf();
+    if (0 === cursor.indexOf()) {
+      destParent = cursor.parent.parent;
+      destIndex = cursor.parent.indexOf();
     }
     // if prev sibling, take its index
     else {
-      destParent = this.cursor.parent;
-      destIndex = this.cursor.indexOf() - 1;
+      destParent = cursor.parent;
+      destIndex = cursor.indexOf() - 1;
     }
 
     // actually move it
-    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setStatus(`moved up: ${this.cursor.toLine()}`);
+    await cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    this.setStatus(`moved up: ${cursor.toLine()}`);
   }
 
-  action_moveNodeDownNoDescend (event) {
-    // TODO: this one is somewhat more complicated
-    //this.setStatus(`moved down: ${this.cursor.toLine()}`);
+  async action_moveNodeDownNoDescend (event) {
+    debug('TreeView.action_moveNodeDownNoDescend()');
+
+    const cursor = this.cursor;
+    const viewRoot = this.viewRoot;
+
+    // if root, or last child of root, do nothing
+    if (! cursor) return;
+    if (cursor.isRoot() || (cursor === viewRoot)) return;
+    if ((cursor.parent.isRoot() || (cursor.parent === viewRoot))
+      && (cursor.indexOf() >= (cursor.parent.nodes.length - 1))) return;
+    if (! cursor.isInViewScope()) return;
+
+    // node can be moved down
+    const nextVisible = cursor.nextVisibleNodeNoKids(viewRoot);
+    const destParent = nextVisible.parent;
+    const destIndex = nextVisible.indexOf() + 1;
+
+    // actually move it
+    await cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
+    this.setStatus(`moved down: ${cursor.toLine()}`);
   }
 
   async action_moveNodeRight (event) {
