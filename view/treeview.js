@@ -188,6 +188,7 @@ export class TreeView extends Tree {
     this.initKeyHandler();
     this.initMouseHandler();
     this.initButtonHandlers();
+    await this.loadConfig();
     this.initStorageObserver();
     // get the window this view is attached to
     this.windowObj = await api.windows.getCurrent();
@@ -276,36 +277,57 @@ export class TreeView extends Tree {
     this.$statusText.textContent = msg;
   }
 
+  async loadConfig () {
+    this.cursorFollowsActiveTab = await this.getConfig(
+      'cursorFollowsActiveTab', true);
+  }
+
   initStorageObserver () {
     api.storage.onChanged.addListener( this.storageObserver.bind(this) );
   }
 
-  storageObserver (changes) {
+  async storageObserver (changes) {
+    debug(`TreeView.storageObserver()`, changes);
     if (changes.expandedRowPrefix) {
       this.updateStyleOptions();
     }
     if (changes.theme) {
       this.updateTheme();
     }
+    if (changes.cursorFollowsActiveTab) {
+      this.cursorFollowsActiveTab = changes.cursorFollowsActiveTab.newValue;
+    }
   }
 
-  async getWindowConfig (varName, defaultValue) {
-    // can't do anything unless we know which window we are
-    if (! this.windowNode) return;
-    // load from config, per window
-    const key = `TreeView.${varName}.${this.windowNode.id}`;
+  async getConfig (varName, defaultValue) {
+    const key = varName;
     const result = await api.storage.local.get(key);
     if (undefined !== result[key]) return result[key];
     return defaultValue;
   }
 
+  setConfig (varName, value) {
+    const vars = {};
+    vars[varName] = value;
+    return api.storage.local.set(vars);
+  }
+
+  getWindowConfig (varName, defaultValue) {
+    // can't do anything unless we know which window we are
+    if (! this.windowNode) return;
+    // load from config, per window
+    return this.getConfig(
+      `TreeView.${varName}.${this.windowNode.id}`,
+      defaultValue);
+  }
+
   setWindowConfig (varName, value) {
     // can't do anything unless we know which window we are
     if (! this.windowNode) return;
-    // save button state to config storage, per window
-    const vars = {};
-    vars[`TreeView.${varName}.${this.windowNode.id}`] = value;
-    return api.storage.local.set(vars);
+    // save to config, per window
+    return this.setConfig(
+      `TreeView.${varName}.${this.windowNode.id}`,
+      value);
   }
 
   async updateTheme () {
@@ -1462,16 +1484,26 @@ export class TreeView extends Tree {
   }
 
   setCursor (node, instant=false) {
-    if ('window' === this.viewScope) {
-      // keep cursor in window
-      const viewRoot = this.viewRoot;
-      if (node &&
-        ( (! node.isInViewScope()) || (! node.isVisible(viewRoot)) )
-      ) { node = viewRoot; }
+    //debug(`TreeView.setCursor(): ${node.toLine()}`);
+    // ensure cursor is on a visible node in our view scope
+    const viewRoot = this.viewRoot;
+    if ((! node.isInViewScope()) || (! node.isVisible(viewRoot))) {
+      // if node is visible, put cursor on it
+      // if node exists but is hidden, put cursor on visible parent
+      // otherwise put cursor on window node
+      let visibleNode = node ? node : viewRoot;
+      if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot)))
+        visibleNode = visibleNode.prevVisibleNode(viewRoot);
+      node = visibleNode;
+      //debug(`TreeView.setCursor(-->): ${node.toLine()}`);
     }
+
+    // update the cursor position
     if (this.cursor && (node !== this.cursor)) this.cursor.removeCursor();
     if (node        && (node !== this.cursor)) node.addCursor();
     this.cursor = node;
+
+    // details box
     if (node) {
       // show and update node detail box
       this.updateDetailsBox();

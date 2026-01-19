@@ -103,6 +103,19 @@ function initThemeForm () {
     const expandedRowPrefix = $expandedRowPrefix.checked;
     api.storage.local.set({ expandedRowPrefix });
   });
+
+  // expandedRowPrefix checkbox
+  const $cursorFollowsActiveTab = document.getElementById('cursorFollowsActiveTab');
+  api.storage.local.get({'cursorFollowsActiveTab': true}).then((result) => {
+    if (undefined !== result.cursorFollowsActiveTab) {
+      $cursorFollowsActiveTab.checked = result.cursorFollowsActiveTab;
+    }
+  });
+  // save on click
+  $cursorFollowsActiveTab.addEventListener('click', (event) => {
+    const cursorFollowsActiveTab = $cursorFollowsActiveTab.checked;
+    api.storage.local.set({ cursorFollowsActiveTab });
+  });
 }
 
 function initSessionRestoreForm () {

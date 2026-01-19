@@ -740,8 +740,19 @@ export class NodeView extends Node {
     this.tree.updateMarkedCount();
   }
 
-  async setActive (...args) {
-    await this.renderIfChanged(super.setActive(...args));
+  async setActive (active, ...args) {
+    const changed = super.setActive(active, ...args);
+    // abort on no-op
+    if (! changed) return;
+    // move the cursor maybe
+    if (active && this.tree.cursorFollowsActiveTab) {
+      // only if the new active tab is in OUR window
+      const winNode = this.getWindowNode();
+      if (winNode.windowId === this.tree.windowId) {
+        this.tree.setCursor(this);
+      }
+    }
+    await this.renderIfChanged(changed);
   }
 
 }  // end class NodeView
