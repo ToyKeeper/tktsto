@@ -779,10 +779,19 @@ export class Node {
       else {
         debug(`loading saved window: ${this.id}`);
         // get a list of 'wasLoaded' tabs
-        const tabList = this.findNodes(
+        let tabList = this.findNodes(
           (node) => { return (node.wasLoaded && node.isUnloadedTab()); },
           (node) => { return ! node.isWindow(); }  // skip nested windows
         );
+        // if window has no 'wasLoaded' tabs, just use the first tab
+        if (tabList.length < 1) {
+          tabList = this.findNodes(
+            (node) => { return (node.isUnloadedTab()); },
+            (node) => { return ! node.isWindow(); }  // skip nested windows
+          );
+          if (tabList.length > 1) tabList.length = 1;
+        }
+        // load everything in the list
         let first = true;
         for (const kid of tabList) {
           debug(`loading saved tab: ${kid.url}`);
