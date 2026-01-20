@@ -1,5 +1,5 @@
 // bkgd/sidepanel.js: sidepanel init script
-// Copyright (C) 2025 Selene ToyKeeper
+// Copyright (C) 2025-2026 Selene ToyKeeper
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 "use strict";
@@ -12,13 +12,11 @@ export function init() {
       .setPanelBehavior({ openPanelOnActionClick: true })
       .catch((error) => console.error(error));
   }
-  // TODO: Firefox
+  // Firefox
   else if (isFirefox) {
-    // get the ID of the window this sidepanel is running in
-    // (might not be specific to Firefox)
-    //api.windows.getCurrent({populate: true}).then((windowInfo) => {
-    //  myWindowId = windowInfo.id;
-    //});
+    // Different API for Firefox.
+    // This is handled in bkgd.onExtensionIconClicked()
+    // So, nothing to do here.
   }
 }
 

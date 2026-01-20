@@ -104,10 +104,8 @@ class Bkgd {
   initMiscListeners () {
     api.storage.onChanged.addListener( this.onStorageChanged.bind(this) );
 
-    // TODO
-    //api.action.onClicked.addListener((...args) => {
-    //  this.onExtensionIconClicked(...args);
-    //});
+    // user clicked extension icon in the address bar area
+    api.action.onClicked.addListener( this.onExtensionIconClicked.bind(this) );
 
     // global hotkey "commands"
     api.commands.onCommand.addListener( this.onCommand.bind(this) );
@@ -224,6 +222,24 @@ class Bkgd {
         this.initLocalBackupAlarm(true);
       }
     }
+  }
+
+  onExtensionIconClicked (tab, click) {
+    // middle click
+    if (click && click.button === 1) {
+      debug('onExtensionIconClicked(middle)');
+    }
+    // left click
+    else {
+      debug('onExtensionIconClicked(left)');
+      if (isFirefox) {
+        api.sidebarAction.toggle();
+      } else {
+      }
+    }
+    // right click uses a totally different API
+    // because the browser handles it as a context menu,
+    // and gives us the option to add items to that menu
   }
 
   async mergeOpenWindowsIntoTree () {
