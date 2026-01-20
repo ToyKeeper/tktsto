@@ -37,6 +37,10 @@ class Bkgd {
 
     // local backups
     this.localBackupAlarmName = 'periodicLocalBackup';
+
+    // kludge because Chrome sidePanel API is missing important stuff
+    // like sidePanel.isOpen()
+    if (isChrome) this.chromeSidepanelIsOpen = {};
   }
 
   init () {
@@ -228,6 +232,8 @@ class Bkgd {
     // middle click
     if (click && click.button === 1) {
       debug('onExtensionIconClicked(middle)');
+      // TODO: add this, for browsers which support it...
+      // (but it seems like only Firefox supports it)
     }
     // left click
     else {
@@ -235,6 +241,21 @@ class Bkgd {
       if (isFirefox) {
         api.sidebarAction.toggle();
       } else {
+        // FIXME: sidePanel.isOpen() still doesn't exist, as of Chrome 143
+        // nasty kludge, waiting on Chrome to add .isOpen()
+        let isOpen = this.chromeSidepanelIsOpen[tab.windowId];
+        if (undefined !== api.sidePanel.isOpen) {
+          isOpen = api.sidePanel.isOpen({ windowId: tab.windowId });
+        }
+        if (isOpen) {
+          // Chrome 141+
+          // (WTF, why didn't this exist until 25 releases AFTER .open())
+          api.sidePanel.close({ windowId: tab.windowId });
+        } else {
+          // Chrome 116+
+          api.sidePanel.open({ windowId: tab.windowId });
+        }
+        this.chromeSidepanelIsOpen[tab.windowId] = (! isOpen);
       }
     }
     // right click uses a totally different API
