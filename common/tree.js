@@ -403,6 +403,31 @@ export class Tree {
     return newNode;
   }
 
+  async checkIfVivaldiPanel (tab) {
+    // TODO: figure out how to detect Vivaldi
+    //if (! isVivaldi) return false;
+    // Most browsers don't have this problem
+    if (isFirefox) return false;
+    if (isBrave) return false;
+    if (isMaxthon) return false;
+    // cache results
+    if (this.tabBlacklist[`${tab.id}`]) { return true; }
+    // cache miss, check the long way
+    const winTabList = await api.tabs.query({ windowId: tab.windowId });
+    // Vivaldi lists tab.windowId as this window,
+    // but doesn't list tab.id in this window's tabs.
+    const found = winTabList.some(t => t.id === tab.id);
+    if (! found) {
+      // Vivaldi puts sidePanel "tabs" after the regular tabs
+      //if (tab.index >= winTabList.length) {
+      this.tabBlacklist[`${tab.id}`] = true;
+      debug('ignoring tab which looks like a Vivaldi panel', tab);
+      // TODO: api.storage.local.set({ isVivaldi: true });
+      return true;
+    }
+    return false;
+  }
+
   async onTabCreated (tab) {
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // tab.active: boolean
@@ -430,22 +455,13 @@ export class Tree {
     const tabNode = this.getNodeByTabId(tab.id);
     if (tabNode) return debug(`Tree.onTabCreated(${tab.id}): already exists`);
 
+    // detect if it's a Vivaldi sidePanel, and ignore it
+    if (isChrome) {
+      if (await this.checkIfVivaldiPanel(tab)) return;
+    }
+
     // figure out which URL this new tab is going to
     const tabPendingUrl = this.getTabPendingUrl(tab);
-
-    // Vivaldi sends this event for sidepanels,
-    // but they can't be used like tabs, so ignore them
-    if (('about:blank' === tabPendingUrl) && isChrome) {
-      let pendingTab;  // allow if *we* opened it; ignore otherwise
-      if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
-        pendingTab = this.bkgd.nodesLoading[0];
-      }
-      if ('about:blank' !== pendingTab) {
-        this.tabBlacklist[`${tab.id}`] = true;
-        debug('ignoring tab which looks like a Vivaldi panel');
-        return;
-      }
-    }
 
     // are we loading a saved tab?
     let savedTabNode;
@@ -859,10 +875,9 @@ export class Tree {
     // wait, if a tab is currently being replaced
     const otrUnlock = await this.onTabReplacedMutex.lock();  otrUnlock();
 
-    // ignore Vivaldi sidepanels and other non-tab "tabs"
-    if (this.tabBlacklist[`${tabId}`]) {
-      debug('ignoring blacklisted tab');
-      return;
+    // detect if it's a Vivaldi sidePanel, and ignore it
+    if (isChrome) {
+      if (await this.checkIfVivaldiPanel(tab)) return;
     }
 
     const tabNode = this.getNodeByTabId(tabId);
