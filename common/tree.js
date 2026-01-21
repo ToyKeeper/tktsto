@@ -3,7 +3,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 "use strict";
-import { api, isChrome, isFirefox } from '/api.js';
+import {
+  api, isChrome, isFirefox,
+  isEdge, isBrave, isVivaldi, isMaxthon
+} from '/api.js';
 
 import {
   log, debug, warn, error, emit, jsonSchema, dateTupleStrings
@@ -56,6 +59,9 @@ export class Tree {
       'ctime',
       'mtime',
       'atime',
+      'geometry',
+      'windowState',
+      'incognito',
       'discarded',
       'frozen',
       'hidden',
@@ -373,8 +379,8 @@ export class Tree {
         type: 'window',
         windowId: window.id,
         loaded: true,
-        //windowState: window.state,  // TODO
-        //incognito: window.incognito,  // TODO
+        windowState: window.state,
+        incognito: window.incognito,
         geometry: [window.width, window.height, window.left, window.top]
       }, { reason: args.reason });
       // in case a parent tab with child tabs has *already* been moved
@@ -387,20 +393,48 @@ export class Tree {
     // otherwise, create a new node for this window
     const destParent = this.root;
     // TODO: maybe insert at beginning instead of end?
+    //       (or after current window, in same parent?)
     const destIndex = this.root.nodes.length;
-    // TODO: handle window.top, .left, .width, .height
-    //       so it can re-open saved windows at same size+position
-    // TODO: handle window types: normal, incognito, pop-up?, ...
+    // TODO: handle window types: normal, panel, pop-up?, ...
     const newNode = await destParent.addChild(destIndex, {
       type: 'window',
       windowId: window.id,
       loaded: true,
-      //windowState: window.state,  // TODO
-      //incognito: window.incognito,  // TODO
+      windowState: window.state,
+      incognito: window.incognito,
       geometry: [window.width, window.height, window.left, window.top]
     }, { reason: args.reason });
     debug('Tree.onWindowCreated() new window node', newNode);
     return newNode;
+  }
+
+  async onWindowBoundsChanged(win, winNode = null) {
+    if (! winNode) winNode = this.root.getWindowId(win.id);
+    // no node = no problem, because a non-browser window may be focused
+    if (! winNode) return;
+
+    function arraysEqual(a, b) {
+      if ((!a) || (!b)) return false;
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return false; }
+      return true;
+    }
+
+    // update the window geometry and stuff
+    const changes = {};
+    if (win.width && win.height) {
+      const geometry = [ win.width, win.height, win.left, win.top ];
+      if (! arraysEqual(geometry, winNode.geometry))
+        changes.geometry = geometry;
+    }
+    if ((undefined !== win.state)
+      && (win.state !== winNode.windowState))
+      changes.windowState = win.state;
+    if ((undefined !== win.incognito)
+      && (win.incognito !== winNode.incognito))
+      changes.incognito = win.incognito;
+    if (0 === Object.keys(changes).length) return;  // abort if no changes
+    await winNode.setTabFields(changes, { reason: 'onWindowBoundsChanged' });
   }
 
   async checkIfVivaldiPanel (tab) {

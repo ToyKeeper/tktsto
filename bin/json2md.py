@@ -185,9 +185,12 @@ def node_toFullLine(node, nodes, indent=False):
     if 'window' == node.type:
         numTabs = len(node.tabs)
         if node.loaded: line = f'{line} (Window, {numTabs} tabs)'
-        else: line = f'{line} (Closed Window)'
-        # FIXME: add window geometry "[WIDxHGT+LEFT+TOP]"
-        if node.geometry: line = f'{line} [{node.geometry}]'
+        else: line = f'{line} (Window) (closed)'
+        if node.incognito: line = f'{line} (private)'
+        # add window geometry "[WIDxHGT+LEFT+TOP]"
+        if node.geometry:
+            gstr = '%sx%s+%s+%s' % tuple(node.geometry)
+            line = f'{line} [{gstr}]'
         else: line = f'{line} [?x?+?+?]'
 
     # if all else fails

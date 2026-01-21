@@ -22,6 +22,13 @@ export class Node {
     // browser attachment
     this.windowId = undefined;
     this.tabId = undefined;
+    // misc window/tab states
+    this.geometry = undefined;
+    this.windowState = undefined;
+    this.incognito = undefined;
+    this.discarded = undefined;
+    this.frozen = undefined;
+    this.hidden = undefined;
     // attributes
     this.label = undefined;
     this.note = undefined;
@@ -440,8 +447,17 @@ export class Node {
     else if (this.url) line = `${line}[${this.url}](${this.url})`;
     else if (this.isWindow()) line = `${line}Window ${this.windowId}`;
     else if (this.isRoot()) line = `${line}Session`;
-    // closed windows
-    if (this.isWindow() && (! this.isLoaded())) line = `${line} (Closed)`;
+    if (this.isWindow()) {
+      // closed windows
+      if (! this.isLoaded()) line = `${line} (closed)`;
+      // incognito windows
+      if (this.incognito) line = `${line} (private)`;
+      // geometry
+      if (this.geometry) {
+        const g = this.geometry;
+        line = `${line} [${g[0]}x${g[1]}+${g[2]}+${g[3]}]`;
+      }
+    }
     // if all else fails
     if (! line) line = `${line}node ${this.id}`;
     return line;
@@ -729,7 +745,7 @@ export class Node {
     // notify others
     if ([
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
-      'onWindowCreated', 'onWindowFocusChanged'
+      'onWindowCreated', 'onWindowFocusChanged', 'onWindowBoundsChanged'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',

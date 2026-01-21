@@ -384,31 +384,24 @@ class Bkgd {
   async onWindowFocusChanged (windowId) {
     debug(`bkgd.onWindowFocusChanged(${windowId})`);
     await this.treeLoaded;
+    const winNode = this.tree.root.getWindowId(windowId);
+    // no node = no problem, because a non-browser window may be focused
+    if (! winNode) return;
+
+    // update the window geometry and stuff
+    // (because Firefox has no onWindowBoundsChanged event)
+    // (so this is a workaround for that)
+    const win = await api.windows.get(windowId);
+    if (win) { await this.tree.onWindowBoundsChanged(win, winNode); }
+
     // TODO: set window node as 'active' and set others as just 'loaded'?
     //   (so the focused window can have a brighter row in the tree view)
-    const node = this.tree.root.getWindowId(windowId);
-    if (node) {
-      // update the window geometry and stuff
-      // (because Firefox has no onWindowBoundsChanged event, apparently)
-      // (so this is a workaround for that)
-      const win = await api.windows.get(windowId);
-      if (win) {
-        const geom = [ win.width, win.height, win.left, win.top ];
-        await node.setTabFields(
-          { geometry: geom,
-            windowState: win.state,
-            incognito: win.incognito
-          },
-          { reason: 'onWindowFocusChanged' });
-      }
-    }
-    // no node = no problem, because a non-browser window may be focused
   }
 
-  async onWindowBoundsChanged (...args) {
-    debug('bkgd.onWindowBoundsChanged', ...args);
+  async onWindowBoundsChanged (win) {
+    debug('bkgd.onWindowBoundsChanged', win);
     await this.treeLoaded;
-    // TODO: update window geometry
+    return this.tree.onWindowBoundsChanged(win);
   }
 
   async onTabCreated (tab) {
@@ -665,17 +658,27 @@ class Bkgd {
       createProperties.url = 'about:blank';
     // opening as first tab in new window
     if (needsWindow) {
+      // TODO: add support for a "panel" window with only TKTSTO in it
+      //       (for Tabs Outliner users who want a separate window)
       createProperties.type = 'normal';
+      // restore incognito status
+      if (undefined !== windowNode.incognito)
+        createProperties.incognito = windowNode.incognito;
+      // save and restore 'state': fullscreen, maximized, minimized
+      if (undefined !== windowNode.windowState)
+        createProperties.state = windowNode.windowState;
       // set window size and position
-      // TODO: save and restore 'state': fullscreen, maximized, minimized
-      if (windowNode.geometry && (4 === windowNode.geometry.length)) {
+      if (windowNode.geometry
+        && (4 === windowNode.geometry.length)
+        // some window types make geometry a forbidden property
+        && (! ['minimized', 'maximized', 'fullscreen']
+            .includes(windowNode.windowState))
+      ) {
         createProperties.width = windowNode.geometry[0];
         createProperties.height = windowNode.geometry[1];
         createProperties.left = windowNode.geometry[2];
         createProperties.top = windowNode.geometry[3];
       }
-      // TODO: set incognito?  (node doesn't check this data yet)
-      if (windowNode.incognito) createProperties.incognito = true;
       debug('bkgd_loadSavedNode() creating saved window', createProperties);
       try {
         try {
@@ -704,7 +707,11 @@ class Bkgd {
       createProperties.windowId = windowNode.windowId;
       // maybe don't fully load it?
       if (msg.discarded) {
-        if (isFirefox) createProperties.discarded = true;
+        if (isFirefox) {
+          createProperties.discarded = true;
+          // only allowed for discarded URLs
+          createProperties.title = node.title;
+        }
         else createProperties.active = false;
       }
       // assign an "openerTab" if one exists

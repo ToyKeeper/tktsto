@@ -17,7 +17,7 @@ if (navigator.userAgentData?.brands) {
 // Brave
 export const isBrave = (typeof navigator.brave !== 'undefined');
 // Vivaldi ... is hard to detect
-//export const isVivaldi = ???;
+export const isVivaldi = undefined
 // Maxthon
 export const isMaxthon = (typeof maxthon !== 'undefined');
 

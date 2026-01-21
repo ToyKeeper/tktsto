@@ -150,6 +150,9 @@ export class NodeView extends Node {
     else this.$row.classList.remove('frozen');
     if (this.hidden) this.$row.classList.add('tab-hidden');
     else this.$row.classList.remove('tab-hidden');
+    // incognito
+    if (this.incognito) this.$row.classList.add('incognito');
+    else this.$row.classList.remove('incognito');
 
     // title row text
     // full row: [3/14] [X] & @ Label Text ~ <a href="link">Link Title</a>
@@ -264,6 +267,11 @@ export class NodeView extends Node {
       // TODO: show when windows was last open
       // (but ctime / mtime / atime aren't quite right)
       $rowTitle.append(' (closed)');
+    }
+
+    // note incognito windows
+    if (this.isWindow() && this.incognito) {
+      $rowTitle.append(' (private)');
     }
 
     // whatever the row "title" was, add it
