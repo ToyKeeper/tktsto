@@ -65,7 +65,7 @@
   "commands": {
     "_execute_sidebar_action": {
       "description": "Toggle Side Panel",
-      "suggested_key": { "default": "Ctrl+1" }
+      "suggested_key": { "default": "F1" }
     },
     "backupSession": {
       "description": "Back up session now"
