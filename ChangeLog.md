@@ -4,6 +4,44 @@ What changed, and when?  You know the drill.
 
 ## Next
 
+## 0.1.39.0 (2026-01-21)
+
+Changes:
+
+- Added feature: Tree view cursor follows active tab.  So it automatically
+  follows what you're doing in the browser, and shows the part of the tree
+  near the current page.
+- Added support for incognito windows.
+- Added support for fullscreen, maximized, and minimized windows... and
+  improved support for remember window geometry.
+- Improved backups: Now saves a backup at boot time if it's overdue.
+- Made it possible to mark windows.
+- Added Shift+PgDn in tree view, and fixed Shift+PgUp.  Moves current node
+  up/down without increasing depth.
+- Changed Firefox default hotkey to `F1`, and added default suggested hotkeys
+  for many other actions.
+
+Bug fixes:
+
+- Fixed "click extension icon does nothing" in Firefox.
+- Fixed major issue in Vivaldi 7.7 where sidepanel "tabs" got mixed into the
+  tree and caused tree corruption.  Other browsers and older versions of
+  Vivaldi are unaffected.
+- Fixed "delete" doing nothing on open window nodes... now it unloads instead.
+- Fixed "load" doing nothing on saved windows with no "wasLoaded" tabs.
+  Now loads the first tab (and thus the window), leaving the user to load
+  other saved tabs if they want more.
+- Fixed bug: Deleting bottom-most node in "Window" mode made cursor disappear.
+- Fixed some cases where cursor could fall out of scope in Window mode.
+
+Browsers known to work, or mostly work:
+
+- Firefox ESR 115 .. 140
+- Chromium (and Ungoogled Chromium) 134 .. 143
+- Edge 136 .. 143
+- Brave 1.78
+- Vivaldi 7.3, 7.7
+- Maxthon 7.3.1
 
 ## 0.1.24.0 (2026-01-17)
 
