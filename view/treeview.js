@@ -139,6 +139,14 @@ export class TreeView extends Tree {
 
     this.$viewScopeBtn = this.document.getElementById('view-scope-btn');
 
+    // zoom buttons
+    this.$zoomOutBtn = this.document.getElementById('zoom-out-btn');
+    this.$zoomInBtn = this.document.getElementById('zoom-in-btn');
+    // number of steps per "octave"
+    this.zoomSteps = 12;
+    this.zoomMax = 3;
+    this.zoomMin = 1 / this.zoomMax;
+
     // shows info about most recent event
     //this.$statusBar = this.document.getElementById('status-bar');
     this.$statusText = this.document.getElementById('status-text');
@@ -162,22 +170,6 @@ export class TreeView extends Tree {
 
     // node row hover menu
     this.$hoverMenu = this.document.getElementById('hover-menu');
-
-    // TODO: buttons to zoom this TreeView
-    // https://developer.chrome.com/docs/extensions/reference/api/tabs#type-ZoomSettings
-    // api.tabs.setZoom(tabId?, zoomFactor, callback?)
-    // api.tabs.getZoom(tabId?, callback?)
-    //   cb(zoomFactor)
-    // api.tabs.onZoomChange.addListener(cb)
-    //   cb(ZoomChangeInfo)
-    //     zci.newZoomFactor
-    //     zci.oldZoomFactor
-    //     zci.tabId
-    //     zci.zoomSettings
-    // Must get the sidepanel's tabId first though?
-    // await api.tabs.query({active:true, currentWindow:true})
-    // await api.tabs.query({active:true, windowId:(await api.windows.getCurrent()).id})
-    // https://stackoverflow.com/questions/76456744/chrome-extension-get-tab-id-in-sidepanel
 
   }
 
@@ -218,6 +210,9 @@ export class TreeView extends Tree {
     if (! this.viewScope) this.viewScope = defaultViewScope;
 
     this.$renderViewScopeBtn();
+
+    this.zoomLevel = 1.0;
+    this.setZoomLevel();
 
     this.$renderWholeTree();
 
@@ -296,6 +291,9 @@ export class TreeView extends Tree {
     }
     if (changes.cursorFollowsActiveTab) {
       this.cursorFollowsActiveTab = changes.cursorFollowsActiveTab.newValue;
+    }
+    if (changes.treeViewZoomLevel) {
+      this.setZoomLevel();
     }
   }
 
@@ -1456,7 +1454,9 @@ export class TreeView extends Tree {
     this.hoverMenuLast = this.mouseNode;
     // adjust menu position
     const rect = this.$mouseRow.getBoundingClientRect();
-    this.$hoverMenu.style.top = String(rect.top + window.scrollY - 3) + 'px';
+    let hTop = (rect.top + window.scrollY - (3 * this.zoomLevel))
+      / this.zoomLevel;
+    this.$hoverMenu.style.top = String(hTop) + 'px';
     // show or hide the 'unload' button
     if (this.mouseNode.isUnloadable()) {
       this.$hoverMenuUnload.style.display = 'inline-block';
@@ -1605,6 +1605,13 @@ export class TreeView extends Tree {
     this.$treeViewInTabBtn.addEventListener('click', () => {
       this.onTreeViewInTabBtnClick();
     });
+    // zoom in and out
+    this.$zoomOutBtn.addEventListener('click', () => {
+      this.onZoomBtn(-1);
+    });
+    this.$zoomInBtn.addEventListener('click', () => {
+      this.onZoomBtn(1);
+    });
     // when details-btn clicked, toggle the details box
     this.$detailsBtn.addEventListener('click', () => {
       this.onDetailsBtnClick();
@@ -1717,6 +1724,66 @@ export class TreeView extends Tree {
 
   onTreeViewInTabBtnClick () {
     this.openInternalPage('/view/sidepanel.html');
+  }
+
+  onZoomBtn (direction) {
+    const zoomStepSize = Math.pow(2, 1.0 / this.zoomSteps);
+
+    // adjust the zoom
+    let newzoom = this.zoomLevel;
+    if (direction > 0) newzoom *= zoomStepSize;
+    else if (direction < 0) newzoom /= zoomStepSize;
+    else newzoom = 1;
+
+    // round to nearest clean ratio if it's close
+    function snapToRatio(value, tolerance = 0.01) {
+      const ratios = [1/4, 1/2, 1, 2, 4];
+      for (const r of ratios) {
+        const diff = Math.abs(value - r) / r;  // relative difference
+        if (diff <= tolerance) {
+          return r;  // snap to the clean ratio
+        }
+      }
+      return value; // leave unchanged
+    }
+
+    // clean up the value
+    newzoom = snapToRatio(newzoom);
+
+    // ... and set it
+    this.setZoomLevel(newzoom);
+  }
+
+  async setZoomLevel (zoomLevel) {
+    // per window
+    //const savedZoomLevel = await this.getWindowConfig('zoomLevel', 1.0);
+    // global
+    const savedZoomLevel = await this.getConfig('treeViewZoomLevel', 1.0);
+    //debug(`setZoomLevel(${zoomLevel}, ${savedZoomLevel})`);
+    if (! zoomLevel) {
+      zoomLevel = savedZoomLevel;
+    }
+    zoomLevel = Math.min(Math.max(zoomLevel, this.zoomMin), this.zoomMax);
+
+    // update the view
+    this.document.documentElement.style.setProperty('--zoom-level', zoomLevel);
+    this.zoomLevel = zoomLevel;
+
+    // persist preference
+    if (zoomLevel !== savedZoomLevel) {
+      // per window
+      //await this.setWindowConfig('zoomLevel', zoomLevel);
+      // global
+      await this.setConfig('treeViewZoomLevel', zoomLevel);
+      this.setStatus(`Zoom: ${(100 * this.zoomLevel).toFixed(2)}%`);
+    }
+
+    // grey out or activate zoom buttons if maxed out
+    const grey = 'greyed-out';
+    if (zoomLevel >= this.zoomMax) this.$zoomInBtn.classList.add(grey);
+    else this.$zoomInBtn.classList.remove(grey);
+    if (zoomLevel <= this.zoomMin) this.$zoomOutBtn.classList.add(grey);
+    else this.$zoomOutBtn.classList.remove(grey);
   }
 
   onBackupBtnClick () {
