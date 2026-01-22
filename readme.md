@@ -260,7 +260,7 @@ Client (browser extension):
     - [x] Remember window positions/sizes
     - [x] Open new windows when necessary, while moving loaded pages
     - [x] Handle the browser's built-in session management
-    - [ ] Incognito windows (might work, just haven't tested yet)
+    - [x] Incognito windows
 - Tree editing via keyboard
     - [x] Cursor movement
     - [x] Move nodes with keystrokes
@@ -275,16 +275,16 @@ Client (browser extension):
     - [x] Edit tasks
 - Tree editing via mouse
     - [x] Move nodes via drag-n-drop
-    - [ ] Move nodes via mark-n-paste
+    - [x] Move nodes via mark-n-paste
     - [x] Hover menu for common operations...
         - [x] Unload
-        - [x] Edit notes
         - [x] Edit tasks
+        - [x] Edit notes
         - [x] Mark
         - [x] Delete
     - [ ] Clickable note icons
     - [x] Clickable task buttons
-    - [ ] Add nodes
+    - [x] Add nodes (can drag text into the tree to make a new label)
     - [x] Expand / collapse
     - [x] Load / unload
     - [x] Switch to tab (double click a tab node)
@@ -299,6 +299,7 @@ Client (browser extension):
     - [ ] Safari (might work, untested)
     - [x] Brave
     - [x] Vivaldi
+    - [x] Maxthon
     - [ ] Ladybird (when the browser is ready for extensions)
     - [ ] ... others?
     - [ ] Usage notes for each browser
@@ -326,8 +327,7 @@ Client (browser extension):
     - [x] Remember view scope per window
     - [ ] Remember panel size per window
     - [ ] Remember details/notes/plain mode per window
-    - [ ] Zoom buttons (can at least zoom using browser built-in controls)
-    - [ ] Remember zoom per window
+    - [x] Zoom buttons (can also zoom using browser built-in controls)
     - [ ] Tab count on extension badge
     - [ ] Sort
     - [ ] Search
@@ -367,9 +367,10 @@ Server:
 
 Misc tools:
 
-- [ ] Convert TKTSTO json files to plain text / markdown
+- [x] Convert TKTSTO json files to plain text / markdown (bin/json2md.py)
 - [x] Convert Tabs Outliner html exports to TKTSTO json backup files
-- [ ] Compress local backup files and archive from "Downloads/" to somewhere better
+- [x] Compress local backup files and archive from "Downloads/" to somewhere
+      better (Linux only so far)
 - [ ] Super simple backup-only server
 
 
@@ -388,30 +389,38 @@ General project stuff:
 
 ## Tips / Best practices
 
-Name your windows!
+**Name your windows!**
 
-Put most of your per-window sidebars in "Window" mode, so it'll only show the
-tabs and notes in that specific window.  "Session" mode is only needed
+Put most of your per-window sidebars in **"Window" mode**, so it'll only show the
+tabs and notes in that specific window.  **"Session" mode** is only needed
 occasionally, for doing things like loading a saved window.
 
-Unload the tabs you don't immediately need.  They'll still be available later
-when you have time for them.  Instead of keeping a tab open for weeks or months
+**Unload tabs** you don't immediately need.  They'll still be available later when
+you have time for them.  Instead of keeping a tab open for weeks or months
 until you have time to do it... add a quick note about why it was open, what
 action it needs from you, then unload it.  Much easier than devoting space in
 your head, your RAM, and your tab bar.
 
-Zoom the sidebar to a comfortable size:
+**Zoom the sidebar** to a comfortable size.  There are two ways to do this:
 
-- Chrome: Click the "Options" button in the sidebar, then use Chrome's normal
-  zoom functions in the options page.  It should zoom the sidebar too.  Try
-  Ctrl+Mousewheel, or Ctrl with "=" or "-".
+1. Click the "+" and "-" buttons in the sidebar header.  This affects only the
+   sidepanel.
 
-- Firefox: Focus the sidebar by clicking in it, then use Ctrl+Mousewheel to
-  zoom the sidebar.
+2. Change the browser's zoom setting for the entire extension.  This affects
+   all pages and views in the extension:
 
-When moving stuff between windows, I recommend marking the items in one window,
-then switching to a different window and pasting the items.  I find this much
-easier than trying to drag stuff around with a mouse.
+   - Chrome: Click the "Options" button in the sidebar, then use Chrome's
+     normal zoom functions in the options page.  It should zoom the sidebar
+     too.  Try Ctrl+Mousewheel, or Ctrl with "=" or "-".
+
+   - Firefox: Focus the sidebar by clicking in it, then use Ctrl+Mousewheel to
+     zoom the sidebar.
+
+When moving stuff between windows, use **mark and paste**.  Mark the items in
+one window, then switch to a different window and paste the items.  I find this
+much easier than trying to drag stuff around with a mouse.  Also note: Items
+are pasted in the order you marked them, which might not be the same order they
+were in the tree before pasting.
 
 ### Organization
 
@@ -526,7 +535,7 @@ month, day, and tasks and details for each day.
 
 ## FAQ
 
-**What's Tiki Tiestio?**  It's just a cute way to say "TKTSTO".
+**What is Tiki Tiestio?**  It's just a cute way to say "TKTSTO".
 
 **Where are my bookmarks?**  This extension does not touch your browser's
 built-in bookmarks.  It is completely separate, and makes the legacy bookmark
