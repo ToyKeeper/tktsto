@@ -527,19 +527,21 @@ export class TreeView extends Tree {
     this.$mouseRow = $row;
     this.$mouseElem = $elem;
     //debug(`${eventName} ${node.id} `, node, this.$mouseRow);
-    //debug(`node: ${node.id}`, node);
+    //debug(`node: ${node.id}: ${node.toLine()}`, node);
     // identify which part of the row the event was in
     let rowX, rowY, rowWid, rowHgt;
     if ($row) {
-      rowX = event.clientX - $row.offsetLeft;
-      rowY = event.clientY - $row.offsetTop;
-      rowWid = $row.clientWidth;
-      rowHgt = $row.clientHeight;
+      //debug(`clientXY(${event.clientX},${event.clientY}), rowOffset(${$row.offsetLeft},${$row.offsetTop})`);
+      rowX = event.clientX - ($row.offsetLeft * this.zoomLevel);
+      rowY = event.clientY - ($row.offsetTop * this.zoomLevel);
+      rowWid = $row.clientWidth * this.zoomLevel;
+      rowHgt = $row.clientHeight * this.zoomLevel;
     }
     this.$mouseRowX = rowX;
     this.$mouseRowY = rowY;
     this.$mouseRowWid = rowWid;
     this.$mouseRowHgt = rowHgt;
+    //debug(`mouseEvent(): rowXY(${rowX},${rowY}) rowWidHgt(${rowWid}x${rowHgt})`);
 
     // call a handler
     const handlerName = this.mouseBindings[eventName];
