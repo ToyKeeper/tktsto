@@ -93,6 +93,7 @@ export class TreeView extends Tree {
       ///// buttons
       'b': 'backupSession',
       ///// misc
+      'i': 'detailsButton',
       'Shift+?': 'generateTutorial',
       'Tab': 'none',  // suppress default Tab handling
       'none': 'none'
@@ -1660,6 +1661,11 @@ export class TreeView extends Tree {
     const label = this.viewScope.charAt(0).toUpperCase()
       + this.viewScope.slice(1);
     this.$viewScopeBtn.innerText = label;
+  }
+
+  action_detailsButton (event) {
+    // hotkey version of the "details" button
+    return this.onDetailsBtnClick();
   }
 
   onDetailsBtnClick () {
