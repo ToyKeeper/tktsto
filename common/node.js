@@ -745,7 +745,8 @@ export class Node {
     // notify others
     if ([
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
-      'onWindowCreated', 'onWindowFocusChanged', 'onWindowBoundsChanged'
+      'onWindowCreated', 'onWindowFocusChanged', 'onWindowBoundsChanged',
+      'userAction'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',

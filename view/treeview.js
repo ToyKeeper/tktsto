@@ -7,7 +7,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug, warn, error, emit } from '/common/common.js';
 import { buildEventName } from '/common/events.js';
-import { inputDialog, checkboxDialog } from '/common/dialog.js';
+import { inputDialog, checkboxDialog, nodeEditDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
 import { Tree } from '/common/tree.js';
 import { Mutex } from '/common/mutex.js';
@@ -48,7 +48,7 @@ export class TreeView extends Tree {
       'Shift+O': 'addNodeAsPrevVisibleRow',
       ///// edit nodes
       'Space': 'toggleExpanded',
-      'e': 'editNotes',
+      'e': 'editNode',
       ///// task status
       //'x': 'toggleTaskDone',
       //'t': 'taskLeaderKey',
@@ -391,6 +391,14 @@ export class TreeView extends Tree {
     // disable key event handling while dialog is active
     this.dialogActive = true;
     const result = await inputDialog(...args);
+    this.dialogActive = false;
+    return result;
+  }
+
+  async nodeEditDialog (...args) {
+    // disable key event handling while dialog is active
+    this.dialogActive = true;
+    const result = await nodeEditDialog(...args);
     this.dialogActive = false;
     return result;
   }
@@ -818,16 +826,20 @@ export class TreeView extends Tree {
     if (undefined === position) position = 'next';
     if ('next' !== position) position = 'prev';
 
-    // prompt for new label text
-    const result = await this.inputDialog({
-      doc: document,
-      title: 'Add Node',
-      description: 'Enter label text:',
-      value: ''
+    // pretend to be a node
+    const fake = {
+      label: '', note: '',
+      isWindow: () => false,
+      isLoaded: () => false,
+      isRoot: () => false,
+    };
+    // prompt for details
+    const result = await this.nodeEditDialog({
+      doc: this.document, title: 'Add Node', node: fake
     });
+
     // abort if user cancelled
     if ((!result) || ('OK' !== result.button)) return;
-    const labelText = result.value;
 
     // figure out where to put the new node (determine parent and index)
     let destParent = this.root;  // default if empty tree or no cursor
@@ -860,8 +872,11 @@ export class TreeView extends Tree {
     }
 
     // add a new Node
+    let nodeType = '';
+    if (result.isWindow) nodeType = 'window';
     const newNode = await destParent.addChild(destIndex,
-      { label: labelText, render: true },
+      { label: result.label, note: result.note, type: nodeType,
+        render: true },
       { reason: 'userAction' });
     //log(destParent.nodes);
     this.setCursor(newNode);
@@ -981,7 +996,7 @@ export class TreeView extends Tree {
     }
     // if note or focused tab or window, edit it
     else {
-      if (allowEdit) this.action_editNotes(event);
+      if (allowEdit) this.action_editNode(event);
     }
   }
 
@@ -1000,31 +1015,53 @@ export class TreeView extends Tree {
     this.setStatus(`${verbed} ${this.cursor.toLine()}`);
   }
 
-  async action_editNotes (event) {
-    debug('action_editNotes()');
+  async action_editNode (event) {
+    debug('action_editNode()');
     // choose mouse or keyboard cursor based on event type
     let cursor = this.whichCursor(event);
     // skip no-op cases
     if (! cursor) return;
 
     // prompt for new label/note text
-    const result = await this.inputDialog({
-      doc: document,
-      title: 'Edit Notes',
-      description: 'Label',
-      value: cursor.label,
-      textArea: true,
-      textAreaLabel: 'Notes',
-      textAreaValue: cursor.note
+    const result = await this.nodeEditDialog({
+      doc: this.document, title: 'Edit Node', node: cursor
     });
+    debug('editNode(result):', result);
     // abort if user cancelled
     if ((!result) || ('OK' !== result.button)) return;
     // update the node
-    const labelText = result.value;
-    const noteText = result.textAreaValue;
-    //debug('action_editNotes():', labelText, noteText);
-    cursor.setNotes(labelText, noteText, { reason: 'userAction' });
-    this.setStatus(`Edited ${cursor.toLine()}`);
+    // unloaded tab
+    if (cursor.url && (! cursor.isLoaded())) {
+      await cursor.setTabFields(
+        { label: result.label, note: result.note,
+          url: result.url, title: result.title },
+        { reason: 'userAction' });
+      this.setStatus(`Edited ${cursor.toLine()}`);
+    }
+    // note-only nodes (and loaded tabs) are simple
+    // (only label+note can change)
+    else if ((! cursor.isWindow()) && (! result.isWindow)) {
+      await cursor.setNotes(result.label, result.note, { reason: 'userAction' });
+      this.setStatus(`Edited ${cursor.toLine()}`);
+    }
+    // window: unloaded or no change in isWindow status
+    else if (
+      (cursor.isWindow() === result.isWindow)
+      || (! cursor.isLoaded())
+    ) {
+      const changes = { label: result.label, note: result.note };
+      if (! cursor.isLoaded()) changes.incognito = result.incognito;
+      if (cursor.isWindow() !== result.isWindow) {
+        changes.type = result.isWindow ? 'window' : '';
+        if (! result.isWindow) changes.wasLoaded = false;
+      }
+      await cursor.setTabFields(changes, { reason: 'userAction' });
+      this.setStatus(`Edited ${cursor.toLine()}`);
+    }
+    else {
+      error('editNode(): Edit type not yet implemented.', cursor, result);
+      this.setStatus(`Edited ${cursor.toLine()}`);
+    }
   }
 
   async action_taskEdit (event) {
@@ -1434,7 +1471,7 @@ export class TreeView extends Tree {
       this.$hoverMenuTask = makeBtn(this, 'task-button', 'T', 'taskEdit');
     }
     if (! this.$hoverMenuEdit) {
-      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNotes');
+      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNode');
     }
     if (! this.$hoverMenuMark) {
       this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');

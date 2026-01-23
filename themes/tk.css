@@ -228,7 +228,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
   box-shadow: var(--button-pressed-shadow);
   transition: var(--button-transition);
 }
-.button.greyed-out {
+.greyed-out {
   opacity: 50%;
 }
 /******************** lists ********************/
@@ -357,6 +357,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
 
 .node-checkbox,
 #hover-menu .task-button,
+input[type="checkbox"],
 foo {
   display: inline-block;
   width: calc(0.7 * var(--row-line-height));
@@ -378,6 +379,7 @@ foo {
 .node-checkbox.done,
 .node-checkbox.skip,
 .node-checkbox.fail,
+input[type="checkbox"]:checked,
 foo {
   background: var(--button-pressed-bg);
   border: var(--button-pressed-border);
@@ -872,10 +874,23 @@ foo {
 }
 
 .dialog input {
-  color: var(--label-loaded-fg);
+  color: var(--note-fg);
   font-size: calc(var(--global-font-size) * 0.9);
   padding: 0.1em 0.2em;
   margin-bottom: var(--dialog-padding);
+}
+
+.dialog input#dialogLabelInput {
+  color: var(--label-loaded-fg);
+}
+
+#dialogLabelWindowToggleDiv {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+.dialog input[type="checkbox"] {
+  width: 1em;
+  margin-right: 0.5em;
 }
 
 .dialog textarea {
