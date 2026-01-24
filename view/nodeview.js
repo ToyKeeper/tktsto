@@ -429,6 +429,7 @@ export class NodeView extends Node {
       // update affected parents
       if (updateParents) this.$refreshAncestry();
     }
+    return changed;
   }
 
   async deleteSelf (...extra) {
@@ -450,6 +451,8 @@ export class NodeView extends Node {
     if (oldParent) oldParent.$refreshAncestry();
     // move the cursor to a new valid node if necessary
     if (newCursor) this.tree.setCursor(newCursor);
+
+    return changed;
   }
 
   async addChild (index, details, ...extra) {
@@ -516,27 +519,27 @@ export class NodeView extends Node {
   }
 
   async setNotes (...args) {
-    await this.renderIfChanged(super.setNotes(...args));
+    return await this.renderIfChanged(super.setNotes(...args));
   }
 
   async setCheckbox (...args) {
-    await this.renderIfChanged(super.setCheckbox(...args));
+    return await this.renderIfChanged(super.setCheckbox(...args));
   }
 
   async updateCheckboxes (...args) {
-    await this.renderIfChanged(super.updateCheckboxes(...args));
+    return await this.renderIfChanged(super.updateCheckboxes(...args));
   }
 
   async setTabFields (...args) {
-    await this.renderIfChanged(super.setTabFields(...args), true);
+    return await this.renderIfChanged(super.setTabFields(...args), true);
   }
 
   async load (...args) {
-    await this.renderIfChanged(super.load(...args), true);
+    return await this.renderIfChanged(super.load(...args), true);
   }
 
   async unload (...args) {
-    await this.renderIfChanged(super.unload(...args), true);
+    return await this.renderIfChanged(super.unload(...args), true);
   }
 
   smoothScrollTo ($container, scrollTop, duration = 200) {
@@ -644,7 +647,7 @@ export class NodeView extends Node {
 
     // move it
     const changed = await super.moveTo(destParent, destIndex, ...extra);
-    if (! changed) return;
+    if (! changed) return false;
 
     destParent.$insertChild(this, destIndex);
     // refresh old parent if needed
@@ -676,6 +679,9 @@ export class NodeView extends Node {
 
     // ensure cursor is in the viewport
     if (this === this.tree.cursor) this.scrollIntoView();
+
+    // report success
+    return true;
   }
 
   isInViewScope () {
@@ -720,10 +726,10 @@ export class NodeView extends Node {
 
   async setExpanded (expanded, ...extra) {
     const wasExpanded = this.expanded;
-    await super.setExpanded(expanded, ...extra);
+    const changed = await super.setExpanded(expanded, ...extra);
 
     // if no change, do nothing
-    if (wasExpanded === this.expanded) return;
+    if (! changed) return;
 
     // only render stuff which is in scope
     if (this.isInViewScope()) {
@@ -740,12 +746,15 @@ export class NodeView extends Node {
         this.$render();
       }
     }
+
+    return changed;
   }
 
   async setMarked (...args) {
-    await this.renderIfChanged(super.setMarked(...args));
+    const changed = await this.renderIfChanged(super.setMarked(...args));
     // update the #marked-count widget
-    this.tree.updateMarkedCount();
+    if (changed) this.tree.updateMarkedCount();
+    return changed;
   }
 
   async setActive (active, ...args) {
@@ -760,7 +769,7 @@ export class NodeView extends Node {
         this.tree.setCursor(this);
       }
     }
-    await this.renderIfChanged(changed);
+    return await this.renderIfChanged(changed);
   }
 
 }  // end class NodeView

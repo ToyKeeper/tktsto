@@ -663,6 +663,14 @@ export class TreeView extends Tree {
     this.setCursor(node);
   }
 
+  async cursorNodeMoveTo(destParent, destIndex, direction) {
+    const moved = await this.cursor.moveTo(
+      destParent, destIndex,
+      { reason: 'userAction' });
+    if (moved) this.setStatus(`moved ${direction}: ${this.cursor.toLine()}`);
+    return moved;
+  }
+
   async action_moveNodeUp (event) {
     debug('TreeView.action_moveNodeUp()');
 
@@ -679,8 +687,7 @@ export class TreeView extends Tree {
     const destIndex = prevRow.indexOf();
 
     // move it
-    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setStatus(`moved up: ${this.cursor.toLine()}`);
+    await this.cursorNodeMoveTo(destParent, destIndex, 'up');
   }
 
   async action_moveNodeDown (event) {
@@ -714,8 +721,7 @@ export class TreeView extends Tree {
     }
 
     // move it
-    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setStatus(`moved down: ${this.cursor.toLine()}`);
+    await this.cursorNodeMoveTo(destParent, destIndex, 'down');
   }
 
   async action_moveNodeUpNoDescend (event) {
@@ -746,8 +752,7 @@ export class TreeView extends Tree {
     }
 
     // actually move it
-    await cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setStatus(`moved up: ${cursor.toLine()}`);
+    await this.cursorNodeMoveTo(destParent, destIndex, 'up');
   }
 
   async action_moveNodeDownNoDescend (event) {
@@ -769,8 +774,7 @@ export class TreeView extends Tree {
     const destIndex = nextVisible.indexOf() + 1;
 
     // actually move it
-    await cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setStatus(`moved down: ${cursor.toLine()}`);
+    await this.cursorNodeMoveTo(destParent, destIndex, 'down');
   }
 
   async action_moveNodeRight (event) {
@@ -799,9 +803,9 @@ export class TreeView extends Tree {
       //newCursor = this.cursor.nextVisibleNode();
     }
 
-    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setCursor(newCursor);
-    this.setStatus(`moved right: ${this.cursor.toLine()}`);
+    // move it
+    const moved = await this.cursorNodeMoveTo(destParent, destIndex, 'right');
+    if (moved) this.setCursor(newCursor);
   }
 
   async action_moveNodeLeft (event) {
@@ -817,8 +821,7 @@ export class TreeView extends Tree {
     const destIndex = this.cursor.parent.indexOf() + 1;
 
     // move it
-    await this.cursor.moveTo(destParent, destIndex, { reason: 'userAction' });
-    this.setStatus(`moved left: ${this.cursor.toLine()}`);
+    await this.cursorNodeMoveTo(destParent, destIndex, 'left');
   }
 
   async addNodeAsPrevOrNextVisibleRow (position) {
@@ -1028,40 +1031,83 @@ export class TreeView extends Tree {
     });
     debug('editNode(result):', result);
     // abort if user cancelled
-    if ((!result) || ('OK' !== result.button)) return;
-    // update the node
-    // unloaded tab
-    if (cursor.url && (! cursor.isLoaded())) {
-      await cursor.setTabFields(
+    if ((!result) || ('OK' !== result.button)) {
+      this.setStatus('editNode: cancelled');
+      return;
+    }
+
+    // what changed?
+    const isWindowChanged = (undefined !== result.isWindow)
+      && ((!! cursor.isWindow()) !== (!! result.isWindow));
+    const incognitoChanged = (undefined !== result.incognito)
+      && ((!! cursor.isIncognito()) !== (!! result.incognito));
+    const pageDataChanged =
+      ((undefined !== result.title) && (cursor.title !== result.title))
+      || ((undefined !== result.url) && (cursor.url !== result.url));
+    const hasLoadedTabs = cursor.isLoaded() || cursor.hasLoadedTabs();
+
+    // attempt to change loaded window's incognito status
+    // (should never happen)
+    if (hasLoadedTabs && incognitoChanged) {
+      this.setStatus("editNode: Can't change incognito on loaded window");
+      return false;
+    }
+    // loaded window status changed
+    // TODO: offload to other function
+    // TODO: must send bkgd a signal to handle it,
+    //       because it'll require opening or closing windows
+    else if (hasLoadedTabs && isWindowChanged) {
+      error('editNode(): Edit type not yet implemented.', cursor, result);
+      this.setStatus('editNode: Edit type not yet implemented');
+      return false;
+
+      //debug('editNode(): convert window');
+      //const changes = { label: result.label, note: result.note };
+      //if (! cursor.isLoaded()) changes.incognito = result.incognito;
+      //if (cursor.isWindow() !== result.isWindow) {
+      //  changes.type = result.isWindow ? 'window' : '';
+      //  if (! result.isWindow) changes.wasLoaded = false;
+      //}
+      //await cursor.setTabFields(changes, { reason: 'userAction' });
+      //this.setStatus(`Edited ${cursor.toLine()}`);
+    }
+    // unloaded window status changed
+    // or unloaded window incognito status changed
+    else if (isWindowChanged || incognitoChanged) {
+      const changes = { label: result.label, note: result.note };
+      if (isWindowChanged) changes.type = result.isWindow ? 'window' : '';
+      if (incognitoChanged) changes.incognito = result.incognito;
+      if (! result.isWindow) changes.wasLoaded = false;
+      const changed = await cursor.setTabFields(
+        changes, { reason: 'userAction' });
+      if (changed) this.setStatus(`Edited ${cursor.toLine()}`);
+      return changed;
+    }
+
+    // below here, we know window and incognito status didn't change
+
+    // unloaded tab can edit title+url too
+    if (pageDataChanged && cursor.isUnloadedTab()) {
+      const changed = await cursor.setTabFields(
         { label: result.label, note: result.note,
           url: result.url, title: result.title },
         { reason: 'userAction' });
-      this.setStatus(`Edited ${cursor.toLine()}`);
+      if (changed) this.setStatus(`Edited ${cursor.toLine()}`);
+      return changed;
     }
-    // note-only nodes (and loaded tabs) are simple
-    // (only label+note can change)
-    else if ((! cursor.isWindow()) && (! result.isWindow)) {
-      await cursor.setNotes(result.label, result.note, { reason: 'userAction' });
-      this.setStatus(`Edited ${cursor.toLine()}`);
+
+    // note-only changes are simple
+    if ((cursor.label !== result.label) || (cursor.note !== result.note)) {
+      const changed = await cursor.setNotes(
+        result.label, result.note, { reason: 'userAction' });
+      if (changed) this.setStatus(`Edited ${cursor.toLine()}`);
+      return changed;
     }
-    // window: unloaded or no change in isWindow status
-    else if (
-      (cursor.isWindow() === result.isWindow)
-      || (! cursor.isLoaded())
-    ) {
-      const changes = { label: result.label, note: result.note };
-      if (! cursor.isLoaded()) changes.incognito = result.incognito;
-      if (cursor.isWindow() !== result.isWindow) {
-        changes.type = result.isWindow ? 'window' : '';
-        if (! result.isWindow) changes.wasLoaded = false;
-      }
-      await cursor.setTabFields(changes, { reason: 'userAction' });
-      this.setStatus(`Edited ${cursor.toLine()}`);
-    }
-    else {
-      error('editNode(): Edit type not yet implemented.', cursor, result);
-      this.setStatus(`Edited ${cursor.toLine()}`);
-    }
+
+    // every allowed case is handled,
+    // so it looks like nothing changed
+    this.setStatus(`Unchanged: ${cursor.toLine()}`);
+    return false;
   }
 
   async action_taskEdit (event) {
@@ -1156,14 +1202,17 @@ export class TreeView extends Tree {
     // (like, to reverse a set, just mark them in reverse order
     //  then paste in-place to change the order)
     let numMoved = 0;
+    let numFailed = 0;
+    let moved = false;
     for (const nodeId of this.markedNodes) {
       const node = this.nodes[nodeId];
       // special case: moving from/to same parent can get weird
       const pastingToSameParent = (node.parent === destParent);
       const oldIndex = node.indexOf();
       // move the node
-      await node.moveTo(destParent, destIndex, { reason: 'userAction' });
-      numMoved ++;
+      moved = await node.moveTo(destParent, destIndex, { reason: 'userAction' });
+      if (moved) numMoved ++;
+      else numFailed ++;
       // adjust if special case was triggered
       if (pastingToSameParent) {
         if (oldIndex < destIndex)
@@ -1172,7 +1221,9 @@ export class TreeView extends Tree {
       // next paste goes at next slot
       destIndex ++;
     }
-    this.setStatus(`Moved ${numMoved} nodes`);
+    if (numFailed > 0)
+      this.setStatus(`Moved ${numMoved} nodes, ${numFailed} failed`);
+    else this.setStatus(`Moved ${numMoved} nodes`);
   }
 
   async action_pasteMarkedBefore (event) {
@@ -1356,9 +1407,11 @@ export class TreeView extends Tree {
     if (drop.targetNode === drop.sourceNode) return;
     // internal source: move the node
     if ('internal' === drop.source) {
-      await drop.sourceNode.moveTo(drop.destParent, drop.destIndex,
+      const moved = await drop.sourceNode.moveTo(
+        drop.destParent, drop.destIndex,
         { reason: 'userAction' });
-      this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
+      if (moved) this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
+      else this.setStatus(`move failed: ${drop.sourceNode.toLine()}`);
     }
     // external source: try to attach external data
     else {

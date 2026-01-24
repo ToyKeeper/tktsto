@@ -200,6 +200,13 @@ export class Node {
     return ('window' === this.type);
   }
 
+  isIncognito () {
+    let windowNode;
+    if (this.isWindow()) windowNode = this;
+    else windowNode = this.getWindowNode();
+    return (!! windowNode.incognito);
+  }
+
   hasKids () {
     return (0 < this.nodes.length);
   }
@@ -733,13 +740,162 @@ export class Node {
     }
   }
 
+  windowCreateData () {
+    // produce "createData" for api.windows.create(createData)
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/windows/create
+    const createData = {};
+    // TODO: add support for a "panel" window with only TKTSTO in it
+    //       (for Tabs Outliner users who want a separate window)
+    createData.type = 'normal';
+    // restore incognito status
+    if (undefined !== this.incognito) createData.incognito = this.incognito;
+    // save and restore 'state': fullscreen, maximized, minimized
+    if (undefined !== this.windowState) createData.state = this.windowState;
+    // set window size and position
+    if (this.geometry
+      && (4 === this.geometry.length)
+      // some window types make geometry a forbidden property
+      && (! ['minimized', 'maximized', 'fullscreen']
+          .includes(this.windowState))
+    ) {
+      createData.width = this.geometry[0];
+      createData.height = this.geometry[1];
+      createData.left = this.geometry[2];
+      createData.top = this.geometry[3];
+    }
+    return createData;
+  }
+
+  canBeConvertedFromWindow () {
+    if (! this.isWindow()) return false;
+    // unloaded windows are easy
+    if (! this.isLoaded()) return true;
+
+    // if loaded, we need another window to move tabs to
+    const parentWindow = this.parent.getWindowNode();
+    // no parent window to move tabs to
+    if (! parentWindow) return false;
+    // incognito mismatch, can't move tabs between profiles
+    if (this.isIncognito() !== parentWindow.isIncognito()) return false;
+    // FIXME: if parent not loaded, return true but also load parent
+    if (! parentWindow.isLoaded()) return false;
+
+    return true;
+  }
+
+  async convertFromWindow (changes, args) {
+    // no-op
+    if (! this.canBeConvertedFromWindow()) return;
+
+    debug(`convertFromWindow(): ${this.toLine()}`);
+
+    // this was an aborted prototype
+    // before I realized I needed a different approach
+    return;
+
+    // if any loaded tabs in branch,
+    // and no incognito mismatch,
+    // move them to this window
+    // else abort?
+    let changed = false;
+
+    const wasIncognito = this.incognito;
+    const loadedTabs = this.getLoadedTabs();
+
+    // not loaded
+    if ((! this.isLoaded()) && (0 === loadedTabs.length)) {
+      debug('convertFromWindow(): not loaded');
+      this.type = '';
+      this.incognito = undefined;
+      changed = true;
+    }
+    // loaded
+    else {
+      debug(`convertFromWindow(): isLoaded`);
+      const parentWindow = this.parent.getWindowNode();
+      debug(`convertFromWindow(): parentWindow = ${parentWindow.toLine()}`);
+      // if no parent window, abort
+      if (! parentWindow) {
+        debug("Error: no parent window");
+        if (this.tree.setStatus)
+          this.tree.setStatus("Error: no parent window");
+        return false;
+      }
+      // if incognito mismatch, abort
+      if (this.isIncognito() !== parentWindow.isIncognito()) {
+        debug("Error: incognito mismatch");
+        if (this.tree.setStatus)
+          this.tree.setStatus("Error: incognito mismatch");
+        return false;
+      }
+      // if parent not loaded, must load it
+      if (! parentWindow.isLoaded()) {
+        debug(`opening parent window: ${parentWindow.toLine()}`);
+        const createData = parentWindow.windowCreateData();
+        createData.tabId = loadedTabs[0].tabId;
+        try {
+          await api.windows.create(createData);
+        } catch (err) {
+          if (err.message.includes('Invalid value for bounds')) {
+            delete createData.geometry;
+            await api.windows.create(createData);
+          }
+          else { throw err; }
+        }
+      }
+      // mark this node as not-a-window
+      this.type = '';
+      this.incognito = undefined;
+      // move all tabs to new window
+      await parentWindow.reorderAllTabsInThisWindow();
+      changed = true;
+    }
+
+    debug(`convertFromWindow(): ==> ${changed}`);
+    return changed;
+  }
+
+  async convertToWindow (changes, args) {
+    // if any loaded tabs in branch,
+    // and no incognito mismatch,
+    // and parent window exists,
+    // move them to parent window
+    // else abort?
+    debug(`convertToWindow(): ${this.toLine()}`);
+  }
+
   async setTabFields (changes, args) {
     if (! args) return;
     // abort on no-op
     if ({} === changes) return;
+
+    let changed = false;
+
+    // special care is needed if converting between a window and a note
+    if ((undefined !== changes.type) && ('userAction' === args.reason)) {
+      debug('setTabFields(isWindow)');
+      // convert window to a note
+      if (('window' === this.type) && (! changes.type)) {
+        changed = await this.convertFromWindow(changes, args);
+      }
+      // convert note to a window
+      else if (('window' !== this.type) && changes.type) {
+        changed = await this.convertToWindow(changes, args);
+      }
+      // nothing changed
+      else {
+        debug('setTabFields(isWindow): no change');
+        delete changes.isWindow;
+      }
+    }
+
     // Do The Thing
     for (const [key, value] of Object.entries(changes)) this[key] = value;
     if (undefined !== changes.loaded) this.wasLoaded = changes.loaded;
+
+    // TODO: check if actually changed
+    // if ()
+    changed = true;
     // bump timestamp
     this.bump('mtime', args);
     // notify others
@@ -752,7 +908,8 @@ export class Node {
         { nodeId: this.id, type: 'setTabFields',
           changes: changes,
           when: this.mtime });
-    return true;  // the data changed
+
+    return changed;
   }
 
   async load (args) {
@@ -1032,11 +1189,29 @@ export class Node {
   }
 
   async moveTo (destParent, destIndex, args) {
-    if (! args) return error(`Node.moveTo(): no args`);
+    if (! args) { error(`Node.moveTo(): no args`); return false; }
     debug(`Node.moveTo(${args.reason})`, this, destParent, destIndex);
+    // report errors to UI
+    const self = this;
+    function setStatus (msg, retval = false) {
+      if (self.tree.setStatus) self.tree.setStatus(msg);
+      return retval;
+    }
     // abort on no-op
     if ((destParent === this.parent) && (destIndex === this.indexOf()))
-      return;
+      return setStatus('moveTo: already there');
+    // don't allow moving loaded tabs between incognito and regular windows
+    // and don't allow moving loaded tabs entirely out of a window
+    const oldWindowNode = this.getWindowNode();
+    const newWindowNode = destParent.getWindowNode();
+    const thisHasLoadedTabs = this.isLoaded() || this.hasLoadedTabs();
+    if (thisHasLoadedTabs && (! this.isWindow())) {
+      if (! newWindowNode)
+        return setStatus('moveTo: no destination window');
+      if (oldWindowNode.isIncognito() !== newWindowNode.isIncognito()) {
+        return setStatus("moveTo: incognito mismatch");
+      }
+    }
     // special case: moving a parent into its own child list
     // (this happens when moving a tab to the right in the tab bar,
     //  when that tab has loaded children)
@@ -1051,8 +1226,10 @@ export class Node {
     if ((this === destParent) || (this.isParentOf(destParent))) {
       debug('Node.moveTo() becoming own child, promoting kids first...', this.toLine());
       // stop if becoming our own first child
-      if ((this === destParent) && (0 === destIndex)) return;
-      if (! this.hasKids()) return;  // stop if becoming self
+      if ((this === destParent) && (0 === destIndex))
+        return setStatus("moveTo: can't become own 1st child");
+      // stop if becoming self
+      if (! this.hasKids()) return setStatus("moveTo: can't replace self");
       // becoming our own direct child
       if (this === destParent) {
         // figure out new destination after promoting kids
@@ -1062,7 +1239,7 @@ export class Node {
       }
       await this.promoteKids({ reason: 'moveTo' });
     }
-    // remove
+    // remove from old parent ...
     const prevParent = this.parent;
     let newIndex = destIndex;
     if (prevParent) {
@@ -1083,7 +1260,7 @@ export class Node {
         prevParent.bump('mtime', args);
       }
     }
-    // ... and add
+    // ... and add to new parent
     destParent.insertChild(this, newIndex);
 
     // bump new parent timestamp
@@ -1124,9 +1301,9 @@ export class Node {
             windowNodeId: newWindow.id,
             nodeId: this.id });
         }
-        // TODO: if loaded tab moved so it's not in a window,
-        //   create a new window to hold it
-        //   (maybe, maybe not... seems fine to not handle that case)
+        // TODO? if loaded tab moved so it's not in a window,
+        //   create a new window to hold it?
+        //   Nope, that case is blocked earlier in moveTo()
         //else if (! newWindow) {
         //}
 

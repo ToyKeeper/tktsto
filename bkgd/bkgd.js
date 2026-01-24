@@ -658,31 +658,12 @@ class Bkgd {
       createProperties.url = 'about:blank';
     // opening as first tab in new window
     if (needsWindow) {
-      // TODO: add support for a "panel" window with only TKTSTO in it
-      //       (for Tabs Outliner users who want a separate window)
-      createProperties.type = 'normal';
-      // restore incognito status
-      if (undefined !== windowNode.incognito)
-        createProperties.incognito = windowNode.incognito;
-      // save and restore 'state': fullscreen, maximized, minimized
-      if (undefined !== windowNode.windowState)
-        createProperties.state = windowNode.windowState;
-      // set window size and position
-      if (windowNode.geometry
-        && (4 === windowNode.geometry.length)
-        // some window types make geometry a forbidden property
-        && (! ['minimized', 'maximized', 'fullscreen']
-            .includes(windowNode.windowState))
-      ) {
-        createProperties.width = windowNode.geometry[0];
-        createProperties.height = windowNode.geometry[1];
-        createProperties.left = windowNode.geometry[2];
-        createProperties.top = windowNode.geometry[3];
-      }
-      debug('bkgd_loadSavedNode() creating saved window', createProperties);
+      const createData = windowNode.windowCreateData();
+      createData.url = createProperties.url;
+      debug('bkgd_loadSavedNode() creating saved window', createData);
       try {
         try {
-          await api.windows.create(createProperties);
+          await api.windows.create(createData);
         } catch (err) {
           // handle "Error: Invalid value for bounds. Bounds must be at least 50% within visible screen space."
           if (err.message.includes('Invalid value for bounds')) {
@@ -690,8 +671,8 @@ class Bkgd {
             // ignore their saved position
             // It's stupid that we have to do this, instead of the browser just
             // moving the window to an allowed position+size.
-            delete createProperties.geometry;
-            await api.windows.create(createProperties);
+            delete createData.geometry;
+            await api.windows.create(createData);
           }
           else { throw err; }
         }

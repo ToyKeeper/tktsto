@@ -490,8 +490,9 @@ class Dialog {
         $isWindowLabel.appendChild(doc.createTextNode("Window?"));
         $form.appendChild($isWindowDiv);
 
-        // FIXME: enable this widget when window-to-label code is written
-        if (node.isLoaded()) {
+        if (node.isWindow() && (! node.canBeConvertedFromWindow())) {
+          // can't make it not-a-window
+          // if there's no parent to move tabs to
           $isWindow.disabled = true;
           $isWindowDiv.classList.add('greyed-out');
         }
