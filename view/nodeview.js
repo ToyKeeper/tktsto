@@ -151,7 +151,7 @@ export class NodeView extends Node {
     if (this.hidden) this.$row.classList.add('tab-hidden');
     else this.$row.classList.remove('tab-hidden');
     // incognito
-    if (this.incognito) this.$row.classList.add('incognito');
+    if (this.isIncognito()) this.$row.classList.add('incognito');
     else this.$row.classList.remove('incognito');
 
     // title row text
@@ -270,7 +270,7 @@ export class NodeView extends Node {
     }
 
     // note incognito windows
-    if (this.isWindow() && this.incognito) {
+    if (this.isWindow() && this.isIncognito()) {
       $rowTitle.append(' (private)');
     }
 

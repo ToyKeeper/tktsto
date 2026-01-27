@@ -1053,23 +1053,15 @@ export class TreeView extends Tree {
       return false;
     }
     // loaded window status changed
-    // TODO: offload to other function
-    // TODO: must send bkgd a signal to handle it,
-    //       because it'll require opening or closing windows
     else if (hasLoadedTabs && isWindowChanged) {
-      error('editNode(): Edit type not yet implemented.', cursor, result);
-      this.setStatus('editNode: Edit type not yet implemented');
-      return false;
-
-      //debug('editNode(): convert window');
-      //const changes = { label: result.label, note: result.note };
-      //if (! cursor.isLoaded()) changes.incognito = result.incognito;
-      //if (cursor.isWindow() !== result.isWindow) {
-      //  changes.type = result.isWindow ? 'window' : '';
-      //  if (! result.isWindow) changes.wasLoaded = false;
-      //}
-      //await cursor.setTabFields(changes, { reason: 'userAction' });
-      //this.setStatus(`Edited ${cursor.toLine()}`);
+      debug('editNode(): convert loaded window');
+      const changes = { label: result.label, note: result.note };
+      changes.type = result.isWindow ? 'window' : '';
+      if (! result.isWindow) changes.wasLoaded = false;
+      const changed = await cursor.setTabFields(
+        changes, { reason: 'userAction' });
+      if (changed) this.setStatus(`Edited ${cursor.toLine()}`);
+      return changed;
     }
     // unloaded window status changed
     // or unloaded window incognito status changed

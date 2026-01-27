@@ -204,7 +204,8 @@ export class Node {
     let windowNode;
     if (this.isWindow()) windowNode = this;
     else windowNode = this.getWindowNode();
-    return (!! windowNode.incognito);
+    if (windowNode) return (!! windowNode.incognito);
+    return false;
   }
 
   hasKids () {
@@ -458,7 +459,7 @@ export class Node {
       // closed windows
       if (! this.isLoaded()) line = `${line} (closed)`;
       // incognito windows
-      if (this.incognito) line = `${line} (private)`;
+      if (this.isIncognito()) line = `${line} (private)`;
       // geometry
       if (this.geometry) {
         const g = this.geometry;
@@ -777,78 +778,38 @@ export class Node {
     if (! parentWindow) return false;
     // incognito mismatch, can't move tabs between profiles
     if (this.isIncognito() !== parentWindow.isIncognito()) return false;
-    // FIXME: if parent not loaded, return true but also load parent
-    if (! parentWindow.isLoaded()) return false;
+    // if parent not loaded, return true because caller will load parent
+    //if (! parentWindow.isLoaded()) return false;
 
     return true;
   }
 
   async convertFromWindow (changes, args) {
     // no-op
-    if (! this.canBeConvertedFromWindow()) return;
+    if (! this.canBeConvertedFromWindow()) return false;
+    // below here, we know this is a window and is either unloaded
+    // or has a parent window with the same incognito status
 
     debug(`convertFromWindow(): ${this.toLine()}`);
 
-    // this was an aborted prototype
-    // before I realized I needed a different approach
-    return;
-
-    // if any loaded tabs in branch,
-    // and no incognito mismatch,
-    // move them to this window
-    // else abort?
     let changed = false;
 
-    const wasIncognito = this.incognito;
     const loadedTabs = this.getLoadedTabs();
 
     // not loaded
     if ((! this.isLoaded()) && (0 === loadedTabs.length)) {
       debug('convertFromWindow(): not loaded');
-      this.type = '';
-      this.incognito = undefined;
+      changes.type = this.type = '';
+      changes.incognito = this.incognito = undefined;
       changed = true;
     }
     // loaded
     else {
-      debug(`convertFromWindow(): isLoaded`);
-      const parentWindow = this.parent.getWindowNode();
-      debug(`convertFromWindow(): parentWindow = ${parentWindow.toLine()}`);
-      // if no parent window, abort
-      if (! parentWindow) {
-        debug("Error: no parent window");
-        if (this.tree.setStatus)
-          this.tree.setStatus("Error: no parent window");
-        return false;
-      }
-      // if incognito mismatch, abort
-      if (this.isIncognito() !== parentWindow.isIncognito()) {
-        debug("Error: incognito mismatch");
-        if (this.tree.setStatus)
-          this.tree.setStatus("Error: incognito mismatch");
-        return false;
-      }
-      // if parent not loaded, must load it
-      if (! parentWindow.isLoaded()) {
-        debug(`opening parent window: ${parentWindow.toLine()}`);
-        const createData = parentWindow.windowCreateData();
-        createData.tabId = loadedTabs[0].tabId;
-        try {
-          await api.windows.create(createData);
-        } catch (err) {
-          if (err.message.includes('Invalid value for bounds')) {
-            delete createData.geometry;
-            await api.windows.create(createData);
-          }
-          else { throw err; }
-        }
-      }
-      // mark this node as not-a-window
-      this.type = '';
-      this.incognito = undefined;
-      // move all tabs to new window
-      await parentWindow.reorderAllTabsInThisWindow();
-      changed = true;
+      // must let the bkgd handle it, requires stuff a view can't do
+      const result = await emit('bkgd_convertNodeFromLoadedWindow',
+        { nodeId: this.id });
+      if ('ok' === result.result) return true;
+      return false;
     }
 
     debug(`convertFromWindow(): ==> ${changed}`);
@@ -857,11 +818,41 @@ export class Node {
 
   async convertToWindow (changes, args) {
     // if any loaded tabs in branch,
-    // and no incognito mismatch,
-    // and parent window exists,
-    // move them to parent window
-    // else abort?
+    // open a new window and move tabs there
+    // or if unloaoded, just change node type
     debug(`convertToWindow(): ${this.toLine()}`);
+
+    let changed = false;
+
+    const parentWindowNode = this.getWindowNode();
+    const loadedTabs = this.getLoadedTabs();
+
+    // not loaded
+    if ((! this.isLoaded()) && (0 === loadedTabs.length)) {
+      debug('convertToWindow(): not loaded');
+      changes.type = this.type = 'window';
+      if (parentWindowNode)
+        changes.incognito = this.incognito = parentWindowNode.incognito;
+      changed = true;
+    }
+    // loaded
+    else {
+      debug(`convertToWindow(): isLoaded`);
+      debug(`convertToWindow(): parentWindow = ${parentWindowNode.toLine()}`);
+      // if no parent window, abort
+      if (! parentWindowNode) {
+        debug("Error: no parent window");
+        if (this.tree.setStatus)
+          this.tree.setStatus("Error: no parent window");
+        return false;
+      }
+      // move all tabs to new window
+      const result = await emit('bkgd_convertNodeToLoadedWindow',
+        { nodeId: this.id });
+      if ('ok' === result.result) return true;
+      return false;
+    }
+    return false;
   }
 
   async setTabFields (changes, args) {
@@ -902,7 +893,7 @@ export class Node {
     if ([
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
       'onWindowCreated', 'onWindowFocusChanged', 'onWindowBoundsChanged',
-      'userAction'
+      'userAction', 'convertNodeToWindow', 'convertNodeFromWindow'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',

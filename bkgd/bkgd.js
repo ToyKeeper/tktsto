@@ -718,6 +718,73 @@ class Bkgd {
     return response;
   }
 
+  async bkgd_convertNodeToLoadedWindow (msg) {
+    // assumes this node contains loaded tabs and is not a window or a tab
+    await this.treeLoaded;  // ensure tree is loaded
+    const response = {};
+    let node = this.tree.nodes[msg.nodeId];
+    if ((! node) || node.isRoot() || (node.url)) {
+      const err = `bkgd_convertNodeToLoadedWindow(): invalid node`;
+      error(err);
+      return { error: err };
+    }
+    // convert a label to a window
+    const changes = { type: 'window', loaded: false };
+    const parentWindowNode = node.getWindowNode();
+    if (parentWindowNode) changes.incognito = parentWindowNode.incognito;
+    const changed = await node.setTabFields(
+      changes, { reason: 'convertNodeToWindow' });
+    //debug(`bkgd_convertNodeToLoadedWindow(): changed=${changed}`, changed);
+    if (changed) {
+      const r = await this.bkgd_loadSavedWindow(
+        { windowNodeId: node.id, nodeId: node.id });
+      if (r.result) response.result = r.result;
+      else if (r.error) result.error = r.err;
+    }
+    else response.result = 'nop';
+    return response;
+  }
+
+  async bkgd_convertNodeFromLoadedWindow (msg) {
+    // assumes this node is a window with loaded tabs
+    // and has a parent window with matching incognito status
+    // (but parent might not be loaded)
+    await this.treeLoaded;  // ensure tree is loaded
+    const response = {};
+    let node = this.tree.nodes[msg.nodeId];
+    if ((! node) || (! node.canBeConvertedFromWindow())) {
+      const err = `bkgd_convertNodeFromLoadedWindow(): invalid node`;
+      error(err);
+      return { error: err };
+    }
+    // convert a window to a label
+    const changes = {
+      type: '',
+      loaded: false, wasLoaded: false,
+      incognito: undefined,
+    };
+    const parentWindowNode = node.parent.getWindowNode();
+    const changed = await node.setTabFields(
+      changes, { reason: 'convertNodeFromWindow' });
+    //debug(`bkgd_convertNodeFromLoadedWindow(): changed=${changed}`, changed);
+    if (changed) {
+      let r;
+      if (parentWindowNode.isLoaded()) {
+        debug(`bkgd_convertNodeFromLoadedWindow(loadedParent)`);
+        r = await this.bkgd_reorderAllTabsInThisWindow(
+          { nodeId: node.id });
+      } else {
+        debug(`bkgd_convertNodeFromLoadedWindow(unloadedParent)`);
+        r = await this.bkgd_loadSavedWindow(
+          { windowNodeId: parentWindowNode.id, nodeId: node.id });
+      }
+      if (r.result) response.result = r.result;
+      else if (r.error) result.error = r.err;
+    }
+    else response.result = 'nop';
+    return response;
+  }
+
   async bkgd_loadSavedWindow (msg) {
     await this.treeLoaded;  // ensure tree is loaded
     const response = {};
@@ -739,21 +806,9 @@ class Bkgd {
     // push window node to be loaded
     this.windowsLoading.push(windowNode);
     // actually open the window
-    const createProperties = {};
+    const createProperties = windowNode.windowCreateData();
     createProperties.tabId = tabIds[0];  // dang, it only allows one
-    // opening as first tab in new window
-    createProperties.type = 'normal';
-    // set window size and position
-    // TODO: save and restore 'state': fullscreen, maximized, minimized
-    if (windowNode.geometry && (4 === windowNode.geometry.length)) {
-      createProperties.width = windowNode.geometry[0];
-      createProperties.height = windowNode.geometry[1];
-      createProperties.left = windowNode.geometry[2];
-      createProperties.top = windowNode.geometry[3];
-    }
-    // TODO: set incognito?  (node doesn't check this data yet)
-    if (windowNode.incognito) createProperties.incognito = true;
-    debug('bkgd_loadSavedWindow() creating saved window', createProperties);
+    debug('bkgd_loadSavedWindow() creating saved window', createProperties, windowNode);
     try {
       const winObj = await api.windows.create(createProperties);
       debug('bkgd_loadSavedWindow() created window', winObj);
