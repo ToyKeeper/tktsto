@@ -370,6 +370,12 @@ export class NodeView extends Node {
     if (mode <= 1) hide($nodeId);
     else setOrHide($nodeId, this.id, null, 'ID', `${this.id}`);
 
+    // parent ID
+    //let $parentId = getOrCreate('detail-parent-id', 'div');
+    //if (mode <= 1) hide($parentId);
+    //else setOrHide($parentId, this.parent.id, null,
+    //  'Parent', `${this.parent.id}`);
+
     // tab ID
     let $tabId = getOrCreate('detail-node-tabid', 'div');
     if (mode <= 1) hide($tabId);

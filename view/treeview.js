@@ -81,6 +81,7 @@ export class TreeView extends Tree {
       'Shift+ArrowLeft': 'moveNodeLeft',
       'Shift+ArrowRight': 'moveNodeRight',
       // move to first / last position
+      // TODO: implement these
       'Shift+Home': 'moveNodeHome',
       'Shift+End': 'moveNodeEnd',
       ///// mark / paste
@@ -915,20 +916,19 @@ export class TreeView extends Tree {
     // if leaf, just delete it... simple
     if (cursor.isLeaf()) {
       //debug('delete leaf node');
-      toDelete.deleteSelf({ reason: 'userAction' });
+      await toDelete.deleteSelf({ reason: 'userAction' });
       this.setStatus(`deleted ${line}`);
     }
     // don't delete an open window; unload it instead
     else if (cursor.isWindow() && cursor.isLoaded()) {
       return await this.action_unloadNode(event);
     }
-    // TODO: if window and has open tabs, things get complicated
     // if expanded, promote kids then delete parent
     else if (cursor.isExpanded()) {
       //debug('promote kids and delete parent');
       // TODO: let user configure "promote all kids" or "promote 1st child"
-      const numKids = toDelete.nodes.length;
-      toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
+      //const numKids = toDelete.nodes.length;
+      await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
       //toDelete.deleteSelfAndPromote1stKid({ reason: 'userAction' });
       //this.setStatus(`deleted 1 node and promoted ${numKids} sub-nodes`);
       this.setStatus(`deleted ${line}`);
@@ -948,7 +948,7 @@ export class TreeView extends Tree {
       // abort if user cancelled
       if ((!result) || ('OK' !== result.button)) return;
       // otherwise, actually delete it
-      toDelete.deleteSelf({ reason: 'userAction' });
+      await toDelete.deleteSelf({ reason: 'userAction' });
       this.setStatus(`deleted ${numToDelete} nodes`);
     }
   }
@@ -1255,7 +1255,7 @@ export class TreeView extends Tree {
         const $cb = this.mouseNode.$.querySelector('.node-checkbox');
         if ($cb) leftWidth += $cb.offsetWidth;
       }
-      debug(`mouseRowX (${this.$mouseRowX}), leftWidth (${leftWidth})`);
+      //debug(`mouseRowX (${this.$mouseRowX}), leftWidth (${leftWidth})`);
       // if user clicked the left ~1em of the row, toggle expand
       // (or if they clicked the node stats widget)
       if ((this.$mouseRowX <= leftWidth)

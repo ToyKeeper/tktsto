@@ -91,7 +91,9 @@ export class TreeStore extends Tree {
     }
     if (! lostFound) {
       log(`fsck: making new ${newParentName} node`);
-      lostFound = await this.root.addChild(this.root.nodes.length,
+      lostFound = await this.root.addChild(
+        //this.root.nodes.length,  // attach as last child
+        0,  // attach as first child
         { label: newParentName, note: 'orphaned nodes found during fsck' },
         { reason: 'reattachOrphanedNodes' });
     }
@@ -113,15 +115,17 @@ export class TreeStore extends Tree {
     // (entire branches may have been detached, and attaching the top-most
     //  node of each detached branch should recover the whole thing)
     for (const nodeId of Object.keys(nodeIds)) {
-      const parentId = nodeIds[nodeId].parent;
+      if ('root' === nodeId) continue; // root can't be orphaned
+
       const n = nodeIds[nodeId];
+      const parentId = n.parent;
       const p = nodeIds[parentId];
       // attach to lost+found if:
       // - parent ID not in the database
       // - node is its own parent
       // - parent doesn't recognize child
       if ((undefined === p)  // parent ID not in database
-        || ((parentId === nodeId) && ('root' !== nodeId))  // is own parent
+        || (parentId === nodeId)  // is own parent
         || (! p.nodes.includes(nodeId))  // parent doesn't expect this child
       ) {
         log('fsck: attaching orphan to lost+found:', nodeIds[nodeId]);

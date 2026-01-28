@@ -79,10 +79,11 @@ export class Node {
   async deleteSelf (args) {  //  TODO: rename this, maybe just use destroy ()
     debug(`Node.deleteSelf(${args.reason}, ${this.id})`, args);
     // root should refuse to delete itself
-    if (this.isRoot()) return;
+    if (this.isRoot()) return false;
 
     // delete kids first
     if (this.hasKids()) {
+      debug(`Node.deleteSelf(${this.nodes.length} kids)`);
       for (const node of this.nodes.slice()) {
         await node.deleteSelf(args);
       }
@@ -158,18 +159,25 @@ export class Node {
   async promoteKids (args) {
     debug('Node.promoteKids()');
     // root should refuse to promote its kids
-    if (this.isRoot()) return;
+    if (this.isRoot()) return false;
     // TODO: if deleting a window node, handle any loaded tabs specially
     //   (since loaded tabs cannot exist outside a window)
+    let moved = 0;
+    let total = this.nodes.length;
     if (this.hasKids()) {
       let newIndex = this.indexOf() + 1;
       // do it last-first so open tabs won't change order during the move
       // (forward order has issues with race conditions for open tabs)
       const reversed = [...this.nodes].reverse();
       for (const node of reversed) {
-        await node.moveTo(this.parent, newIndex, args);
+        if (await node.moveTo(this.parent, newIndex, args)) {
+          moved ++;
+        }
       }
     }
+    debug(`promoteKids(moved ${moved} / ${total} kids)`);
+    if (moved > 0) return true;
+    return false;
   }
 
   indexOf () {
@@ -189,7 +197,7 @@ export class Node {
 
   isRoot () {
     // root has no parent, or is its own parent
-    return ((! this.parent) || (this.parent === this));
+    return (('root' === this.id) || (! this.parent) || (this.parent === this));
   }
 
   isLeaf () {

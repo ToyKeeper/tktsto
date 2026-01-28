@@ -130,6 +130,7 @@ export class IDB {
 
   // save an individual Object
   async saveObj (dbName, key, obj) {
+    //debug(`idb.saveObj(): ${dbName} :: ${key}`, obj);
     const db = await this.db;
     return new Promise((resolve, reject) => {
       const txn = db.transaction(dbName, 'readwrite');

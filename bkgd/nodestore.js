@@ -7,6 +7,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 
 import { debug, log, warn, error } from '/common/common.js';
 import { Node } from '/common/node.js';
+import { Mutex } from '/common/mutex.js';
 
 
 // TODO
@@ -14,6 +15,8 @@ export class NodeStore extends Node {
 
   constructor (...args) {
     super(...args);
+    // don't write other things during the middle of a transaction
+    this.writeLock = new Mutex();
   }
 
   newNodeId () {
@@ -27,7 +30,11 @@ export class NodeStore extends Node {
 
   async saveIfChanged (promise) {
     const changed = await promise;
-    if (changed) await this.tree.db.saveNode(this);
+    if (changed) {
+      const unlock = await this.writeLock.lock();
+      try { await this.tree.db.saveNode(this); }
+      finally { unlock(); }
+    }
     return changed;
   }
 
@@ -38,14 +45,18 @@ export class NodeStore extends Node {
 
     // let parent class do its thing
     const changed = await super.deleteSelf(args);
-    // if delete failed, abort
-    if (! changed) return changed;
-
-    // parent child list changed
-    if (parent && parent.id && (parent.id !== nodeId))
-      await this.tree.db.saveNode(parent);
-    // remove from database
-    await this.tree.db.deleteNode(nodeId);
+    // if delete failed, skip the rest
+    if (changed) {
+      const unlock = await this.writeLock.lock();
+      try {
+        // parent child list changed
+        if (parent && parent.id && (parent.id !== nodeId))
+          await this.tree.db.saveNode(parent);
+        // remove from database
+        await this.tree.db.deleteNode(nodeId);
+      }
+      finally { unlock(); }
+    }
 
     return changed;
   }
@@ -57,13 +68,19 @@ export class NodeStore extends Node {
     debug(`NodeStore.addChild(${index})`, details);
     // must allocate ID before creating node and emitting notifications
     if (! details.id) { details.id = this.newNodeId(); }
+
     // create new Node object
     const newNode = await super.addChild(index, details, ...extra);
-
-    // add child to database
-    await this.tree.db.saveNode(newNode);
-    // parent changed too
-    await this.tree.db.saveNode(this);
+    if (newNode) {
+      const unlock = await this.writeLock.lock();
+      try {
+        // add child to database
+        await this.tree.db.saveNode(newNode);
+        // parent changed too
+        await this.tree.db.saveNode(this);
+      }
+      finally { unlock(); }
+    }
 
     return newNode;
   }
@@ -90,12 +107,16 @@ export class NodeStore extends Node {
     }
 
     const changed = await super.updateCheckboxes();
-    if (! changed) return changed;
-
-    // if any parents changed, save them too
-    for (const [n, checkbox, checkboxPx] of parents) {
-      if ((n.checkbox !== checkbox) || (n.checkboxPx !== checkboxPx))
-        await this.tree.db.saveNode(n);
+    if (changed) {
+      const unlock = await this.writeLock.lock();
+      try {
+        // if any parents changed, save them too
+        for (const [n, checkbox, checkboxPx] of parents) {
+          if ((n.checkbox !== checkbox) || (n.checkboxPx !== checkboxPx))
+            await this.tree.db.saveNode(n);
+        }
+      }
+      finally { unlock(); }
     }
 
     return changed;
@@ -121,13 +142,17 @@ export class NodeStore extends Node {
     const prevParent = this.parent;
 
     const changed = await super.moveTo(destParent, destIndex, args);
-    if (! changed) return changed;
-
-    await this.tree.db.saveNode(this);
-    if (destParent)
-      await this.tree.db.saveNode(destParent);
-    if (prevParent && (prevParent !== destParent))
-      await this.tree.db.saveNode(prevParent);
+    if (changed) {
+      const unlock = await this.writeLock.lock();
+      try {
+        await this.tree.db.saveNode(this);
+        if (destParent)
+          await this.tree.db.saveNode(destParent);
+        if (prevParent && (prevParent !== destParent))
+          await this.tree.db.saveNode(prevParent);
+      }
+      finally { unlock(); }
+    }
 
     return changed;
   }

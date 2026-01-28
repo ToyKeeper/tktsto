@@ -114,8 +114,10 @@ export class Tree {
   }
 
   initListeners () {
+    // only process one message at a time
+    this.onMessageMutex = new Mutex();
     api.runtime.onMessage.addListener( (msg, sender, sendResponse) => {
-      this.onMessage(msg, sender, sendResponse);
+      return this.onMessage(msg, sender, sendResponse);
     });
   }
 
@@ -978,7 +980,7 @@ export class Tree {
     finally { unlock(); }
   }
 
-  onMessage (msg, sender, sendResponse) {
+  async onMessage (msg, sender, sendResponse) {
     if (! msg.msg) {
       warn('Tree onMessage invalid', msg);
       sendResponse({error: 'invalid msg type'});
@@ -995,7 +997,11 @@ export class Tree {
     if (handler) {
       // actually handle the event
       //debug(`Tree: ${msg.msg}()`);
-      handler.bind(this)(msg, sender, sendResponse);
+      const unlock = await this.onMessageMutex.lock();
+      try {
+        await handler.bind(this)(msg, sender, sendResponse);
+      }
+      finally { unlock(); }
       // FIXME: on sync error, tree should set an error state
       //   which can be exposed to the user to let them know they should
       //   reload the view or whatever...
