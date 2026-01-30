@@ -4,7 +4,7 @@ What changed, and when?  You know the drill.
 
 ## Next
 
-## 0.1.48.0 (2026-01-30)
+## 0.1.49.0 (2026-01-30)
 
 Changes:
 
@@ -37,6 +37,10 @@ Bug fixes:
   events get handled in the correct order and only one at a time
 - Fixed issue where maximized/minimized window state could be ignored
   sometimes when loading a saved window.
+
+Misc:
+
+- Added a privacy policy.  It's required by some web extension stores.
 
 Browsers known to work, or mostly work:
 

@@ -16,9 +16,11 @@ rm -rf build
 mkdir -p build
 
 # copy root-level files
-cp LICENSE.* \
+cp ChangeLog.md \
+  LICENSE.* \
+  PRIVACY.md \
+  readme.md \
   *.js \
-  *.md \
   build
 
 # manifest is different for some browsers
