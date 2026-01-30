@@ -105,7 +105,17 @@ Install from your browser's app store, ideally.  It boosts the numbers in the
 app store and helps this extension gain more visibility.  It also allows easier
 updates, in case you want updates when a new version is released.
 
-However, installing from source is possible too:
+These are the stores where TKTSTO is published.  Each link is a redirect to the
+store's extension page:
+
+- Firefox / Mozilla Add-Ons Store: https://toykeeper.net/tktsto/firefox
+- Chrome (TBD): https://toykeeper.net/tktsto/chrome
+- Edge (TBD): https://toykeeper.net/tktsto/edge
+
+## Installing from source
+
+If your browser store isn't added yet, or if you prefer to build the extension
+yourself, here's how:
 
 ### Chrome
 
@@ -561,7 +571,7 @@ Installing the extension from source or from web extension stores:
 
 - From source: https://toykeeper.net/tktsto/releases
 - Chrome (TBD): https://toykeeper.net/tktsto/chrome
-- Firefox (TBD): https://toykeeper.net/tktsto/firefox
+- Firefox: https://toykeeper.net/tktsto/firefox
 - Edge (TBD): https://toykeeper.net/tktsto/edge
 - Safari (TBD): https://toykeeper.net/tktsto/safari
 
