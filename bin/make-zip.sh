@@ -29,9 +29,8 @@ MANIFEST='manifest.json'
 bin/make-manifest.sh "$MANIFEST" build/manifest.json
 
 # copy subdirs
-for d in bkgd common docs img options themes view ; do
-  mkdir -p "build/$d"
-  cp $(git ls-files "$d") "build/$d"
+for d in _locales bkgd common docs img options themes view ; do
+  cp --parents $(git ls-files "$d") build
 done
 
 mkdir -p dist

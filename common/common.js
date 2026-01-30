@@ -5,6 +5,10 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
+export function _ (...args) {
+  return api.i18n.getMessage(...args);
+}
+
 export function debug (...args) {
   console.debug(...args);
 }

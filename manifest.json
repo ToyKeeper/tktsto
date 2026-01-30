@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "{EXT_NAME}",
-  "description": "Outliner, tree-style tabs, bookmarks, and notes all in one",
+  "name": "__MSG_extName__",
+  "description": "__MSG_extDescription__",
   "version": "{VERSION}",
   "author": "ToyKeeper",
   "homepage_url": "https://toykeeper.net/tktsto",
+  "default_locale": "en",
   "minimum_chrome_version": "114.0.0.0",
   "icons": {
     "16": "img/icon-16.png",
