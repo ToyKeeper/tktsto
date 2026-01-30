@@ -4,6 +4,49 @@ What changed, and when?  You know the drill.
 
 ## Next
 
+## 0.1.48.0 (2026-01-30)
+
+Changes:
+
+- Added zoom for the tree view with "+" and "-" buttons
+- Added "i" key to toggle notes/details/plain info view mode
+- Added ability to convert between text nodes and window nodes, so you can
+  promote a branch to a window or turn a window into a branch.  This makes it
+  easier to keep windows smaller and more topic-focused, since any branch
+  which gets too large can be turned into its own window.
+- Added ability to change incognito status of unloaded windows
+- Added ability to edit page title and URL for unloaded tabs
+- Added ability to edit notes and window status while adding a node
+- Added short error messages in the status bar when a user action is rejected,
+  like trying to move an incognito tab to a non-incognito window.
+
+Bug fixes:
+
+- Fixed errors when trying to move a tab between a regular window and an
+  incognito window.  The browser doesn't allow that, so now TKTSTO prevents
+  it instead of failing.
+- Fixed problems when moving loaded tabs entirely out of a window and into the
+  void.  Loaded tabs *must* be inside a window, so now it doesn't allow moving
+  them into the void.
+- Fixed issue where pressing "d" too fast to delete nodes could cause
+  incomplete deletion, and partially-deleted nodes would then be recovered in
+  "lost+found" on the next fsck
+- Moved "lost+found" to the top of the tree instead of the bottom, to make it
+  more noticeable when data has been recovered.
+- Added more safety checks in general, for data storage access, to make sure
+  events get handled in the correct order and only one at a time
+- Fixed issue where maximized/minimized window state could be ignored
+  sometimes when loading a saved window.
+
+Browsers known to work, or mostly work:
+
+- Firefox ESR 115 .. 140
+- Chromium (and Ungoogled Chromium) 134 .. 143
+- Edge 136 .. 143
+- Brave 1.78
+- Vivaldi 7.3, 7.7
+- Maxthon 7.3.1
+
 ## 0.1.39.0 (2026-01-21)
 
 Changes:
