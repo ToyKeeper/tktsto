@@ -4,7 +4,14 @@ What changed, and when?  You know the drill.
 
 ## Next
 
-## 0.1.49.0 (2026-01-30)
+## 0.1.52.0 (2026-01-30)
+
+Bug fixes:
+
+- Fixed an issue which broke Firefox: Tree wouldn't load, because an async
+  message handler returned a non-null status.  Fixed by changing one word.
+
+## 0.1.51.0 (2026-01-30)
 
 Changes:
 

@@ -117,7 +117,7 @@ export class Tree {
     // only process one message at a time
     this.onMessageMutex = new Mutex();
     api.runtime.onMessage.addListener( (msg, sender, sendResponse) => {
-      return this.onMessage(msg, sender, sendResponse);
+      this.onMessage(msg, sender, sendResponse);
     });
   }
 
