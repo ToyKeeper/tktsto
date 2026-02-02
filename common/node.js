@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 "use strict";
-import { api, isChrome, isFirefox } from '/api.js';
+import { api, isChrome, isFirefox, isZenBrowser } from '/api.js';
 
 import {
   log, warn, error, debug, emit, isIllegalURL
@@ -1557,12 +1557,20 @@ export class Node {
           for (const node of tabNodeList)
             if (node.tabId) tabIds.push(node.tabId);
 
-          debug(`Node.reorderAllTabsInThisWindow():`, tabIds);
+          // Zen Browser is fucked
+          let zeroIndex = 0;
+          if (isZenBrowser) {
+            const tabArray = await api.tabs.query(
+              { windowId: windowNode.windowId });
+            zeroIndex = tabArray[0].index;
+          }
+
+          debug(`Node.reorderAllTabsInThisWindow():`, zeroIndex, tabIds);
 
           // attempt to reorder the tabs
           if (tabIds.length > 0)
             await api.tabs.move(tabIds,
-              { index: 0, windowId: windowNode.windowId });
+              { index: zeroIndex, windowId: windowNode.windowId });
           debug('tab reorder success');
           success = true;
           tries ++;

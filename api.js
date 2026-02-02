@@ -21,8 +21,20 @@ export const isVivaldi = undefined
 // Maxthon
 export const isMaxthon = (typeof maxthon !== 'undefined');
 
+export let isZenBrowser = false;
+// FIXME: actually detect this somehow
+if (isFirefox) isZenBrowser = true;
+
 // select a base symbol for all browser API calls
 export const api = isFirefox ? browser : chrome;
 
-console.log(`Browser type: Firefox(${isFirefox}) Chrome(${isChrome}) Edge(${isEdge}) Brave(${isBrave}) Vivaldi(???) Maxthon(${isMaxthon})`);
+console.log('Browser type:'
+  + ` Firefox(${isFirefox})`
+  + ` Chrome(${isChrome})`
+  + ` Edge(${isEdge})`
+  + ` Brave(${isBrave})`
+  + ` Vivaldi(???)`
+  + ` Maxthon(${isMaxthon})`
+  + ` Zen(${isZenBrowser})`
+);
 

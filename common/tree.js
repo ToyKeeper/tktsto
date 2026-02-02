@@ -5,7 +5,7 @@
 "use strict";
 import {
   api, isChrome, isFirefox,
-  isEdge, isBrave, isVivaldi, isMaxthon
+  isEdge, isBrave, isVivaldi, isMaxthon, isZenBrowser
 } from '/api.js';
 
 import {
@@ -487,6 +487,19 @@ export class Tree {
     //   which doesn't exist yet.  :(
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
 
+    // Zen Browser is fucked
+    if (isZenBrowser) {
+      const oldIndex = tab.index;
+      const tabArray = await api.tabs.query( { windowId: tab.windowId });
+      const zeroIndex = tabArray[0].index;
+      const newIndex = oldIndex - zeroIndex;
+      debug(`onTabCreated(): Zen tab.index ${oldIndex} - ${zeroIndex} => ${newIndex}`);
+      tab.index = newIndex;
+      if (oldIndex < zeroIndex) {
+        debug(`onTabCreated(): ignoring Zen non-tab`);
+      }
+    }
+
     // if tab was already created, do nothing
     const tabNode = this.getNodeByTabId(tab.id);
     if (tabNode) return debug(`Tree.onTabCreated(${tab.id}): already exists`);
@@ -554,6 +567,12 @@ export class Tree {
     const activeTabNode = winNode.getActiveTab();
     const loadedTabNodes = winNode.getLoadedTabs();
     //debug(`Tree.onTabCreated(): new tab is ${tab.index+1} of ${loadedTabNodes.length}`);
+
+    // Zen opens "New Tab" at the far left for some reason
+    if (isZenBrowser && (0 === tab.index) && activeTab) {
+      // place it as 1st child of focused tab
+      tab.index = activeTab.index + 1;
+    }
 
     // if the tab is a blank created by the user with C-t...
     // ... make it the 1st child of the active tab
@@ -728,6 +747,16 @@ export class Tree {
     // moveInfo.toIndex: number
     // moveInfo.windowId: number
     // get the tabNode and winNode
+
+    // Zen Browser is fucked
+    let zeroIndex = 0;
+    if (isZenBrowser) {
+      const tabArray = await api.tabs.query( { windowId: moveInfo.windowId });
+      zeroIndex = tabArray[0].index;
+      moveInfo.fromIndex -= zeroIndex;
+      moveInfo.toIndex -= zeroIndex;
+    }
+
     const windowNode = this.root.getWindowId(moveInfo.windowId);
     if (! windowNode) {
       // FIXME: WTF, shouldn't happen, big error here
@@ -816,9 +845,32 @@ export class Tree {
     // attachInfo.newPosition: number
     // attachInfo.newWindowId: number
     //   (may refer to a window which doesn't exist yet)
+
+    // Zen Browser is fucked
+    if (isZenBrowser) {
+      debug(`Tree.onTabAttached(Zen, ${tabId})`, attachInfo);
+      let tabArray = await api.tabs.query(
+          { windowId: attachInfo.newWindowId });
+      // attached to new window which doesn't exist yet
+      // (needs a moment to spawn the window)
+      if ((! tabArray) || (0 >= tabArray.length)) {
+        debug(`Tree.onTabAttached(Zen): retrying`);
+        // delay is probably unnecessary, since await above already waited
+        await new Promise(r => setTimeout(r, 10));  // wait 10ms
+        tabArray = await api.tabs.query(
+          { windowId: attachInfo.newWindowId });
+      }
+      if (tabArray.length > 0) {
+        const zeroIndex = tabArray[0].index;
+        attachInfo.newPosition -= zeroIndex;
+        debug(`Tree.onTabAttached(Zen) => index=${attachInfo.newPosition}`);
+      }
+    }
+
     const newIndex = attachInfo.newPosition;
     const windowId = attachInfo.newWindowId;
-    debug(`Tree.onTabAttached(${tabId}) -> ${windowId}, ${newIndex}`);
+
+    debug(`Tree.onTabAttached(tabId=${tabId}) -> windowId=${windowId}, index=${newIndex}`);
 
     // find the tab node
     const tabNode = this.getNodeByTabId(tabId);
@@ -907,6 +959,12 @@ export class Tree {
     // changeInfo.mutedInfo: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-MutedInfo
     // changeInfo.autoDiscardable: boolean
     debug(`Tree.onTabUpdated(tabId=${tabId})`, changeInfo, tab);
+
+    // dammit, Zen Browser
+    if (tabId < 0) {
+      debug(`Tree.onTabUpdated(${tabId}): ignoring non-tab (Zen Browser?)`);
+      return;
+    }
 
     // wait, if a tab is currently being replaced
     const otrUnlock = await this.onTabReplacedMutex.lock();  otrUnlock();

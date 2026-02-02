@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 "use strict";
-import { api, isChrome, isFirefox } from '/api.js';
+import { api, isChrome, isFirefox, isZenBrowser } from '/api.js';
 
 import { TreeView } from '/view/treeview.js';
 
@@ -99,6 +99,32 @@ export async function createNewUserTutorialNodes (tree, parentNode) {
     { label: "When you're done with this tutorial...",
       note: '... feel free to delete it.  First collapse it, then press the red "D" button in the hover menu, or type the letter "D".\n\nYou can generate the tutorial again by pressing "?" on the keyboard.\n\nNote: Deleting the branch will also close and delete any tabs or windows remaining inside the tutorial branch.  Move those first if you want to keep anything.' },
   ]};
+
+  // Zen Browser "window sync" mode is insane, turn it off
+  if (isZenBrowser) {
+    helpInfo.nodes.splice(4, 0,
+      {
+        label: 'If you use Zen Browser...', expanded: false, nodes: [
+          { label: '... you MUST disable Window Sync.',
+            note: 'Open a tab to "about:config" and search for "window-sync" and set it as "false", then restart Zen.  Otherwise things will break every time you open a window.'
+          },
+          { label: 'Other helpful settings:' },
+          { label: 'zen.urlbar.replace-newtab = false' },
+          { label: 'zen.glance.enabled = false' },
+          { label: "Don't use pinned tabs or essentials" },
+          { label: "Don't use spaces" },
+          { label: "Don't tear off tabs from Zen sidebar",
+            note: "... because Zen's API is broken for this, in ways which are nearly impossible to work around, so it will break."
+          },
+          { label: "Enable compact mode" },
+          { label: "Ctrl-S to hide the Zen sidebar" },
+          { label: "Configure extension shortcuts",
+            note: 'about:addons -> gear icon -> Manage Extension Shortcuts'
+          },
+        ]
+      }
+    );
+  }
 
   async function addItem (parent, index, details) {
     const newNode = await parent.addChild(index, details,
