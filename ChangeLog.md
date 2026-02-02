@@ -2,7 +2,28 @@
 
 What changed, and when?  You know the drill.
 
-## Next
+## 0.1.55.0 (2026-02-02)
+
+Changes:
+
+- Added partial support for Zen Browser.  Requires special configuration and
+  workflow adjustments, because some of Zen's features are incompatible in
+  ways which are difficult or impossible to fix.  Read the Zen-specific parts
+  of the tutorial nodes for details (press `?` in a tree view to generate
+  a tutorial).
+- Added optional command hotkeys for prev/next tab, for browsers which lack
+  that hotkey or which refuse to keep their native tab bar in the same order
+  as the tree.
+
+Browsers known to work, or mostly work:
+
+- Firefox ESR 115 .. 140
+- Chromium (and Ungoogled Chromium) 134 .. 143
+- Edge 136 .. 143
+- Brave 1.78
+- Vivaldi 7.3, 7.7
+- Maxthon 7.3.1
+- Zen Browser 1.18.3b
 
 ## 0.1.52.0 (2026-01-30)
 
