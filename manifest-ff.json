@@ -159,6 +159,12 @@
     "moveNodeEnd": {
       "description": "Move highlighted node end (down to last sibling)",
       "suggested_key": { "default": "Shift+Alt+End" }
+    },
+    "prevTab": {
+      "description": "Focus the previous tab"
+    },
+    "nextTab": {
+      "description": "Focus the next tab"
     }
   }
 }

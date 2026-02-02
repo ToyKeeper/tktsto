@@ -825,6 +825,58 @@ export class TreeView extends Tree {
     await this.cursorNodeMoveTo(destParent, destIndex, 'left');
   }
 
+  async getActiveTabThisWindow () {
+    // find our window
+    let winNode = viewRoot;
+    if ('session' === this.viewScope) {
+      // find the current window in the tree
+      const win = await api.windows.getCurrent();
+      let found = viewRoot.findNodes((node) => {
+        return (node.isWindow() && (win.id === node.windowId));
+      });
+      if (found.length > 0) winNode = found[0];
+    }
+    const activeTabNode = winNode.getActiveTab();
+    return activeTabNode;
+  }
+
+  async action_prevOrNextTab (event, which = 'next') {
+    debug(`action_prevOrNextTab(${which})`, event);
+    if ('command' !== event.type) {
+      return;  // this is a command-only action
+    }
+
+    const winNode = this.root.getWindowId(this.windowId);
+    let activeTabNode = this.getNodeByTabId(event.tab.id);
+    if (! activeTabNode) activeTabNode = winNode.getActiveTab();
+    const loadedTabNodes = winNode.getLoadedTabs();
+    let oldTabIndex = loadedTabNodes.indexOf(activeTabNode);
+    debug(`action_prevOrNextTab(${which} ${oldTabIndex})`, winNode, activeTabNode, loadedTabNodes);
+    if (oldTabIndex < 0) {
+      warn('action_prevOrNextTab(): current tab not found');
+      return;
+    }
+
+    let newTabIndex = oldTabIndex;
+    if ('next' === which) {
+      newTabIndex ++;
+      if (newTabIndex >= loadedTabNodes.length) newTabIndex = 0;
+    } else {
+      newTabIndex --;
+      if (newTabIndex < 0) newTabIndex = loadedTabNodes.length - 1;
+    }
+    const newTab = loadedTabNodes[newTabIndex];
+    await newTab.setActive(true, { reason: 'userAction' });
+  }
+
+  action_prevTab (event) {
+    return this.action_prevOrNextTab(event, 'prev');
+  }
+
+  action_nextTab (event) {
+    return this.action_prevOrNextTab(event, 'next');
+  }
+
   async addNodeAsPrevOrNextVisibleRow (position) {
     // ensure valid position: prev or next
     if (undefined === position) position = 'next';
@@ -1923,7 +1975,7 @@ export class TreeView extends Tree {
       try {
         this.setStatus(`key: ${msg.action}`);
         // event type tells handlers to use keyboard cursor, not mouse
-        await handler.bind(this)({ type: 'command' });
+        await handler.bind(this)({ type: 'command',  tab: msg.tab });
       }
       finally { unlock(); }
       return;

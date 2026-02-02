@@ -127,6 +127,12 @@
     },
     "moveNodeEnd": {
       "description": "Move highlighted node end (down to last sibling)"
+    },
+    "prevTab": {
+      "description": "Focus the previous tab"
+    },
+    "nextTab": {
+      "description": "Focus the next tab"
     }
   }
 }
