@@ -574,7 +574,7 @@ export class NodeView extends Node {
     requestAnimationFrame(step);
   }
 
-  scrollIntoView (instant = false) {
+  async scrollIntoView (instant = false, scrollDelay = 0) {
     if (! this.$row) return;
     // ensure row is visible,
     // and has a sufficient margin
@@ -611,12 +611,19 @@ export class NodeView extends Node {
     // always stay scrolled all the way to the left
     $container.scrollLeft = 0;
 
+    // maybe wait a moment to let user finish a double click
+    let scrollDuration = 200;
+    if (scrollDelay) {
+      scrollDuration = scrollDelay;
+      await new Promise(r => setTimeout(r, scrollDelay));
+    }
+
     // instant
     if (instant) $container.scrollTop = newScrollTop;
     // smooth
     // (helps reduce jitter from details box appearing and disappearing)
     else if (newScrollTop != $container.scrollTop)
-      this.smoothScrollTo($container, newScrollTop);
+      this.smoothScrollTo($container, newScrollTop, scrollDuration);
   }
 
   scrollToTop () {

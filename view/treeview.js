@@ -189,6 +189,7 @@ export class TreeView extends Tree {
     this.windowId = this.windowObj.id;
     // TODO: load config...
     this.nodesPerPage = 20;
+    this.doubleClickMs = 500;
     // init stylesheets
     this.updateTheme();
     this.updateStyleOptions();
@@ -1290,7 +1291,7 @@ export class TreeView extends Tree {
     // abort on no-op
     if (! this.mouseNode) return;
     // place the cursor
-    await this.setCursor(this.mouseNode);
+    await this.setCursor(this.mouseNode, false, this.doubleClickMs);
     // maybe modify a checkbox
     if (this.$mouseElem.classList.contains('node-checkbox')) {
       await this.action_taskEdit(event);
@@ -1620,7 +1621,7 @@ export class TreeView extends Tree {
     this.$hoverMenu.classList.remove('hidden');
   }
 
-  setCursor (node, instant=false) {
+  setCursor (node, instant = false, scrollDelay = 0) {
     //debug(`TreeView.setCursor(): ${node.toLine()}`);
     // ensure cursor is on a visible node in our view scope
     const viewRoot = this.viewRoot;
@@ -1645,7 +1646,7 @@ export class TreeView extends Tree {
       // show and update node detail box
       this.updateDetailsBox();
       // ensure node is visible
-      node.scrollIntoView(instant);
+      node.scrollIntoView(instant, scrollDelay);
     }
     else {
       this.hideDetailsBox();
