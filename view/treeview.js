@@ -149,6 +149,9 @@ export class TreeView extends Tree {
     this.zoomMax = 3;
     this.zoomMin = 1 / this.zoomMax;
 
+    // drag-n-drop scroll zone size
+    this.dragScrollZone = 0.15;  // 15% top and bottom
+
     // shows info about most recent event
     //this.$statusBar = this.document.getElementById('status-bar');
     this.$statusText = this.document.getElementById('status-text');
@@ -500,8 +503,15 @@ export class TreeView extends Tree {
   }
 
   async mouseEvent (eventType, event) {
+    //debug(`TreeView.mouseEvent(${eventType})`, event);
     // don't try to handle mouse events while a dialog is visible
     if (this.dialogActive) return;
+
+    // stop scrolling if mouse left the tree view
+    if ((isFirefox && (! event.relatedTarget))
+      || ((0 === event.x) && (0 === event.x)))
+      this.dragScrollSpeed = 0;
+
     //debug(`mouseEvent(${eventType}):`, event);
     // ensure nothing gets focused / highlighted
     this.document.activeElement.blur();
@@ -568,7 +578,9 @@ export class TreeView extends Tree {
   }
 
   mouseLeave (event) {
+    //debug('TreeView.mouseLeave()');
     this.hideHoverMenu();
+    this.dragScrollSpeed = 0;
   }
 
   whichCursor (event) {
@@ -1290,6 +1302,8 @@ export class TreeView extends Tree {
   async action_mousePressLeft (event) {
     // abort on no-op
     if (! this.mouseNode) return;
+    // save for later potential drag-n-drop
+    this.mouseDragStartNode = this.mouseNode;
     // place the cursor
     await this.setCursor(this.mouseNode, false, this.doubleClickMs);
     // maybe modify a checkbox
@@ -1331,8 +1345,14 @@ export class TreeView extends Tree {
   action_mouseDragStart (event) {
     // abort on no-op
     if (! this.mouseNode) return;
+
     // save for later
-    this.mouseDragStartNode = this.mouseNode;
+    // (was saved already during mousePressLeft)
+    // (it's too late to detect now, view may have scrolled)
+    if (! this.mouseDragStartNode) this.mouseDragStartNode = this.cursor;
+    //if (! this.mouseDragStartNode) this.mouseDragStartNode = this.mouseNode;
+    //this.mouseDragStartNode = this.mouseNode;
+
     // attach a text representation in case the user drops into a text field
     const plainText = this.mouseDragStartNode.asTextBranch();
     event.dataTransfer.setData('text', plainText);
@@ -1341,6 +1361,12 @@ export class TreeView extends Tree {
     // default drag image obscures drop target, so make a smaller one
     let dragImage = this.document.getElementById('drag-arrow');
     event.dataTransfer.setDragImage(dragImage, 0, 12);
+
+    // let other funcs know to behave differently during a drag
+    this.dragInProgress = true;
+
+    // this gets in the way during a drag
+    this.hideHoverMenu();
   }
 
   action_mouseDrag (event) {
@@ -1427,6 +1453,8 @@ export class TreeView extends Tree {
   action_mouseDragOver (event) {
     // apparently "drop" won't work unless we eat this event
     event.preventDefault();
+    // Scroll when near the top or bottom of the tree view
+    this.scrollDuringDrag (event);
     // figure out where to drop it
     const drop = this.getMouseDragTarget(event);
     // abort on no-op
@@ -1441,6 +1469,62 @@ export class TreeView extends Tree {
     elem.classList.add(drop.targetClass);
     if ('external' === drop.source)
       elem.classList.add(`drop-external-${drop.type}`);
+  }
+
+  scrollDuringDrag (event) {
+    // Scroll when near the top or bottom of the tree view
+    const rect = this.$.getBoundingClientRect();
+    const y = event.clientY - rect.top; // mouse position inside element
+    const height = rect.height;
+    const scrollZone = height * this.dragScrollZone;
+    this.maxDragScrollSpeed = height * this.dragScrollZone * 0.25;
+
+    //debug(`scroll? ${y}/${height} (0..${scrollZone}, ${height - scrollZone}..${height})`);
+    if (y < scrollZone) {
+      // near top
+      const intensity = 1 - y / scrollZone;
+      // negative = scroll up
+      this.dragScrollSpeed = -intensity * this.maxDragScrollSpeed;
+    } else if (y > (height - scrollZone)) {
+      // near bottom
+      const intensity = (y - (height - scrollZone)) / scrollZone;
+      // positive = scroll down
+      this.dragScrollSpeed = intensity * this.maxDragScrollSpeed;
+    } else {
+      this.dragScrollSpeed = 0;
+    }
+
+    // begin scrolling, maybe
+    if (this.dragScrollSpeed && (! this.dragAnimationFrame)) {
+      this.dragAnimationFrame = requestAnimationFrame(this.updateDragScroll.bind(this));
+    }
+  }
+
+  updateDragScroll () {
+    // scroll the tree view during a drag-n-drop
+    //debug(`updateDragScroll(${this.dragScrollSpeed})`);
+
+    // ramp up to target scroll speed by simulating inertia
+    if (undefined === this.actualScrollSpeed) this.actualScrollSpeed = 0;
+    this.actualScrollSpeed =
+      (this.actualScrollSpeed * 0.9)
+      + (this.dragScrollSpeed * 0.1);
+
+    // stop when the numbers are too small
+    const min = 1.0 / 60;  // stop at 1 pixel per 60 frames
+    let fudge = 0;
+    if (isFirefox) fudge = 0.2;  // Firefox scrolls up too long
+    if ((-(min+fudge) <= this.actualScrollSpeed)
+      && (this.actualScrollSpeed < min))
+      this.actualScrollSpeed = 0;
+
+    // scroll
+    if (this.actualScrollSpeed) {
+      this.$.scrollTop += this.actualScrollSpeed;
+      this.dragAnimationFrame = requestAnimationFrame(this.updateDragScroll.bind(this));
+    } else {
+      this.dragAnimationFrame = null;
+    }
   }
 
   async action_mouseDrop (event) {
@@ -1532,9 +1616,14 @@ export class TreeView extends Tree {
     // clear data
     this.mouseDragStartNode = undefined;
     this.clearDropTargetNodeStyles();
+    // allow hoverMenu to be displayed again
+    this.dragInProgress = false;
+    // stop any scrolling in progress
+    this.dragScrollSpeed = 0;
   }
 
   action_mouseDragLeave (event) {
+    //debug('action_mouseDragLeave()', event);
     this.clearDropTargetNodeStyles();
   }
 
@@ -1587,6 +1676,8 @@ export class TreeView extends Tree {
 
   showHoverMenu () {
     //debug(`showHoverMenu: ${this.mouseNode.toLine()}`);
+    // skip if we're in the middle of a drag-n-drop
+    if (this.dragInProgress) return;
     // skip extra drawing if the menu hasn't changed
     if (this.hoverMenuLast === this.mouseNode) return;
     this.hoverMenuLast = this.mouseNode;

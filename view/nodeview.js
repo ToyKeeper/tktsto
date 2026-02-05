@@ -559,7 +559,10 @@ export class NodeView extends Node {
       return t * (2 - t);
     }
 
-    function step (now) {
+    const step = (now) => {
+      // abort if tree is already scrolling for other reasons
+      if (this.tree.dragInProgress || this.tree.actualScrollSpeed) return;
+
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = easeOutQuad(progress);
@@ -569,7 +572,7 @@ export class NodeView extends Node {
       if (progress < 1) {
         requestAnimationFrame(step);
       }
-    }
+    };
 
     requestAnimationFrame(step);
   }
