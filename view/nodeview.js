@@ -572,7 +572,20 @@ export class NodeView extends Node {
       if (progress < 1) {
         requestAnimationFrame(step);
       }
+      else {
+        // allow the hover menu to appear again, after scrolling is done
+        const scrollComplete = () => {
+          this.tree.smoothScrollInProgress = false;
+        }
+        if (this.tree.scrollCompleteTimer)
+          clearTimeout(this.tree.scrollCompleteTimer);
+        this.tree.scrollCompleteTimer = setTimeout(scrollComplete, duration);
+      }
     };
+
+    // no hover menu while scrolling, plz
+    this.tree.smoothScrollInProgress = true;
+    this.tree.hideHoverMenu();
 
     requestAnimationFrame(step);
   }

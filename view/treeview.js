@@ -1689,7 +1689,7 @@ export class TreeView extends Tree {
   showHoverMenu () {
     //debug(`showHoverMenu: ${this.mouseNode.toLine()}`);
     // skip if we're in the middle of a drag-n-drop
-    if (this.dragInProgress) return;
+    if (this.dragInProgress || this.smoothScrollInProgress) return;
     // skip extra drawing if the menu hasn't changed
     if (this.hoverMenuLast === this.mouseNode) return;
     this.hoverMenuLast = this.mouseNode;
