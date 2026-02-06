@@ -187,6 +187,7 @@ export class TreeView extends Tree {
     this.initButtonHandlers();
     await this.loadConfig();
     this.initStorageObserver();
+    this.nodeIdMimeType = 'application/x-tktsto-node-id';
     // get the window this view is attached to
     this.windowObj = await api.windows.getCurrent();
     this.windowId = this.windowObj.id;
@@ -1355,9 +1356,13 @@ export class TreeView extends Tree {
     //if (! this.mouseDragStartNode) this.mouseDragStartNode = this.mouseNode;
     //this.mouseDragStartNode = this.mouseNode;
 
+    // add info for internal use, when dragging between 2 tktsto panels
+    event.dataTransfer.setData(this.nodeIdMimeType, this.mouseDragStartNode.id);
+
     // attach a text representation in case the user drops into a text field
     const plainText = this.mouseDragStartNode.asTextBranch();
     event.dataTransfer.setData('text', plainText);
+
     // change how the node looks
     this.mouseDragStartNode.$.classList.add('dragging');
     // default drag image obscures drop target, so make a smaller one
@@ -1381,17 +1386,31 @@ export class TreeView extends Tree {
     let targetNode = this.mouseNode;
     // abort on no-op
     if (! targetNode) return result;
+
+    // where did the data come from?
+    const types = event.dataTransfer.types;
+    // drop to/from same sidepanel
+    if (sourceNode) result.source = 'internal';
+    // drop from one sidepanel to another
+    else if (types.includes(this.nodeIdMimeType)) {
+      result.source = 'internal';
+      const nodeId = event.dataTransfer.getData(this.nodeIdMimeType);
+      if (nodeId) {
+        sourceNode = this.nodes[nodeId];
+        if (! sourceNode) return result;
+      }
+    }
+    // drop from some other source
+    if (! result.source) result.source = 'external';
+
     // don't move a parent into its own child list
     if (sourceNode && targetNode.isChildOf(sourceNode)) return result;
-    // where did the data come from?
-    if (this.mouseDragStartNode) result.source = 'internal';
-    else result.source = 'external';
+
     // source and target confirmed
     result.sourceNode = sourceNode;
     result.targetNode = targetNode;
     // external drops are complicated
     if ('external' === result.source) {
-      const types = event.dataTransfer.types;
       // URL (Firefox)
       if (types.includes('text/x-moz-url')) {
         result.type = 'url';
@@ -1531,13 +1550,27 @@ export class TreeView extends Tree {
 
   async action_mouseDrop (event) {
     event.preventDefault();
+
+    // clean up at the end
+    let finished = false;
+    const finish = (msg) => {
+      // only finish once
+      if (finished) return;
+      finished = true;
+      if (msg) this.setStatus(msg);
+      this.action_mouseDragEnd(event);
+    }
+
     // figure out where to drop it
     const drop = this.getMouseDragTarget(event);
     // abort on no-op
-    if (! drop.targetNode) return;
-    if (drop.targetNode === drop.sourceNode) return;
+    if (! drop.targetNode) return finish('drop aborted');
+    if (drop.targetNode === drop.sourceNode) return finish('drop aborted');
     // internal source: move the node
     if ('internal' === drop.source) {
+      // don't move a parent into its own child list
+      if (drop.targetNode.isChildOf(drop.sourceNode))
+        return finish('drop aborted');
       // prevent cursor from disappearing or jumping
       const wasCursor = this.cursor === drop.sourceNode;
       if (wasCursor && (drop.destParent.isCollapsed()))
@@ -1546,12 +1579,12 @@ export class TreeView extends Tree {
       const moved = await drop.sourceNode.moveTo(
         drop.destParent, drop.destIndex,
         { reason: 'userAction' });
-      if (moved) this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
+      if (moved) return finish(`moved node: ${drop.sourceNode.toLine()}`);
       else {
         // undo cursor change if move failed
         if (wasCursor && (this.cursor !== drop.sourceNode))
           this.setCursor(drop.sourceNode);
-        this.setStatus(`move failed: ${drop.sourceNode.toLine()}`);
+        return finish(`move failed: ${drop.sourceNode.toLine()}`);
       }
     }
     // external source: try to attach external data
@@ -1562,11 +1595,10 @@ export class TreeView extends Tree {
         let newNode = await drop.destParent.addChild(drop.destIndex,
           { url: drop.url, title: drop.title, render: true },
           { reason: 'userAction' });
-        this.setStatus(`Added node: ${newNode.toLine()}`);
+        return finish(`Added node: ${newNode.toLine()}`);
       }
       // plain text note
       else if ('text' === drop.type) {
-        let attached = false;
         // right edge of node: create new child node with note
         if ('drop-target-right' === drop.targetClass) {
           let label, note;
@@ -1579,21 +1611,19 @@ export class TreeView extends Tree {
           let newNode = await drop.destParent.addChild(drop.destIndex,
             { label: label, note: note, render: true },
             { reason: 'userAction' });
-          this.setStatus(`Added node: ${newNode.toLine()}`);
-          attached = true;
+          return finish(`Added node: ${newNode.toLine()}`);
         }
         // single line: use as label, if label is empty
-        if (! drop.text.includes('\n') && (! attached)) {
+        if (! drop.text.includes('\n')) {
           if (! drop.targetNode.label) {
             await drop.targetNode.setNotes(
               drop.text, drop.targetNode.note,
               { reason: 'userAction' });
-            this.setStatus(`Added label to ${drop.targetNode.toLine()}`);
-            attached = true;
+            return finish(`Added label to ${drop.targetNode.toLine()}`);
           }
         }
         // multiple lines or fall-through: add to note
-        if (! attached) {
+        if (true) {
           let note = drop.targetNode.note;
           if (! note) note = '';
           // TODO: user pref for append / prepend
@@ -1610,13 +1640,13 @@ export class TreeView extends Tree {
           await drop.targetNode.setNotes(
             drop.targetNode.label, newNote,
             { reason: 'userAction' });
-          this.setStatus(`Added note to ${drop.targetNode.toLine()}`);
+          return finish(`Added note to ${drop.targetNode.toLine()}`);
         }
       }
     }
     // clean up, just in case
     // (because 'dragend' event doesn't trigger sometimes)
-    this.action_mouseDragEnd(event);
+    finish();
   }
 
   action_mouseDragEnd (event) {
