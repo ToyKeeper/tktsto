@@ -569,7 +569,9 @@ export class TreeView extends Tree {
     if (handlerName) {
       const handler = this[`action_${handlerName}`];
       if (handler) {
-        if (! ['mouseHoverMenu', 'rejectEvent'].includes(handlerName))
+        if (! [
+          'mouseHoverMenu', 'rejectEvent', 'mouseDragEnd'
+        ].includes(handlerName))
           this.setStatus(`mouse: ${handlerName}`);
         // equivalent to this.handler(event);
         await handler.bind(this)(event);
@@ -1536,11 +1538,21 @@ export class TreeView extends Tree {
     if (drop.targetNode === drop.sourceNode) return;
     // internal source: move the node
     if ('internal' === drop.source) {
+      // prevent cursor from disappearing or jumping
+      const wasCursor = this.cursor === drop.sourceNode;
+      if (wasCursor && (drop.destParent.isCollapsed()))
+        this.setCursor(drop.destParent);
+      // move it
       const moved = await drop.sourceNode.moveTo(
         drop.destParent, drop.destIndex,
         { reason: 'userAction' });
       if (moved) this.setStatus(`moved node: ${drop.sourceNode.toLine()}`);
-      else this.setStatus(`move failed: ${drop.sourceNode.toLine()}`);
+      else {
+        // undo cursor change if move failed
+        if (wasCursor && (this.cursor !== drop.sourceNode))
+          this.setCursor(drop.sourceNode);
+        this.setStatus(`move failed: ${drop.sourceNode.toLine()}`);
+      }
     }
     // external source: try to attach external data
     else {
