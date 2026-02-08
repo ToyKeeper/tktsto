@@ -108,9 +108,12 @@ updates, in case you want updates when a new version is released.
 These are the stores where TKTSTO is published.  Each link is a redirect to the
 store's extension page:
 
-- Firefox / Mozilla Add-Ons Store: https://toykeeper.net/tktsto/firefox
+- Firefox: https://toykeeper.net/tktsto/firefox
 - Chrome (TBD): https://toykeeper.net/tktsto/chrome
-- Edge (TBD): https://toykeeper.net/tktsto/edge
+- Edge: https://toykeeper.net/tktsto/edge
+
+Please leave a review at the store so "the algorithm" will know to show the
+extension to other people.
 
 ## Installing from source
 
@@ -572,7 +575,7 @@ Installing the extension from source or from web extension stores:
 - From source: https://toykeeper.net/tktsto/releases
 - Chrome (TBD): https://toykeeper.net/tktsto/chrome
 - Firefox: https://toykeeper.net/tktsto/firefox
-- Edge (TBD): https://toykeeper.net/tktsto/edge
+- Edge: https://toykeeper.net/tktsto/edge
 - Safari (TBD): https://toykeeper.net/tktsto/safari
 
 
