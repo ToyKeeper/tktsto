@@ -1380,15 +1380,21 @@ export class TreeView extends Tree {
 
     // where did the data come from?
     const types = event.dataTransfer.types;
-    // drop to/from same sidepanel
-    if (sourceNode) result.source = 'internal';
-    // drop from one sidepanel to another
-    else if (types.includes(this.nodeIdMimeType)) {
+    // internal (from a TreeView in this extension)
+    if (types.includes(this.nodeIdMimeType)) {
       result.source = 'internal';
-      const nodeId = event.dataTransfer.getData(this.nodeIdMimeType);
-      if (nodeId) {
-        sourceNode = this.nodes[nodeId];
-        if (! sourceNode) return result;
+      // if (sourceNode) { drop to/from same sidepanel, extra code needed }
+      if (! sourceNode) {
+        // drop from one sidepanel to another
+        const nodeId = event.dataTransfer.getData(this.nodeIdMimeType);
+        if (nodeId) {
+          sourceNode = this.nodes[nodeId];
+          if (! sourceNode) {
+            // return result;
+            // dragged from other tktsto instance with different node IDs?
+            result.source = undefined;
+          }
+        }
       }
     }
     // drop from some other source
