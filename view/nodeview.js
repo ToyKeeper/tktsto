@@ -619,23 +619,16 @@ export class NodeView extends Node {
   }
 
   isInViewScope () {
-    // check if this node is contained in the viewRoot,
-    // and (in Window mode) is not in one of our sub-windows
-
-    const viewScope = this.tree.viewScope;
-
     // in Session mode, everything is in scope
-    if ('window' !== viewScope) return true;
+    if ('window' !== this.tree.viewScope) return true;
 
     const viewRoot = this.tree.viewRoot;
+
     // our root is always visible, by definition
     if (this === viewRoot) return true;
 
-    // if it's in the current window and not in a sub-window, it's in scope
-    // (getWindowNode(winNode) returns winNode, so check one level up)
-    const windowNode = this.parent.getWindowNode();
-    if (windowNode === viewRoot) return true;
-    else if (this === viewRoot) return true;
+    // all children of viewRoot are in view scope
+    if (viewRoot.isParentOf(this)) return true;
 
     // otherwise not in scope
     return false;
@@ -644,23 +637,48 @@ export class NodeView extends Node {
   isExpanded () {
     // Session mode is simple, no overrides needed
     if ('window' !== this.tree.viewScope) return this.expanded;
-
-    // in "Window" view mode, all our sub-windows are treated as "collapsed"
-    // and all parents of the viewRoot are treated as "expanded"
-    else if (this === this.tree.viewRoot) return this.expanded;
-    else if (this.isParentOf(this.tree.viewRoot)) return true;
-    else if (! this.isWindow()) return this.expanded;
-    // assume this is a window, and our child
-    else return false;
+    // in "Window" view mode,
+    // our viewRoot has its own local override, not saved to the DB
+    if (this === this.tree.viewRoot) {
+      // initial value is "expanded"
+      if (undefined === this.viewRootExpanded) this.viewRootExpanded = true;
+      return this.viewRootExpanded;
+    }
+    // all parents of the viewRoot are treated as "expanded"
+    if (this.isParentOf(this.tree.viewRoot)) return true;
+    // otherwise just tell the truth
+    return this.expanded;
   }
 
   isCollapsed () {
     return (! this.isExpanded());
   }
 
-  async setExpanded (expanded, ...extra) {
-    const wasExpanded = this.expanded;
-    const changed = await super.setExpanded(expanded, ...extra);
+  async setExpanded (expanded, args) {
+    let wasExpanded;
+    let changed;
+    // special case for view root in window mode
+    // (because its expanded state is fake)
+    if ( (this === this.tree.viewRoot)
+      && ('window' === this.tree.viewScope)
+    ) {
+      if ('userAction' === args.reason) {
+        // fake expanded state, this view only
+        wasExpanded = this.isExpanded();
+        this.viewRootExpanded = expanded;
+        changed = (expanded !== wasExpanded);
+      } else {
+        // apply changes to keep tree in sync,
+        // but otherwise pretend it didn't happen
+        // (don't update the view)
+        await super.setExpanded(expanded, args);
+        changed = false;
+      }
+    }
+    else {
+      wasExpanded = this.expanded;
+      changed = await super.setExpanded(expanded, args);
+    }
 
     // if no change, do nothing
     if (! changed) return;

@@ -632,11 +632,6 @@ export class TreeView extends Tree {
     // if no kids, do nothing
     if (this.cursor.isLeaf()) return;
 
-    // don't go into sub-windows in Window view mode
-    if (('window' === this.viewScope)
-      && (this.cursor !== this.viewRoot)
-      && (this.cursor.isWindow())) return;
-
     // expand if necessary
     if (! this.cursor.isExpanded()) {
       await this.cursor.setExpanded(true, { reason: 'userAction' });
@@ -1075,12 +1070,8 @@ export class TreeView extends Tree {
     debug('action_toggleExpanded()');
     // skip no-op cases
     if (! this.cursor) return;
-    // don't act on sub-windows in Window view mode
-    if (('window' === this.viewScope)
-      && (this.cursor.isWindow())
-      && (this.cursor !== this.viewRoot)) return;
-    // otherwise, twiddle the state
-    const toggled = ! this.cursor.expanded;
+    // twiddle the state
+    const toggled = ! this.cursor.isExpanded();
     this.cursor.setExpanded(toggled, { reason: 'userAction' });
     const verbed = toggled ? 'Expanded' : 'Collapsed';
     this.setStatus(`${verbed} ${this.cursor.toLine()}`);
@@ -1800,6 +1791,17 @@ export class TreeView extends Tree {
     //debug(`TreeView.ensureCursorVisible(cursor):`, this.cursor);
     //debug(`TreeView.ensureCursorVisible(viewRoot):`, viewRoot);
 
+    // when cursor node is pasted into collapsed branch,
+    // and branch is in the view scope,
+    // move cursor to nearest visible parent
+    const cursor = this.cursor;
+    if (cursor?.isInViewScope() && (! cursor.isVisible(viewRoot))) {
+      const newCursor = cursor.prevVisibleNode(viewRoot);
+      if (newCursor) return await this.setCursor(newCursor);
+    }
+
+    // move the cursor to this window's active tab
+    // (or its nearest visible parent within the view scope)
     // find our window
     let winNode = viewRoot;
     if ('session' === this.viewScope) {
@@ -1811,7 +1813,6 @@ export class TreeView extends Tree {
       if (found.length > 0) winNode = found[0];
     }
     //winNode.scrollToTop();
-    // show the active tab and put the cursor on it
     const activeTabNode = winNode.getActiveTab();
     //debug(`TreeView.ensureCursorVisible(activeTabNode):`, activeTabNode);
 
