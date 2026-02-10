@@ -191,12 +191,11 @@ export class NodeView extends Node {
     let ckbox = '';
     if (this.hasCheckbox()) {
       let cbType = this.getCheckboxType();
-      let cbText = this.checkbox;
+      let cbText = this.checkboxText();
       if (' ' === this.checkbox) cbText = '\u00A0';  // &nbsp;
-      if ('percent' === cbType) {
-        if (! this.checkboxPx) this.checkboxPx = 0.0;
-        cbText = String(Math.floor((this.checkboxPx * 100))) + '%';
+      if (['percent', 'ratio'].includes(cbType)) {
         if (this.checkboxPx > 0.999) cbType = cbType + ' done';
+        else if (this.checkboxPx > 0.499) cbType = cbType + ' half-done';
       }
       const $ckbox = doc.createElement('div');
       $ckbox.className = `node-checkbox ${cbType}`;

@@ -80,6 +80,7 @@ export class Tree {
       ['+', 'half-done'],
       ['=', 'half-done'],
       ['%', 'percent'],
+      ['/', 'ratio'],
       ['X', 'done'],
       ['*', 'done'],
       ['F', 'fail'],

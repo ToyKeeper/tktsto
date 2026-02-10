@@ -448,10 +448,8 @@ export class Node {
     else line = '* ';
     // checkbox
     if (this.hasCheckbox()) {
-      if ('percent' === this.getCheckboxType()) {
-        const px = Math.floor(this.checkboxPx * 100);
-        line = `${line}[${px}%] `;
-      } else line = `${line}[${this.checkbox}] `;
+      const cbText = this.checkboxText();
+      line = `${line}[${cbText}] `;
     }
     // main text
     let urlTitle = this.title ? this.title : this.url;
@@ -647,6 +645,29 @@ export class Node {
     return (undefined !== this.checkbox);
   }
 
+  checkboxText () {
+    // return a text representation of the checkbox type+completion
+    if (! this.hasCheckbox()) return '';
+    const cbType = this.getCheckboxType();
+    if ('percent' === cbType) {
+      if (! this.checkboxPx) this.checkboxPx = 0.0;
+      return String(Math.floor((this.checkboxPx * 100))) + '%';
+    }
+    else if ('ratio' === cbType) {
+      // count isn't saved to DB, so calculate and cache it
+      let total = this.checkboxKidCount;
+      if ((! total) && (this.hasKidsWithCheckboxes())) {
+        total = this.countNodes( (n) => n.hasCheckbox(), (n) => false );
+        this.checkboxKidCount = total;
+      }
+      if (! total) { this.checkboxPx = 0; return '/'; }
+      if (! this.checkboxPx) this.checkboxPx = 0;
+      const done = Math.floor(this.checkboxPx * total);
+      return `${done}/${total}`;
+    }
+    else return this.checkbox;
+  }
+
   getCheckboxType () {
     let cbType = this.tree.checkboxClasses.get(this.checkbox);
     if (! cbType) cbType = 'other';
@@ -707,6 +728,7 @@ export class Node {
           total ++;
           complete += kid.getCompletion();
         }
+        this.checkboxKidCount = total;
         let completion = 0;
         if (total > 0) {
           completion = complete / total;
@@ -738,6 +760,7 @@ export class Node {
       case 'fail':
         return 1;  // always 1 even if checkboxPx is set
       case 'percent':
+      case 'ratio':
         return this.checkboxPx;
       default:
         if ((! changed)
