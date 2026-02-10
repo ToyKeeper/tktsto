@@ -251,7 +251,7 @@ export class TreeView extends Tree {
     // restore state
     if (oldCursor) {
       const newCursor = this.nodes[oldCursor];
-      this.setCursor(newCursor, true);
+      await this.setCursor(newCursor, true);
     }
   }
 
@@ -603,31 +603,31 @@ export class TreeView extends Tree {
     event.stopPropagation();
   }
 
-  action_cursorUp (event) {
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorUp (event) {
+    if (! this.cursor) return await this.setCursor(this.root);
     // move up one row
-    this.setCursor(this.cursor.prevVisibleNode(this.viewRoot));
+    await this.setCursor(this.cursor.prevVisibleNode(this.viewRoot));
   }
 
-  action_cursorDown (event) {
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorDown (event) {
+    if (! this.cursor) return await this.setCursor(this.root);
     // move down one row
-    this.setCursor(this.cursor.nextVisibleNode(this.viewRoot));
+    await this.setCursor(this.cursor.nextVisibleNode(this.viewRoot));
   }
 
-  action_cursorLeft (event) {  // move cursor to parent
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorLeft (event) {  // move cursor to parent
+    if (! this.cursor) return await this.setCursor(this.root);
     // ignore if root
     if (this.cursor.isRoot()) return;
     if (this.viewRoot === this.cursor) return;
     // move to parent
-    this.setCursor(this.cursor.parent);
+    await this.setCursor(this.cursor.parent);
   }
 
   async action_cursorRight (event) {
     // expand current node and move cursor to 1st child
     // default
-    if (! this.cursor) return this.setCursor(this.root);
+    if (! this.cursor) return await this.setCursor(this.root);
 
     // if no kids, do nothing
     if (this.cursor.isLeaf()) return;
@@ -643,41 +643,41 @@ export class TreeView extends Tree {
     }
 
     // move to 1st child
-    this.setCursor(this.cursor.nodes[0]);
+    await this.setCursor(this.cursor.nodes[0]);
   }
 
-  action_cursorHome (event) {
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorHome (event) {
+    if (! this.cursor) return await this.setCursor(this.root);
     // move to first sibling
     const node = this.cursor.firstSibling();
     if (node.isChildOf(this.viewRoot, true))
-      this.setCursor(node);
+      await this.setCursor(node);
   }
 
-  action_cursorEnd (event) {
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorEnd (event) {
+    if (! this.cursor) return await this.setCursor(this.root);
     // move to last sibling
     const node = this.cursor.lastSibling();
     if (node.isChildOf(this.viewRoot, true))
-      this.setCursor(node);
+      await this.setCursor(node);
   }
 
-  action_cursorPgUp (event) {
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorPgUp (event) {
+    if (! this.cursor) return await this.setCursor(this.root);
     // move up N rows
     let node = this.cursor;
     for (let i=0; i<this.nodesPerPage; i++)
       node = node.prevVisibleNode(this.viewRoot);
-    this.setCursor(node);
+    await this.setCursor(node);
   }
 
-  action_cursorPgDown (event) {
-    if (! this.cursor) return this.setCursor(this.root);
+  async action_cursorPgDown (event) {
+    if (! this.cursor) return await this.setCursor(this.root);
     // move up N rows
     let node = this.cursor;
     for (let i=0; i<this.nodesPerPage; i++)
       node = node.nextVisibleNode(this.viewRoot);
-    this.setCursor(node);
+    await this.setCursor(node);
   }
 
   async cursorNodeMoveTo(destParent, destIndex, direction) {
@@ -822,7 +822,7 @@ export class TreeView extends Tree {
 
     // move it
     const moved = await this.cursorNodeMoveTo(destParent, destIndex, 'right');
-    if (moved) this.setCursor(newCursor);
+    if (moved) await this.setCursor(newCursor);
   }
 
   async action_moveNodeLeft (event) {
@@ -951,7 +951,7 @@ export class TreeView extends Tree {
         render: true },
       { reason: 'userAction' });
     //log(destParent.nodes);
-    this.setCursor(newNode);
+    await this.setCursor(newNode);
     //debug(`added "${newNode.label}"`);
     this.setStatus(`added ${this.cursor.toLine()}`);
   }
@@ -1307,8 +1307,8 @@ export class TreeView extends Tree {
     if (! this.mouseNode) return;
     // save for later potential drag-n-drop
     this.mouseDragStartNode = this.mouseNode;
-    // place the cursor
-    await this.setCursor(this.mouseNode, false, this.doubleClickMs);
+    // place the cursor (and *don't* await)
+    this.setCursor(this.mouseNode, false, this.doubleClickMs);
     // maybe modify a checkbox
     if (this.$mouseElem.classList.contains('node-checkbox')) {
       await this.action_taskEdit(event);
@@ -1719,7 +1719,7 @@ export class TreeView extends Tree {
   showHoverMenu () {
     //debug(`showHoverMenu: ${this.mouseNode.toLine()}`);
     // skip if we're in the middle of a drag-n-drop
-    if (this.dragInProgress || this.smoothScrollInProgress) return;
+    if (this.dragInProgress || this.smoothScrollHideHoverMenu) return;
     // skip extra drawing if the menu hasn't changed
     if (this.hoverMenuLast === this.mouseNode) return;
     this.hoverMenuLast = this.mouseNode;
@@ -1754,7 +1754,7 @@ export class TreeView extends Tree {
     this.$hoverMenu.classList.remove('hidden');
   }
 
-  setCursor (node, instant = false, scrollDelay = 0) {
+  async setCursor (node, instant = false, scrollDelay = 0) {
     //debug(`TreeView.setCursor(): ${node.toLine()}`);
     // ensure cursor is on a visible node in our view scope
     const viewRoot = this.viewRoot;
@@ -1778,8 +1778,17 @@ export class TreeView extends Tree {
     if (node) {
       // show and update node detail box
       this.updateDetailsBox();
+
+      // maybe wait a moment to let user finish a double click
+      let scrollDuration = 200;  // TODO: load from this.scrollDurationDefault
+      if (scrollDelay) {
+        scrollDuration = scrollDelay;
+        await new Promise(r => setTimeout(r, scrollDelay));
+      }
+
       // ensure node is visible
-      node.scrollIntoView(instant, scrollDelay);
+      if (instant) scrollDuration = 0;
+      this.scrollNodeIntoView(node, scrollDuration);
     }
     else {
       this.hideDetailsBox();
@@ -1819,7 +1828,115 @@ export class TreeView extends Tree {
       if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot)))
         visibleNode = visibleNode.prevVisibleNode(viewRoot);
       debug(`TreeView.ensureCursorVisible(visibleNode)`, visibleNode);
-      return this.setCursor(visibleNode);
+      return await this.setCursor(visibleNode);
+    }
+  }
+
+  scrollNodeIntoView (node, duration = 200) {
+    if (! node?.$row) return;
+
+    // ensure row is visible,
+    // and has a sufficient margin
+    // between the row and the edge of the tree view
+    const $container = this.$;  // div#tree-view
+    const rowRect = node.$row.getBoundingClientRect();
+    const containerRect = $container.getBoundingClientRect();
+
+    // zoom makes the values weird
+    // (scroll goes to the wrong position without zoom compensation)
+    const rowTop = rowRect.top / this.zoomLevel;
+    const rowBottom = rowRect.bottom / this.zoomLevel;
+    const cTop = containerRect.top / this.zoomLevel;
+    const cBottom = containerRect.bottom / this.zoomLevel;
+
+    // TODO: make scroll margin configurable
+    // percent of the view height
+    const margin = Math.floor(0.25 * (cBottom - cTop));
+
+    let newScrollTop = $container.scrollTop;
+
+    // if row is above the visible area, scroll down
+    if (rowTop < cTop + margin) {
+      newScrollTop -= (cTop + margin - rowTop);
+    }
+
+    // if row is below the visible area, scroll up
+    else if (rowBottom > cBottom - margin) {
+      newScrollTop += (rowBottom - (cBottom - margin));
+    }
+
+    // bounds check
+    const maxScrollTop = $container.scrollHeight - $container.clientHeight;
+    newScrollTop = Math.max(0, Math.min(newScrollTop, maxScrollTop));
+
+    // always stay scrolled all the way to the left
+    $container.scrollLeft = 0;
+
+    // instant
+    if (duration < 1) $container.scrollTop = newScrollTop;
+    // smooth
+    // (helps reduce jitter from details box appearing and disappearing)
+    else this.smoothScrollTo(newScrollTop, duration);
+  }
+
+  smoothScrollTo (scrollTop, duration = 200) {
+    //debug(`TreeView.smoothScrollTo(${this.$.scrollTop} => ${scrollTop}, ${duration})`);
+    // abort if nothing changed
+    if (Math.round(scrollTop) === Math.round(this.$.scrollTop)) return;
+    if (this.smoothScrollInProgress &&
+      (Math.round(scrollTop) === Math.round(this.smoothScrollTop))) return;
+
+    // adjust vertical scroll position gradually,
+    // animating for "duration" ms
+    this.smoothScrollStartTime = performance.now();
+    this.smoothScrollDuration = duration;
+    this.smoothScrollTop = scrollTop;
+
+    // if we're not already scrolling, start a scroll animation
+    // (otherwise, no need to start a *new* animation sequence)
+    if (! this.smoothScrollInProgress) {
+      this.smoothScrollInProgress = true;
+      // no hover menu while scrolling, plz
+      this.hideHoverMenu();
+      requestAnimationFrame(this.smoothScrollStep.bind(this));
+    }
+  }
+
+  smoothScrollStep (now) {
+    function easeOutQuad (t) {
+      return t * (2 - t);
+    }
+
+    // abort if tree is already scrolling for other reasons
+    if (this.dragInProgress || this.actualScrollSpeed) return;
+
+    const elapsed = now - this.smoothScrollStartTime;
+    const progress = Math.min(elapsed / this.smoothScrollDuration, 1);
+    const eased = easeOutQuad(progress);
+
+    const $container = this.$;
+    const start = $container.scrollTop;
+    const distance = this.smoothScrollTop - start;
+    // last frame should land exactly on target
+    if (progress >= 1) $container.scrollTop = this.smoothScrollTop;
+    else $container.scrollTop = start + (distance * eased);
+
+    if (progress < 1) {
+      this.smoothScrollInProgress = true;
+      this.smoothScrollHideHoverMenu = true;
+      if (this.scrollCompleteTimer) clearTimeout(this.scrollCompleteTimer);
+      requestAnimationFrame(this.smoothScrollStep.bind(this));
+    }
+    else {
+      //debug(`smoothScrollStep(): ${$container.scrollTop} => ${this.smoothScrollTop}`);
+      this.smoothScrollInProgress = false;
+      // allow the hover menu to appear again, after scrolling is done
+      const scrollComplete = () => {
+        this.smoothScrollHideHoverMenu = false;
+      }
+      if (this.scrollCompleteTimer) clearTimeout(this.scrollCompleteTimer);
+      this.scrollCompleteTimer = setTimeout(
+        scrollComplete, this.smoothScrollDuration);
     }
   }
 
@@ -1833,7 +1950,7 @@ export class TreeView extends Tree {
     // only show details if its button is in a 'pressed' state
     this.cursor.$renderDetails(this.$detailsBox);
     // restore scroll position
-    this.$.scrollTop = scrollBefore;
+    if (! this.smoothScrollInProgress) this.$.scrollTop = scrollBefore;
   }
 
   hideDetailsBox () {
@@ -1963,7 +2080,7 @@ export class TreeView extends Tree {
         this.$detailsBtn.classList.add('pressed');
         this.$detailsBtn.innerText = 'Notes';
         this.updateDetailsBox();
-        if (this.cursor) this.cursor.scrollIntoView();
+        if (this.cursor) this.scrollNodeIntoView(this.cursor);
         break;
       // 2 = full / all details
       case 2:
@@ -1972,7 +2089,7 @@ export class TreeView extends Tree {
         //this.$detailsBtn.classList.remove('half-pressed');
         this.$detailsBtn.innerText = 'Details';
         this.updateDetailsBox();
-        if (this.cursor) this.cursor.scrollIntoView();
+        if (this.cursor) this.scrollNodeIntoView(this.cursor);
         break;
     }
   }

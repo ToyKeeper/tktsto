@@ -548,100 +548,6 @@ export class NodeView extends Node {
     return await this.renderIfChanged(super.unload(...args), true);
   }
 
-  smoothScrollTo ($container, scrollTop, duration = 200) {
-    // adjust vertical scroll position gradually,
-    // animating for "duration" ms
-    const start = $container.scrollTop;
-    const distance = scrollTop - start;
-    const startTime = performance.now();
-
-    function easeOutQuad (t) {
-      return t * (2 - t);
-    }
-
-    const step = (now) => {
-      // abort if tree is already scrolling for other reasons
-      if (this.tree.dragInProgress || this.tree.actualScrollSpeed) return;
-
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = easeOutQuad(progress);
-
-      $container.scrollTop = start + distance * eased;
-
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      }
-      else {
-        // allow the hover menu to appear again, after scrolling is done
-        const scrollComplete = () => {
-          this.tree.smoothScrollInProgress = false;
-        }
-        if (this.tree.scrollCompleteTimer)
-          clearTimeout(this.tree.scrollCompleteTimer);
-        this.tree.scrollCompleteTimer = setTimeout(scrollComplete, duration);
-      }
-    };
-
-    // no hover menu while scrolling, plz
-    this.tree.smoothScrollInProgress = true;
-    this.tree.hideHoverMenu();
-
-    requestAnimationFrame(step);
-  }
-
-  async scrollIntoView (instant = false, scrollDelay = 0) {
-    if (! this.$row) return;
-    // ensure row is visible,
-    // and has a sufficient margin
-    // between the row and the edge of the tree view
-    const $container = this.tree.$;  // div#tree-view
-    const rowRect = this.$row.getBoundingClientRect();
-    const containerRect = $container.getBoundingClientRect();
-
-    const rowTop = rowRect.top;
-    const rowBottom = rowRect.bottom;
-    const cTop = containerRect.top;
-    const cBottom = containerRect.bottom;
-
-    // TODO: make scroll margin configurable
-    // percent of the view height
-    const margin = Math.floor(0.25 * (cBottom - cTop));
-
-    let newScrollTop = $container.scrollTop;
-
-    // if row is above the visible area, scroll down
-    if (rowTop < cTop + margin) {
-      newScrollTop -= (cTop + margin - rowTop);
-    }
-
-    // if row is below the visible area, scroll up
-    else if (rowBottom > cBottom - margin) {
-      newScrollTop += (rowBottom - (cBottom - margin));
-    }
-
-    // bounds check
-    const maxScrollTop = $container.scrollHeight - $container.clientHeight;
-    newScrollTop = Math.max(0, Math.min(newScrollTop, maxScrollTop));
-
-    // always stay scrolled all the way to the left
-    $container.scrollLeft = 0;
-
-    // maybe wait a moment to let user finish a double click
-    let scrollDuration = 200;
-    if (scrollDelay) {
-      scrollDuration = scrollDelay;
-      await new Promise(r => setTimeout(r, scrollDelay));
-    }
-
-    // instant
-    if (instant) $container.scrollTop = newScrollTop;
-    // smooth
-    // (helps reduce jitter from details box appearing and disappearing)
-    else if (newScrollTop != $container.scrollTop)
-      this.smoothScrollTo($container, newScrollTop, scrollDuration);
-  }
-
   scrollToTop () {
     if (this.$) this.$.scrollIntoView({
       behavior: "instant",  // smooth or instant
@@ -707,7 +613,7 @@ export class NodeView extends Node {
     }
 
     // ensure cursor is in the viewport
-    if (this === this.tree.cursor) this.scrollIntoView();
+    if (this === this.tree.cursor) this.tree.scrollNodeIntoView(this);
 
     // report success
     return true;
