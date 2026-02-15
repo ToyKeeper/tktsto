@@ -1917,7 +1917,11 @@ export class TreeView extends Tree {
     // abort if tree is already scrolling for other reasons
     if (this.dragInProgress || this.actualScrollSpeed) return;
 
-    const elapsed = now - this.smoothScrollStartTime;
+    // given "now" can be *before* smoothScrollStartTime on loaded systems
+    // so take a fresh timestamp instead and make sure elapsed can never
+    // be less than zero (which causes scrolling in the wrong direction)
+    now = performance.now();
+    const elapsed = Math.max(0, now - this.smoothScrollStartTime);
     const progress = Math.min(elapsed / this.smoothScrollDuration, 1);
     const eased = easeOutQuad(progress);
 
