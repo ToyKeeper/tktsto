@@ -2,6 +2,45 @@
 
 What changed, and when?  You know the drill.
 
+
+## 0.1.69.0 (2026-02-19)
+
+Changes:
+
+- Added a new task type: "ratio" or "/", shows "$done / $total" like "3/7"
+- Made nested windows more intuitive when using "window" view scope mode (can
+  be expanded and collapsed within the parent now)
+- Multiple improvements to scrolling
+- Multiple improvements to drag-n-drop
+- Made it easy to scroll during a drag-n-drop
+
+Bug fixes:
+
+- Double click near top/bottom of view no longer scrolls before 2nd click
+- Fixed keyboard scrolling sometimes scrolling the wrong direction when
+  computer was really busy
+- Fixed scrolling to slightly wrong place when zoomed
+- Fixed drag-n-drop between tktsto sidepanels
+- Fixed some cases where the wrong node could get dragged
+- Fixed cursor jumping to focused tab when node dropped into a collapsed
+  branch
+- Fixed cursor jumping to focused tab when pasted into a collapsed branch
+- Hover menu no longer gets in the way during a drag-n-drop
+- Hover menu no longer gets in the way during keyboard scroll
+- Fixed button label text getting highlighted when it shouldn't
+- Improved detection of Zen Browser (but requires new Zen)
+
+Browsers known to work, or mostly work:
+
+- Firefox ESR 115 .. 140
+- Chromium (and Ungoogled Chromium) 134 .. 143
+- Edge 136 .. 143
+- Brave 1.78
+- Vivaldi 7.3, 7.7
+- Maxthon 7.3.1
+- Zen Browser 1.18.3b
+
+
 ## 0.1.55.0 (2026-02-02)
 
 Changes:
@@ -25,12 +64,14 @@ Browsers known to work, or mostly work:
 - Maxthon 7.3.1
 - Zen Browser 1.18.3b
 
+
 ## 0.1.52.0 (2026-01-30)
 
 Bug fixes:
 
 - Fixed an issue which broke Firefox: Tree wouldn't load, because an async
   message handler returned a non-null status.  Fixed by changing one word.
+
 
 ## 0.1.51.0 (2026-01-30)
 
@@ -79,6 +120,7 @@ Browsers known to work, or mostly work:
 - Vivaldi 7.3, 7.7
 - Maxthon 7.3.1
 
+
 ## 0.1.39.0 (2026-01-21)
 
 Changes:
@@ -117,6 +159,7 @@ Browsers known to work, or mostly work:
 - Brave 1.78
 - Vivaldi 7.3, 7.7
 - Maxthon 7.3.1
+
 
 ## 0.1.24.0 (2026-01-17)
 
