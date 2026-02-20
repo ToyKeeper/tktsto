@@ -687,16 +687,27 @@ export class TreeView extends Tree {
     debug('TreeView.action_moveNodeUp()');
 
     // if root or 1st child of root, or if outside of root, do nothing
-    if (! this.cursor) return;
-    if (this.cursor.isRoot()) return;
-    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
-    if (this.cursor.parent.isRoot() && (0 === this.cursor.indexOf())) return;
-    if ((this.cursor.parent === this.viewRoot) && (0 === this.cursor.indexOf())) return;
+    const cursor = this.cursor;
+    if (! cursor) return;
+    if (cursor.isRoot()) return;
+    if (! cursor.isChildOf(this.viewRoot, false)) return;
+    if (cursor.parent.isRoot() && (0 === cursor.indexOf())) return;
+    if ((cursor.parent === this.viewRoot) && (0 === cursor.indexOf())) return;
 
-    // node can be moved up; take position of previous visible row
-    const prevRow = this.cursor.prevVisibleNode();
+    // node can be moved up
+    const prevRow = cursor.prevVisibleNode();
     const destParent = prevRow.parent;
-    const destIndex = prevRow.indexOf();
+    let destIndex;
+
+    // if prev row is our parent or sibling, take its place
+    if ((prevRow === cursor.parent) || (prevRow.parent === cursor.parent)) {
+      destIndex = prevRow.indexOf();
+    }
+    // otherwise dive into an expanded branch
+    // (move right to become prev row's next sibling)
+    else {
+      destIndex = prevRow.indexOf() + 1;
+    }
 
     // move it
     await this.cursorNodeMoveTo(destParent, destIndex, 'up');
@@ -706,30 +717,40 @@ export class TreeView extends Tree {
     debug('TreeView.action_moveNodeDown()');
 
     // if root, or outside of root, do nothing
-    if (! this.cursor) return;
-    if (this.cursor.isRoot()) return;
-    if (! this.cursor.isChildOf(this.viewRoot, false)) return;
+    const cursor = this.cursor;
+    if (! cursor) return;
+    if (cursor.isRoot()) return;
+    if (! cursor.isChildOf(this.viewRoot, false)) return;
 
     // take position of next visible row outside our own branch, probably
-    const nextRow = this.cursor.nextVisibleNodeNotMyChild(this.viewRoot);
+    const nextRow = cursor.nextVisibleNodeNotMyChild(this.viewRoot);
     // figure out where to move to
     let destParent;
     let destIndex;
     // if we're the last row in the tree, promote to last child of parent
-    if (nextRow === this.cursor) {
-      if (this.cursor.parent.isRoot()) return;
-      if (this.cursor.parent === this.viewRoot) return;
-      destParent = this.cursor.parent.parent;
-      destIndex = this.cursor.parent.indexOf() + 1;
+    if (nextRow === cursor) {
+      if (cursor.parent.isRoot()) return;
+      if (cursor.parent === this.viewRoot) return;
+      destParent = cursor.parent.parent;
+      destIndex = cursor.parent.indexOf() + 1;
     }
-    // if next row is an expanded parent, move before 1st child
-    else if (nextRow.hasKids() && nextRow.isExpanded()) {
+    // next row is our sibling and an expanded parent: move before 1st child
+    else if (nextRow.hasKids() && nextRow.isExpanded()
+      && (nextRow.parent === cursor.parent)
+    ) {
       destParent = nextRow;
       destIndex = 0;
     }
-    else {  // take position of next visible row
+    else {
       destParent = nextRow.parent;
-      destIndex = nextRow.indexOf() + 1;
+      if (destParent === cursor.parent) {
+        // next row is our sibling; swap places with it
+        destIndex = nextRow.indexOf() + 1;
+      } else {
+        // exit an expanded branch
+        // dedent (move left) and take exact position of next visible row
+        destIndex = nextRow.indexOf();
+      }
     }
 
     // move it
