@@ -792,7 +792,7 @@ export class Tree {
     }
     // do nothing if the tab is already in the right place
     // (this probably means we initiated the tabMove operation)
-    if (tabId === tabList[moveInfo.toIndex]) {
+    if (tabNode === tabList[moveInfo.toIndex]) {
       debug('Tree.onTabMoved(): tab already at correct index', moveInfo.fromIndex, moveInfo.toIndex);
       return;
     }
