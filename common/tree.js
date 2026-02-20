@@ -115,6 +115,8 @@ export class Tree {
   }
 
   initListeners () {
+    if (this.isInert) return;  // detached trees shouldn't listen
+
     // only process one message at a time
     this.onMessageMutex = new Mutex();
     api.runtime.onMessage.addListener( (msg, sender, sendResponse) => {

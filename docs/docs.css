@@ -1,0 +1,125 @@
+html {
+  margin: 0;
+  padding: 0;
+  height: unset;
+  min-height: 100%;
+  background: var(--doc-page-bg);
+  /* background: var(--tree-view-bg); */
+  /*
+  background: linear-gradient(
+    var(--cursor-branch-top),
+    var(--cursor-branch-bot));
+    */
+}
+
+body {
+  background: transparent;
+  margin: 0.25rem 1rem 2rem 1rem;
+}
+
+::-webkit-scrollbar,
+::-webkit-scrollbar-track {
+  background: var(--window-branch-bot);
+}
+
+* {
+  font-size: 1.333rem;
+}
+
+p, li, td, h1, h4, h5, h6 {
+  color: var(--doc-text-fg);
+}
+
+p {
+  margin: 0.25em 0;
+}
+
+b {
+  color: var(--label-unloaded-fg);
+}
+
+code {
+  color: var(--label-loaded-fg);
+  border: 1px solid var(--label-unloaded-fg);
+  padding: 0 0.2em;
+}
+
+a {
+  color: var(--tab-loaded-fg);
+}
+a:visited {
+  color: var(--tab-unloaded-fg);
+}
+
+h2, h3 {
+  padding: 0.2em 0.25em;
+}
+
+h2 { font-size: 130%; }
+h3 { font-size: 115%; }
+
+small { font-size: 80%; }
+small * { font-size: 100%; }
+
+ul, ol {
+  margin: 0;
+}
+
+li:not(.node) {
+  margin: 0.5em;
+  padding: 0.25em 0.5em;
+  outline: var(--1px) outset var(--cursor-branch-hl);
+  background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
+  border-radius: var(--cursor-branch-radius);
+  box-shadow: var(--cursor-branch-shadow);
+}
+
+li:not(.node) li {
+  border: var(--1px) outset var(--window-branch-hl);
+  background: linear-gradient(var(--window-branch-top), var(--window-branch-bot));
+  border-radius: var(--window-branch-radius);
+  box-shadow: var(--window-branch-shadow);
+}
+
+div#tree-view, div.tree-view {
+  /*
+  border: 5px solid;
+  border-image-slice: 1;
+  border-image-source: var(--top-area-bg);
+  */
+  border-radius: var(--button-border-radius);
+  /* box-shadow: var(--window-branch-shadow); */
+  box-shadow: var(--button-pressed-shadow);
+  /* box-shadow: var(--button-pressed-shadow), var(--cursor-shadow); */
+  height: unset;
+  max-width: min-content;
+  padding: 0.25em;
+  overflow-y: hidden;
+}
+
+table.fit {
+  max-width: min-content;
+  border: none;
+  border-spacing: 1em;
+  table-layout: fixed;
+}
+
+table.fit tr, table.fit td {
+  vertical-align: top;
+}
+
+blockquote {
+  border-left: 5px solid var(--tree-line);
+  padding-left: 0.5em;
+  margin-left: 0.5em;
+}
+
+.pointer {
+  position: absolute;
+  width: 3rem;
+  height: 3rem;
+  pointer-events: none;
+  display: none;
+  overflow: visible;
+}
+

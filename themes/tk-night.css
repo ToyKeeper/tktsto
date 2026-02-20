@@ -37,6 +37,13 @@ foo {
     #00000060  0.05em 0.05em 0.10em, /* shadow */
     #00000080  0.07em 0.10em 0.15em,
     #000000a0  0.10em 0.15em 0.25em;
+  /***** docs *****/
+  /* --doc-page-bg: linear-gradient(#1a1a25, #262633); */
+  --doc-page-bg: linear-gradient(
+    var(--window-branch-top),
+    var(--window-branch-bot));
+  /* --doc-text-fg: #c8ccd4; */
+  --doc-text-fg: #ccc;
   /***** main tree view *****/
   --tree-view-bg: #191919;
   --label-loaded-fg: #12ee6a;

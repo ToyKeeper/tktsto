@@ -77,6 +77,7 @@ export function fmtDate (date) {
 }
 
 export async function emit (name, args, retry = true) {
+  if (emit.disabled) return;  // abort if we're turned off
   // ensure valid args
   if (!((typeof name === 'string') || (name instanceof String)))
     throw new TypeError(`emit(name): name was not a string: ${name}`);
@@ -163,5 +164,18 @@ export function isIllegalURL (url) {
 
   // if no match, assume it's allowed
   return false;
+}
+
+export async function updateTheme ($base, $variant) {
+  const themes = {
+    'TK Night': ['tk', 'tk-night'],
+    'TK Day': ['tk', 'tk-day']
+  };
+  const data = await api.storage.local.get('theme');
+  if (data.theme && themes[data.theme]) {
+    const theme = themes[data.theme];
+    $base.href = `/themes/${theme[0]}.css`;
+    $variant.href = `/themes/${theme[1]}.css`;
+  }
 }
 

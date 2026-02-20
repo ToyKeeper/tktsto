@@ -99,6 +99,26 @@ export class NodeView extends Node {
       this.$renderDetails(this.tree.$detailsBox);
     }
 
+    if (this.nodeClasses) {  // doc page style overrides
+      this.$.classList.add(...this.nodeClasses);
+    }
+
+    // maybe add a mouse cursor (for documentation pages)
+    if (undefined !== this.pointer) {
+      this.tree.$pointer = doc.createElement('img');
+      const $pointer = this.tree.$pointer;
+      $pointer.classList.add('pointer');
+      if (this.pointerImg)
+        $pointer.src = api.runtime.getURL(`/img/${this.pointerImg}`);
+      else $pointer.src = api.runtime.getURL('/img/pointer.svg');
+      $pointer.style.left = `${this.pointer*100}%`;
+      $pointer.style.top = '33%';
+      $pointer.style.display = 'block';
+      this.$row.style.position = 'relative';
+      this.$row.style.overflow = 'visible';
+      this.$row.appendChild($pointer);
+    }
+
     // add to parent (nope, nevermind, let the parent do that on its own)
     // needs a way to specify where to insert the new node
     //if (!this.parent) return;
@@ -278,6 +298,11 @@ export class NodeView extends Node {
 
     // let user drag-n-drop rows to reorganize the tree
     this.$row.setAttribute('draggable', true);
+
+    if (this.rowClasses) {  // doc page style overrides
+      this.$row.classList.add(...this.rowClasses);
+    }
+
   }
 
   $renderDetails ($detailsBox) {
@@ -556,6 +581,7 @@ export class NodeView extends Node {
   }
 
   isCursor () {
+    // TODO: or if classList contains 'cursor' ?
     return (this === this.tree.cursor);
   }
 

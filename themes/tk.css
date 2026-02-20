@@ -175,7 +175,8 @@ body:not(.unfocused) ::-webkit-scrollbar-thumb,
 .unfocused *:hover::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb-bg-unfocused);
 }
-body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
+body:not(.unfocused) *:hover::-webkit-scrollbar-thumb,
+body.docs::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb-bg);
 }
 
@@ -357,7 +358,7 @@ body:not(.unfocused) *:hover::-webkit-scrollbar-thumb {
 }
 
 .node-checkbox,
-#hover-menu .task-button,
+#hover-menu .task-button, .task-button,
 input[type="checkbox"],
 foo {
   display: inline-block;
@@ -514,13 +515,15 @@ foo {
 }
 
 
-.window.row {
+.window.row,
+h2, h3 {
   background: var(--window-row-bg);
   border-radius: var(--cursor-radius-collapsed);
   font-weight: normal;
   color: var(--window-unloaded-fg);
 }
-.window.row .row-title {
+.window.row .row-title,
+h2, h3 {
   text-shadow: var(--window-title-text-shadow);
 }
 .window.row .node-label {
@@ -539,6 +542,7 @@ foo {
 
 .window.row.active .row-title,
 .window.row.active .node-label,
+h2, h3,
 foo {
   /* the current window is brighter */
   color: var(--window-active-fg);
@@ -665,11 +669,7 @@ foo {
   border-radius: var(--cursor-radius-expanded);
 }
 
-#marked-count {
-  position: fixed;
-  z-index: 2;
-  top: calc(var(--toolbar-height) + 0.5rem);
-  right: 1rem;
+.marked-count, #marked-count {
   border-radius: var(--cursor-branch-radius);
   padding: 0.1em 0.35em;
   font-size: 133%;
@@ -677,6 +677,13 @@ foo {
   background: var(--marked-count-bg);
   box-shadow: var(--marked-count-shadow);
   text-shadow: var(--marked-count-text-shadow);
+}
+
+#marked-count {
+  position: fixed;
+  z-index: 2;
+  top: calc(var(--toolbar-height) + 0.5rem);
+  right: 1rem;
 }
 
 #marked-count:hover {
@@ -703,7 +710,7 @@ foo {
   box-shadow: var(--hover-menu-shadow);
 }
 
-#hover-menu div {
+#hover-menu div, .hover-menu-button {
   display: inline-block;
   cursor: pointer;
   width: calc(var(--row-line-height) - 0.1rem);
@@ -717,7 +724,8 @@ foo {
 }
 
 #hover-menu div:hover,
-#hover-menu .unload-button.unloaded:hover {
+#hover-menu .unload-button.unloaded:hover,
+.hover-menu-button:hover {
   background: var(--hover-menu-button-hover-bg);
   border-radius: 6px;
   box-shadow: 0.1em 0.1em 0.2em #000000c0;
@@ -730,16 +738,16 @@ foo {
   box-shadow: none;
 }
 
-#hover-menu .unload-button {
+#hover-menu .unload-button, .unload-button {
   /* click to unload */
   color: var(--tab-unloaded-fg);
 }
-#hover-menu .unload-button.unloaded {
+#hover-menu .unload-button.unloaded, .unload-button.unloaded {
   /* click to set "wasLoaded" state */
   color: var(--tab-was-loaded-fg);
 }
 
-#hover-menu .task-button {
+#hover-menu .task-button, .task-button {
   color: var(--checkbox-fg-todo);
   text-shadow: none;
   vertical-align: top;
@@ -752,15 +760,15 @@ foo {
   margin-right: 0.05rem;
 }
 
-#hover-menu .edit-button {
+#hover-menu .edit-button, .edit-button {
   color: var(--label-loaded-fg);
 }
 
-#hover-menu .delete-button {
+#hover-menu .delete-button, .delete-button {
   color: var(--delete-button-fg);
 }
 
-#hover-menu .mark-button {
+#hover-menu .mark-button, .mark-button {
   color: var(--marked-count-color);
 }
 

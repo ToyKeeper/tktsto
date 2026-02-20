@@ -1,23 +1,27 @@
+<!DOCTYPE html>
+<!-- tktsto documentation page
+  -- Copyright (C) 2025-2026 Selene ToyKeeper
+  -- SPDX-License-Identifier: AGPL-3.0-or-later
+  -->
 <html>
 <head>
-<title>Grey text is an unloaded tab</title>
-<style><!--
-* {
-  font-size: 1.333rem;
-}
---></style>
+  <meta charset="UTF-8">
+  <script type="module" src="./docs.js"></script>
+  <title>Grey text is an unloaded tab</title>
 </head>
-<body>
+<body class="docs">
 
-  <p>
-  Grey text is an unloaded tab.
-  </p>
+  <h2>
+  Grey text is an
+  <b class="row"><span class="url-title">unloaded tab</span></b>.
+  </h2>
 
   <p>
   But now that you've opened it, the text probably changed color and became
-  <b>bold</b>, because it is open and "active".  Open tabs are shown in a
-  brighter color than saved tabs, and the browser's current tab is shown in
-  bold.
+  <b class="row loaded"><span class="url-title">bold</span></b>, because
+  it is open and "active".  Open tabs are shown in a brighter color than
+  <b class="row"><span class="url-title">saved tabs</span></b>, and the
+  browser's current tab is shown in bold.
   </p>
 
   <p>
@@ -33,11 +37,12 @@
   <p>
   Then try unloading this page.  There are a few ways to do this:
   <ul>
-    <li>Press <code><b>Alt+U</b></code> to unload the current page.</li>
-    <li>Hover the mouse over a node in the side panel and click the <b>"U"
-        button</b> in the "<b>hover menu</b>".</li>
-    <li>Put the panel cursor on a node and press the <b>"U" key</b> on the
-      keyboard.</li>
+    <li>Press <b><code>Alt+U</code></b> to unload the current page.</li>
+    <li>Hover the mouse over a node in the sidepanel and click the
+      <b><span class="hover-menu-button unload-button">U</span> button</b>
+      in the "<b>hover menu</b>".</li>
+    <li>Put the treeView (sidepanel) cursor on a node and press the
+      <b><code>U</code> key</b> on the keyboard.</li>
     <li>Or <b>just close the page</b> normally.  It has a note attached, so it
       is "<b>interesting</b>" and <b>will be saved</b> automatically.  Any node
       with a label, note, or checkbox is considered "interesting", and is kept

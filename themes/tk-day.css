@@ -27,6 +27,18 @@ foo {
   text-shadow: var(--window-title-text-shadow);
 }
 
+
+/******************** doc overrides ********************/
+
+.doc b {
+  color: var(--label-loaded-fg);
+}
+
+.doc code {
+  color: var(--label-unloaded-fg);
+  border: 1px solid var(--label-unloaded-fg);
+}
+
 /******************** vars ********************/
 
 :root {
@@ -64,6 +76,11 @@ foo {
     #0004  0.03em -0.03em 0.02em,
     #0008  0.05em 0.05em 0.10em, /* shadow */
     #000f  0.10em 0.15em 0.25em;
+  /***** docs *****/
+  --doc-page-bg: linear-gradient(
+    var(--window-branch-top),
+    var(--window-branch-bot));
+  --doc-text-fg: #246;
   /***** main tree view *****/
   --tree-view-bg: #e2e2f4;
   --label-loaded-fg: #005400;

@@ -5,7 +5,11 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
-import { log, debug, warn, error, emit } from '/common/common.js';
+import {
+  log, debug, warn, error,
+  emit,
+  updateTheme
+} from '/common/common.js';
 import { buildEventName } from '/common/events.js';
 import { inputDialog, checkboxDialog, nodeEditDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
@@ -127,23 +131,24 @@ export class TreeView extends Tree {
   }
 
   initElements () {
-    this.$body = this.document.getElementById('body');
-    this.$ = this.document.getElementById('tree-view');
-    this.$treeRoot = this.document.getElementById('tree-root');
+    const doc = this.document;
+    this.$body = doc.getElementById('body');
+    this.$ = doc.getElementById('tree-view');
+    this.$treeRoot = doc.getElementById('tree-root');
 
     // stylesheets
-    this.$themeBase = this.document.getElementById('theme-base');
-    this.$themeVariant = this.document.getElementById('theme-variant');
-    this.$styleOptions = this.document.getElementById('style-options');
-    this.$userStyles = this.document.getElementById('user-styles');
+    this.$themeBase = doc.getElementById('theme-base');
+    this.$themeVariant = doc.getElementById('theme-variant');
+    this.$styleOptions = doc.getElementById('style-options');
+    this.$userStyles = doc.getElementById('user-styles');
 
     this.cursor = null;
 
-    this.$viewScopeBtn = this.document.getElementById('view-scope-btn');
+    this.$viewScopeBtn = doc.getElementById('view-scope-btn');
 
     // zoom buttons
-    this.$zoomOutBtn = this.document.getElementById('zoom-out-btn');
-    this.$zoomInBtn = this.document.getElementById('zoom-in-btn');
+    this.$zoomOutBtn = doc.getElementById('zoom-out-btn');
+    this.$zoomInBtn = doc.getElementById('zoom-in-btn');
     // number of steps per "octave"
     this.zoomSteps = 12;
     this.zoomMax = 3;
@@ -153,28 +158,28 @@ export class TreeView extends Tree {
     this.dragScrollZone = 0.15;  // 15% top and bottom
 
     // shows info about most recent event
-    //this.$statusBar = this.document.getElementById('status-bar');
-    this.$statusText = this.document.getElementById('status-text');
-    this.$detailsBox = this.document.getElementById('details-box');
-    this.$detailsBtn = this.document.getElementById('details-btn');
+    //this.$statusBar = doc.getElementById('status-bar');
+    this.$statusText = doc.getElementById('status-text');
+    this.$detailsBox = doc.getElementById('details-box');
+    this.$detailsBtn = doc.getElementById('details-btn');
     // TODO: this should load from config
     this.detailsState = 1;  // 0=off, 1=notes, 2=details
     // open a tree view in a new tab
-    this.$treeViewInTabBtn = this.document.getElementById('tree-view-in-tab-btn');
+    this.$treeViewInTabBtn = doc.getElementById('tree-view-in-tab-btn');
     // click to save a session backup
-    this.$backupBtn = this.document.getElementById('backup-btn');
+    this.$backupBtn = doc.getElementById('backup-btn');
     // open the extension's options page
-    this.$optionsBtn = this.document.getElementById('options-btn');
+    this.$optionsBtn = doc.getElementById('options-btn');
     // help the project survive, and help me pay rent
-    this.$donateBtn = this.document.getElementById('donate-btn');
+    this.$donateBtn = doc.getElementById('donate-btn');
     // open the extension's help page
-    this.$helpBtn = this.document.getElementById('help-btn');
+    this.$helpBtn = doc.getElementById('help-btn');
 
     // count of marked nodes when non-zero
-    this.$markedCount = this.document.getElementById('marked-count');
+    this.$markedCount = doc.getElementById('marked-count');
 
     // node row hover menu
-    this.$hoverMenu = this.document.getElementById('hover-menu');
+    this.$hoverMenu = doc.getElementById('hover-menu');
 
   }
 
@@ -335,17 +340,8 @@ export class TreeView extends Tree {
       value);
   }
 
-  async updateTheme () {
-    const themes = {
-      'TK Night': ['tk', 'tk-night'],
-      'TK Day': ['tk', 'tk-day']
-    };
-    const data = await api.storage.local.get('theme');
-    if (data.theme && themes[data.theme]) {
-      const theme = themes[data.theme];
-      this.$themeBase.href = `/themes/${theme[0]}.css`;
-      this.$themeVariant.href = `/themes/${theme[1]}.css`;
-    }
+  updateTheme () {
+    return updateTheme(this.$themeBase, this.$themeVariant);
   }
 
   async updateStyleOptions () {
@@ -1858,6 +1854,7 @@ export class TreeView extends Tree {
       debug(`TreeView.ensureCursorVisible(visibleNode)`, visibleNode);
       return await this.setCursor(visibleNode);
     }
+    return await this.setCursor(this.cursor);
   }
 
   scrollNodeIntoView (node, duration = 200) {
