@@ -19,12 +19,9 @@
     "storage",
     "downloads",
     "tabs",
-    "alarms",
-    "favicon"
+    "alarms"
   ],
   "optional_permissions": [
-    "clipboardRead",
-    "clipboardWrite"
   ],
   "optional_host_permissions": [
     "http://localhost:*/*",
