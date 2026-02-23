@@ -17,6 +17,25 @@ read-later, notes, pinned tabs, stacked tabs, AI tab organizers, etc.  You
 could still use those things, but why bother when you have something better?
 
 
+## Screenshots
+
+Just a few pics to give a general idea what this is all about.
+
+Example usage, in dark and light themes:
+
+![Dark theme](https://toykeeper.net/tktsto/gfx/tktsto-dark.1.png)
+![Light theme](https://toykeeper.net/tktsto/gfx/tktsto-light.1.png)
+
+Some of the dialog popups:
+
+![Dialogs](https://toykeeper.net/tktsto/gfx/tktsto-themes.1.png)
+
+Internal documentation / help pages:
+
+![Docs (dark)](https://toykeeper.net/tktsto/gfx/tktsto-docs.1.png)
+![Docs (light)](https://toykeeper.net/tktsto/gfx/tktsto-docs.2.png)
+
+
 ## Background / Inspiration
 
 I used Tabs Outliner for a long time.  It was great.  But it was missing some
