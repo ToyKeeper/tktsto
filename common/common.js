@@ -5,27 +5,34 @@
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
 
+
 export function _ (...args) {
   return api.i18n.getMessage(...args);
 }
+
 
 export function debug (...args) {
   console.debug(...args);
 }
 
+
 export function log (...args) {
   console.log(...args);
 }
+
 
 export function warn (...args) {
   console.warn(...args);
 }
 
+
 export function error (...args) {
   console.error(...args);
 }
 
+
 export const jsonSchema = 'https://toykeeper.net/tktsto/session-backup-json-schema-v1';
+
 
 // unused
 // make a date tuple similar to python
@@ -39,6 +46,7 @@ export const jsonSchema = 'https://toykeeper.net/tktsto/session-backup-json-sche
 //  ];
 //  return result;
 //}
+
 
 // WTF, javascript doesn't have strftime()
 export function dateTupleStrings (date) {
@@ -75,6 +83,7 @@ export function fmtDate (date) {
   // generate ISO 8601 style timestamp string in local time zone
   return date.toLocaleString("en-CA", { hour12: false });
 }
+
 
 export async function emit (name, args, retry = true) {
   if (emit.disabled) return;  // abort if we're turned off
@@ -125,6 +134,7 @@ export async function emit (name, args, retry = true) {
   return response;
 }
 
+
 export function isIllegalURL (url) {
   if (! url) return false;
 
@@ -164,18 +174,5 @@ export function isIllegalURL (url) {
 
   // if no match, assume it's allowed
   return false;
-}
-
-export async function updateTheme ($base, $variant) {
-  const themes = {
-    'TK Night': ['tk', 'tk-night'],
-    'TK Day': ['tk', 'tk-day']
-  };
-  const data = await api.storage.local.get('theme');
-  if (data.theme && themes[data.theme]) {
-    const theme = themes[data.theme];
-    $base.href = `/themes/${theme[0]}.css`;
-    $variant.href = `/themes/${theme[1]}.css`;
-  }
 }
 

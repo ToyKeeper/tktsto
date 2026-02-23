@@ -176,7 +176,8 @@ body:not(.unfocused) ::-webkit-scrollbar-thumb,
   background: var(--scrollbar-thumb-bg-unfocused);
 }
 body:not(.unfocused) *:hover::-webkit-scrollbar-thumb,
-body.docs::-webkit-scrollbar-thumb {
+body.docs::-webkit-scrollbar-thumb,
+body.options::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb-bg);
 }
 
@@ -192,7 +193,10 @@ body.docs::-webkit-scrollbar-thumb {
 }
 
 .toolbar .button,
-#dialogButtons button {
+#dialogButtons button,
+.options button,
+input[type="file"]::file-selector-button,
+foo {
   display: inline-block;
   flex: 1 1 auto;
   text-align: center;
@@ -209,7 +213,10 @@ body.docs::-webkit-scrollbar-thumb {
   user-select: none;
 }
 .toolbar .button:hover,
-#dialogButtons button:hover {
+#dialogButtons button:hover,
+.options button:hover,
+input[type="file"]::file-selector-button:hover,
+foo {
   color: var(--button-hover-fg);
   border: var(--button-hover-border);
   background: var(--button-hover-bg);
@@ -223,7 +230,10 @@ body.docs::-webkit-scrollbar-thumb {
 }
 .toolbar .button.pressed,
 .toolbar .button:active,
-#dialogButtons button:active {
+#dialogButtons button:active,
+.options button:active,
+input[type="file"]::file-selector-button:active,
+foo {
   color: var(--button-pressed-fg);
   border: var(--button-pressed-border);
   background: var(--button-pressed-bg);
@@ -873,7 +883,8 @@ foo {
 }
 
 .dialog input,
-.dialog textarea {
+.dialog textarea,
+.options input {
   background: var(--dialog-input-bg);
   border: var(--1px) inset var(--dialog-input-border);
   border-radius: 3px;
@@ -979,6 +990,17 @@ foo {
 .dialog *:focus,
 *:focus {
   outline: var(--focus-outline);
+}
+
+select {
+  border: var(--1px) outset var(--dialog-border-color);
+  /* "select" widget apparently can't use a gradient background */
+  /*background: linear-gradient(var(--dialog-bg-top), var(--dialog-bg-bot));*/
+  background: var(--dialog-bg-top);
+  border-radius: var(--dialog-radius);
+  padding: var(--dialog-padding);
+  color: var(--dialog-fg);
+  font-size: var(--global-font-size);
 }
 
 

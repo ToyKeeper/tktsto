@@ -7,64 +7,23 @@ console.log('docs.js loading...');
 import { api, isChrome, isFirefox } from '/api.js';
 
 import {
-  log, debug, warn, error,
-  emit,
-  updateTheme
+  emit, log, debug, warn, error
 } from '/common/common.js';
+import { ThemedPage } from '/themes/themes.js';
 import { TreeView } from '/view/treeview.js';
 
 
-class Docs {
+class Docs extends ThemedPage {
 
   constructor () {
+    super('/docs/docs');
     this.$doc = document;
   }
 
   init () {
+    super.init();
     emit.disabled = true;  // never emit events
-    this.initElements();
     this.renderAllTrees();
-  }
-
-  initElements () {
-    const doc = this.$doc;
-    const head = doc.head;
-
-    // mark body as "focused" so a scrollbar will appear
-    doc.body.classList.add('focused');
-
-    // load stylesheets
-    const themeBase = document.createElement('link');
-    themeBase.rel = 'stylesheet'; themeBase.type = 'text/css';
-    themeBase.id = 'theme-base'; themeBase.href = '/themes/tk.css';
-    head.appendChild(themeBase);
-    this.$themeBase = themeBase;
-
-    const themeVariant = document.createElement('link');
-    themeVariant.rel = 'stylesheet'; themeVariant.type = 'text/css';
-    themeVariant.id = 'theme-variant'; themeVariant.href = '/themes/tk-night.css';
-    head.appendChild(themeVariant);
-    this.$themeVariant = themeVariant;
-
-    const docsCss = document.createElement('link');
-    docsCss.rel = 'stylesheet'; docsCss.type = 'text/css';
-    docsCss.href = './docs.css';
-    head.appendChild(docsCss);
-    this.$docsCss = docsCss;
-
-    const styleOptions = document.createElement('link');
-    styleOptions.rel = 'stylesheet'; styleOptions.type = 'text/css';
-    styleOptions.id = 'style-options';
-    head.appendChild(styleOptions);
-    this.$styleOptions = styleOptions;
-
-    const userStyles = document.createElement('link');
-    userStyles.rel = 'stylesheet'; userStyles.type = 'text/css';
-    userStyles.id = 'user-styles';
-    head.appendChild(userStyles);
-    this.$userStyles = userStyles;
-
-    updateTheme(this.$themeBase, this.$themeVariant);
   }
 
   async renderAllTrees () {
@@ -93,7 +52,7 @@ class Docs {
 
   async renderTree (opts, tree, $container) {
     const dtv = new DocTreeView(opts);
-    dtv.createRootElement($container);
+    dtv.init($container);
     await dtv.fromObjects(tree);
     dtv.$renderWholeTree();
   }
@@ -104,10 +63,14 @@ class Docs {
 export class DocTreeView extends TreeView {
 
   constructor (opts) {
-    super(TreeView);
+    super({ isInert: true });
     // never emit events, and don't listen for events either
     emit.disabled = true;
-    this.isInert = true;
+  }
+
+  init ($container) {
+    super.init();
+    this.createRootElement($container);
   }
 
   async fromObjects (root) {

@@ -1,0 +1,18 @@
+.options input {
+  width: unset;
+  max-width: unset;
+  color: var(--tab-loaded-fg);
+  font-size: calc(var(--global-font-size) * 0.9);
+  padding: 0.1em 0.2em;
+  margin-bottom: var(--dialog-padding);
+}
+
+.short-input {
+  min-width: unset;
+}
+
+.options button {
+  flex: unset;
+  margin: unset;
+}
+

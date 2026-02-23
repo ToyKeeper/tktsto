@@ -1,62 +1,28 @@
 <!DOCTYPE html>
 <!-- options/options.html: options page
-  -- Copyright (C) 2025 Selene ToyKeeper
+  -- Copyright (C) 2025-2026 Selene ToyKeeper
   -- SPDX-License-Identifier: AGPL-3.0-or-later
   -->
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>TK Tree Style Tab Outliner Options</title>
-  <script defer src="options.js" type="module"></script>
-  <style>
-    body {
-      background-color: #333;
-      color: #ccc;
-    }
-    label, input {
-      margin: 0.25em 0;
-    }
-    input {
-      background-color: #222;
-      color: #ccc;
-      border: inset 3px #444;
-    }
-    .short-input {
-      min-width: unset;
-    }
-    .file-input {
-      display: flex;
-      flex-direction: row;
-      gap: 0.5em;
-    }
-    button,
-    input[type="file"]::file-selector-button {
-      background: linear-gradient(180deg, #888, #444);
-      border-radius: 1em;
-      color: #fff;
-      border: outset 1px #555;
-      font-weight: bold;
-      padding: 0.1em 1em;
-    }
-    code, pre {
-      background-color: #3a3a3a;
-      border-radius: 0.25em;
-      padding: 0.1em 0.25em;
-    }
-    pre {
-      margin: 0 2em;
-      border-left: 3px solid #555;
-    }
-  </style>
+  <script type="module" src="options.js"></script>
 </head>
-<body>
+<body class="options">
   <h1>TK Tree Style Tab Outliner Options</h1>
 
   <h2>Client ID</h2>
+
+  <p>
 
   Each browser you use needs its own unique identifier.  Use something <b>very
   short with no spaces or punctuation</b>, ideally 3 letters or less, because
   it will become part of the ID for each tree node and transaction created by
   that browser.  For example:
+
+  </p>
+
   <ul>
     <li><code>pc</code>: Your desktop computer.</li>
     <li><code>nb</code>: Your notebook computer.</li>
@@ -74,7 +40,7 @@
   <h2>Theme</h2>
 
   <div>
-    Theme:
+    <label>Theme:</label>
     <select id="theme" name="theme">
       <option value="TK Night">TK Night</option>
       <option value="TK Day">TK Day</option>
@@ -172,10 +138,8 @@
 
 
   <!-- TODO:
-    - Re-use css from tree view
     - Split config options into multiple tabs
     - Add link to help/doc pages and other internal pages
-    - Select theme / stylesheet for tree views
     - User styles text widget
     - Configure server URL and type
       - None (local manual snapshots only)

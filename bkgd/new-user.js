@@ -5,17 +5,16 @@
 "use strict";
 import { api, isChrome, isFirefox, isZenBrowser } from '/api.js';
 
-import { TreeView } from '/view/treeview.js';
+import { keyBindings } from '/view/treeview.js';
 
 
 export async function createNewUserTutorialNodes (tree, parentNode) {
   const root = tree.root;
-  // build a list of keyBindngs
-  const tv = new TreeView();
+  // build a list of keyBindings
   const keymapInfo = [
   ];
-  for (const key of Object.keys(tv.keyBindngs)) {
-    const value = tv.keyBindngs[key];
+  for (const key of Object.keys(keyBindings)) {
+    const value = keyBindings[key];
     if ('none' !== value)
       keymapInfo.push({ label: `${key} : ${value}` });
   }

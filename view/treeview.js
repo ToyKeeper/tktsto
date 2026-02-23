@@ -6,10 +6,9 @@
 import { api, isChrome, isFirefox } from '/api.js';
 
 import {
-  log, debug, warn, error,
-  emit,
-  updateTheme
+  emit, log, debug, warn, error
 } from '/common/common.js';
+import { ThemedPage } from '/themes/themes.js';
 import { buildEventName } from '/common/events.js';
 import { inputDialog, checkboxDialog, nodeEditDialog } from '/common/dialog.js';
 import { NodeView } from './nodeview.js';
@@ -19,112 +18,15 @@ import { Mutex } from '/common/mutex.js';
 
 export class TreeView extends Tree {
 
-  constructor () {
+  constructor (args = {}) {
     super(NodeView);
+
+    // false = interactive "real" TreeView
+    // true = static read-only TreeView for demonstration purposes
+    this.isInert = args.isInert;
 
     // TODO: determine whether full view or single-window
 
-    try {
-      this.document = document;
-      this.window = window;
-    } catch (err) {
-      // This instance is NOT a real tree view...
-      // ... just an instance created for some other purpose
-      // (like during the tutorial, to get a list of keyBindngs)
-      this.isInert = true;
-    }
-
-    if (! this.isInert) {
-      this.initElements();
-    }
-
-    // table mapping keys to actions
-    // TODO: let user bind keys
-    this.keyEventMutex = new Mutex();
-    this.keyBindngs = {
-      // test
-      //'a': 'addNode',
-      ///// add / remove nodes
-      'Enter': 'loadOrEditNode',
-      'd': 'deleteNode',
-      'u': 'unloadNode',
-      'o': 'addNodeAsNextVisibleRow',
-      'Shift+O': 'addNodeAsPrevVisibleRow',
-      ///// edit nodes
-      'Space': 'toggleExpanded',
-      'e': 'editNode',
-      ///// task status
-      //'x': 'toggleTaskDone',
-      //'t': 'taskLeaderKey',
-      't': 'taskEdit',
-      ///// search
-      //'/': 'beginSearch',
-      //'Shift+*': 'searchForCurrent',  // match current label, url, or title
-      //'Ctrl+f': 'beginSearch',
-      //'Ctrl+g': 'nextSearchResult',
-      //'n': 'nextSearchResult',
-      //'Shift+N': 'prevSearchResult',
-      //'Escape': 'endSearch',
-      ///// cursor movement
-      'ArrowUp': 'cursorUp',
-      'ArrowDown': 'cursorDown',
-      'ArrowLeft': 'cursorLeft',
-      'ArrowRight': 'cursorRight',
-      'PageUp': 'cursorPgUp',
-      'PageDown': 'cursorPgDown',
-      'Home': 'cursorHome',
-      'End': 'cursorEnd',
-      ///// move current node
-      // move by one visible row, period
-      'Shift+ArrowUp': 'moveNodeUp',
-      'Shift+ArrowDown': 'moveNodeDown',
-      // move by one sibling, never going to a deeper level (but maybe higher)
-      'Shift+PageUp': 'moveNodeUpNoDescend',
-      'Shift+PageDown': 'moveNodeDownNoDescend',
-      // move shallower or deeper
-      'Shift+ArrowLeft': 'moveNodeLeft',
-      'Shift+ArrowRight': 'moveNodeRight',
-      // move to first / last position
-      // TODO: implement these
-      'Shift+Home': 'moveNodeHome',
-      'Shift+End': 'moveNodeEnd',
-      ///// mark / paste
-      'm': 'toggleMarked',
-      'Shift+M': 'unmarkAll',
-      'p': 'pasteMarked',
-      'Shift+P': 'pasteMarkedBefore',
-      // TODO: leader key for batch processing of other things,
-      //   like delete and maybe sort and checkbox actions and ...
-      ///// buttons
-      'b': 'backupSession',
-      ///// misc
-      'i': 'detailsButton',
-      'Shift+?': 'generateTutorial',
-      'Tab': 'none',  // suppress default Tab handling
-      'none': 'none'
-    };
-    // mouse click bindings
-    this.mouseBindings = {
-      // mouseover should show a hover menu thingy
-      'MouseOver': 'mouseHoverMenu',
-      // drag-n-drop stuff
-      'MouseDragStart': 'mouseDragStart',
-      'MouseDrag': 'mouseDrag',
-      'MouseDrop': 'mouseDrop',
-      'MouseDragEnd': 'mouseDragEnd',
-      'MouseDragLeave': 'mouseDragLeave',
-      'MouseDragOver': 'mouseDragOver',
-      // do nothing on 'click' event
-      'MouseClickLeft': 'rejectEvent',
-      // double click does the same thing as 'Enter'
-      'MouseDblClickLeft': 'loadOrEditNode',
-      // place cursor and maybe expand/collapse node
-      'MousePressLeft': 'mousePressLeft',
-      // allow middle click to pass as-is, and open link in a new tab
-      'MousePressMiddle': 'none',
-      // allow right click to open normal context menu
-      'MousePressRight': 'none',
-    };
   }
 
   destroy () {
@@ -135,12 +37,6 @@ export class TreeView extends Tree {
     this.$body = doc.getElementById('body');
     this.$ = doc.getElementById('tree-view');
     this.$treeRoot = doc.getElementById('tree-root');
-
-    // stylesheets
-    this.$themeBase = doc.getElementById('theme-base');
-    this.$themeVariant = doc.getElementById('theme-variant');
-    this.$styleOptions = doc.getElementById('style-options');
-    this.$userStyles = doc.getElementById('user-styles');
 
     this.cursor = null;
 
@@ -185,13 +81,27 @@ export class TreeView extends Tree {
 
   async init () {
     super.init();
-    // misc handlers
-    this.initBodyHandlers();
-    this.initKeyHandler();
-    this.initMouseHandler();
-    this.initButtonHandlers();
+
+    this.document = document;
+    this.window = window;
+
+    this.initElements();
+
+    if (! this.isInert) {
+      this.themedPage = new ThemedPage('/view/sidepanel');
+      this.themedPage.init();
+
+      this.keyEventMutex = new Mutex();
+
+      // misc handlers
+      this.initBodyHandlers();
+      this.initKeyHandler();
+      this.initMouseHandler();
+      this.initButtonHandlers();
+      this.initStorageObserver();
+    }
+
     await this.loadConfig();
-    this.initStorageObserver();
     this.nodeIdMimeType = 'application/x-tktsto-node-id';
     // get the window this view is attached to
     this.windowObj = await api.windows.getCurrent();
@@ -199,27 +109,30 @@ export class TreeView extends Tree {
     // TODO: load config...
     this.nodesPerPage = 20;
     this.doubleClickMs = 500;
-    // init stylesheets
-    this.updateTheme();
-    this.updateStyleOptions();
-    this.updateUserStyles();
-    // init connection to bkgd
-    await this.initBkgdPort();
-    this.initBkgdPing();
-    // TODO: load the nodes from storage and render them
-    await this.loadTreeFromBkgd(false);
+
+    if (! this.isInert) {
+      // init connection to bkgd
+      await this.initBkgdPort();
+      this.initBkgdPing();
+      // TODO: load the nodes from storage and render them
+      await this.loadTreeFromBkgd(false);
+    }
 
     //this.root = new NodeView(this, null, this.window);
     this.root.window = this.window;
 
     // figure out which window we are and whether to view the whole tree
-    this.windowNode = this.root.getWindowId(this.windowId);
-    let defaultViewScope = 'window';
-    // 1st window defaults to Session mode, others use Window mode
-    if (this.windowNode.parent.isRoot() && (0 === this.windowNode.indexOf()))
-    { defaultViewScope = 'session'; }
-    this.viewScope = await this.getWindowConfig('viewScope', defaultViewScope);
-    if (! this.viewScope) this.viewScope = defaultViewScope;
+    if (this.isInert) {
+      this.viewScope = 'session';
+    } else {
+      this.windowNode = this.root.getWindowId(this.windowId);
+      let defaultViewScope = 'window';
+      // 1st window defaults to Session mode, others use Window mode
+      if (this.windowNode.parent.isRoot() && (0 === this.windowNode.indexOf()))
+      { defaultViewScope = 'session'; }
+      this.viewScope = await this.getWindowConfig('viewScope', defaultViewScope);
+      if (! this.viewScope) this.viewScope = defaultViewScope;
+    }
 
     this.$renderViewScopeBtn();
 
@@ -295,12 +208,6 @@ export class TreeView extends Tree {
 
   async storageObserver (changes) {
     debug(`TreeView.storageObserver()`, changes);
-    if (changes.expandedRowPrefix) {
-      this.updateStyleOptions();
-    }
-    if (changes.theme) {
-      this.updateTheme();
-    }
     if (changes.cursorFollowsActiveTab) {
       this.cursorFollowsActiveTab = changes.cursorFollowsActiveTab.newValue;
     }
@@ -338,30 +245,6 @@ export class TreeView extends Tree {
     return this.setConfig(
       `TreeView.${varName}.${this.windowNode.id}`,
       value);
-  }
-
-  updateTheme () {
-    return updateTheme(this.$themeBase, this.$themeVariant);
-  }
-
-  async updateStyleOptions () {
-    let styleText = '';
-    let data;
-    // '+' marker drawn before expanded rows?
-    data = await api.storage.local.get({ 'expandedRowPrefix': true });
-    let expandedRowPrefix = '';
-    if (data.expandedRowPrefix) {
-      styleText = styleText
-        + "\n.expanded.row::before {"
-        + `\n  content: "+";`
-        + '\n  margin-left: -2px;'
-        + '\n}';
-    }
-    // apply the changes
-    this.$styleOptions.textContent = styleText;
-  }
-
-  updateUserStyles () {
   }
 
   updateMarkedCount () {
@@ -476,7 +359,7 @@ export class TreeView extends Tree {
   async dispatchInputEvent (event) {
     // look up the event name to see if it's mapped to an action
     // ... then call that action
-    const handlerName = this.keyBindngs[event.processedName];
+    const handlerName = keyBindings[event.processedName];
     if (handlerName) {
       // bindable actions detectable by naming convention
       const handler = this[`action_${handlerName}`];
@@ -562,7 +445,7 @@ export class TreeView extends Tree {
     //debug(`mouseEvent(): rowXY(${rowX},${rowY}) rowWidHgt(${rowWid}x${rowHgt})`);
 
     // call a handler
-    const handlerName = this.mouseBindings[eventName];
+    const handlerName = mouseBindings[eventName];
     if (handlerName) {
       const handler = this[`action_${handlerName}`];
       if (handler) {
@@ -1684,6 +1567,8 @@ export class TreeView extends Tree {
   }
 
   $renderHoverMenu () {
+    if (! this.$hoverMenu) return;
+
     const doc = this.document;
 
     function makeBtn (_this, className, label, funcName) {
@@ -1810,6 +1695,7 @@ export class TreeView extends Tree {
   }
 
   async ensureCursorVisible () {
+    if (this.isInert) return;
     const viewRoot = this.viewRoot;
     //debug(`TreeView.ensureCursorVisible(cursor):`, this.cursor);
     //debug(`TreeView.ensureCursorVisible(viewRoot):`, viewRoot);
@@ -2071,6 +1957,7 @@ export class TreeView extends Tree {
   }
 
   $renderViewScopeBtn () {
+    if (! this.$viewScopeBtn) return;
     // Capitalize word and place it inside the button
     const label = this.viewScope.charAt(0).toUpperCase()
       + this.viewScope.slice(1);
@@ -2094,6 +1981,8 @@ export class TreeView extends Tree {
   }
 
   $renderDetailsBtn () {
+    if (! this.$detailsBtn) return;
+
     switch (this.detailsState) {
       // 0 = off / none
       case 0:
@@ -2177,35 +2066,43 @@ export class TreeView extends Tree {
   }
 
   async setZoomLevel (zoomLevel) {
-    // per window
-    //const savedZoomLevel = await this.getWindowConfig('zoomLevel', 1.0);
-    // global
-    const savedZoomLevel = await this.getConfig('treeViewZoomLevel', 1.0);
-    //debug(`setZoomLevel(${zoomLevel}, ${savedZoomLevel})`);
-    if (! zoomLevel) {
-      zoomLevel = savedZoomLevel;
+    let savedZoomLevel;
+    if (! this.isInert) {
+      // per window
+      //const savedZoomLevel = await this.getWindowConfig('zoomLevel', 1.0);
+      // global
+      savedZoomLevel = await this.getConfig('treeViewZoomLevel', 1.0);
+      //debug(`setZoomLevel(${zoomLevel}, ${savedZoomLevel})`);
+      if (! zoomLevel) {
+        zoomLevel = savedZoomLevel;
+      }
     }
+
     zoomLevel = Math.min(Math.max(zoomLevel, this.zoomMin), this.zoomMax);
 
     // update the view
     this.document.documentElement.style.setProperty('--zoom-level', zoomLevel);
     this.zoomLevel = zoomLevel;
 
-    // persist preference
-    if (zoomLevel !== savedZoomLevel) {
-      // per window
-      //await this.setWindowConfig('zoomLevel', zoomLevel);
-      // global
-      await this.setConfig('treeViewZoomLevel', zoomLevel);
-      this.setStatus(`Zoom: ${(100 * this.zoomLevel).toFixed(2)}%`);
+    if (! this.isInert) {
+      // persist preference
+      if (zoomLevel !== savedZoomLevel) {
+        // per window
+        //await this.setWindowConfig('zoomLevel', zoomLevel);
+        // global
+        await this.setConfig('treeViewZoomLevel', zoomLevel);
+        this.setStatus(`Zoom: ${(100 * this.zoomLevel).toFixed(2)}%`);
+      }
     }
 
     // grey out or activate zoom buttons if maxed out
-    const grey = 'greyed-out';
-    if (zoomLevel >= this.zoomMax) this.$zoomInBtn.classList.add(grey);
-    else this.$zoomInBtn.classList.remove(grey);
-    if (zoomLevel <= this.zoomMin) this.$zoomOutBtn.classList.add(grey);
-    else this.$zoomOutBtn.classList.remove(grey);
+    if (this.$zoomInBtn) {
+      const grey = 'greyed-out';
+      if (zoomLevel >= this.zoomMax) this.$zoomInBtn.classList.add(grey);
+      else this.$zoomInBtn.classList.remove(grey);
+      if (zoomLevel <= this.zoomMin) this.$zoomOutBtn.classList.add(grey);
+      else this.$zoomOutBtn.classList.remove(grey);
+    }
   }
 
   onBackupBtnClick () {
@@ -2263,4 +2160,94 @@ export class TreeView extends Tree {
   }
 
 }
+
+
+// table mapping keys to actions
+// TODO: let user bind keys
+export const keyBindings = {
+  // test
+  //'a': 'addNode',
+  ///// add / remove nodes
+  'Enter': 'loadOrEditNode',
+  'd': 'deleteNode',
+  'u': 'unloadNode',
+  'o': 'addNodeAsNextVisibleRow',
+  'Shift+O': 'addNodeAsPrevVisibleRow',
+  ///// edit nodes
+  'Space': 'toggleExpanded',
+  'e': 'editNode',
+  ///// task status
+  //'x': 'toggleTaskDone',
+  //'t': 'taskLeaderKey',
+  't': 'taskEdit',
+  ///// search
+  //'/': 'beginSearch',
+  //'Shift+*': 'searchForCurrent',  // match current label, url, or title
+  //'Ctrl+f': 'beginSearch',
+  //'Ctrl+g': 'nextSearchResult',
+  //'n': 'nextSearchResult',
+  //'Shift+N': 'prevSearchResult',
+  //'Escape': 'endSearch',
+  ///// cursor movement
+  'ArrowUp': 'cursorUp',
+  'ArrowDown': 'cursorDown',
+  'ArrowLeft': 'cursorLeft',
+  'ArrowRight': 'cursorRight',
+  'PageUp': 'cursorPgUp',
+  'PageDown': 'cursorPgDown',
+  'Home': 'cursorHome',
+  'End': 'cursorEnd',
+  ///// move current node
+  // move by one visible row, period
+  'Shift+ArrowUp': 'moveNodeUp',
+  'Shift+ArrowDown': 'moveNodeDown',
+  // move by one sibling, never going to a deeper level (but maybe higher)
+  'Shift+PageUp': 'moveNodeUpNoDescend',
+  'Shift+PageDown': 'moveNodeDownNoDescend',
+  // move shallower or deeper
+  'Shift+ArrowLeft': 'moveNodeLeft',
+  'Shift+ArrowRight': 'moveNodeRight',
+  // move to first / last position
+  // TODO: implement these
+  'Shift+Home': 'moveNodeHome',
+  'Shift+End': 'moveNodeEnd',
+  ///// mark / paste
+  'm': 'toggleMarked',
+  'Shift+M': 'unmarkAll',
+  'p': 'pasteMarked',
+  'Shift+P': 'pasteMarkedBefore',
+  // TODO: leader key for batch processing of other things,
+  //   like delete and maybe sort and checkbox actions and ...
+  ///// buttons
+  'b': 'backupSession',
+  ///// misc
+  'i': 'detailsButton',
+  'Shift+?': 'generateTutorial',
+  'Tab': 'none',  // suppress default Tab handling
+  'none': 'none'
+};
+
+
+// mouse click bindings
+export const mouseBindings = {
+  // mouseover should show a hover menu thingy
+  'MouseOver': 'mouseHoverMenu',
+  // drag-n-drop stuff
+  'MouseDragStart': 'mouseDragStart',
+  'MouseDrag': 'mouseDrag',
+  'MouseDrop': 'mouseDrop',
+  'MouseDragEnd': 'mouseDragEnd',
+  'MouseDragLeave': 'mouseDragLeave',
+  'MouseDragOver': 'mouseDragOver',
+  // do nothing on 'click' event
+  'MouseClickLeft': 'rejectEvent',
+  // double click does the same thing as 'Enter'
+  'MouseDblClickLeft': 'loadOrEditNode',
+  // place cursor and maybe expand/collapse node
+  'MousePressLeft': 'mousePressLeft',
+  // allow middle click to pass as-is, and open link in a new tab
+  'MousePressMiddle': 'none',
+  // allow right click to open normal context menu
+  'MousePressRight': 'none',
+};
 

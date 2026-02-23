@@ -26,7 +26,7 @@ body {
   font-size: 1.333rem;
 }
 
-p, li, td, h1, h4, h5, h6 {
+p, li, td, h1, h4, h5, h6, label {
   color: var(--doc-text-fg);
 }
 
@@ -120,6 +120,5 @@ blockquote {
   height: 3rem;
   pointer-events: none;
   display: none;
-  overflow: visible;
 }
 

@@ -306,7 +306,8 @@ export class NodeView extends Node {
   }
 
   $renderDetails ($detailsBox) {
-    if (!this.tree.document) return;
+    if (! $detailsBox) return;
+    if (! this.tree.document) return;
     const doc = this.tree.document;
     const mode = this.tree.detailsState;
 
