@@ -1011,6 +1011,38 @@ select {
   display: none;
 }
 
+/******************** icons ********************/
+
+.icon {
+  display: inline-block;
+  width: calc(0.8 * var(--row-line-height));
+  height: calc(0.8 * var(--row-line-height));
+  line-height: calc(0.77 * var(--row-line-height));
+  margin-right: 0.2em;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  vertical-align: middle;
+  background-color: var(--tree-line);
+}
+
+.cursor.node .icon,
+.loaded .icon, .loaded-children .icon {
+  background-color: var(--tree-line-cursor);
+}
+
+.icon.pinned {
+  mask-image: url("/img/twemoji/thumbtack.svg");
+}
+
+.icon.pinned-branch {
+  mask-image: url("/img/twemoji/thumbtack.svg");
+}
+
+.icon.pinned-branch-anchored {
+  mask-image: url("/img/fa/anchor.svg");
+}
+
 /******************** vars ********************/
 
 :root {

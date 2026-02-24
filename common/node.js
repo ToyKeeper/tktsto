@@ -354,6 +354,10 @@ export class Node {
     }
   }
 
+  isTab () {
+    return (! (! this.url));
+  }
+
   isLoaded () {
     return this.loaded;
   }
@@ -405,6 +409,34 @@ export class Node {
     if (this.isRoot()) return false;
     if (this.isWindow() && this.isLoaded()) return false;
     return true;
+  }
+
+  isPinnedBranch () {
+    // true if this node is a label called "Pinned"
+    // and is the first child of a window
+    // ... and false otherwise
+    if (('Pinned' !== this.label)
+      || this.isTab()
+      || this.isWindow()
+      || this.isRoot()
+      || (! this.parent.isWindow())
+      || (0 !== this.indexOf())
+    ) return false;
+    return true;
+  }
+
+  isPinned () {
+    // a node is "pinned" if it is in a branch called "Pinned", and
+    // that branch is the first child of its window
+    if (this.isWindow()) return false;
+    const windowNode = this.getWindowNode();
+    if (! windowNode) return false;
+    if (windowNode.nodes?.length <= 0) return false;
+    const firstChild = windowNode.nodes[0];
+    if (! firstChild.isPinnedBranch()) return false;
+    if (this === firstChild) return true;
+    if (this.isChildOf(firstChild)) return true;
+    return false;
   }
 
   isChildOf (node, includeSelf = false) {
@@ -1222,6 +1254,25 @@ export class Node {
     // abort on no-op
     if ((destParent === this.parent) && (destIndex === this.indexOf()))
       return setStatus('moveTo: already there');
+
+    // handle pinned tabs specially... they're weird
+    // - if window's 1st child is a pinned branch label,
+    //   don't allow it to be moved
+    //   and don't allow anything to take its place
+    if (this.isPinnedBranch() && this.hasLoadedTabs())
+      return setStatus("moveTo: can't move pinned branch");
+    const targetNode = destParent.nodes[destIndex];
+    if (targetNode && targetNode.isPinnedBranch() && targetNode.hasLoadedTabs())
+      return setStatus("moveTo: can't move pinned branch");
+    // - if loaded tab moved between pinned and non-pinned position,
+    //   update its pinned status
+    const pinnedBefore = this.isPinned();
+    const pinnedAfter = (destParent.isPinnedBranch() || destParent.isPinned());
+    const pinnedChanged = (pinnedBefore !== pinnedAfter)
+      && (this.isLoadedTab() || this.hasLoadedTabs());
+    if (pinnedChanged)
+      return setStatus("moveTo: can't pin/unpin yet");
+
     // don't allow moving loaded tabs between incognito and regular windows
     // and don't allow moving loaded tabs entirely out of a window
     const oldWindowNode = this.getWindowNode();
@@ -1234,6 +1285,7 @@ export class Node {
         return setStatus("moveTo: incognito mismatch");
       }
     }
+
     // special case: moving a parent into its own child list
     // (this happens when moving a tab to the right in the tab bar,
     //  when that tab has loaded children)
@@ -1261,6 +1313,7 @@ export class Node {
       }
       await this.promoteKids({ reason: 'moveTo' });
     }
+
     // remove from old parent ...
     const prevParent = this.parent;
     let newIndex = destIndex;

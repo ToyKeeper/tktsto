@@ -207,8 +207,29 @@ export class NodeView extends Node {
       this.$row.append($nodeStats);
     }
 
+    // pinned tabs and stuff
+    let pinnedState;
+    if (this.isPinnedBranch() && this.hasLoadedTabs()) {
+      // "Pinned" parent label (with loaded tabs, so it's locked in place)
+      pinnedState = { row: ['pinned', 'pinned-branch'],
+        icon: 'pinned-branch-anchored' };
+    } else if (this.isPinnedBranch() && this.hasLoadedTabs()) {
+      // "Pinned" parent label (without loaded tabs, so it's not locked)
+      pinnedState = { row: ['pinned', 'pinned-branch'], icon: 'pinned-branch' };
+    } else if (this.isPinned()) {
+      // other pinned node
+      pinnedState = { row: ['pinned'], icon: 'pinned' };
+    }
+    if (pinnedState) {
+      this.$row.classList.add(...pinnedState.row);
+      const $pinnedIcon = doc.createElement('span');
+      $pinnedIcon.className = `icon ${pinnedState.icon}`;
+      this.$row.append($pinnedIcon);
+    } else {
+      this.$row.classList.remove('pinned', 'pinned-branch');
+    }
+
     // checkbox
-    let ckbox = '';
     if (this.hasCheckbox()) {
       let cbType = this.getCheckboxType();
       let cbText = this.checkboxText();
