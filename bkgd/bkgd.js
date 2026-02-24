@@ -450,6 +450,8 @@ class Bkgd {
     // moveInfo.toIndex: number
     // moveInfo.windowId: number
     debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
+    if (this.tabReorderInProgress)
+      return debug('bkgd.onTabMoved ignored (tabReorderInProgress)');
     await this.treeLoaded;
     await this.tree.onTabMoved(tabId, moveInfo);
   }
@@ -460,6 +462,8 @@ class Bkgd {
     // attachInfo.newWindowId: number
     //   (may refer to a window which doesn't exist yet)
     debug(`bkgd.onTabAttached(tabId=${tabId}, windowId=${attachInfo.newWindowId}, ${attachInfo.newPosition})`);
+    if (this.tabReorderInProgress)
+      return debug('bkgd.onTabAttached ignored (tabReorderInProgress)');
     await this.treeLoaded;
     return this.tree.onTabAttached(tabId, attachInfo);
   }

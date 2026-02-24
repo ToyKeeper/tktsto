@@ -571,7 +571,15 @@ export class NodeView extends Node {
   }
 
   async setNotes (...args) {
-    return await this.renderIfChanged(super.setNotes(...args));
+    // if user edits "Pinned" branch, it needs to update kids too
+    const wasPinned = this.isPinned();
+
+    const changed = await this.renderIfChanged(super.setNotes(...args));
+
+    // if pinned status changed, refresh this node and all children
+    if (wasPinned !== this.isPinned()) this.$renderChildren();
+
+    return changed;
   }
 
   async setCheckbox (...args) {
@@ -626,6 +634,7 @@ export class NodeView extends Node {
     const oldParent = this.parent;
     let wasInViewScope = true;
     if ('window' === viewScope) wasInViewScope = this.isInViewScope();
+    const wasPinned = this.isPinned();
 
     // move it
     const changed = await super.moveTo(destParent, destIndex, ...extra);
@@ -634,6 +643,9 @@ export class NodeView extends Node {
     destParent.$insertChild(this, destIndex);
     // refresh old parent if needed
     if (oldParent != destParent) oldParent.$refreshAncestry();
+
+    // if pinned status changed, refresh this node and all children
+    if (wasPinned !== this.isPinned()) this.$renderChildren();
 
     // update the #marked-count widget
     // (can change when nodes move into / out of marked nodes)
