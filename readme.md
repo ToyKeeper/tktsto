@@ -13,8 +13,8 @@ recommended for maximum privacy.
 
 This extension makes many of the browser's built-in functions wholly or at
 least partially obsolete -- bookmarks, session management, vertical tabs,
-read-later, notes, pinned tabs, stacked tabs, AI tab organizers, etc.  You
-could still use those things, but why bother when you have something better?
+read-later, notes, stacked tabs, AI tab organizers, etc.  You could still use
+those things, but why bother when you have something better?
 
 
 ## Screenshots
