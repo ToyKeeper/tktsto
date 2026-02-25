@@ -3,6 +3,46 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.80.0 (2026-02-25)
+
+Changes:
+
+- Added support for pinned tabs.  It uses a special magic branch called
+  "Pinned" at the top of each window, and moving nodes into or out of that
+  branch will pin or unpin them.
+
+- Made Shift+Up/Shift+Down node moves a bit more intuitive when moving to or
+  from the end of an expanded branch.  It no longer skips past the next node,
+  and instead will indent / dedent to match the next node first.
+
+- Completely overhauled the documentation pages, including both the
+  appearance and the content.  Now uses the user's configured theme, and has
+  more information -- particularly TreeView widgets as a visual guide for how
+  to do things.
+
+- Made the user's theme apply to the Options page too.
+
+- Made the "Help" button show a list of help pages, and info about how to
+  invoke a tutorial.
+
+- Added a help page for pinned tabs.
+
+- Added a help page for people migrating from Tabs Outliner.
+
+- Moved theme-handling code to a central location, to make it easier and more
+  consistent to make themed pages.
+
+- Finally added some demo screenshots to the main readme.
+
+Bug fixes:
+
+- Fixed cursor going to the wrong place after clicking the viewScope button.
+
+- Removed unused permissions in Chrome, so the extension can be published in
+  the Chrome store.  Will have to re-add those later if I ever add the
+  features the permissions were meant to enable.
+
+
 ## 0.1.69.0 (2026-02-19)
 
 Changes:

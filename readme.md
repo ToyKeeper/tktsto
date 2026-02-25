@@ -128,7 +128,7 @@ These are the stores where TKTSTO is published.  Each link is a redirect to the
 store's extension page:
 
 - Firefox: https://toykeeper.net/tktsto/firefox
-- Chrome (TBD): https://toykeeper.net/tktsto/chrome
+- Chrome: https://toykeeper.net/tktsto/chrome
 - Edge: https://toykeeper.net/tktsto/edge
 
 Please leave a review at the store so "the algorithm" will know to show the
@@ -592,7 +592,7 @@ the current project hosting site:
 Installing the extension from source or from web extension stores:
 
 - From source: https://toykeeper.net/tktsto/releases
-- Chrome (TBD): https://toykeeper.net/tktsto/chrome
+- Chrome: https://toykeeper.net/tktsto/chrome
 - Firefox: https://toykeeper.net/tktsto/firefox
 - Edge: https://toykeeper.net/tktsto/edge
 - Safari (TBD): https://toykeeper.net/tktsto/safari
