@@ -354,6 +354,10 @@ export class Node {
     }
   }
 
+  isTab () {
+    return (! (! this.url));
+  }
+
   isLoaded () {
     return this.loaded;
   }
@@ -405,6 +409,34 @@ export class Node {
     if (this.isRoot()) return false;
     if (this.isWindow() && this.isLoaded()) return false;
     return true;
+  }
+
+  isPinnedBranch () {
+    // true if this node is a label called "Pinned"
+    // and is the first child of a window
+    // ... and false otherwise
+    if (('Pinned' !== this.label)
+      || this.isTab()
+      || this.isWindow()
+      || this.isRoot()
+      || (! this.parent.isWindow())
+      || (0 !== this.indexOf())
+    ) return false;
+    return true;
+  }
+
+  isPinned () {
+    // a node is "pinned" if it is in a branch called "Pinned", and
+    // that branch is the first child of its window
+    if (this.isWindow()) return false;
+    const windowNode = this.getWindowNode();
+    if (! windowNode) return false;
+    if (windowNode.nodes?.length <= 0) return false;
+    const firstChild = windowNode.nodes[0];
+    if (! firstChild.isPinnedBranch()) return false;
+    if (this === firstChild) return true;
+    if (this.isChildOf(firstChild)) return true;
+    return false;
   }
 
   isChildOf (node, includeSelf = false) {
@@ -603,6 +635,7 @@ export class Node {
     if ([
       'userAction',
       'onTabCreated', 'onTabAttached', 'onWindowCreated',
+      'setPinned',
       'bkgd_loadSavedNode:autoWindow',
       'importFile', 'tutorial', 'reattachOrphanedNodes'
     ].includes(args.reason))
@@ -626,6 +659,7 @@ export class Node {
     // abort on no-op
     if (! args) return;
     if ((label === this.label) && (note === this.note)) return;
+    const wasPinnedBranch = this.isPinnedBranch();
     // Do The Thing
     this.label = label;
     this.note = note;
@@ -638,6 +672,14 @@ export class Node {
           label: this.label,
           note: this.note,
           when: this.mtime });
+
+    // needs extra care if "Pinned" status changed while loaded
+    if ( (wasPinnedBranch !== this.isPinnedBranch())
+      && (this.hasLoadedTabs())
+    ) {
+      await this.reorderAllTabsInThisWindow();
+    }
+
     return true;  // the data changed
   }
 
@@ -1222,6 +1264,17 @@ export class Node {
     // abort on no-op
     if ((destParent === this.parent) && (destIndex === this.indexOf()))
       return setStatus('moveTo: already there');
+
+    // handle pinned tabs specially... they're weird
+    // - if window's 1st child is a pinned branch label,
+    //   don't allow it to be moved
+    //   and don't allow anything to take its place
+    if (this.isPinnedBranch() && this.hasLoadedTabs())
+      return setStatus("moveTo: can't move pinned branch");
+    const targetNode = destParent.nodes[destIndex];
+    if (targetNode && targetNode.isPinnedBranch() && targetNode.hasLoadedTabs())
+      return setStatus("moveTo: can't move pinned branch");
+
     // don't allow moving loaded tabs between incognito and regular windows
     // and don't allow moving loaded tabs entirely out of a window
     const oldWindowNode = this.getWindowNode();
@@ -1234,6 +1287,7 @@ export class Node {
         return setStatus("moveTo: incognito mismatch");
       }
     }
+
     // special case: moving a parent into its own child list
     // (this happens when moving a tab to the right in the tab bar,
     //  when that tab has loaded children)
@@ -1261,6 +1315,7 @@ export class Node {
       }
       await this.promoteKids({ reason: 'moveTo' });
     }
+
     // remove from old parent ...
     const prevParent = this.parent;
     let newIndex = destIndex;
@@ -1303,6 +1358,7 @@ export class Node {
       'userAction',
       'onTabMoved', 'onTabRemoved', 'onTabAttached',
       'moveTo',
+      'setPinned',
       'bkgd_loadSavedNode:autoWindow'
     ].includes(args.reason)) {
       emit('tree_nodeMoved',
@@ -1525,13 +1581,61 @@ export class Node {
     return result;
   }
 
+  async setPinned (pinned, args) {
+    // This is *only* for use in response to an onTabUpdated event,
+    // like if the user right-clicked a tab in the browser's tab bar,
+    // then clicked "Pin" or "Unpin".  There is no explicit user action
+    // in TKTSTO to pin or unpin a tab, because it happens as a side
+    // effect of moving a tab into a special "Pinned" branch.
+    debug(`Node.setPinned(${pinned})`, args);
+    if (! args) return;
+    // abort on no-op
+    if (pinned === this.isPinned()) return;
+    // can only run this in the bkgd process
+    if (! this.tree.bkgd) return;
+    // abort if not invoked by the correct event
+    if ('onTabUpdated' !== args.reason) return;
+
+    // do the thing
+    const windowNode = this.getWindowNode();
+    if (! windowNode) return;
+    if (windowNode.nodes.length <= 0) return;
+    let changed = false;
+    // if became unpinned, move out of the "Pinned" node
+    if (! pinned) {
+      // become 2nd child of window (1st child is "Pinned")
+      changed = await this.moveTo(windowNode, 1, { reason: 'setPinned' });
+      return changed;
+    }
+    // if became pinned, move to a child of the "Pinned" node
+    // but first, ensure there *is* a "Pinned" node
+    else {
+      const windowFirstChild = windowNode.nodes[0];
+      let pinnedBranch = windowFirstChild;
+      let destIndex;
+      if ((! windowFirstChild) || (! windowFirstChild.isPinnedBranch())) {
+        // create a "Pinned" branch
+        pinnedBranch = await windowNode.addChild(0,
+          { label: 'Pinned', render: true },
+          { reason: 'setPinned' });
+        if (! pinnedBranch) return;
+        // become first and only child of brand new "Pinned"
+        destIndex = 0;
+      } else {
+        // become last child of "Pinned"
+        destIndex = pinnedBranch.nodes.length;
+      }
+      // move into "Pinned" branch
+      changed = await this.moveTo(pinnedBranch, destIndex,
+        { reason: 'setPinned' });
+      return changed;
+    }
+
+    return changed;
+  }
+
   async reorderAllTabsInThisWindow () {
     debug(`Node.reorderAllTabsInThisWindow(${this.tabReorderInProgress}):`, this);
-    // drop reorder requests when one is already pending
-    // TODO? figure out correct place to attach this flag
-    // (on the node being dragged, or on the window node?  or both?)
-    // (using the dragged node because the window changes mid-drag)
-    if (this.tabReorderInProgress) return;
     // abort on no-op
     if ((! this.isLoaded()) && (! this.hasLoadedTabs())) return;
     // find this tab's window
@@ -1539,10 +1643,7 @@ export class Node {
     if (! windowNode) return;
     if (! windowNode.windowId) return;
 
-    // bugfix: prevent a "tab storm", infinite loop of tab reordering
-    // (could trigger the bug in Vivaldi by grabbing a tab in the tab bar
-    //  and "spazzing out" with the mouse to overload the browser with
-    //  tab move events... since it generates events *during* dragging)
+    // only the bkgd can handle this
     if (! this.tree.bkgd) {
       // tell the bkgd to reorder the tabs
       await emit('bkgd_reorderAllTabsInThisWindow',
@@ -1550,19 +1651,35 @@ export class Node {
       return;
     }
 
+    // drop reorder requests when one is already pending
+    const bkgd = this.tree.bkgd;
+    if (bkgd.tabReorderInProgress) return;
+
     // actually handle the request
     try {
-      this.tabReorderInProgress = true;
+      bkgd.tabReorderInProgress = true;
+
+      // get a list of all loaded tab nodes in this window node, in order
+      const tabNodeList = windowNode.getLoadedTabs();
+
+      // tell browser to move *all* tabs in this window to that order
+      const tabIds = [];
+      const updates = [];
+      for (const node of tabNodeList) {
+        if (node.tabId) {
+          tabIds.push(node.tabId);
+          // ... and update the pinned status too
+          updates.push({
+            tabId: node.tabId,
+            updateProperties: { pinned: node.isPinned() }
+          });
+        }
+      }
+
       // wait a moment; Firefox wants this sometimes
       // (like, when dragging a tab to the void,
       //  it needs to create a window before the tabs can be reordered)
       await new Promise(resolve => setTimeout(resolve, 50));
-
-      // verify which tab is active, and deactivate all others
-      //const [activeTab] = await api.tabs.query(
-      //  { active: true, windowId: windowNode.windowId });
-      //if (activeTab) windowNode.setActiveTab(
-      //  { reason: 'reorderAllTabsInThisWindow' });
 
       // try to move the tabs... maybe try a few times
       // (keep trying until the browser stops blocking reorder requests)
@@ -1572,14 +1689,6 @@ export class Node {
       const maxTrySeconds = 30;
       while ((! success) && (tries < (maxTrySeconds * 1000 / msPerTry))) {
         try {
-          // get a list of all loaded tab nodes in this window node, in order
-          const tabNodeList = windowNode.getLoadedTabs();
-
-          // tell browser to move *all* tabs in this window to that order
-          const tabIds = [];
-          for (const node of tabNodeList)
-            if (node.tabId) tabIds.push(node.tabId);
-
           // Zen Browser is fucked
           let zeroIndex = 0;
           if (isZenBrowser) {
@@ -1588,14 +1697,35 @@ export class Node {
             zeroIndex = tabArray[0].index;
           }
 
-          debug(`Node.reorderAllTabsInThisWindow():`, zeroIndex, tabIds);
+          debug(`Node.reorderAllTabsInThisWindow():`,
+            zeroIndex, tabIds, updates);
 
           // attempt to reorder the tabs
-          if (tabIds.length > 0)
-            await api.tabs.move(tabIds,
+          const results = [];
+          let movePromise;
+          if (tabIds.length > 0) {
+            // pull tabs into the correct window first
+            results.push( api.tabs.move(tabIds,
+              { index: zeroIndex, windowId: windowNode.windowId }) );
+            // then we can update pinned status
+            for (const { tabId, updateProperties } of updates) {
+              results.push( api.tabs.update(tabId, updateProperties) );
+            }
+            // and then finally move tabs to the correct order
+            movePromise = api.tabs.move(tabIds,
               { index: zeroIndex, windowId: windowNode.windowId });
+          }
+          if (movePromise) {
+            movePromise.then(
+              () => success = true,
+              () => success = false);
+          }
+          for (const promise of results) {
+            await promise;
+          }
+          await movePromise;
           debug('tab reorder success');
-          success = true;
+          //success = true;
           tries ++;
         } catch (err) {
           // handle Brave's "Error: Tabs cannot be edited right now (user may be dragging a tab)."
@@ -1612,7 +1742,8 @@ export class Node {
       error(`Node.reorderAllTabsInThisWindow() error:`, err);
     }
     finally {
-      this.tabReorderInProgress = false;
+      //bkgd.tabReorderInProgress = false;
+      queueMicrotask(() => bkgd.tabReorderInProgress = false);
     }
     return;
   }

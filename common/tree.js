@@ -798,12 +798,37 @@ export class Tree {
       debug('Tree.onTabMoved(): tab already at correct index', moveInfo.fromIndex, moveInfo.toIndex);
       return;
     }
+    // if pinned status changed, gotta handle things specially
+    const fromWasPinned = tabList[moveInfo.fromIndex].isPinned();
+    const toWasPinned = tabList[moveInfo.toIndex].isPinned();
+    if (fromWasPinned != toWasPinned) {
+      debug('Tree.onTabMoved() ignored (side effect of "pinned" change)',
+        moveInfo.fromIndex, moveInfo.toIndex);
+      return;
+    }
+    // FIXME: if pinned tab moved to right edge of pin area,
+    // it gets unpinned by the "move right" algorithm
+    // (need to rewrite the entire event handling system,
+    //  to group batches of events together and analyze them
+    //  to infer the actual user intent,
+    //  instead of guessing based on the first event)
+
     // if moving left, things are surprisingly easy...
     // just insert immediately before the tab at the new location
     if (moveInfo.toIndex < moveInfo.fromIndex) {
       let prevNode = tabList[moveInfo.toIndex];
       let destParent = prevNode.parent;
       let destIndex = prevNode.indexOf();
+      // must handle special case of far left edge, to allow pinning to work
+      if (0 === moveInfo.toIndex) {
+        destParent = windowNode;
+        destIndex = 0;
+        const firstNode = windowNode.nodes[0];
+        if (firstNode.isPinnedBranch()) {
+          destParent = firstNode;
+          destIndex = 0;
+        }
+      }
       // TODO: ideally should be just after the previous tab in the tree,
       // but that's a lot harder to calculate
       debug('Tree.onTabMoved(): moving left', moveInfo.fromIndex, moveInfo.toIndex);
@@ -813,9 +838,10 @@ export class Tree {
     // (Node.moveTo handles parent becoming its own child, so that's okay)
     let nextNode = tabList[moveInfo.toIndex + 1];
     if (nextNode) {
+      debug('Tree.onTabMoved(): moving right', moveInfo.fromIndex, moveInfo.toIndex);
       let destParent = nextNode.parent;
       let destIndex = nextNode.indexOf();
-      debug('Tree.onTabMoved(): moving right', moveInfo.fromIndex, moveInfo.toIndex);
+      debug('Tree.onTabMoved(): moving right', destParent.toLine(), destIndex);
       return await doTheMove(destParent, destIndex);
     }
     else {
@@ -1000,6 +1026,12 @@ export class Tree {
     // apply changes, if any
     if (Object.keys(changes).length > 0) {
       await tabNode.setTabFields(changes, { reason: 'onTabUpdated' });
+    }
+
+    // pinned tabs need special care, because they also *move*
+    // ... and handling that can be complicated
+    if (undefined !== changeInfo.pinned) {
+      await tabNode.setPinned(changeInfo.pinned, { reason: 'onTabUpdated' });
     }
   }
 
