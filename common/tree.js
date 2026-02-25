@@ -303,13 +303,13 @@ export class Tree {
       saveAs: false
     });
     let downloadId;
-    function onStarted (id) { downloadId = id; }
-    function progress (delta) {
+    const onStarted = (id) => downloadId = id;
+    const onProgress = (delta) => {
       //debug('Download delta', delta);
       if (delta.id !== downloadId) return;
       if (delta.state?.current === "complete") {
         //log(`Download succeeded: ${filename}`);
-        api.downloads.onChanged.removeListener(progress);
+        api.downloads.onChanged.removeListener(onProgress);
         api.storage.local.set({ localBackupLastTimeCompleted: Date.now() });
         this.localBackupInProgress = false;
         if (this.setStatus) {
@@ -323,16 +323,16 @@ export class Tree {
         } catch (err) {
         }
       } else if (!!delta.error?.current || delta.state?.current === "interrupted") {
-        onFailed.call(this, delta.error?.current || 'Download was interrupted');
+        onFailed(delta.error?.current || 'Download was interrupted');
       }
-    }
-    function onFailed (err) {
+    };
+    const onFailed = (err) => {
       warn(`Download failed: ${err}`);
-      api.downloads.onChanged.removeListener(progress);
+      api.downloads.onChanged.removeListener(onProgress);
       this.localBackupInProgress = false;
-    }
-    api.downloads.onChanged.addListener(progress.bind(this));
-    downloading.then(onStarted, onFailed.bind(this));
+    };
+    api.downloads.onChanged.addListener(onProgress);
+    downloading.then(onStarted, onFailed);
   }
 
   getNodeByTabId (tabId, root)  {
