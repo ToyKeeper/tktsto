@@ -293,44 +293,54 @@ export class Tree {
     // build a filename
     const clientId = backup.metadata.clientId;
     const date = dateTupleStrings(when);
-    const filename = `tktsto.${date[0]}-${date[1]}-${date[2]}_${date[3]}-${date[4]}-${date[5]}.${clientId}.json`;
+    const filenameRequested = `tktsto.${date[0]}-${date[1]}-${date[2]}_${date[3]}-${date[4]}-${date[5]}.${clientId}.json`;
+    let filename = filenameRequested;
 
     // save the file
-    log(`Tree.downloadBackupNow(): saving to "${filename}"`);
+    log(`downloadBackupNow(): saving to "${filename}"`);
     const downloading = api.downloads.download({
       url: url,
       filename: filename,
       saveAs: false
     });
     let downloadId;
-    function onStarted (id) { downloadId = id; }
-    function progress (delta) {
+    const onStarted = (id) => { downloadId = id; };
+    const onProgress = (delta) => {
       //debug('Download delta', delta);
-      if ((delta.id === downloadId)
-        && delta.state && delta.state.current === "complete")
-      {
-        //log(`Download succeeded: ${filename}`);
-        api.downloads.onChanged.removeListener(progress);
+      if (delta.id !== downloadId) return;
+      // filename changed
+      if (delta.filename?.current) {
+        // "/foo/baz.txt" or "C:\foo\baz.txt" -> "baz.txt"
+        filename = delta.filename.current.split(/[/\\]+/).pop();
+        if (filenameRequested !== filename)
+          log(`downloadBackupNow(): filename changed to "${filename}" from "${filenameRequested}"`);
+      }
+      // download succeeded
+      if ('complete' === delta.state?.current) {
+        //log(`downloadBackupNow(): Download succeeded: ${filename}`);
+        api.downloads.onChanged.removeListener(onProgress);
         api.storage.local.set({ localBackupLastTimeCompleted: Date.now() });
         this.localBackupInProgress = false;
-        if (this.setStatus) {
+        if (this.setStatus)
           this.setStatus(`Saved ${blob.size} bytes to "${filename}"`);
-        }
         try {
           // docs recommend cleaning this up
           // but docs also say this is unavailable in service workers
           // so ... do it when possible, and ignore errors otherwise
           URL.revokeObjectURL(url);
-        } catch (err) {
-        }
+        } catch (err) { }
+      } else if (
+        (!!delta.error?.current) || ('interrupted' === delta.state?.current)
+      ) {
+        onFailed(delta.error?.current || 'Download was interrupted');
       }
-    }
-    function onFailed (err) {
-      warn(`Download failed: ${err}`);
-      api.downloads.onChanged.removeListener(progress);
+    };
+    const onFailed = (err) => {
+      warn(`downloadBackupNow(): Download failed: ${err}`);
+      api.downloads.onChanged.removeListener(onProgress);
       this.localBackupInProgress = false;
-    }
-    api.downloads.onChanged.addListener(progress.bind(this));
+    };
+    api.downloads.onChanged.addListener(onProgress);
     downloading.then(onStarted, onFailed);
   }
 
