@@ -77,6 +77,18 @@ export class TreeView extends Tree {
     // node row hover menu
     this.$hoverMenu = doc.getElementById('hover-menu');
 
+    // some functions don't work in incognito windows in Chrome-based browsers
+    // because of its "spanning" vs "split" modes for incognito extensions
+    // (we use "spanning" mode, because "split" mode would break tktsto)
+    if (isChrome && (! this.isInert)) {
+      api.windows.getCurrent({ populate: false}, win => {
+        if (win.incognito) {
+          // grey out buttons to warn the user they won't work as expected
+          if (this.$optionsBtn) this.$optionsBtn.classList.add('greyed-out');
+          if (this.$helpBtn) this.$helpBtn.classList.add('greyed-out');
+        }
+      });
+    }
   }
 
   async init () {
@@ -2018,10 +2030,13 @@ export class TreeView extends Tree {
       createProperties.url = api.runtime.getURL(url);
     else
       createProperties.url = url;
-    const [tab] = await api.tabs.query(
-      { active: true, windowId: this.windowId });
+    const win = await api.windows.getCurrent({ populate: false });
+    const [tab] = await api.tabs.query({ active: true, windowId: win.id });
     debug(`openLinkInNewTab() parent tab:`, tab);
-    createProperties.openerTabId = tab.id;
+    createProperties.windowId = tab.windowId;
+    // Chrome can't open internal pages in incognito windows
+    if (internal && isChrome && tab.incognito) { }
+    else createProperties.openerTabId = tab.id;
     api.tabs.create(createProperties);
   }
 
