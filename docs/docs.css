@@ -26,7 +26,7 @@ body {
   font-size: 1.333rem;
 }
 
-p, li, td, h1, h4, h5, h6, label {
+p, li, td, h1, h4, h5, h6, label, pre, .pre {
   color: var(--doc-text-fg);
 }
 
@@ -60,6 +60,25 @@ h3 { font-size: 115%; }
 
 small { font-size: 80%; }
 small * { font-size: 100%; }
+
+.pre {
+  white-space: pre;
+  font-family: monospace;
+}
+
+pre {
+  background: var(--details-box-bg);
+  color: var(--details-box-fg);
+  border-radius: 8px;
+  border: var(--details-box-border);
+  box-shadow: var(--details-box-shadow);
+  max-width: min-content;
+  padding: 0.25em;
+}
+
+img {
+  max-width: 100%;
+}
 
 ul, ol {
   margin: 0;
