@@ -84,6 +84,7 @@ export class TreeView extends Tree {
       api.windows.getCurrent({ populate: false}, win => {
         if (win.incognito) {
           // grey out buttons to warn the user they won't work as expected
+          if (this.$treeViewInTabBtn) this.$treeViewInTabBtn.classList.add('greyed-out');
           if (this.$optionsBtn) this.$optionsBtn.classList.add('greyed-out');
           if (this.$helpBtn) this.$helpBtn.classList.add('greyed-out');
         }
