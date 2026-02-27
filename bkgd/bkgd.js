@@ -654,6 +654,15 @@ class Bkgd {
     }
     // - push node to be loaded, and open it (new window or existing window)
     this.nodesLoading.push(node);
+    const popNode = (node, failed = false) => {
+      const index = this.nodesLoading.indexOf(node);
+      if (index !== -1) {
+        this.nodesLoading.splice(index, 1);
+        if (failed) warn('bkgd_loadSavedNode failed:', node);
+      }
+    };
+    setTimeout(() => { popNode(node, true); }, 3000);  // failsafe
+
     // actually open the tab
     const createProperties = {};
     createProperties.url = node.url;
@@ -682,7 +691,7 @@ class Bkgd {
         }
       } catch (err) {
         this.windowsLoading.pop(windowNode);
-        this.nodesLoading.pop(node);
+        popNode(node);
         warn(`loadSavedTab failed: ${err}`);
         response.result = err;
       }
@@ -710,7 +719,7 @@ class Bkgd {
       try {
         await api.tabs.create(createProperties);
       } catch (err) {
-        this.nodesLoading.pop(node);
+        popNode(node);
         warn(`loadSavedTab failed: ${err}`);
         response.result = err;
       }
