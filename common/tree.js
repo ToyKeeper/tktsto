@@ -25,6 +25,7 @@ export class Tree {
       this.resolveTreeLoaded = resolve;
     });
 
+    this.onTabCreatedMutex = new Mutex();
     this.onTabReplacedMutex = new Mutex();
 
     // don't run more than one backup simultaneously
@@ -354,6 +355,11 @@ export class Tree {
     if (1 > found.length) return null;
     warn(`Tree.getNodeByTabId(${tabId}) found ${found.length} matches, not 1`,
       found);
+    // fix the errors we found, by unsetting duplicate tabIds
+    for (const dupe of found.slice(1)) {
+      if (dupe.tabId === tabId)
+        dupe.unload({ reason: 'badTabId' });
+    }
     // FIXME: prefer matching tabId over oldTabId
     return found[0];
   }
@@ -380,7 +386,10 @@ export class Tree {
     }
     // if nothing in the queue, try searching by window ID
     // TODO: unsure if this ever actually happens
-    if (! savedWindowNode) {
+    if ((! savedWindowNode)
+      // special case: Firefox restarted, windowId=1, but not same window
+      && ('mergeOpenWindowsIntoTree' !== args.reason)
+    ) {
       const found = this.root.findNodes((node) =>
         { return node.isWindow() && (node.windowId === window.id); });
       if (found.length > 0) {
@@ -500,166 +509,171 @@ export class Tree {
     //   which doesn't exist yet.  :(
     debug(`Tree.onTabCreated(): Window ID: ${tab.windowId} Tab ID: ${tab.id}, URL: ${tab.url}, pendingUrl: ${tab.pendingUrl}`, tab);
 
-    // Zen Browser is fucked
-    if (isZenBrowser) {
-      const oldIndex = tab.index;
-      const tabArray = await api.tabs.query( { windowId: tab.windowId });
-      const zeroIndex = tabArray[0].index;
-      const newIndex = oldIndex - zeroIndex;
-      debug(`onTabCreated(): Zen tab.index ${oldIndex} - ${zeroIndex} => ${newIndex}`);
-      tab.index = newIndex;
-      if (oldIndex < zeroIndex) {
-        debug(`onTabCreated(): ignoring Zen non-tab`);
-      }
-    }
+    const unlock = await this.onTabCreatedMutex.lock();
+    try {
 
-    // if tab was already created, do nothing
-    const tabNode = this.getNodeByTabId(tab.id);
-    if (tabNode) return debug(`Tree.onTabCreated(${tab.id}): already exists`);
-
-    // detect if it's a Vivaldi sidePanel, and ignore it
-    if (isChrome) {
-      if (await this.checkIfVivaldiPanel(tab)) return;
-    }
-
-    // figure out which URL this new tab is going to
-    const tabPendingUrl = this.getTabPendingUrl(tab);
-
-    // are we loading a saved tab?
-    let savedTabNode;
-    if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
-      savedTabNode = this.bkgd.nodesLoading.shift();
-      debug(`Tree.onTabCreated() loadingSavedTab=${savedTabNode.id}`);
-    }
-
-    // if we're loading a saved tab,
-    // use that node instead of making a new one
-    if (savedTabNode) {
-      debug(`Tree.onTabCreated(): restoring nodeId=${savedTabNode.id}`);
-      // re-attach this tab to the found Node
-      await savedTabNode.setTabFields({
-        tabId: tab.id,
-        loaded: true,
-        discarded: tab.discarded,
-        frozen: tab.frozen,
-        hidden: tab.hidden,
-        incognito: tab.incognito
-      }, { reason: 'onTabCreated' });
-      // put the tab in the right position
-      await savedTabNode.reorderAllTabsInThisWindow();
-      return;
-    }
-
-    // find the window Node
-    let winNode = this.root.getWindowId(tab.windowId);
-    if (! winNode) {
-      // this usually means the user just opened a new window, and
-      // the browser generated onTabCreated BEFORE doing an onWindowCreated
-      // event, so we need to create a new window Node on the assumption
-      // that it WILL exist in a few milliseconds (7ms later, in my tests)
-      //return error(`Tree.onTabCreated() can't find windowId="${tab.windowId}"`);
-      debug(`Tree.onTabCreated() can't find windowId="${tab.windowId}", creating new Node for it`);
-      // create the window node, assuming the window will exist soon
-      const winParent = this.root;
-      const winIndex = this.root.nodes.length;
-      winNode = await winParent.addChild(winIndex, {
-        type: 'window',
-        windowId: tab.windowId,
-        loaded: false
-        }, { reason: 'onTabCreated' });
-    }
-    let destParent = winNode;
-    let destIndex = winNode.nodes.length;
-
-    // find the active tab so we can compare to the new tab
-    // (some browsers (Maxthon) set tab.index *instead of* tab.openerTabId,
-    //  so detecting parent must be done by index in those browsers)
-    const activeTabs = await api.tabs.query({
-      active: true, windowId: tab.windowId });
-    const activeTab = activeTabs[0];
-    const activeTabNode = winNode.getActiveTab();
-    const loadedTabNodes = winNode.getLoadedTabs();
-    //debug(`Tree.onTabCreated(): new tab is ${tab.index+1} of ${loadedTabNodes.length}`);
-
-    // Zen opens "New Tab" at the far left for some reason
-    if (isZenBrowser && (0 === tab.index) && activeTab) {
-      // place it as 1st child of focused tab
-      tab.index = activeTab.index + 1;
-    }
-
-    // if the tab is a blank created by the user with C-t...
-    // ... make it the 1st child of the active tab
-    if (isNewTabPage(tabPendingUrl)) {
-      destParent = activeTabNode;
-      if (! destParent) destParent = winNode;
-      destIndex = 0;
-      debug(`Tree.onTabCreated(newTabPage) moving new tab to the right of: "${destParent.toLine()}"`);
-    }
-    // find the right place to put this tab in the tree
-    else if (tab.openerTabId) {
-      const found = this.getNodeByTabId(tab.openerTabId, winNode);
-      if (found) {
-        destParent = found;
-        // find the correct destIndex
-        // TODO: decide this based on a user config option:
-        //   - open tabs as [first / last] child of current,
-        //     or open as next sibling
-        //destIndex = destParent.nodes.length;
-        destIndex = 0;  // always insert as 1st child of current tab
-        debug(`Tree.onTabCreated(openerTabId): destParent:`, destParent);
-      }
-      else {
-        // if parent not found, open tab as 1st child of current/active tab
-        if (activeTabNode) {
-          destParent = activeTabNode;
-          destIndex = 0;
-          debug(`Tree.onTabCreated(openerTabId not found): destParent:`, destParent);
+      // Zen Browser is fucked
+      if (isZenBrowser) {
+        const oldIndex = tab.index;
+        const tabArray = await api.tabs.query( { windowId: tab.windowId });
+        const zeroIndex = tabArray[0].index;
+        const newIndex = oldIndex - zeroIndex;
+        debug(`onTabCreated(): Zen tab.index ${oldIndex} - ${zeroIndex} => ${newIndex}`);
+        tab.index = newIndex;
+        if (oldIndex < zeroIndex) {
+          debug(`onTabCreated(): ignoring Zen non-tab`);
         }
       }
+
+      // if tab was already created, do nothing
+      const tabNode = this.getNodeByTabId(tab.id);
+      if (tabNode) return debug(`Tree.onTabCreated(${tab.id}): already exists`);
+
+      // detect if it's a Vivaldi sidePanel, and ignore it
+      if (isChrome) {
+        if (await this.checkIfVivaldiPanel(tab)) return;
+      }
+
+      // figure out which URL this new tab is going to
+      const tabPendingUrl = this.getTabPendingUrl(tab);
+
+      // are we loading a saved tab?
+      let savedTabNode;
+      if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
+        savedTabNode = this.bkgd.nodesLoading.shift();
+        debug(`Tree.onTabCreated() loadingSavedTab=${savedTabNode.id}`);
+      }
+
+      // if we're loading a saved tab,
+      // use that node instead of making a new one
+      if (savedTabNode) {
+        debug(`Tree.onTabCreated(): restoring nodeId=${savedTabNode.id}`);
+        // re-attach this tab to the found Node
+        await savedTabNode.setTabFields({
+          tabId: tab.id,
+          loaded: true,
+          discarded: tab.discarded,
+          frozen: tab.frozen,
+          hidden: tab.hidden,
+          incognito: tab.incognito
+        }, { reason: 'onTabCreated' });
+        // put the tab in the right position
+        await savedTabNode.reorderAllTabsInThisWindow();
+        return;
+      }
+
+      // find the window Node
+      let winNode = this.root.getWindowId(tab.windowId);
+      if (! winNode) {
+        // this usually means the user just opened a new window, and
+        // the browser generated onTabCreated BEFORE doing an onWindowCreated
+        // event, so we need to create a new window Node on the assumption
+        // that it WILL exist in a few milliseconds (7ms later, in my tests)
+        //return error(`Tree.onTabCreated() can't find windowId="${tab.windowId}"`);
+        debug(`Tree.onTabCreated() can't find windowId="${tab.windowId}", creating new Node for it`);
+        // create the window node, assuming the window will exist soon
+        const winParent = this.root;
+        const winIndex = this.root.nodes.length;
+        winNode = await winParent.addChild(winIndex, {
+          type: 'window',
+          windowId: tab.windowId,
+          loaded: false
+          }, { reason: 'onTabCreated' });
+      }
+      let destParent = winNode;
+      let destIndex = winNode.nodes.length;
+
+      // find the active tab so we can compare to the new tab
+      // (some browsers (Maxthon) set tab.index *instead of* tab.openerTabId,
+      //  so detecting parent must be done by index in those browsers)
+      const activeTabs = await api.tabs.query({
+        active: true, windowId: tab.windowId });
+      const activeTab = activeTabs[0];
+      const activeTabNode = winNode.getActiveTab();
+      const loadedTabNodes = winNode.getLoadedTabs();
+      //debug(`Tree.onTabCreated(): new tab is ${tab.index+1} of ${loadedTabNodes.length}`);
+
+      // Zen opens "New Tab" at the far left for some reason
+      if (isZenBrowser && (0 === tab.index) && activeTab) {
+        // place it as 1st child of focused tab
+        tab.index = activeTab.index + 1;
+      }
+
+      // if the tab is a blank created by the user with C-t...
+      // ... make it the 1st child of the active tab
+      if (isNewTabPage(tabPendingUrl)) {
+        destParent = activeTabNode;
+        if (! destParent) destParent = winNode;
+        destIndex = 0;
+        debug(`Tree.onTabCreated(newTabPage) moving new tab to the right of: "${destParent.toLine()}"`);
+      }
+      // find the right place to put this tab in the tree
+      else if (tab.openerTabId) {
+        const found = this.getNodeByTabId(tab.openerTabId, winNode);
+        if (found) {
+          destParent = found;
+          // find the correct destIndex
+          // TODO: decide this based on a user config option:
+          //   - open tabs as [first / last] child of current,
+          //     or open as next sibling
+          //destIndex = destParent.nodes.length;
+          destIndex = 0;  // always insert as 1st child of current tab
+          debug(`Tree.onTabCreated(openerTabId): destParent:`, destParent);
+        }
+        else {
+          // if parent not found, open tab as 1st child of current/active tab
+          if (activeTabNode) {
+            destParent = activeTabNode;
+            destIndex = 0;
+            debug(`Tree.onTabCreated(openerTabId not found): destParent:`, destParent);
+          }
+        }
+      }
+      // Maxthon doesn't set openerTabId, so detect it by index
+      else if ((activeTab.index + 1) === tab.index) {
+        // first child of current tab
+        // (assume user clicked a link on the current page, to open a new tab)
+        destParent = activeTabNode;
+        if (! destParent) destParent = winNode;
+        destIndex = 0;
+        debug(`Tree.onTabCreated(parentByIndex) moving new tab to the right of: "${destParent.toLine()}"`);
+      }
+      // if a tab is opened at the far right edge, claim it
+      else if (tab.index >= loadedTabNodes.length) {
+        // become first child of current tab
+        destParent = activeTabNode;
+        if (! destParent) destParent = winNode;
+        destIndex = 0;
+        debug(`Tree.onTabCreated(farRightCapture) moving new tab to the right of: "${destParent.toLine()}"`);
+      }
+      // if a tab is otherwise opened in the middle somewhere,
+      // like with "restore last closed tab" in browser
+      else if (undefined !== tab.index) {
+        if (0 === tab.index) destParent = winNode;
+        else destParent = loadedTabNodes[tab.index - 1];
+        destIndex = 0;
+        debug(`Tree.onTabCreated(tabIndex) new tab is first child of: "${destParent.toLine()}"`);
+      }
+      // unsure how a tab would have no index, but note it
+      else {
+        debug('Tree.onTabCreated(default) not moving new tab');
+      }
+      // create the tree node
+      await destParent.addChild(destIndex, {
+        windowId: tab.windowId,
+        tabId: tab.id,
+        title: tab.title,
+        url: tab.url,
+        loaded: true,
+        active: tab.active,
+        discarded: tab.discarded,
+        frozen: tab.frozen,
+        hidden: tab.hidden,  // firefox only?
+        incognito: tab.incognito,
+        atime: tab.lastAccessed
+        }, { reason: 'onTabCreated' });
     }
-    // Maxthon doesn't set openerTabId, so detect it by index
-    else if ((activeTab.index + 1) === tab.index) {
-      // first child of current tab
-      // (assume user clicked a link on the current page, to open a new tab)
-      destParent = activeTabNode;
-      if (! destParent) destParent = winNode;
-      destIndex = 0;
-      debug(`Tree.onTabCreated(parentByIndex) moving new tab to the right of: "${destParent.toLine()}"`);
-    }
-    // if a tab is opened at the far right edge, claim it
-    else if (tab.index >= loadedTabNodes.length) {
-      // become first child of current tab
-      destParent = activeTabNode;
-      if (! destParent) destParent = winNode;
-      destIndex = 0;
-      debug(`Tree.onTabCreated(farRightCapture) moving new tab to the right of: "${destParent.toLine()}"`);
-    }
-    // if a tab is otherwise opened in the middle somewhere,
-    // like with "restore last closed tab" in browser
-    else if (undefined !== tab.index) {
-      if (0 === tab.index) destParent = winNode;
-      else destParent = loadedTabNodes[tab.index - 1];
-      destIndex = 0;
-      debug(`Tree.onTabCreated(tabIndex) new tab is first child of: "${destParent.toLine()}"`);
-    }
-    // unsure how a tab would have no index, but note it
-    else {
-      debug('Tree.onTabCreated(default) not moving new tab');
-    }
-    // create the tree node
-    await destParent.addChild(destIndex, {
-      windowId: tab.windowId,
-      tabId: tab.id,
-      title: tab.title,
-      url: tab.url,
-      loaded: true,
-      active: tab.active,
-      discarded: tab.discarded,
-      frozen: tab.frozen,
-      hidden: tab.hidden,  // firefox only?
-      incognito: tab.incognito,
-      atime: tab.lastAccessed
-      }, { reason: 'onTabCreated' });
+    finally { unlock(); }
   }
 
   onTabRemoved (tabId, removeInfo) {
@@ -1005,7 +1019,8 @@ export class Tree {
       return;
     }
 
-    // wait, if a tab is currently being replaced
+    // wait, if a tab is currently being created or replaced
+    const otcUnlock = await this.onTabCreatedMutex.lock();  otcUnlock();
     const otrUnlock = await this.onTabReplacedMutex.lock();  otrUnlock();
 
     // detect if it's a Vivaldi sidePanel, and ignore it
@@ -1015,8 +1030,11 @@ export class Tree {
 
     const tabNode = this.getNodeByTabId(tabId);
 
-    // if tab doesn't exist, do nothing
-    if (! tabNode) return warn(`Tree.onTabUpdated(${tabId}): no tab found`);
+    // if tab doesn't exist, create a node for it
+    if (! tabNode) {
+      warn(`Tree.onTabUpdated(${tabId}): no tab found`);
+      return await this.onTabCreated(tab);
+    }
 
     // change ... multiple things
     let changes = {};  // only changes we care about

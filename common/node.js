@@ -1053,7 +1053,8 @@ export class Node {
     if (! args) return;
     //if (! this.isLoaded() && (! this.wasLoaded)) return;
     if ((! this.url) && (! this.isWindow())) return;  // don't "unload" notes
-    const wasActuallyLoaded = this.loaded || this.tabId;
+    const wasActuallyLoaded = (this.loaded || this.tabId)
+      && ('badTabId' !== args.reason);
     const isWindowClosing = ['onWindowUnloaded', 'onWindowRemoved'].includes(args.reason);
 
     // Do The Thing
@@ -1071,7 +1072,9 @@ export class Node {
       this.tabClosedReason = 'unload';
 
     // save loaded tabs on window close
-    if (isWindowClosing) this.wasLoaded = true;
+    // (and convert loaded -> wasLoaded during crash recovery)
+    if (isWindowClosing || ('mergeOpenWindowsIntoTree' === args.reason))
+      this.wasLoaded = (isWindowClosing || wasActuallyLoaded);
     // propagate changes from other threads
     else if (undefined !== args.wasLoaded) this.wasLoaded = args.wasLoaded;
     // when unloading a tab manually, mark it as fully unloaded
@@ -1087,7 +1090,8 @@ export class Node {
     // notify others, if event originated here
     if (['userAction',
       'onTabRemoved', 'onWindowRemoved', 'onWindowUnloaded',
-      'mergeOpenWindowsIntoTree'
+      'mergeOpenWindowsIntoTree',
+      'badTabId'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'unload',
@@ -1100,6 +1104,12 @@ export class Node {
       for (const kid of tabList) {
         await kid.unload(args);
       }
+      // remove stale tabIds too
+      const stale = this.findNodes(
+        (n) => n.tabId,
+        (n) => (! n.isWindow())
+      );
+      for (const kid of stale) { kid.tabId = undefined; }
       return true;
     }
 
@@ -1709,7 +1719,8 @@ export class Node {
               { index: zeroIndex, windowId: windowNode.windowId }) );
             // then we can update pinned status
             for (const { tabId, updateProperties } of updates) {
-              results.push( api.tabs.update(tabId, updateProperties) );
+              if (tabId)
+                results.push( api.tabs.update(tabId, updateProperties) );
             }
             // and then finally move tabs to the correct order
             movePromise = api.tabs.move(tabIds,
@@ -1733,6 +1744,30 @@ export class Node {
             // wait before trying again
             debug(`Tab reorder blocked, trying again in ${msPerTry}ms...`, err);
             await new Promise(resolve => setTimeout(resolve, msPerTry));
+          }
+          // tabIds are out of sync with browser
+          // so attempt to fix the issue and try again
+          else if (
+            err.message.includes('Invalid tab ID:')  // Firefox
+            || err.message.includes('No tab with id:')  // Chrome
+          ) {
+            warn(true, 'Invalid tab ID', err);
+            // unset node.tabId and try again
+            let handled = false;
+            let badId = Number(err.message.split(' ').pop());
+            if (badId) {
+              const badNode = this.tree.getNodeByTabId(badId);
+              if (badNode) {
+                await badNode.unload({ reason: 'badTabId' });
+                // remove tabId from our list
+                const index = tabIds.indexOf(badId);
+                if (-1 !== index) {
+                  tabIds.splice(index, 1);
+                  handled = true;
+                }
+              }
+            }
+            if (! handled) throw err;
           } else { throw err; }
         }
       }
