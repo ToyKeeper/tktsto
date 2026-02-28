@@ -315,6 +315,7 @@ export class Node {
     if (this.label
       || this.note
       || this.hasCheckbox()
+      || this.isPinned()
       //|| (this.type !== '')  // is a window or something
     ) return true;
     // stop if we've gone deep enough
