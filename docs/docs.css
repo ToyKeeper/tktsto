@@ -51,6 +51,10 @@ a:visited {
   color: var(--tab-unloaded-fg);
 }
 
+h1 {
+  font-size: 170%;
+}
+
 h2, h3 {
   padding: 0.2em 0.25em;
 }
@@ -80,8 +84,9 @@ img {
   max-width: 100%;
 }
 
-ul, ol {
+not(.tree-view) ul, not(.tree-view) ol {
   margin: 0;
+  width: fit-content;
 }
 
 li:not(.node) {
@@ -125,6 +130,17 @@ table.fit {
 
 table.fit tr, table.fit td {
   vertical-align: top;
+}
+
+.flexbox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.box {
+  /* grow, shrink, minimum width */
+  flex: 1 1 20rem;
 }
 
 blockquote {

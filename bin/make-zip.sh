@@ -19,6 +19,7 @@ mkdir -p build
 cp ChangeLog.md \
   LICENSE.* \
   PRIVACY.md \
+  Browsers.md \
   readme.md \
   *.js \
   build

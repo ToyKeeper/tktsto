@@ -16,6 +16,8 @@ least partially obsolete -- bookmarks, session management, vertical tabs,
 read-later, notes, stacked tabs, AI tab organizers, etc.  You could still use
 those things, but why bother when you have something better?
 
+[TOC]
+
 
 ## Screenshots
 

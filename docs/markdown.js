@@ -29,6 +29,7 @@
 function renderMarkdown(md) {
   const lines = md.split(/\r?\n/);
   const html = [];
+  const TOC = [];
   let inPre = false;
   let inCodeBlock = false;
 
@@ -59,8 +60,29 @@ function renderMarkdown(md) {
     inCodeBlock = ! inCodeBlock;
   }
 
+  function headerToHref (text) {
+    return text.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")  // remove punctuation
+      .trim()
+      .replace(/\s+/g, "-");  // collapse spaces -> dash
+  }
+
+  function makeTOC () {
+    const index = html.indexOf('[TOC]');
+    if (index !== -1) {
+      const rendered = ['Contents:\n'];
+      for (const [depth, href, title] of TOC) {
+        const indent = '  '.repeat(depth - 1);
+        rendered.push(`${indent}- <a href="#${href}">${title}</a>\n`);
+      }
+      html.splice(index, 1, ...rendered);
+    }
+  }
+
   const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/;
-  const urlRegex = /(https?:\/\/[\/a-zA-Z0-9.:+()#\?&]+)/;
+  const urlRegex = /(https?:\/\/[\/a-zA-Z0-9.:+()#\?&_-]+)/;
+  // [Foo Bar](#anchor-text)
+  const tocRegex = /\[([^\]]+)\]\(#([^\)]+)\)/;
 
   let blank = false;
   let wasBlank = false;
@@ -85,21 +107,18 @@ function renderMarkdown(md) {
     }
     // everything else
     if (! inCodeBlock) {
-      if (/^#\s+/.test(line)) {  // # -> h1
+      // # / ## / ### -> h1 / h2 / h3
+      if (/^#+\s+/.test(line)) {
         closePre();
-        html.push('<h1>' + inlineMarkdown(trimmed.replace(/^#\s+/, '')) + '</h1>');
-        openPre();
-        continue;
-      }
-      else if (/^##\s+/.test(line)) {  // ## -> h2
-        closePre();
-        html.push('<h2>' + inlineMarkdown(trimmed.replace(/^##\s+/, '')) + '</h2>');
-        openPre();
-        continue;
-      }
-      else if (/^###\s+/.test(line)) {  // ### -> h3
-        closePre();
-        html.push('<h3>' + inlineMarkdown(trimmed.replace(/^###\s+/, '')) + '</h3>');
+        const headings = { '#': 'h1', '##': 'h2', '###': 'h3',
+          '####': 'h4', '#####': 'h5', '######': 'h6' };
+        const depth = trimmed.replace(/\s.*/, '');
+        const h = headings[depth];
+        const title = trimmed.replace(/^#+\s+/, '');
+        const href = headerToHref(title);
+        TOC.push([depth.length, href, title]);
+        html.push(`<a id="${href}"></a>`);
+        html.push(`<${h}>${title}</${h}>`);
         openPre();
         continue;
       }
@@ -123,6 +142,12 @@ function renderMarkdown(md) {
           return `<a href="${url}">${url}</a>`;
         });
       }
+      // internal links / anchors
+      else if (tocRegex.test(line)) {
+        line = line.replace(tocRegex, (match, title, anchor) => {
+          return `<a href="#${anchor}">${title}</a>`;
+        });
+      }
     }
 
     wasBlank = blank;
@@ -134,6 +159,7 @@ function renderMarkdown(md) {
 
   if (inCodeBlock) toggleCodeBlock();
   closePre();
+  makeTOC();
   return html.join('');
 }
 
