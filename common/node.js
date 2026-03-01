@@ -34,6 +34,7 @@ export class Node {
     this.note = undefined;
     this.title = undefined;
     this.url = undefined;
+    this.bookmark = undefined;
     this.faviconUrl = undefined;
     this.expanded = true;
     this.loaded = false;
@@ -216,6 +217,10 @@ export class Node {
     return false;
   }
 
+  isBookmark () {
+    return (!! this.url) && (!! this.bookmark);
+  }
+
   hasKids () {
     return (0 < this.nodes.length);
   }
@@ -316,6 +321,7 @@ export class Node {
       || this.note
       || this.hasCheckbox()
       || this.isPinned()
+      || this.isBookmark()
       //|| (this.type !== '')  // is a window or something
     ) return true;
     // stop if we've gone deep enough
@@ -373,13 +379,16 @@ export class Node {
     return (this.url
       && this.wasLoaded
       && (! this.loaded)
-      && (! this.isWindow()));
+      && (! this.isWindow())
+      && (! this.isBookmark())
+    );
   }
 
   isUnloadedTab () {
     if (this.url
-      && (!this.isLoaded())
-      && (!this.isWindow())
+      && (! this.isLoaded())
+      && (! this.isWindow())
+      && (! this.isBookmark())
     ) return true;
     return false;
   }
@@ -467,6 +476,7 @@ export class Node {
       else line = this.label;
     }
     else if (this.title) line = this.title;
+    else if (this.url) line = this.url;
     else if (this.isWindow()) line = `Window ${this.windowId}`;
     if (! line) line = `node ${this.id}`;
     return line;
@@ -954,6 +964,9 @@ export class Node {
       }
     }
 
+    // bookmarks cannot be 'wasLoaded'
+    if (changes.bookmark) changes.wasLoaded = false;
+
     // Do The Thing
     for (const [key, value] of Object.entries(changes)) this[key] = value;
     if (undefined !== changes.loaded) this.wasLoaded = changes.loaded;
@@ -1083,6 +1096,8 @@ export class Node {
     // let user toggle wasLoaded state manually
     else if (('userAction' === args.reason) && (! wasActuallyLoaded))
       this.wasLoaded = (! this.wasLoaded);
+    // bookmarks are always unloaded
+    if (this.isBookmark()) this.wasLoaded = false;
 
     // bump timestamp (?)
     // TODO: (but are 'load' and 'unload' really modifications?)

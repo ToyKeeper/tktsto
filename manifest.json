@@ -58,9 +58,12 @@
       "description": "Unload current tab",
       "suggested_key": { "default": "Alt+U" }
     },
+    "bookmarkCurrentTab": {
+      "description": "Bookmark current tab",
+      "suggested_key": { "default": "Alt+B" }
+    },
     "addNoteToCurrentTab": {
-      "description": "Add highlighted text to current tab's notes",
-      "suggested_key": { "default": "Alt+A" }
+      "description": "Add highlighted text to current tab's notes"
     },
     "cursorUp": {
       "description": "Move cursor up"

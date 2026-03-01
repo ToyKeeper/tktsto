@@ -49,6 +49,7 @@ export class Tree {
       'note',
       'title',
       'url',
+      'bookmark',
       'faviconUrl',
       'expanded',
       'loaded',

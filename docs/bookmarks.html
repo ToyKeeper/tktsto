@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<!-- tktsto documentation page
+  -- Copyright (C) 2026 Selene ToyKeeper
+  -- SPDX-License-Identifier: AGPL-3.0-or-later
+  -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="module" src="./docs.js"></script>
+  <title>Bookmarks</title>
+</head>
+<body class="docs">
+
+<h2> Bookmarks </h2>
+
+  <p>
+
+  Bookmarks are usually not necessary when you can just <code>Alt+U</code>
+  <b><span class="hover-menu-button unload-button">U</span></b>
+  <b class="row"><span class="url-title">unload</span></b>
+  a tab you want to come back to later.
+
+  </p><p>
+
+  However, sometimes a
+  <span class="row loaded"><span class="node-title">
+    <span class="icon bookmark"> </span>bookmark</span></span>
+  can still be useful.  Bookmarks provide a consistent starting point which
+  does not change if you navigate to another page.  You open it, navigate
+  however you like, and the bookmark stays the same so you can start from the
+  same page next time.
+
+  </p><p>
+
+  This is helpful when a site requires you to log in every day, so you can
+  bookmark the login page and then immediately navigate away to some other
+  page.  Or if you frequently check a news site, and want to always start on
+  the front page, but also want to go to other pages without opening new
+  tabs.  Or if you otherwise want to lock a saved tab so the URL and title
+  won't change while you're browsing.
+
+  </p><p>
+
+  Bookmarks in TKTSTO are essentially the same as an
+  <b class="row"><span class="url-title">unloaded tab</span></b>,
+  except for a few small differences:
+
+  </p>
+  <ul>
+    <li><p>It has a
+      <span class="loaded"><span class="icon bookmark"> </span></span>bookmark
+      icon.</p>
+    </li>
+    <li><p>When loaded, <b>it opens as a new node</b>, leaving the bookmark
+      itself unchanged.  The new node will be the first child of the bookmark
+      node.</p>
+    </li>
+  </ul>
+
+  <p>
+  There are two ways to make a TKTSTO bookmark:
+  </p>
+
+  <ul>
+    <li><p>Press <code>Alt+B</code> (or <code>Alt+K</code> in Firefox) to
+      bookmark the current tab.  This will create a new bookmark node and
+      make it the parent of the current tab's node.</p>
+    </li>
+    <li><p>Press <code>E</code> or click
+      <span class="hover-menu-button edit-button">E</span>
+      to <b>Edit Node</b> on an
+      <b class="row"><span class="url-title">unloaded tab</span></b>
+      in the <b>Tree View</b>,
+      then set its "Bookmark?" checkbox and save the changes.  This converts
+      an unloaded tab into a bookmark.</p>
+    </li>
+  </ul>
+
+  <p>
+  <b>Tip:</b> If you want a tab to <b>open next to the current tab</b>
+  instead of opening as a child of a bookmark node, just <code>middle
+  click</code> the node.  This works for any tab node, not just bookmarks.
+  Because <b>tab nodes are links</b>.  You can middle click any tab node,
+  whether loaded or unloaded, to open that node's URL in a new tab, and it
+  will be placed the same as if you middle-clicked a link in the current
+  page.  So <b>every tab node can be used like a native browser bookmark</b>,
+  even if it doesn't have a bookmark icon in the Tree View.
+  </p>
+
+  <p>
+  <b>Another tip:</b> When you open a
+  <span class="loaded"><span class="icon bookmark"> </span></span>bookmark
+  in the Tree View, the bookmark's <b>mtime</b> gets updated.  It also gets
+  updated when you close-and-delete the clone it spawned.  This provides an
+  easy way to automatically track <b>when you last used a bookmark</b>.  Just
+  enable the <b>Details panel</b> in the Tree View and check the mtime.
+  Pretty handy if you have a news site bookmarked, and you want to know how
+  far back to read before you'll get to articles you've already seen.  Just
+  be sure to check the mtime <i>before</i> you open the bookmark.
+  </p>
+
+<h2>Examples</h2>
+
+  <p>
+
+  Bookmark usage is pretty simple.  For example, let's say you have a page
+  open and you hit <code>Alt+B</code> (or <code>Alt+K</code> in Firefox) to
+  bookmark the current page:
+
+  </p>
+
+  <table class="fit"><tr><td>
+
+  <script class="tree" type="application/json">{
+    "opts": {},
+    "tree": { "id": "root", "label": "Before",
+      "nodes": [
+        { "label": "My Window", "type": "window", "active": true,
+          "loaded": true,
+          "nodes": [
+            { "label": "News", "nodes": [
+              { "url": "index.html", "loaded": true, "title": "For Nerds" },
+              { "url": "index.html", "loaded": true, "active": true,
+                "title": "Stuff That Matters" },
+              { "url": "index.html", "loaded": false, "title": "Hacker News" }
+            ]}
+          ]
+        }
+      ]
+    }
+  }</script>
+
+  </td><td>
+
+  <script class="tree" type="application/json">{
+    "opts": {},
+    "tree": { "id": "root", "label": "After",
+      "nodes": [
+        { "label": "My Window", "type": "window", "active": true,
+          "loaded": true,
+          "nodes": [
+            { "label": "News", "nodes": [
+              { "url": "index.html", "loaded": true, "title": "For Nerds" },
+              { "url": "index.html", "loaded": false, "bookmark": true,
+                "title": "Stuff That Matters", "nodes": [
+                  { "url": "index.html", "loaded": true, "active": true,
+                    "title": "Stuff That Matters" }
+              ]},
+              { "url": "index.html", "loaded": false, "title": "Hacker News" }
+            ]}
+          ]
+        }
+      ]
+    }
+  }</script>
+
+  </td></tr></table>
+
+  <p>
+
+  A new
+  <span class="loaded"><span class="icon bookmark"> </span></span>bookmark
+  node is created as a clone of the page you currently have focused.  Then
+  the focused page node is moved to become the bookmark's first child.
+
+  </p><p>
+
+  Note: It does not matter where the <b>Tree View cursor</b> is.  The
+  <code>Alt+B</code> action applies to the page you have focused in the
+  browser, not the tree view cursor node.
+
+  </p><p>
+
+  Let's say you then decide to bookmark "Hacker News" too.  But it isn't
+  currently open.  So use a different method:
+
+  </p><p>
+
+  Put the Tree View cursor on it and press <code>E</code>, or click
+  <span class="hover-menu-button edit-button">E</span>
+  in the <b>hoverMenu</b> to <b>Edit Node</b>.  Then click the "Bookmark?"
+  checkbox and save your changes.
+
+  </p><p>
+
+  Afterward, <code>double click</code> it or press <code>Enter</code> on it
+  to open the bookmark.  Here's how the TreeView looks after each step:
+
+  </p>
+
+  <table class="fit"><tr><td>
+
+  <script class="tree" type="application/json">{
+    "opts": {},
+    "tree": { "id": "root", "label": "Click 'E' button",
+      "nodes": [
+        { "label": "My Window", "type": "window", "active": true,
+          "loaded": true,
+          "nodes": [
+            { "label": "News", "nodes": [
+              { "url": "index.html", "loaded": true, "title": "For Nerds" },
+              { "url": "index.html", "loaded": false, "bookmark": true,
+                "title": "Stuff That Matters", "nodes": [
+                  { "url": "index.html", "loaded": true, "active": true,
+                    "title": "Stuff That Matters" }
+              ]},
+              { "url": "index.html", "loaded": false, "title": "Hacker News",
+                "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
+                "pointer": 0.8
+              }
+            ]}
+          ]
+        }
+      ]
+    }
+  }</script>
+
+  </td><td>
+
+  <script class="tree" type="application/json">{
+    "opts": {},
+    "tree": { "id": "root", "label": "Converted to bookmark",
+      "nodes": [
+        { "label": "My Window", "type": "window", "active": true,
+          "loaded": true,
+          "nodes": [
+            { "label": "News", "nodes": [
+              { "url": "index.html", "loaded": true, "title": "For Nerds" },
+              { "url": "index.html", "loaded": false, "bookmark": true,
+                "title": "Stuff That Matters", "nodes": [
+                  { "url": "index.html", "loaded": true, "active": true,
+                    "title": "Stuff That Matters" }
+              ]},
+              { "url": "index.html", "loaded": false, "title": "Hacker News",
+                "bookmark": true,
+                "nodeClasses": ["cursor"], "rowClasses": ["cursor"]
+              }
+            ]}
+          ]
+        }
+      ]
+    }
+  }</script>
+
+  </td><td>
+
+  <script class="tree" type="application/json">{
+    "opts": {},
+    "tree": { "id": "root", "label": "Open the bookmark",
+      "nodes": [
+        { "label": "My Window", "type": "window", "active": true,
+          "loaded": true,
+          "nodes": [
+            { "label": "News", "nodes": [
+              { "url": "index.html", "loaded": true, "title": "For Nerds" },
+              { "url": "index.html", "loaded": false, "bookmark": true,
+                "title": "Stuff That Matters", "nodes": [
+                  { "url": "index.html", "loaded": true,
+                    "title": "Stuff That Matters" }
+              ]},
+              { "url": "index.html", "loaded": false, "title": "Hacker News",
+                "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
+                "pointer": 0.47,
+                "bookmark": true, "nodes": [
+                  { "url": "index.html", "title": "Hacker News",
+                    "loaded": true, "active": true
+                  }
+              ]}
+            ]}
+          ]
+        }
+      ]
+    }
+  }</script>
+
+  </td></tr></table>
+
+  <p>
+
+  The
+  "<span class="row"><span class="url-title">Hacker News</span></span>"
+  saved tab was first converted to a
+  <span class="row loaded"><span class="icon bookmark"> </span></span>bookmark,
+  then opened.  The new page opens as its first child, and is
+  <b class="row loaded"><span class="url-title">Bold</span></b>
+  because it is now the focused page.
+
+  </p>
+
+  <p>
+  One other detail to note: The bookmark icon changes color depending on
+  whether there are any loaded tabs in the branch.  This makes it easier to
+  find open tabs, even if the bookmark branch is collapsed.
+  </p>
+
+  <script class="tree" type="application/json">{
+    "opts": {},
+    "tree": { "id": "root", "label": "Bookmark Icon Colors",
+      "nodes": [
+        { "label": "Browser Setup", "type": "window", "active": true,
+          "loaded": true, "nodes": [
+            { "bookmark": true, "url": "chrome://settings" },
+            { "bookmark": true, "url": "chrome://flags" },
+            { "bookmark": true, "url": "chrome://extensions", "nodes": [
+              { "url": "chrome://extensions", "title": "Extensions",
+                "loaded": true }
+            ]},
+            { "bookmark": true, "url": "chrome://extensions/shortcuts" }
+          ]
+        }
+      ]
+    }
+  }</script>
+
+<h2>Native Browser bookmarks</h2>
+
+  <p>The browser's built-in bookmarks are not supported yet.  TKTSTO provides
+  a separate, alternate bookmark system, so you can more easily take your
+  bookmarks with you if/when you change browsers, and not have to rely on
+  a "Sign in to Chrome" type feature to sync between browsers.</p>
+
+  <p>However, a future version of TKTSTO may add some type of support for
+  native bookmarks... at least enough to import them into the session
+  tree.</p>
+
+  <p>A future version may also potentially add support for the "omnibar", to
+  suggest TKTSTO bookmarks related to the current window.</p>
+
+
+</body>
+</html>
+

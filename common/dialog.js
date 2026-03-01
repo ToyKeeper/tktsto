@@ -390,6 +390,7 @@ class Dialog {
         incognito: false,
         title: false,
         url: false,
+        isBookmark: false,
       };
       if (node.isWindow()) {
         show.isWindow = true;
@@ -397,6 +398,7 @@ class Dialog {
       } else if (node.url) {
         show.title = true;
         show.url = true;
+        show.isBookmark = true;
       } else if (! node.isRoot()) {
         show.isWindow = true;
       }
@@ -431,6 +433,30 @@ class Dialog {
         if (node.note) $note.value = node.note;
         else $note.value = '';
         $form.appendChild($note);
+      }
+
+      // bookmark toggle
+      let $isBookmark;
+      if (show.isBookmark) {
+        const $isBookmarkDiv = doc.createElement('div');
+        $isBookmarkDiv.id = 'dialogisBookmarkDiv';
+        const $isBookmarkLabel = doc.createElement('label');
+        $isBookmarkLabel.id = 'dialogisBookmarkLabel';
+        $isBookmarkDiv.appendChild($isBookmarkLabel);
+
+        $isBookmark = doc.createElement('input');
+        $isBookmark.type = "checkbox";
+        $isBookmark.id = 'dialogisBookmarkInput';
+        $isBookmark.checked = node.isBookmark();
+        $isBookmarkLabel.appendChild($isBookmark);
+        $isBookmarkLabel.appendChild(doc.createTextNode("Bookmark?"));
+        $form.appendChild($isBookmarkDiv);
+
+        if (node.isLoaded()) {
+          // can't make it a bookmark while loaded
+          $isBookmark.disabled = true;
+          $isBookmarkDiv.classList.add('greyed-out');
+        }
       }
 
       // title widget
@@ -528,8 +554,9 @@ class Dialog {
         if ($note) result.note = $note.value;
         if ($title) result.title = $title.value;
         if ($url) result.url = $url.value;
-        if ($incognito) result.incognito = $incognito.checked;
+        if ($isBookmark) result.bookmark = $isBookmark.checked;
         if ($isWindow) result.isWindow = $isWindow.checked;
+        if ($incognito) result.incognito = $incognito.checked;
         return result;
       }
 

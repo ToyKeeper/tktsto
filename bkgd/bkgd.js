@@ -1178,6 +1178,7 @@ class Bkgd {
     debug(`Bkgd.onCommand(${command})`, tab);
     const bkgdCommands = [
       'unloadCurrentTab',
+      'bookmarkCurrentTab',
       'unmarkAll',
       'backupSession',
     ];
@@ -1215,6 +1216,27 @@ class Bkgd {
     }
     if (! tabNode) { return; }
     return tabNode.unload({ reason: 'userAction' });
+  }
+
+  async command_bookmarkCurrentTab (tab) {
+    if (! tab) return;
+    debug(`bookmark(${tab.title})`, tab);
+    const tabNode = this.tree.getNodeByTabId(tab.id);
+    if (! tabNode) return;
+    // add a new bookmark node in place of tabNode,
+    // and make tabNode the first child of the bookmark
+    const parentNode = tabNode.parent;
+    const bmNode = await parentNode.addChild(tabNode.indexOf(),
+      { bookmark: true, loaded: false,
+        url: tabNode.url, title: tabNode.title,
+        label: tabNode.label, note: tabNode.note,
+        checkbox: tabNode.checkbox, },
+      { reason: 'userAction' });
+    if (! bmNode) return error(`failed to add bookmark`, tabNode);
+    const moved = await tabNode.moveTo(bmNode, 0, { reason: 'userAction'});
+    if (! moved) return error(`failed to move tab into bookmark`,
+      tabNode, bmNode);
+    return moved;
   }
 
   command_unmarkAll (tab) {

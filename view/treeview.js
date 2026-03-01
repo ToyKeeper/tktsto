@@ -946,7 +946,7 @@ export class TreeView extends Tree {
     return this.action_loadOrEditNode(event, false);
   }
 
-  action_loadOrEditNode (event, allowEdit = true) {
+  async action_loadOrEditNode (event, allowEdit = true) {
     debug('action_loadOrEditNode');
     if ('command' !== event.type) {
       event.preventDefault();
@@ -956,8 +956,17 @@ export class TreeView extends Tree {
     if (! this.cursor) return;
     let cursor = this.cursor;
 
+    // if bookmark, clone a new child and load it
+    if (cursor.isBookmark()) {
+      const newNode = await cursor.addChild(0,
+        { url: cursor.url, title: cursor.title, render: true },
+        { reason: 'userAction' });
+      if (! newNode) return this.setStatus(`failed to load ${cursor.toLine()}`);
+      newNode.load({ reason: 'userAction' });
+      this.setStatus(`loaded ${newNode.toLine()}`);
+    }
     // if unloaded tab, load it
-    if (cursor.isUnloadedTab()) {
+    else if (cursor.isUnloadedTab()) {
       cursor.load({ reason: 'userAction' });
       this.setStatus(`loaded ${cursor.toLine()}`);
     }
@@ -1015,7 +1024,9 @@ export class TreeView extends Tree {
       && ((!! cursor.isIncognito()) !== (!! result.incognito));
     const pageDataChanged =
       ((undefined !== result.title) && (cursor.title !== result.title))
-      || ((undefined !== result.url) && (cursor.url !== result.url));
+      || ((undefined !== result.url) && (cursor.url !== result.url))
+      || ((undefined !== result.bookmark) && (cursor.bookmark !== result.bookmark))
+      ;
     const hasLoadedTabs = cursor.isLoaded() || cursor.hasLoadedTabs();
 
     // attempt to change loaded window's incognito status
@@ -1050,11 +1061,11 @@ export class TreeView extends Tree {
 
     // below here, we know window and incognito status didn't change
 
-    // unloaded tab can edit title+url too
-    if (pageDataChanged && cursor.isUnloadedTab()) {
+    // unloaded tab can edit title+url+bookmark too
+    if (pageDataChanged && (cursor.isUnloadedTab() || cursor.isBookmark())) {
       const changed = await cursor.setTabFields(
         { label: result.label, note: result.note,
-          url: result.url, title: result.title },
+          url: result.url, title: result.title, bookmark: result.bookmark },
         { reason: 'userAction' });
       if (changed) this.setStatus(`Edited ${cursor.toLine()}`);
       return changed;

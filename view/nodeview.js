@@ -244,6 +244,16 @@ export class NodeView extends Node {
       this.$row.append($ckbox);
     }
 
+    // bookmarks (locked saved tabs)
+    if (this.isBookmark()) {
+      this.$row.classList.add('bookmark');
+      const $bookmarkIcon = doc.createElement('span');
+      $bookmarkIcon.className = 'icon bookmark';
+      this.$row.append($bookmarkIcon);
+    } else {
+      this.$row.classList.remove('bookmark');
+    }
+
     // indicate when there's a long note attached
     if (this.note) {
       const $noteIcon = doc.createElement('span');

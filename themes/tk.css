@@ -1043,6 +1043,10 @@ select {
   mask-image: url("/img/fa/anchor.svg");
 }
 
+.icon.bookmark {
+  mask-image: url("/img/fa/bookmark.svg");
+}
+
 /******************** vars ********************/
 
 :root {
