@@ -3,6 +3,16 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.97.1 (2026-03-02)
+
+- Made markdown renderer even safer, to address a warning from Firefox's lint
+  checker.  It wasn't unsafe regardless, since it only allows files shipped
+  with the extension, and they don't contain anything sketchy... but I added
+  an extra layer of safety regardless, replacing all '<' and '>' and '&'
+  input characters with safer versions like '&lt;', '&gt;', and '&amp;'.
+  Hopefully this will satisfy any security reviews.
+
+
 ## 0.1.96.0 (2026-03-02)
 
 Changes:

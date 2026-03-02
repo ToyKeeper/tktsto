@@ -15,7 +15,9 @@
     container.textContent = 'No page specified.';
     return;
   }
-  if ((! page.startsWith('/')) && (! page.startsWith('.'))) {
+  // only allow "/dir/file.md",
+  // to ensure no external or non-markdown files are used
+  if ((! page.startsWith('/')) || (! page.endsWith('.md'))) {
     container.textContent = 'Invalid page.';
     return;
   }
@@ -100,6 +102,10 @@ function renderMarkdown(md) {
       if (prevLine.startsWith('<')) continue;
     } else { blank = false; }
 
+    // safety sanitization
+    line = line.replace(/[&<>]/g, (m) =>
+      { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]; } );
+
     // code blocks
     if (line.startsWith('```')) {
       toggleCodeBlock();
@@ -171,8 +177,6 @@ function inlineMarkdown(text) {
   text = text.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
   // *foo* -> <i>foo</i>
   text = text.replace(/\*([^*]+)\*/g, '<i>$1</i>');
-  // & -> &amp;
-  text = text.replace(/[&]/g, '&amp;');
   return text;
 }
 
