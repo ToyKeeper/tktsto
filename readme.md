@@ -566,6 +566,53 @@ month, day, and tasks and details for each day.
         - `[X]` get a pizza and hide from the world
         - `[X]` anime
 
+### Keeping Windows Open / More Reliable Crash Recovery
+
+I've started keeping an identifier tab in each window, for two reasons:
+
+- I often wanted to keep a window open even when there were no meaningful
+  tabs in it, so I could browse the session tree and load saved tabs.  So
+  I started adding a lightweight junk page at the top of each window, and
+  giving it a label of "Keep Window Open".
+
+- If you have the same pages open in more than one window, it can be hard for
+  TKTSTO to tell which one is which, and match them to the correct window
+  nodes in the session tree.  Although I've only had it happen when testing
+  crazy configurations I doubt anyone would use, it can occasionally guess
+  wrong and attach the browser window to the wrong window node in the tree.
+  So it's helpful to keep a unique page in each window to help it figure out
+  which window is which.
+
+Because of this, I got into the habit of adding a unique page to each window.
+It only needs to be unique enough to ensure none of *your* other windows will
+ever have that page open.  Ideally something lightweight and fast with no
+scripts or media, so it won't use much memory or CPU.  Then I pin that page
+and ignore it.
+
+What I use for this is a tiny "marker page" I created on my server:
+
+- http://toykeeper.net/tktsto/title?t=Whatever
+
+One of these (with a unique title) goes into each window, pinned and
+collapsed and forgotten.
+
+But you can use whatever.  Can even be discarded or hidden, since it doesn't
+need to be *fully* loaded, and you're not meant to ever *look* at it.  The
+sole purpose is to put some sort of persistent identifier on each window.
+And sometimes to keep the window open when it has no other tabs loaded.
+
+I initially wanted to make an internal page in TKTSTO for this purpose, but
+then I realized it wouldn't work.  Extension pages get closed when the
+extension is reloaded, so the marker page wouldn't stay open reliably... and
+that defeats the whole purpose of it.  So it has to be an external page.
+
+Thus, I created a very minimal page on my site to use for this.
+
+You're welcome to use mine if you want, but it's not private.  It'll log
+a page load on my server every time you open it.  Granted, I almost never
+look at my web server logs, and the old logs get deleted after a couple
+weeks, but still.  It's the principle of the thing.
+
 
 ## FAQ
 
