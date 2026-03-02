@@ -350,6 +350,7 @@ export class Node {
     if (this === root) return true;  // root is "visible" by definition
     let parent = this.parent;
     while (true) {
+      if (! parent) return false;  // can happen after a node was deleted
       if (parent.isCollapsed()) return false;
       // we've looked far enough, stop the search
       else if (parent === root) return true;
