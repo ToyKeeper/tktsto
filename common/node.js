@@ -1445,12 +1445,62 @@ export class Node {
     if (changed) this.bump('atime', args);
 
     // TODO? recalculate stats
-    if (changed && ('userAction' === args.reason))
+    if (changed && ('userAction' === args.reason)) {
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setExpanded', expanded: this.expanded,
           when: this.atime });
 
+      if (isFirefox) await this.syncTabHideState();
+    }
+
     return true;
+  }
+
+  async syncTabHideState (forceShow = false) {
+    // forceShow: call tabs.show() on everything, period
+    // (is used after turning off enableHideCollapsedTabs in Options)
+
+    if (! isFirefox) return;  // only Firefox has tabs.hide()
+
+    const enableHideCollapsedTabs = true;  // FIXME: needs config option
+    if ((! enableHideCollapsedTabs) && (! forceShow)) return;
+
+    // don't hide entire windows
+    // (it gets weird when a parent window collapses a child window,
+    //  and the child window's TreeView gets all greyed out)
+    if ((! forceShow) && this.isWindow() && (! this.isExpanded())) return;
+
+    // we only care about visibility within the current window
+    // (if entire window is in a collapsed branch, it should still
+    //  count as visible... even in Session mode)
+    let viewRoot;
+    if (this.isWindow()) viewRoot = this;
+    else viewRoot = this.tree.viewRoot || this.tree.root;
+    //debug(`viewRoot: ${viewRoot.toLine()}`);
+
+    const tabNodeList = this.getLoadedTabs();
+    const hideTabIds = [];
+    const showTabIds = [];
+    for (const node of tabNodeList) {
+      if (node.tabId) {
+        const shouldBeVisible =
+          node.isVisible(viewRoot) || node.isPinned() || node.isActive();
+        // show if hidden and needs to be visible
+        if (forceShow || (node.hidden && shouldBeVisible))
+          showTabIds.push(node.tabId);
+        // hide if visible but needs to be hidden
+        else if ((! node.hidden) && (! shouldBeVisible))
+          hideTabIds.push(node.tabId);
+      }
+    }
+    if (showTabIds.length > 0) {
+      debug(`show: ${showTabIds}`);
+      await api.tabs.show(showTabIds);
+    }
+    if (hideTabIds.length > 0) {
+      debug(`hide: ${hideTabIds}`);
+      await api.tabs.hide(hideTabIds);
+    }
   }
 
   async setMarked (marked, args) {
@@ -1499,6 +1549,8 @@ export class Node {
     if (! args) return;
     // abort on no-op
     if (active === this.active) return;
+    // do we need to sync the hidden state?
+    let syncHide = false;
     // Do The Thing
     this.active = active;
     // bump timestamp
@@ -1517,11 +1569,18 @@ export class Node {
         { nodeId: this.id, type: 'setActive', active: this.active,
           loaded: this.loaded,
           when: this.atime });
+
+      syncHide = true;
     }
 
     // if we're the originator and the tab isn't focused, focus it
     if (active && ('userAction' === args.reason))
       await api.tabs.update(this.tabId, { active: true });
+
+    if (isFirefox && syncHide) {
+      const windowNode = this.getWindowNode(true);
+      if (windowNode) await windowNode.syncTabHideState();
+    }
 
     return true;
   }
@@ -1752,6 +1811,7 @@ export class Node {
             await promise;
           }
           await movePromise;
+          if (isFirefox) await this.syncTabHideState();
           debug('tab reorder success');
           //success = true;
           tries ++;

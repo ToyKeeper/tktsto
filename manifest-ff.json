@@ -27,6 +27,7 @@
     "storage",
     "downloads",
     "tabs",
+    "tabHide",
     "alarms"
   ],
   "optional_permissions": [
