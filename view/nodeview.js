@@ -784,7 +784,7 @@ export class NodeView extends Node {
     // abort on no-op
     if (! changed) return;
     // move the cursor maybe
-    if (active && this.tree.cursorFollowsActiveTab) {
+    if (active && this.tree.cfg.cursorFollowsActiveTab) {
       // only if the new active tab is in OUR window
       const winNode = this.getWindowNode();
       if (winNode.windowId === this.tree.windowId) {

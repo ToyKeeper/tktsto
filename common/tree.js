@@ -13,6 +13,7 @@ import {
 } from '/common/common.js';
 import { Node } from '/common/node.js';
 import { Mutex } from '/common/mutex.js';
+import { Config } from '/common/config.js';
 
 
 export class Tree {
@@ -36,6 +37,12 @@ export class Tree {
     // holds tabIds of "tabs" we need to ignore,
     // like Vivaldi panels
     this.tabBlacklist = {};
+
+    this.cfg = new Config();
+    this.cfgDefaults = {
+      hideCollapsedTabs: (!! isFirefox),
+      hideCollapsedTabGroups: true,
+    };
 
     this.createRootNode();
 
@@ -109,10 +116,14 @@ export class Tree {
   destroy () {
   }
 
-  init () {
+  async init () {
     // bkgd only: prevent tab reorder storms
     if (this.bkgd) this.tabReorderMutex = new Mutex();
 
+    if (isFirefox && (! this.isInert))
+      this.cfg.watch('hideCollapsedTabs',
+        this.onHideCollapsedTabsChanged.bind(this), 1000);
+    await this.cfg.init(this.cfgDefaults);
     this.initListeners();
   }
 
@@ -1132,6 +1143,13 @@ export class Tree {
       return;
     }
     return error(`Tree fn not found: ${msg.msg}`);
+  }
+
+  onHideCollapsedTabsChanged(key, newValue, oldValue) {
+    if (! isFirefox) return;
+    if (! this.bkgd) return;
+    if (! newValue) this.root.syncTabHideState(true);
+    else this.root.syncTabHideState();
   }
 
   async tree_nodeAdded (msg, sender, sendResponse) {

@@ -30,10 +30,9 @@
   </ul>
 
   <form id="options-form" accept-charset="utf-8">
-    <label for="client-id">ID for this browser: (a-z and 0-9 only)</label>
+    <label for="clientId">ID for this browser: (a-z and 0-9 only)</label>
     <input type="text" maxlength="8" class="short-input"
-      id="client-id" name="client-id" required />
-    <button type="submit">Save</button>
+      id="clientId" name="clientId" required />
   </form>
 
 
@@ -67,6 +66,15 @@
     Tree view cursor follows active (focused) tab?
     </label>
     </p>
+  </div>
+
+  <div class="isFirefox">
+    <label>
+    <input type="checkbox" id="hideCollapsedTabs"
+                           name="hideCollapsedTabs">
+    Hide tabs in browser's tab bar when those tabs are in a collapsed branch?
+    (Firefox-based browsers only)
+    </label>
   </div>
 
 

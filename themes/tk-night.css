@@ -169,6 +169,7 @@ foo {
   --dialog-input-bg: #222;
   --dialog-input-border: #444;
   --focus-outline: 4px inset #46a;
+  --unsaved-outline: 4px inset #aa4;
   /***** scrollbar *****/
   --scrollbar-thumb-bg: linear-gradient(#57b, #347);
   --scrollbar-thumb-bg-unfocused: linear-gradient(#357, #235);

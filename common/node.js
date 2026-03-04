@@ -1458,12 +1458,11 @@ export class Node {
 
   async syncTabHideState (forceShow = false) {
     // forceShow: call tabs.show() on everything, period
-    // (is used after turning off enableHideCollapsedTabs in Options)
+    // (is used after turning off hideCollapsedTabs in Options)
 
     if (! isFirefox) return;  // only Firefox has tabs.hide()
 
-    const enableHideCollapsedTabs = true;  // FIXME: needs config option
-    if ((! enableHideCollapsedTabs) && (! forceShow)) return;
+    if ((! forceShow) && (! this.tree.cfg.hideCollapsedTabs)) return;
 
     // don't hide entire windows
     // (it gets weird when a parent window collapses a child window,

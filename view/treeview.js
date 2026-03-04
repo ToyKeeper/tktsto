@@ -21,10 +21,19 @@ export class TreeView extends Tree {
   constructor (args = {}) {
     super(NodeView);
 
+    this.document = document;
+    this.window = window;
+
     // false = interactive "real" TreeView
     // true = static read-only TreeView for demonstration purposes
     this.isInert = args.isInert;
 
+    this.cfgDefaults = { ...this.cfgDefaults,
+      cursorFollowsActiveTab: true,
+      nodesPerPage: 20,
+      doubleClickMs: 500,
+      treeViewZoomLevel: 1.0,
+    };
     // TODO: determine whether full view or single-window
 
   }
@@ -35,8 +44,8 @@ export class TreeView extends Tree {
   initElements () {
     const doc = this.document;
     this.$body = doc.getElementById('body');
-    this.$ = doc.getElementById('tree-view');
-    this.$treeRoot = doc.getElementById('tree-root');
+    if (! this.$) this.$ = doc.getElementById('tree-view');
+    if (! this.$treeRoot) this.$treeRoot = doc.getElementById('tree-root');
 
     this.cursor = null;
 
@@ -93,7 +102,7 @@ export class TreeView extends Tree {
   }
 
   async init () {
-    super.init();
+    await super.init();
 
     this.document = document;
     this.window = window;
@@ -111,17 +120,17 @@ export class TreeView extends Tree {
       this.initKeyHandler();
       this.initMouseHandler();
       this.initButtonHandlers();
-      this.initStorageObserver();
+
+      // config watchers
+      this.cfg.watch('treeViewZoomLevel',
+        (key, newVal, oldVal) => this.setZoomLevel(newVal, oldVal));
+      this.setZoomLevel(this.cfg.treeViewZoomLevel, this.cfg.treeViewZoomLevel);
     }
 
-    await this.loadConfig();
     this.nodeIdMimeType = 'application/x-tktsto-node-id';
     // get the window this view is attached to
     this.windowObj = await api.windows.getCurrent();
     this.windowId = this.windowObj.id;
-    // TODO: load config...
-    this.nodesPerPage = 20;
-    this.doubleClickMs = 500;
 
     if (! this.isInert) {
       // init connection to bkgd
@@ -148,9 +157,6 @@ export class TreeView extends Tree {
     }
 
     this.$renderViewScopeBtn();
-
-    this.zoomLevel = 1.0;
-    this.setZoomLevel();
 
     this.$renderWholeTree();
 
@@ -210,54 +216,21 @@ export class TreeView extends Tree {
     this.$statusText.textContent = msg;
   }
 
-  async loadConfig () {
-    this.cursorFollowsActiveTab = await this.getConfig(
-      'cursorFollowsActiveTab', true);
-  }
-
-  initStorageObserver () {
-    api.storage.onChanged.addListener( this.storageObserver.bind(this) );
-  }
-
-  async storageObserver (changes) {
-    debug(`TreeView.storageObserver()`, changes);
-    if (changes.cursorFollowsActiveTab) {
-      this.cursorFollowsActiveTab = changes.cursorFollowsActiveTab.newValue;
-    }
-    if (changes.treeViewZoomLevel) {
-      this.setZoomLevel();
-    }
-  }
-
-  async getConfig (varName, defaultValue) {
-    const key = varName;
-    const result = await api.storage.local.get(key);
-    if (undefined !== result[key]) return result[key];
-    return defaultValue;
-  }
-
-  setConfig (varName, value) {
-    const vars = {};
-    vars[varName] = value;
-    return api.storage.local.set(vars);
-  }
-
-  getWindowConfig (varName, defaultValue) {
+  async getWindowConfig (varName, defaultValue) {
     // can't do anything unless we know which window we are
     if (! this.windowNode) return;
     // load from config, per window
-    return this.getConfig(
-      `TreeView.${varName}.${this.windowNode.id}`,
-      defaultValue);
+    const key = `TreeView.${varName}.${this.windowNode.id}`;
+    if (this.cfg[key]) return this.cfg[key];
+    else return this.cfg.get(key, defaultValue);
   }
 
   setWindowConfig (varName, value) {
     // can't do anything unless we know which window we are
     if (! this.windowNode) return;
     // save to config, per window
-    return this.setConfig(
-      `TreeView.${varName}.${this.windowNode.id}`,
-      value);
+    const key = `TreeView.${varName}.${this.windowNode.id}`;
+    return this.cfg.set(key, value);
   }
 
   updateMarkedCount () {
@@ -443,13 +416,14 @@ export class TreeView extends Tree {
     //debug(`${eventName} ${node.id} `, node, this.$mouseRow);
     //debug(`node: ${node.id}: ${node.toLine()}`, node);
     // identify which part of the row the event was in
+    const zoomLevel = this.cfg.treeViewZoomLevel;
     let rowX, rowY, rowWid, rowHgt;
     if ($row) {
       //debug(`clientXY(${event.clientX},${event.clientY}), rowOffset(${$row.offsetLeft},${$row.offsetTop})`);
-      rowX = event.clientX - ($row.offsetLeft * this.zoomLevel);
-      rowY = event.clientY - ($row.offsetTop * this.zoomLevel);
-      rowWid = $row.clientWidth * this.zoomLevel;
-      rowHgt = $row.clientHeight * this.zoomLevel;
+      rowX = event.clientX - ($row.offsetLeft * zoomLevel);
+      rowY = event.clientY - ($row.offsetTop * zoomLevel);
+      rowWid = $row.clientWidth * zoomLevel;
+      rowHgt = $row.clientHeight * zoomLevel;
     }
     this.$mouseRowX = rowX;
     this.$mouseRowY = rowY;
@@ -553,7 +527,7 @@ export class TreeView extends Tree {
     if (! this.cursor) return await this.setCursor(this.root);
     // move up N rows
     let node = this.cursor;
-    for (let i=0; i<this.nodesPerPage; i++)
+    for (let i=0; i<this.cfg.nodesPerPage; i++)
       node = node.prevVisibleNode(this.viewRoot);
     await this.setCursor(node);
   }
@@ -562,7 +536,7 @@ export class TreeView extends Tree {
     if (! this.cursor) return await this.setCursor(this.root);
     // move up N rows
     let node = this.cursor;
-    for (let i=0; i<this.nodesPerPage; i++)
+    for (let i=0; i<this.cfg.nodesPerPage; i++)
       node = node.nextVisibleNode(this.viewRoot);
     await this.setCursor(node);
   }
@@ -1223,7 +1197,7 @@ export class TreeView extends Tree {
     // save for later potential drag-n-drop
     this.mouseDragStartNode = this.mouseNode;
     // place the cursor (and *don't* await)
-    this.setCursor(this.mouseNode, false, this.doubleClickMs);
+    this.setCursor(this.mouseNode, false, this.cfg.doubleClickMs);
     // maybe modify a checkbox
     if (this.$mouseElem.classList.contains('node-checkbox')) {
       await this.action_taskEdit(event);
@@ -1648,8 +1622,9 @@ export class TreeView extends Tree {
     this.hoverMenuLast = this.mouseNode;
     // adjust menu position
     const rect = this.$mouseRow.getBoundingClientRect();
-    let hTop = (rect.top + window.scrollY - (3 * this.zoomLevel))
-      / this.zoomLevel;
+    const zoomLevel = this.cfg.treeViewZoomLevel;
+    let hTop = (rect.top + window.scrollY - (3 * zoomLevel))
+      / zoomLevel;
     this.$hoverMenu.style.top = String(hTop) + 'px';
     // show or hide the 'unload' button
     if (this.mouseNode.isUnloadable()) {
@@ -1779,10 +1754,11 @@ export class TreeView extends Tree {
 
     // zoom makes the values weird
     // (scroll goes to the wrong position without zoom compensation)
-    const rowTop = rowRect.top / this.zoomLevel;
-    const rowBottom = rowRect.bottom / this.zoomLevel;
-    const cTop = containerRect.top / this.zoomLevel;
-    const cBottom = containerRect.bottom / this.zoomLevel;
+    const zoomLevel = this.cfg.treeViewZoomLevel;
+    const rowTop = rowRect.top / zoomLevel;
+    const rowBottom = rowRect.bottom / zoomLevel;
+    const cTop = containerRect.top / zoomLevel;
+    const cBottom = containerRect.bottom / zoomLevel;
 
     // TODO: make scroll margin configurable
     // percent of the view height
@@ -2068,7 +2044,7 @@ export class TreeView extends Tree {
     const zoomStepSize = Math.pow(2, 1.0 / this.zoomSteps);
 
     // adjust the zoom
-    let newzoom = this.zoomLevel;
+    let newzoom = this.cfg.treeViewZoomLevel;
     if (direction > 0) newzoom *= zoomStepSize;
     else if (direction < 0) newzoom /= zoomStepSize;
     else newzoom = 1;
@@ -2089,22 +2065,11 @@ export class TreeView extends Tree {
     newzoom = snapToRatio(newzoom);
 
     // ... and set it
-    this.setZoomLevel(newzoom);
+    this.cfg.set('treeViewZoomLevel', newzoom);
+    //this.setZoomLevel(newzoom);
   }
 
-  async setZoomLevel (zoomLevel) {
-    let savedZoomLevel;
-    if (! this.isInert) {
-      // per window
-      //const savedZoomLevel = await this.getWindowConfig('zoomLevel', 1.0);
-      // global
-      savedZoomLevel = await this.getConfig('treeViewZoomLevel', 1.0);
-      //debug(`setZoomLevel(${zoomLevel}, ${savedZoomLevel})`);
-      if (! zoomLevel) {
-        zoomLevel = savedZoomLevel;
-      }
-    }
-
+  async setZoomLevel (zoomLevel, oldZoomLevel) {
     zoomLevel = Math.min(Math.max(zoomLevel, this.zoomMin), this.zoomMax);
 
     // update the view
@@ -2112,12 +2077,7 @@ export class TreeView extends Tree {
     this.zoomLevel = zoomLevel;
 
     if (! this.isInert) {
-      // persist preference
-      if (zoomLevel !== savedZoomLevel) {
-        // per window
-        //await this.setWindowConfig('zoomLevel', zoomLevel);
-        // global
-        await this.setConfig('treeViewZoomLevel', zoomLevel);
+      if (zoomLevel !== oldZoomLevel) {
         this.setStatus(`Zoom: ${(100 * this.zoomLevel).toFixed(2)}%`);
       }
     }

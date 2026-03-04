@@ -18,12 +18,12 @@ class Docs extends ThemedPage {
   constructor () {
     super('/docs/docs');
     this.$doc = document;
+    emit.disabled = true;  // never emit events
   }
 
-  init () {
-    super.init();
-    emit.disabled = true;  // never emit events
-    this.renderAllTrees();
+  async init () {
+    await super.init();
+    await this.renderAllTrees();
   }
 
   async renderAllTrees () {
@@ -51,8 +51,8 @@ class Docs extends ThemedPage {
   }
 
   async renderTree (opts, tree, $container) {
-    const dtv = new DocTreeView(opts);
-    dtv.init($container);
+    const dtv = new DocTreeView(opts, $container);
+    await dtv.init();
     await dtv.fromObjects(tree);
     dtv.$renderWholeTree();
   }
@@ -62,15 +62,15 @@ class Docs extends ThemedPage {
 
 export class DocTreeView extends TreeView {
 
-  constructor (opts) {
+  constructor (opts, $container) {
     super({ isInert: true });
     // never emit events, and don't listen for events either
     emit.disabled = true;
+    this.createRootElement($container);
   }
 
-  init ($container) {
-    super.init();
-    this.createRootElement($container);
+  async init () {
+    await super.init();
   }
 
   async fromObjects (root) {

@@ -7,6 +7,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, warn, debug, emit } from '/common/common.js';
 import { ThemedPage } from '/themes/themes.js';
+import { Config } from '/common/config.js';
 
 log('options.js running');
 
@@ -18,126 +19,110 @@ class OptionsPage extends ThemedPage {
       '/options/options'
     );
     this.$doc = document;
+    this.cfgDefaults = {
+      clientId: null,
+      // backups
+      humanFriendlyBackups: false,
+      localBackupInterval: null,
+      // theme
+      theme: 'TK Night',
+      // TreeView
+      expandedRowPrefix: true,
+      cursorFollowsActiveTab: true,
+    };
+    if (isFirefox) {
+      cfgDefaults.hideCollapsedTabs = true;
+    }
   }
 
-  init () {
-    super.init();
-    this.initClientIdForm();
-    this.initThemeForm();
-    this.initBackupsForm();
+  async init () {
+    await super.init();
+
     this.initSessionRestoreForm();
+
+    this.options = [
+      new Option(this, {
+        cfgKey: 'clientId',
+        inputType: 'line',
+        fromStr: this.saveClientId,
+        debounceTime: 3000,
+      }),
+
+      // theme options
+      new Option(this, {
+        cfgKey: 'theme',
+        inputType: 'select',
+      }),
+
+      // TreeView options
+      new Option(this, {
+        cfgKey: 'expandedRowPrefix',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'cursorFollowsActiveTab',
+        inputType: 'checkbox',
+      }),
+
+      // backups
+      new Option(this, {
+        cfgKey: 'humanFriendlyBackups',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'localBackupInterval',
+        elementId: 'localBackupHours',
+        inputType: 'number',
+        toStr: (x) => x / 60,
+        fromStr: (x) => { return this.parseLocalBackupInterval(x); },
+        debounceTime: 3000,
+        }),
+    ];
+
+    if (isFirefox) {
+      this.options.push(
+        new Option(this, {
+          cfgKey: 'hideCollapsedTabs',
+          inputType: 'checkbox',
+        })
+      );
+    } else {
+      this.greyOut('hideCollapsedTabs');
+    }
+
+    for (const option of this.options) {
+      option.init();
+    }
   }
 
-  initClientIdForm () {
-    const doc = this.$doc;
-    const form = doc.getElementById('options-form');
-    const clientIdInput = doc.getElementById('client-id');
+  saveClientId (value) {
+    let clientId = value;
+    if (! clientId) return;
+    // FIXME: strip everything except letters and numbers from ID
 
-    // load saved client ID
-    api.storage.local.get('clientId').then((result) => {
-      if (result.clientId) {
-        clientIdInput.value = result.clientId;
-      }
+    // TODO: rewrite bkgd to notice when config changes
+    //   instead of needing a special message
+    api.runtime.sendMessage({
+      'msg':'bkgd_setClientId',
+      'clientId': clientId
     });
-
-    // save on form submit
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const clientId = clientIdInput.value;
-      // FIXME: strip everything except letters and numbers from ID
-      api.storage.local.set({ clientId }).then(() => {
-        alert('Saved!');
-      });
-      api.runtime.sendMessage({
-        'msg':'bkgd_setClientId',
-        'clientId': clientId
-      });
-    });
+    return clientId;
   }
 
-  initBackupsForm () {
-    const doc = this.$doc;
-    // humanFriendlyBackups checkbox
-    const $humanFriendlyBackups = doc.getElementById('humanFriendlyBackups');
-    api.storage.local.get('humanFriendlyBackups').then((result) => {
-      if (undefined !== result.humanFriendlyBackups) {
-        $humanFriendlyBackups.checked = result.humanFriendlyBackups;
-      }
-    });
-    // save on click
-    $humanFriendlyBackups.addEventListener('click', (event) => {
-      //debug(`humanFriendlyBackups: ${$humanFriendlyBackups.checked}`, $humanFriendlyBackups);
-      const humanFriendlyBackups = $humanFriendlyBackups.checked;
-      api.storage.local.set({ humanFriendlyBackups });
-    });
+  parseLocalBackupInterval (value) {
+    // input: hours (string)
+    // output: minutes (number) or undefined (if invalid)
+    // range: 0 to 1000 hours (about 41 days)
 
-    // automatic local backup interval
-    const $localBackupHours = doc.getElementById('localBackupHours');
-    api.storage.local.get(['localBackupInterval'], (result) => {
-      if (undefined !== result.localBackupInterval) {
-        $localBackupHours.value = result.localBackupInterval / 60;
-      }
-    });
-    let localBackupHoursDebounceTimer;
-    $localBackupHours.addEventListener("input", () => {
-      clearTimeout(localBackupHoursDebounceTimer);
+    const hours = parseFloat(value);
 
-      localBackupHoursDebounceTimer = setTimeout(() => {
-        const hours = parseFloat($localBackupHours.value);
+    // validate the input
+    if (isNaN(hours) || hours < 0 || hours > 1000) {
+      warn('User entered invalid data into localBackupHours input');
+      return;
+    }
 
-        // validate the input
-        if (isNaN(hours) || hours < 0 || hours > 1000) {
-          warn('User entered invalid data into localBackupHours input');
-          return;
-        }
-
-        const minutes = hours * 60;
-        api.storage.local.set({ localBackupInterval: minutes });
-        debug(`User set localBackupInterval = ${minutes} minutes`);
-      }, 3000); // 3 second debounce delay
-    });
-  }
-
-  initThemeForm () {
-    const doc = this.$doc;
-    // theme selector
-    const $theme = doc.getElementById('theme');
-    api.storage.local.get('theme').then((result) => {
-      if (undefined !== result.theme) {
-        $theme.value = result.theme;
-      }
-    });
-    // save when changed
-    $theme.addEventListener('change', (event) => {
-      const theme = $theme.value;
-      api.storage.local.set({ theme });
-    });
-
-    // expandedRowPrefix checkbox
-    const $expandedRowPrefix = doc.getElementById('expandedRowPrefix');
-    api.storage.local.get({'expandedRowPrefix': true}).then((result) => {
-      if (undefined !== result.expandedRowPrefix) {
-        $expandedRowPrefix.checked = result.expandedRowPrefix;
-      }
-    });
-    // save on click
-    $expandedRowPrefix.addEventListener('click', (event) => {
-      const expandedRowPrefix = $expandedRowPrefix.checked;
-      api.storage.local.set({ expandedRowPrefix });
-    });
-
-    // expandedRowPrefix checkbox
-    const $cursorFollowsActiveTab = doc.getElementById('cursorFollowsActiveTab');
-    api.storage.local.get({'cursorFollowsActiveTab': true}).then((result) => {
-      if (undefined !== result.cursorFollowsActiveTab) {
-        $cursorFollowsActiveTab.checked = result.cursorFollowsActiveTab;
-      }
-    });
-    // save on click
-    $cursorFollowsActiveTab.addEventListener('click', (event) => {
-      const cursorFollowsActiveTab = $cursorFollowsActiveTab.checked;
-      api.storage.local.set({ cursorFollowsActiveTab });
-    });
+    return hours * 60;
   }
 
   initSessionRestoreForm () {
@@ -218,6 +203,98 @@ class OptionsPage extends ThemedPage {
 
   }
 
+  greyOut (elementId) {
+    const $elem = this.$doc.getElementById(elementId);
+    if (! $elem) return warn(`No such page element: ${elementId}`);
+    $elem.disabled = true;
+    let $grey = $elem.parentElement;
+    if (! $grey) $grey = $elem;
+    $grey.classList.add('greyed-out');
+  }
+
+}
+
+class Option {
+  constructor (page, args) {
+    this.page = page;
+    this.cfg = page.cfg;
+    this.cfgKey = args.cfgKey;
+    if (undefined !== args.elementId) this.elementId = args.elementId;
+    else this.elementId = this.cfgKey;
+    this.inputType = args.inputType;
+    this.toStr = args.toStr;  // convert to string for display
+    this.fromStr = args.fromStr;  // process user-submitted values
+    this.debounceTime = args.debounceTime;
+    this.debounceTimer = null;
+  }
+
+  init () {
+    const doc = this.page.$doc;
+    const cfg = this.cfg;
+    const $elem = doc.getElementById(this.elementId);
+    if (! $elem) return error(`No such page element: ${this.elementId}`);
+    this.$elem = $elem;
+
+    debug(`${this.inputType}: ${this.cfgKey} = ${cfg[this.cfgKey]}`);
+
+    // convert saved value to a string for display
+    let valueStr = cfg[this.cfgKey];
+    if (this.toStr) valueStr = this.toStr(valueStr);
+
+    this.setValue(valueStr);
+
+    // save changes when relevant event fires
+    let eventName = 'input';
+    if ('checkbox' === this.inputType) eventName = 'click';
+    else if ('select' === this.inputType) eventName = 'change';
+
+    $elem.addEventListener(eventName, (event) => {
+      if (! this.debounceTime) {
+        this.parseAndSave();
+      } else {
+        if (this.debounceTimer) clearTimeout(this.debounceTimer);
+        // visually mark it as unsaved until the timer expires
+        this.$elem.classList.add('unsaved');
+        this.debounceTimer = setTimeout(() => {
+          this.parseAndSave();
+        }, this.debounceTime);
+      }
+    });
+  }
+
+  getValue () {
+    if (['line', 'text', 'number', 'select'].includes(this.inputType)) {
+      return this.$elem.value;
+    }
+    else if ('checkbox' === this.inputType) {
+      return this.$elem.checked;
+    }
+  }
+
+  setValue (value) {
+    if (['line', 'text', 'number', 'select'].includes(this.inputType)) {
+      this.$elem.value = value;
+    }
+    else if ('checkbox' === this.inputType) {
+      this.$elem.checked = value;
+    }
+  }
+
+  parseAndSave () {
+    let value = this.getValue();
+    if (this.fromStr) value = this.fromStr(value);
+    if (undefined !== value) {
+      this.cfg.set(this.cfgKey, value);
+
+      // update widget with sanitized value
+      let valueStr = value;
+      if (this.toStr) valueStr = this.toStr(valueStr);
+      this.setValue(valueStr);
+
+      // remove 'unsaved' status
+      this.$elem.classList.remove('unsaved');
+    }
+  }
 }
 
 // pre-populate form with saved user options,

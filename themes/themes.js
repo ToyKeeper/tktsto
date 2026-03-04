@@ -7,6 +7,7 @@ import { api } from '/api.js';
 import {
   log, debug, warn, error
 } from '/common/common.js';
+import { Config } from '/common/config.js';
 
 export const themes = {
   'TK Night': ['tk', 'tk-night'],
@@ -18,16 +19,28 @@ export class ThemedPage {
   constructor (...pagePaths) {
     this.$doc = document;
     this.pagePaths = pagePaths;
-    this.defaultThemeName = 'TK Night';
-    this.themeName = this.defaultThemeName;
+    this.defaultTheme = 'TK Night';
+    this.cfg = new Config();
+    this.cfgDefaults = {
+      theme: this.defaultTheme,
+      expandedRowPrefix: true,
+    };
   }
 
-  init () {
+  async init () {
+    await this.cfg.init(this.cfgDefaults);
     this.initElements();
     this.updateTheme();
     this.updateStyleOptions();
     this.updateUserStyles();
-    this.initStorageObserver();
+
+    // config watchers
+    this.cfg.watch('theme', (key, newVal, oldVal) => {
+      this.updateTheme();
+    });
+    this.cfg.watch('expandedRowPrefix', (key, newVal, oldVal) => {
+      this.updateStyleOptions();
+    });
   }
 
   initElements () {
@@ -38,8 +51,9 @@ export class ThemedPage {
     doc.body.classList.add('focused');
 
     // load stylesheets
-    const baseName = themes[this.themeName][0];
-    const variantName = themes[this.themeName][1];
+    const themeName = this.cfg.theme;
+    const baseName = themes[themeName][0];
+    const variantName = themes[themeName][1];
 
     // <link id="theme-base" rel="stylesheet" type="text/css" href="/themes/tk.css" />
     const $themeBase = document.createElement('link');
@@ -79,27 +93,25 @@ export class ThemedPage {
     $userStyles.type = 'text/css';
     head.appendChild($userStyles);
     this.$userStyles = $userStyles;
-
-    this.updateTheme(this.$themeBase, this.$themeVariant);
   }
 
-  async updateTheme ($base, $variant) {
-    const data = await api.storage.local.get('theme');
-    if (data.theme && themes[data.theme]) {
-      this.themeName = data.theme;
-      const theme = themes[data.theme];
-      this.$themeBase.href = `/themes/${theme[0]}.css`;
-      this.$themeVariant.href = `/themes/${theme[1]}.css`;
+  async updateTheme () {
+    let themeName = this.cfg.theme;
+    debug(`theme = ${themeName}`);
+    if (! themes[themeName]) {
+      warn(`unrecognized theme: ${themeName}`);
+      themeName = this.defaultTheme;
     }
+
+    const theme = themes[themeName];
+    this.$themeBase.href = `/themes/${theme[0]}.css`;
+    this.$themeVariant.href = `/themes/${theme[1]}.css`;
   }
 
-  async updateStyleOptions () {
+  updateStyleOptions () {
     let styleText = '';
-    let data;
     // '+' marker drawn before expanded rows?
-    data = await api.storage.local.get({ 'expandedRowPrefix': true });
-    let expandedRowPrefix = '';
-    if (data.expandedRowPrefix) {
+    if (this.cfg.expandedRowPrefix) {
       styleText = styleText
         + "\n.expanded.row::before {"
         + `\n  content: "+";`
@@ -112,20 +124,8 @@ export class ThemedPage {
   }
 
   updateUserStyles () {
-  }
-
-  initStorageObserver () {
-    api.storage.onChanged.addListener( this.storageObserver.bind(this) );
-  }
-
-  async storageObserver (changes) {
-    debug(`ThemedPage.storageObserver()`, changes);
-    if (changes.theme) {
-      this.updateTheme();
-    }
-    if (changes.expandedRowPrefix) {
-      this.updateStyleOptions();
-    }
+    // TODO: add support for user styles
+    //   (a text area in the config options where user CSS can go)
   }
 
 }

@@ -239,6 +239,7 @@ foo {
   --dialog-input-bg: linear-gradient(#eee, #ddd);
   --dialog-input-border: #fff;
   --focus-outline: 4px inset var(--cursor-bg-bot);
+  --unsaved-outline: 4px inset #ff4;
   /***** scrollbar *****/
   --scrollbar-thumb-bg-unfocused: linear-gradient(#bbf, #aaf);
 }

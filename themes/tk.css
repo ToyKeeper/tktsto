@@ -892,6 +892,9 @@ foo {
   max-width: calc(100% - var(--dialog-padding));
   margin-top: 0.1em;
 }
+.options .unsaved {
+  outline: var(--unsaved-outline);
+}
 
 .dialog input {
   color: var(--note-fg);
