@@ -276,7 +276,8 @@ class Option {
   }
 
   parseAndSave () {
-    let value = this.getValue();
+    const rawValue = this.getValue();
+    let value = rawValue;
     if (this.fromStr) value = this.fromStr(value);
     if (undefined !== value) {
       this.cfg.set(this.cfgKey, value);
@@ -284,7 +285,7 @@ class Option {
       // update widget with sanitized value
       let valueStr = value;
       if (this.toStr) valueStr = this.toStr(valueStr);
-      this.setValue(valueStr);
+      if (valueStr !== rawValue) this.setValue(valueStr);
 
       // remove 'unsaved' status
       this.$elem.classList.remove('unsaved');
