@@ -39,6 +39,8 @@ export class Config {
     // functions to call when a value changes
     // Map<key, Array<{callback, delay}>>
     this.watchers = new Map();
+    // Map<key, timer>
+    this.debounceTimers = new Map();
   }
 
   async init (defaults) {

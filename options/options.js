@@ -31,7 +31,7 @@ class OptionsPage extends ThemedPage {
       cursorFollowsActiveTab: true,
     };
     if (isFirefox) {
-      cfgDefaults.hideCollapsedTabs = true;
+      this.cfgDefaults.hideCollapsedTabs = true;
     }
   }
 

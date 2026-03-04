@@ -354,17 +354,17 @@ foo {
 /* tabs which are only half unloaded */
 .row.discarded .row-title,
 .row.frozen .row-title,
-.row.tab-hidden .row-title {
+foo {
   font-style: italic;
   font-size: 90%;
   /* opacity: 70%; */
 }
 .row.tab-hidden .row-title {
-  /* just in case you're a madman and use "Tab Unloader for Tree Style Tab"
-   * AT THE SAME TIME as this extension, and made it unload+hide some tabs
-   * ... but you'd have to be pretty crazy to do that.
-   */
-  opacity: 66%;
+  /* these should never be visible, but style them anyway just in case */
+  /* because the user could be using a different extension to hide tabs,
+   * or there could be a bug in this extension to allow these to be seen */
+  font-size: 80%;
+  border: 1px dashed #888;
 }
 
 .node-checkbox,

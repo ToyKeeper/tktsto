@@ -120,13 +120,16 @@ export class Tree {
   }
 
   async init () {
-    // bkgd only: prevent tab reorder storms
-    if (this.bkgd) this.tabReorderMutex = new Mutex();
+    if (this.bkgd) {
+      // prevent tab reorder storms
+      this.tabReorderMutex = new Mutex();
 
-    if (isFirefox && (! this.isInert))
-      this.cfg.watch('hideCollapsedTabs',
-        this.onHideCollapsedTabsChanged.bind(this), 1000);
-    await this.cfg.init(this.cfgDefaults);
+      if (isFirefox)
+        this.cfg.watch('hideCollapsedTabs',
+          this.onHideCollapsedTabsChanged.bind(this), 1000);
+    }
+    if (! this.isInert)
+      await this.cfg.init(this.cfgDefaults);
     this.initListeners();
   }
 
@@ -1145,11 +1148,24 @@ export class Tree {
     return error(`Tree fn not found: ${msg.msg}`);
   }
 
-  onHideCollapsedTabsChanged(key, newValue, oldValue) {
+  async onHideCollapsedTabsChanged (key, newValue, oldValue) {
     if (! isFirefox) return;
     if (! this.bkgd) return;
-    if (! newValue) this.root.syncTabHideState(true);
-    else this.root.syncTabHideState();
+    debug(`hideCollapsedTabs: ${newValue}`);
+    // find all open windows,
+    // and force them to refresh their hidden tab states
+    const windowNodes = this.root.findNodes(
+      (n) => n.isWindow() && n.isLoaded(),
+    );
+    for (const winNode of windowNodes) {
+      if (! newValue) await winNode.syncTabHideState(true);
+      else {
+        const wasExpanded = winNode.expanded;
+        winNode.expanded = true;
+        await winNode.syncTabHideState();
+        winNode.expanded = wasExpanded;
+      }
+    }
   }
 
   async tree_nodeAdded (msg, sender, sendResponse) {
