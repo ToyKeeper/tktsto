@@ -8,6 +8,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 import {
   log, debug, warn, error, fmtDate, emit, jsonSchema, isIllegalURL
 } from '/common/common.js';
+import { Config } from '/common/config.js';
 import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
 import { TreeStore } from './treestore.js';
@@ -38,6 +39,13 @@ class Bkgd {
     // local backups
     this.localBackupAlarmName = 'periodicLocalBackup';
 
+    this.cfg = new Config();
+    this.cfgDefaults = {
+      clientId: null,
+      localBackupInterval: 0,
+      localBackupLastTimeCompleted: 0,
+    };
+
     // kludge because Chrome sidePanel API is missing important stuff
     // like sidePanel.isOpen()
     if (isChrome) this.chromeSidepanelIsOpen = {};
@@ -67,7 +75,11 @@ class Bkgd {
     sidepanel.init();
 
     this.initConfig().then(() => {
-      this.idGen = new IdGenerator(this.clientId, 9, 2);
+      this.idGen = new IdGenerator(this.cfg.clientId, 9, 2);
+      this.cfg.watch('clientId', (key, newVal, oldVal) => {
+        // always use latest clientId to generate new nodeIds
+        this.idGen.name = newVal;
+      });
       debug('Bkgd.resolveConfigLoaded()');
       this.resolveConfigLoaded();  // let listeners know the config is ready
 
@@ -106,8 +118,6 @@ class Bkgd {
   }
 
   initMiscListeners () {
-    api.storage.onChanged.addListener( this.onStorageChanged.bind(this) );
-
     // user clicked extension icon in the address bar area
     api.action.onClicked.addListener( this.onExtensionIconClicked.bind(this) );
 
@@ -151,27 +161,26 @@ class Bkgd {
   }
 
   async initConfig () {
-    // load client name from storage
-    const result = await api.storage.local.get('clientId');
-    if (result.clientId) {
-      this.clientId = result.clientId;
-      log(`clientId: ${this.clientId}`);
-    } else {
+    await this.cfg.init(this.cfgDefaults);
+
+    if (! this.cfg.clientId) {
       // detect first run and generate random client name
       // generate 2-digit base32 string
       let num = Math.floor(Math.random() * (32**2));
-      this.clientId = base32encode(num, 2);
-      await api.storage.local.set({ 'clientId': this.clientId });
-      log(`rand clientId: ${this.clientId}`);
+      const clientId = base32encode(num, 2);
+      await this.cfg.set('clientId', clientId);
+      log(`set random clientId: ${clientId}`);
     }
+    log(`clientId: ${this.cfg.clientId}`);
+
+    // reset backup events when the interval changes
+    this.cfg.watch('localBackupInterval', (key, newVal, oldVal) => {
+      this.initLocalBackupAlarm(true);
+    });
   }
 
   async initLocalBackupAlarm (reset = false) {
-    const stored = await api.storage.local.get([
-      'localBackupInterval',
-      'localBackupLastTimeCompleted',
-    ]);
-    let interval = stored.localBackupInterval;
+    let interval = this.cfg.localBackupInterval;
     const alarm = await api.alarms.get(this.localBackupAlarmName);
     // 0.5 minutes is the shortest the browser allows
     const backupDisabled = (! interval) || (interval < 0.5);
@@ -180,7 +189,7 @@ class Bkgd {
     // because sometimes alarms don't persist across browser restarts, and
     // if a user sets interval=24h but they restart daily, it may never fire
     if (! backupDisabled) {
-      let lastBackupTime = stored.localBackupLastTimeCompleted;
+      let lastBackupTime = this.cfg.localBackupLastTimeCompleted;
       if (! lastBackupTime) lastBackupTime = 0;
       if ((lastBackupTime + (interval * 1000 * 60)) < Date.now()) {
         debug(`Bkgd.initLocalBackupAlarm: overdue, backing up now`);
@@ -217,14 +226,6 @@ class Bkgd {
     if (this.localBackupAlarmName === alarm.name) {
       debug(this.localBackupAlarmName);
       this.tree.downloadBackupNow();
-    }
-  }
-
-  onStorageChanged (changes, areaName) {
-    if ('local' === areaName) {
-      if (undefined !== changes.localBackupInterval) {
-        this.initLocalBackupAlarm(true);
-      }
     }
   }
 
@@ -582,14 +583,6 @@ class Bkgd {
     const newId = this.idGen.newId();
     //debug(`bkgd_newNodeId() => "${newId}"`);
     return newId;
-  }
-
-  async bkgd_setClientId (msg) {
-    await this.configLoaded;  // wait for config to finish loading
-    // FIXME: strip everything but a-zA-Z0-9
-    // TODO: save to config
-    this.clientId = msg.clientId;
-    this.idGen.name = this.clientId;
   }
 
   async bkgd_getTree (msg) {

@@ -98,14 +98,9 @@ class OptionsPage extends ThemedPage {
   saveClientId (value) {
     let clientId = value;
     if (! clientId) return;
+
     // FIXME: strip everything except letters and numbers from ID
 
-    // TODO: rewrite bkgd to notice when config changes
-    //   instead of needing a special message
-    api.runtime.sendMessage({
-      'msg':'bkgd_setClientId',
-      'clientId': clientId
-    });
     return clientId;
   }
 
