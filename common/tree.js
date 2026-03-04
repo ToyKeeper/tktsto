@@ -40,6 +40,9 @@ export class Tree {
 
     this.cfg = new Config();
     this.cfgDefaults = {
+      clientId: null,
+      humanFriendlyBackups: false,
+      localBackupLastTimeCompleted: 0,
       hideCollapsedTabs: (!! isFirefox),
       hideCollapsedTabGroups: true,
     };
@@ -252,7 +255,7 @@ export class Tree {
     return numLoaded;
   }
 
-  async makeBackupObject (rootNode, when) {
+  makeBackupObject (rootNode, when) {
     const obj = {};
     // TODO: actually write and publish the schema file
     obj.$schema = jsonSchema;
@@ -261,9 +264,8 @@ export class Tree {
     obj.metadata.exportDate = Number(when);
     obj.metadata.sessionStartDate = Number(rootNode.ctime);
     // attach the client ID
-    let clientId = '??';
-    const result = await api.storage.local.get('clientId');
-    if (result.clientId) clientId = result.clientId;
+    let clientId = this.cfg.clientId;
+    if (! clientId) clientId = '??';
     obj.metadata.clientId = clientId;
     // attach the actual tree / node data
     obj.nodes = this.serializeNodes(true);
@@ -279,11 +281,9 @@ export class Tree {
 
     const when = new Date();
     // determine whether to pretty-print the data
-    let prettyPrint = 0;
-    const result = await api.storage.local.get('humanFriendlyBackups');
-    if (result.humanFriendlyBackups) prettyPrint = 2;
+    const prettyPrint = this.cfg.humanFriendlyBackups ? 2 : 0;
     // generate the file's raw data
-    const backup = await this.makeBackupObject(this.root, when);
+    const backup = this.makeBackupObject(this.root, when);
     const jsonString = JSON.stringify(backup, null, prettyPrint);
     const blob = new Blob([jsonString], { type: "application/json" });
     // generate the URL to download
@@ -332,7 +332,7 @@ export class Tree {
       if ('complete' === delta.state?.current) {
         //log(`downloadBackupNow(): Download succeeded: ${filename}`);
         api.downloads.onChanged.removeListener(onProgress);
-        api.storage.local.set({ localBackupLastTimeCompleted: Date.now() });
+        this.cfg.set('localBackupLastTimeCompleted', Date.now());
         this.localBackupInProgress = false;
         if (this.setStatus)
           this.setStatus(`Saved ${blob.size} bytes to "${filename}"`);
@@ -492,7 +492,7 @@ export class Tree {
       //if (tab.index >= winTabList.length) {
       this.tabBlacklist[`${tab.id}`] = true;
       debug('ignoring tab which looks like a Vivaldi panel', tab);
-      // TODO: api.storage.local.set({ isVivaldi: true });
+      // TODO: this.cfg.set('isVivaldi', true);
       return true;
     }
     return false;
