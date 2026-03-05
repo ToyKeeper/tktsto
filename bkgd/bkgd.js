@@ -180,8 +180,10 @@ class Bkgd {
   }
 
   async initLocalBackupAlarm (reset = false) {
-    let interval = this.cfg.localBackupInterval;
+    await this.configLoaded;  // this.cfg must be ready first
+
     const alarm = await api.alarms.get(this.localBackupAlarmName);
+    let interval = this.cfg.localBackupInterval;
     // 0.5 minutes is the shortest the browser allows
     const backupDisabled = (! interval) || (interval < 0.5);
 
