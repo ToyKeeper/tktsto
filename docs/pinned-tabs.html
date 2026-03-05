@@ -273,13 +273,22 @@ native functions, so I recommend doing it that way in most cases.
               "pointer": 0.78, "pointerImg": "pointer-dragging.svg"
             },
             { "url": "index.html", "loaded": true, "title": "A Page",
+              "pointer": 0.75, "pointerImg": "pointer-dragging.svg",
+              "pointerOpacity": 0.7,
               "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
+                { "url": "index.html", "loaded": false, "title": "With Stuff",
+                  "pointer": 0.67, "pointerImg": "pointer-dragging.svg",
+                  "pointerOpacity": 0.6
+                },
+                { "url": "index.html", "loaded": true, "title": "And Things",
+                  "pointer": 0.60, "pointerImg": "pointer-dragging.svg",
+                  "pointerOpacity": 0.5
+                }
             ]},
             { "url": "index.html", "loaded": true, "title": "Drag Me!",
               "nodeClasses": ["cursor", "dragging"],
               "rowClasses": ["cursor"],
+              "pointer": 0.55, "pointerOpacity": 0.5,
               "nodes": [
                 { "url": "index.html", "loaded": true, "title": "Details",
                   "nodes": [
@@ -344,11 +353,17 @@ native functions, so I recommend doing it that way in most cases.
               { "url": "index.html", "loaded": true, "title": "Drag Me!",
                 "nodeClasses": ["cursor", "dragging"],
                 "rowClasses": ["cursor"],
+                "pointer": 0.65, "pointerOpacity": 0.7,
                 "nodes": [
                   { "url": "index.html", "loaded": true, "title": "Details",
+                    "pointer": 0.55, "pointerImg": "pointer-dragging.svg",
+                    "pointerOpacity": 0.9,
                     "nodes": [
                       { "url": "index.html", "loaded": false,
-                        "title": "Another Page" }
+                        "title": "Another Page",
+                        "pointer": 0.3, "pointerImg": "pointer-dragging.svg",
+                        "pointerOpacity": 1.0
+                        }
                     ]
                   }
                 ]

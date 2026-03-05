@@ -114,6 +114,7 @@ export class NodeView extends Node {
       $pointer.style.left = `${this.pointer*100}%`;
       $pointer.style.top = '33%';
       $pointer.style.display = 'block';
+      if (this.pointerOpacity) $pointer.style.opacity = this.pointerOpacity;
       this.$row.style.position = 'relative';
       this.$row.style.overflow = 'visible';
       this.$row.appendChild($pointer);
