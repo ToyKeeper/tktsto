@@ -29,6 +29,7 @@ class OptionsPage extends ThemedPage {
       // TreeView
       expandedRowPrefix: true,
       cursorFollowsActiveTab: true,
+      pinnedTabsOpenNewTabsPinnedToo: false,
     };
     if (isFirefox) {
       this.cfgDefaults.hideCollapsedTabs = true;
@@ -61,6 +62,10 @@ class OptionsPage extends ThemedPage {
       }),
       new Option(this, {
         cfgKey: 'cursorFollowsActiveTab',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'pinnedTabsOpenNewTabsPinnedToo',
         inputType: 'checkbox',
       }),
 

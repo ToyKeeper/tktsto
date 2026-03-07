@@ -45,6 +45,7 @@ export class Tree {
       localBackupLastTimeCompleted: 0,
       hideCollapsedTabs: (!! isFirefox),
       hideCollapsedTabGroups: true,
+      pinnedTabsOpenNewTabsPinnedToo: false,
     };
 
     this.createRootNode();
@@ -614,9 +615,17 @@ export class Tree {
         tab.index = activeTab.index + 1;
       }
 
+      // if the active tab is pinned, open just after the "Pinned" area
+      if (activeTabNode.isPinned()
+        && (! this.cfg.pinnedTabsOpenNewTabsPinnedToo)
+      ) {
+        debug(`Tree.onTabCreated(active = pinned): moving new tab outside Pinned area`);
+        destParent = winNode;
+        destIndex = 1;
+      }
       // if the tab is a blank created by the user with C-t...
       // ... make it the 1st child of the active tab
-      if (isNewTabPage(tabPendingUrl)) {
+      else if (isNewTabPage(tabPendingUrl)) {
         destParent = activeTabNode;
         if (! destParent) destParent = winNode;
         destIndex = 0;
