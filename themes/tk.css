@@ -326,6 +326,7 @@ foo {
   min-height: var(--row-min-height);  /* ensure row still visible even when empty */
   font-size: var(--global-font-size);
   padding-left: 2px;
+  width: unset;
 }
 
 .row a {
@@ -1058,7 +1059,7 @@ select {
   --font-family: "Quicksand Medium", Tahoma, Geneva, sans-serif;
   --font-family: "DejaVu Sans", Arial, sans-serif;
   --font-family: Arial, Tahoma, Geneva, sans-serif;
-  --global-font-size: 1.15rem;
+  --global-font-size: 14pt;
   --button-font-size: 1rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;

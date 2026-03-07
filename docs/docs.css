@@ -1,4 +1,8 @@
 html {
+  zoom: 1.15;
+  /* font-size: 14pt; */
+  /* font-size: var(--global-font-size); */
+  /* font-size: var(--doc-font-size); */
   margin: 0;
   padding: 0;
   height: unset;
@@ -22,16 +26,13 @@ body {
   background: var(--window-branch-bot);
 }
 
-* {
-  font-size: 1.333rem;
-}
-
 p, li, td, h1, h4, h5, h6, label, pre, .pre {
   color: var(--doc-text-fg);
 }
 
 p {
   margin: 0.25em 0;
+  font-size: var(--doc-font-size);
 }
 
 b {
@@ -42,12 +43,13 @@ code {
   color: var(--label-loaded-fg);
   border: 1px solid var(--label-unloaded-fg);
   padding: 0 0.2em;
+  font-size: 80%;
 }
 
-a {
+a:not(.tree-view a) {
   color: var(--tab-loaded-fg);
 }
-a:visited {
+a:visited:not(.tree-view a:visited) {
   color: var(--tab-unloaded-fg);
 }
 
@@ -61,6 +63,7 @@ h2, h3 {
 
 h2 { font-size: 130%; }
 h3 { font-size: 115%; }
+h4 { font-size: var(--doc-font-size); }
 
 small { font-size: 80%; }
 small * { font-size: 100%; }
@@ -68,6 +71,7 @@ small * { font-size: 100%; }
 .pre {
   white-space: pre;
   font-family: monospace;
+  font-size: var(--doc-font-size);
 }
 
 pre {
@@ -78,14 +82,16 @@ pre {
   box-shadow: var(--details-box-shadow);
   max-width: min-content;
   padding: 0.25em;
+  font-size: var(--doc-font-size);
 }
 
 img {
   max-width: 100%;
 }
 
-not(.tree-view) ul, not(.tree-view) ol {
-  margin: 0;
+ul:not(.nodes), ol:not(.nodes) {
+  margin: 0 0.5em;
+  padding: 0 0.5em;
   width: fit-content;
 }
 
@@ -96,6 +102,7 @@ li:not(.node) {
   background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
   border-radius: var(--cursor-branch-radius);
   box-shadow: var(--cursor-branch-shadow);
+  font-size: var(--doc-font-size);
 }
 
 li:not(.node) li {
@@ -118,13 +125,14 @@ div#tree-view, div.tree-view {
   height: unset;
   max-width: min-content;
   padding: 0.25em;
+  margin: 0.25em 0.5em;
   overflow-y: hidden;
 }
 
 table.fit {
   max-width: min-content;
   border: none;
-  border-spacing: 1em;
+  border-spacing: 0;
   table-layout: fixed;
 }
 
@@ -155,5 +163,9 @@ blockquote {
   height: 3rem;
   pointer-events: none;
   display: none;
+}
+
+:root {
+  --doc-font-size: calc(var(--global-font-size) * 1.15);
 }
 

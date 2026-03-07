@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!-- tktsto documentation page
+  -- Copyright (C) 2026 Selene ToyKeeper
+  -- SPDX-License-Identifier: AGPL-3.0-or-later
+  -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="module" src="./docs.js"></script>
+  <title>Node Types</title>
+</head>
+<body class="docs">
+
+<h2> Node Types </h2>
+
+<table class="fit"><tr><td>
+
+<p>
+
+Nodes come in several flavors:
+
+</p>
+
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Root Node",
+    "nodes": [
+      { "label": "Window Node (focused)", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Label" },
+          { "url": "index.html", "title": "Loaded Tab", "loaded": true },
+          { "url": "index.html", "title": "Unloaded Tab" },
+          { "url": "index.html", "title": "wasLoaded Tab", "wasLoaded": true },
+          { "url": "index.html", "title": "Bookmark", "bookmark": true }
+        ]
+      },
+      { "label": "Window Node (unfocused)", "type": "window", "loaded": true,
+        "nodes": [
+          { "label": "Pinned", "nodes": [
+            { "url": "index.html", "title": "Loaded Tab (pinned)",
+              "loaded": true },
+            { "url": "index.html", "title": "Unloaded Tab (pinned)" }
+          ]},
+          { "label": "\"Weird\" nodes", "nodes": [
+            { "url": "index.html", "title": "Discarded Tab", "loaded": true,
+              "discarded": true
+            },
+            { "url": "index.html", "title": "Hidden Tab", "loaded": true,
+              "hidden": true
+            },
+            { "id": "1kk4mnwnq--pc (empty)" }
+          ]}
+        ]
+      },
+      { "label": "Saved Window Node", "type": "window", "loaded": false,
+        "nodes": [
+          { "url": "index.html", "title": "Unloaded Tab" },
+          { "url": "index.html", "title": "wasLoaded Tab", "wasLoaded": true }
+        ]
+      }
+    ]
+  }
+}</script>
+
+</td><td>
+
+<p>
+
+Every node can have a <b>label</b>, <b>note</b>,
+<span class="node-checkbox"> </span>checkbox,
+and children.
+
+</p>
+
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Root Node",
+    "nodes": [
+      { "label": "Window w/ Note", "type": "window", "active": true,
+        "loaded": true, "note": "A Note",
+        "nodes": [
+          { "url": "index.html", "title": "Tab w/ Label", "loaded": true,
+            "label": "Label" },
+          { "url": "index.html", "title": "Tab w/ Note", "loaded": true,
+            "note": "A Note" },
+          { "url": "index.html", "title": "Tab w/ Checkbox", "loaded": true,
+            "checkbox": " " },
+          { "url": "index.html", "title": "Tab w/ Checkbox (done)",
+            "loaded": true, "checkbox": "X" },
+          { "url": "index.html", "title": "Bookmark", "bookmark": true,
+            "label": "Label", "note": "A Note", "checkbox": "X" },
+          { "label": "Node with Cursor On It",
+            "nodeClasses": ["cursor"], "rowClasses": ["cursor"]
+          },
+          { "label": "Expanded Branch", "expanded": true, "nodes": [
+            { "url": "index.html", "title": "Loaded Tab", "loaded": true },
+            { "url": "index.html", "title": "Unloaded Tab" }
+          ]},
+          { "label": "Collapsed Branch", "expanded": false, "nodes": [
+            { "url": "index.html", "title": "Loaded Tab", "loaded": true },
+            { "url": "index.html", "title": "Unloaded Tab" }
+          ]}
+        ]
+      }
+    ]
+  }
+}</script>
+
+<p>A <b>branch</b> is simply a node with children.  It can be any node
+type.</p>
+
+<p>A <b>leaf</b> is a node with no children.</p>
+
+</td><td>
+
+<p>
+
+Every branch can be expanded or collapsed, and every node can be marked or
+have the cursor on it.
+
+</p>
+
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Root Node",
+    "nodes": [
+      { "label": "Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": " " },
+          { "label": "Expanded Branch w/ Cursor", "expanded": true,
+            "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
+            "nodes": [
+            { "url": "index.html", "title": "Loaded Tab", "loaded": true },
+            { "url": "index.html", "title": "Unloaded Tab" }
+          ]},
+          { "label": " " },
+          { "label": "Marked Expanded Branch", "expanded": true,
+            "marked": true, "nodes": [
+            { "url": "index.html", "title": "Loaded Tab", "loaded": true },
+            { "url": "index.html", "title": "Unloaded Tab" }
+          ]},
+          { "label": " " },
+          { "label": "Marked Collapsed Branch", "expanded": false,
+            "marked": true, "nodes": [
+            { "url": "index.html", "title": "Loaded Tab", "loaded": true },
+            { "url": "index.html", "title": "Unloaded Tab" }
+          ]},
+          { "label": " " }
+        ]
+      }
+    ]
+  }
+}</script>
+
+<p>A <b>blank row</b> is just a <b>label</b> with a <code>Space</code>
+inside.</p>
+
+</td></tr></table>
+
+<p>Some types may require additional explanation:</p>
+
+<ul>
+
+  <li><b class="row was-loaded"><span class="url-title">wasLoaded</span></b>
+    tabs are documented in more detail
+    <a href="./wasloaded-tab.html">here</a>.</li>
+
+  <li><span class="row discarded"><span class="row-title">Discarded
+        tabs</span></span>
+    are tabs that the browser has <b>partially unloaded</b>.  They are
+    sometimes called a "hibernated" tab or a "suspended" tab or, confusingly,
+    some browsers or extensions call them "unloaded" tabs.  But they are not
+    <i>fully</i> unloaded.  They still appear in the browser's tab bar, and
+    the browser has simply paused them and remove some of their data from
+    memory.  Focusing one loads it back to the state it was in before,
+    usually.  A discarded tab will typically keep any unsubmitted form data
+    intact.</li>
+
+  <li><span class="row tab-hidden"><span class="row-title">Hidden
+        tabs</span></span>
+    only exist in Firefox-based browsers.  These are not displayed in the
+    browser's tab bar, but they otherwise behave the same as other tabs.  If
+    you close a window while it has hidden tabs, then expand the branch
+    while looking at the saved window node, it will likely contain tabs
+    which are hidden, "wasLoaded", and possibly discarded.</li>
+
+  <li>An <b>empty node</b> is a label node with no label.  It looks like
+    "node 1kk4mnwnq--pc".  If it has no text to use as its title, it shows
+    the node ID instead.</li>
+
+</ul>
+
+<h3>Organization</h3>
+
+<p>
+
+The <b>session tree</b> can mostly be organized however you want, but there
+are a few restrictions:
+
+</p>
+
+<ul>
+
+  <li>The <b>root node</b> cannot be moved or deleted.</li>
+  <li><b>Loaded tabs</b> <i>must</i> be inside a window node.</li>
+  <li><b>Loaded tabs</b> cannot be moved between a regular window and an
+    incognito window.</li>
+  <li>A <b>loaded window node</b> cannot be converted into a non-window node
+    (like a label) unless it is nested inside of another window node with the
+    same incognito status.  Because loaded tabs <i>must</i> be in
+    a window.</li>
+  <li>The
+    "<span class="row loaded"><span class="node-label"><span class="icon pinned-branch-anchored"> </span>
+      Pinned</span></span>"
+    tab is special and cannot be moved while it contains any loaded
+    tabs.  Also, it is only special when it is the first child of a window
+    node.  Otherwise, it's just a regular label.</li>
+  <li>Native browser <b>tab groups</b> cannot contain other tab groups.  The
+    browser does not allow them to be nested.</li>
+
+</ul>
+
+
+</body>
+</html>
+
