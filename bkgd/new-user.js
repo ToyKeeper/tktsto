@@ -138,8 +138,13 @@ export async function createNewUserTutorialNodes (tree, parentNode) {
   }
 
   let destParent = tree.root.nodes[0];
+  let destIndex = 0;
   if (parentNode) destParent = parentNode;
   if (! destParent) destParent = tree.root;
-  await addItem(destParent, 0, helpInfo);
+  if ((destParent.nodes.length > 0) && destParent.nodes[0].isPinnedBranch()) {
+    // don't move the "Pinned" branch if it exists
+    destIndex = 1;
+  }
+  await addItem(destParent, destIndex, helpInfo);
 }
 
