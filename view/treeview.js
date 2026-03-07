@@ -2153,26 +2153,23 @@ export class TreeView extends Tree {
 // TODO: let user bind keys
 export const keyBindings = {
   // test
-  //'a': 'addNode',
   ///// add / remove nodes
   'Enter': 'loadOrEditNode',
-  'd': 'deleteNode',
-  'u': 'unloadNode',
-  'o': 'addNodeAsNextVisibleRow',
+  'D': 'deleteNode',
+  'U': 'unloadNode',
+  'O': 'addNodeAsNextVisibleRow',
   'Shift+O': 'addNodeAsPrevVisibleRow',
   ///// edit nodes
   'Space': 'toggleExpanded',
-  'e': 'editNode',
+  'E': 'editNode',
   ///// task status
-  //'x': 'toggleTaskDone',
-  //'t': 'taskLeaderKey',
-  't': 'taskEdit',
+  'T': 'taskEdit',
   ///// search
   //'/': 'beginSearch',
   //'Shift+*': 'searchForCurrent',  // match current label, url, or title
-  //'Ctrl+f': 'beginSearch',
-  //'Ctrl+g': 'nextSearchResult',
-  //'n': 'nextSearchResult',
+  //'Ctrl+F': 'beginSearch',
+  //'Ctrl+G': 'nextSearchResult',
+  //'N': 'nextSearchResult',
   //'Shift+N': 'prevSearchResult',
   //'Escape': 'endSearch',
   ///// cursor movement
@@ -2199,16 +2196,16 @@ export const keyBindings = {
   'Shift+Home': 'moveNodeHome',
   'Shift+End': 'moveNodeEnd',
   ///// mark / paste
-  'm': 'toggleMarked',
+  'M': 'toggleMarked',
   'Shift+M': 'unmarkAll',
-  'p': 'pasteMarked',
+  'P': 'pasteMarked',
   'Shift+P': 'pasteMarkedBefore',
   // TODO: leader key for batch processing of other things,
   //   like delete and maybe sort and checkbox actions and ...
   ///// buttons
-  'b': 'backupSession',
+  'B': 'backupSession',
   ///// misc
-  'i': 'detailsButton',
+  'I': 'detailsButton',
   'Shift+?': 'generateTutorial',
   'Tab': 'none',  // suppress default Tab handling
   'none': 'none'

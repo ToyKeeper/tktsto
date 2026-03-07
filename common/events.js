@@ -4,6 +4,7 @@
 
 "use strict";
 import { api, isChrome, isFirefox } from '/api.js';
+//import { debug } from '/common/common.js';
 
 
 export function buildEventName (event, eventType) {
@@ -12,12 +13,16 @@ export function buildEventName (event, eventType) {
   const alt   = (event.altKey   && (event.key != 'Alt'    )) ? 'Alt+'   : '';
   const meta  = (event.metaKey  && (event.key != 'Meta'   )) ? 'Meta+'  : '';
 
+  //debug(`event`, event);
+
   let eventName;
 
   if ('keydown' === event.type) {
     let eventKey = event.key;
     if (eventKey === ' ') eventKey = 'Space';
     eventName = eventKey;
+    // override CapsLock
+    if (1 === eventName.length) eventName = eventName.toUpperCase();
   }
   else if (['mousedown', 'mouseup',
     'click', 'dblclick'].includes(event.type))
