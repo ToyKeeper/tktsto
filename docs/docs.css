@@ -30,7 +30,7 @@ p, li, td, h1, h4, h5, h6, label, pre, .pre {
   color: var(--doc-text-fg);
 }
 
-p {
+p, label {
   margin: 0.25em 0;
   font-size: var(--doc-font-size);
 }

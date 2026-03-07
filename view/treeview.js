@@ -33,6 +33,7 @@ export class TreeView extends Tree {
       nodesPerPage: 20,
       doubleClickMs: 500,
       treeViewZoomLevel: 1.0,
+      deleteExpandedBranchStyle: 'ask',
     };
     // TODO: determine whether full view or single-window
 
@@ -881,14 +882,35 @@ export class TreeView extends Tree {
       return await this.action_unloadNode(event);
     }
     // if expanded, promote kids then delete parent
-    else if (cursor.isExpanded()) {
-      //debug('promote kids and delete parent');
-      // TODO: let user configure "promote all kids" or "promote 1st child"
-      //const numKids = toDelete.nodes.length;
-      await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
-      //toDelete.deleteSelfAndPromote1stKid({ reason: 'userAction' });
-      //this.setStatus(`deleted 1 node and promoted ${numKids} sub-nodes`);
-      this.setStatus(`deleted ${line}`);
+    else if (cursor.isExpanded() && cursor.hasKids()) {
+      let dStyle = this.cfg.deleteExpandedBranchStyle;
+      const numToDelete = 1 + toDelete.countNodes();
+      if ('ask' === dStyle) {
+        const result = await this.inputDialog({
+          doc: document,
+          title: 'Delete Nodes',
+          input: false,
+          description: `Delete one node or all ${numToDelete} nodes?`,
+          buttons: ['Cancel', 'One', 'All']  // Cancel is default
+        });
+        // abort if user cancelled
+        if ((!result) || (! ['All', 'One'].includes(result.button))) return;
+        if ('All' === result.button) dStyle = 'all';
+        else if ('One' === result.button) dStyle = 'row';
+      }
+      if ('row' === dStyle) {
+        await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
+        this.setStatus(`deleted ${line}`);
+      }
+      //else if ('row1' === dStyle) {
+      //  // FIXME: write this?
+      //  await toDelete.deleteSelfAndPromoteFirstKid({ reason: 'userAction' });
+      //  this.setStatus(`deleted ${line}`);
+      //}
+      else if ('all' === dStyle) {
+        await toDelete.deleteSelf({ reason: 'userAction' });
+        this.setStatus(`deleted ${numToDelete} nodes`);
+      }
     }
     // if collapsed, delete entire branch
     else {

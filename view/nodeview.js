@@ -501,7 +501,7 @@ export class NodeView extends Node {
     if (this.isCursor()) {
       const viewRoot = this.tree.viewRoot;
       // move to next row when possible
-      newCursor = this.nextVisibleNode(viewRoot);
+      newCursor = this.nextVisibleNodeNotMyChild(viewRoot);
       // move to prev row if cursor is already on the last row
       if (newCursor === this) newCursor = this.prevVisibleNode(viewRoot);
     }

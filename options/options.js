@@ -29,6 +29,7 @@ class OptionsPage extends ThemedPage {
       // TreeView
       expandedRowPrefix: true,
       cursorFollowsActiveTab: true,
+      deleteExpandedBranchStyle: 'ask',
       pinnedTabsOpenNewTabsPinnedToo: false,
     };
     if (isFirefox) {
@@ -63,6 +64,10 @@ class OptionsPage extends ThemedPage {
       new Option(this, {
         cfgKey: 'cursorFollowsActiveTab',
         inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'deleteExpandedBranchStyle',
+        inputType: 'select',
       }),
       new Option(this, {
         cfgKey: 'pinnedTabsOpenNewTabsPinnedToo',
