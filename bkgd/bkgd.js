@@ -465,8 +465,10 @@ class Bkgd {
     // attachInfo.newWindowId: number
     //   (may refer to a window which doesn't exist yet)
     debug(`bkgd.onTabAttached(tabId=${tabId}, windowId=${attachInfo.newWindowId}, ${attachInfo.newPosition})`);
-    if (this.tabReorderInProgress)
+    if (this.tabReorderInProgress) {
+      this.onTabAttachedRequested = true;
       return debug('bkgd.onTabAttached ignored (tabReorderInProgress)');
+    }
     await this.treeLoaded;
     return this.tree.onTabAttached(tabId, attachInfo);
   }

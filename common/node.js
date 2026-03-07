@@ -1847,6 +1847,12 @@ export class Node {
           } else { throw err; }
         }
       }
+      if (bkgd.onTabAttachedRequested) {
+        // ensure only one tab is 'active'
+        debug(`reset active tab afterward`);
+        await windowNode.setActiveTab({ reason: 'reorderAllTabsInThisWindow' });
+        bkgd.onTabAttachedRequested = false;
+      }
     }
     // all other errors should still be allowed
     catch (err) {
