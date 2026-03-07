@@ -825,6 +825,13 @@ export class TreeView extends Tree {
       }
     }
 
+    // don't unpin "Pinned"
+    let destNode = destParent.nodes[destIndex];
+    if (destNode?.isPinnedBranch()) {
+      if (destNode.isCollapsed()) { destIndex ++; }  // next sibling
+      else { destParent = destNode; destIndex = 0; }  // first child
+    }
+
     // add a new Node
     let nodeType = '';
     if (result.isWindow) nodeType = 'window';
