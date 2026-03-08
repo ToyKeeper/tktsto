@@ -16,6 +16,10 @@ foo {
   color: var(--cursor-fg-override);
 }
 
+.cursor.row .icon {
+  background-color: var(--cursor-fg-override);
+}
+
 /* make node stats easier to read on window nodes */
 .window.row .node-stats * {
   color: var(--window-loaded-fg);
