@@ -25,6 +25,8 @@ export class ThemedPage {
       theme: this.defaultTheme,
       expandedRowPrefix: false,
       alwaysShowNodeStats: true,
+      hideTreeLines: false,
+      hideCursorTreeLines: false,
     };
   }
 
@@ -43,6 +45,12 @@ export class ThemedPage {
       this.updateStyleOptions();
     });
     this.cfg.watch('alwaysShowNodeStats', (key, newVal, oldVal) => {
+      this.updateStyleOptions();
+    });
+    this.cfg.watch('hideTreeLines', (key, newVal, oldVal) => {
+      this.updateStyleOptions();
+    });
+    this.cfg.watch('hideCursorTreeLines', (key, newVal, oldVal) => {
       this.updateStyleOptions();
     });
   }
@@ -127,6 +135,20 @@ export class ThemedPage {
       styleText = styleText
         + "\n#tree-view .expanded .node-stats {"
         + '\n  display: unset;'
+        + '\n}';
+    }
+    // hide tree lines outside of cursor node
+    if (this.cfg.hideTreeLines) {
+      styleText = styleText
+        + "\n.nodes {"
+        + '\n  border-left: 2px solid transparent;'
+        + '\n}';
+    }
+    // hide tree lines inside of cursor node
+    if (this.cfg.hideCursorTreeLines) {
+      styleText = styleText
+        + "\n.cursor.node .nodes {"
+        + '\n  border-left-color: transparent;'
         + '\n}';
     }
     //debug(`ThemedPage.updateStyleOptions()`, data);

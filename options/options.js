@@ -29,6 +29,8 @@ class OptionsPage extends ThemedPage {
       // TreeView
       expandedRowPrefix: false,
       alwaysShowNodeStats: true,
+      hideTreeLines: false,
+      hideCursorTreeLines: false,
       cursorFollowsActiveTab: true,
       unloadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
@@ -66,6 +68,14 @@ class OptionsPage extends ThemedPage {
       }),
       new Option(this, {
         cfgKey: 'alwaysShowNodeStats',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'hideTreeLines',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'hideCursorTreeLines',
         inputType: 'checkbox',
       }),
       new Option(this, {
