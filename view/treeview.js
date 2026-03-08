@@ -33,6 +33,8 @@ export class TreeView extends Tree {
       nodesPerPage: 20,
       doubleClickMs: 500,
       treeViewZoomLevel: 1.0,
+      unloadCollapsedBranchStyle: 'ask',
+      unloadExpandedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
     };
     // TODO: determine whether full view or single-window
@@ -895,10 +897,9 @@ export class TreeView extends Tree {
         });
         // abort if user cancelled
         if ((!result) || (! ['All', 'One'].includes(result.button))) return;
-        if ('All' === result.button) dStyle = 'all';
-        else if ('One' === result.button) dStyle = 'row';
+        dStyle = result.button.toLowerCase();
       }
-      if ('row' === dStyle) {
+      if ('one' === dStyle) {
         await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
         this.setStatus(`deleted ${line}`);
       }
@@ -932,7 +933,7 @@ export class TreeView extends Tree {
     }
   }
 
-  action_unloadNode (event) {
+  async action_unloadNode (event) {
     debug('action_unloadNode');
     // choose mouse or keyboard cursor based on event type
     let cursor = this.whichCursor(event);
@@ -940,8 +941,46 @@ export class TreeView extends Tree {
     if (! cursor) return;
     //if (! cursor.isLoaded()) return;
 
-    cursor.unload({ reason: 'userAction' });
-    this.setStatus(`unloaded ${cursor.toLine()}`);
+    // non-window branch w/ loaded tabs needs special care
+    if (cursor.hasLoadedTabs() && (! cursor.isWindow())) {
+      const loadedTabs = cursor.getLoadedTabs();
+      if (cursor.isLoadedTab()) loadedTabs.push(cursor);
+      const cursorLoaded = cursor.isLoadedTab();
+      const numLoaded = loadedTabs.length;
+      // if collapsed, unload all but maybe ask first
+      let uStyle;
+      if (cursor.isCollapsed()) {
+        uStyle = this.cfg.unloadCollapsedBranchStyle;
+      }
+      // if expanded, behavior is configurable
+      else { uStyle = this.cfg.unloadExpandedBranchStyle; }
+      if ('ask' === uStyle) {
+        const result = await this.inputDialog({
+          doc: document,
+          title: 'Unload Tabs',
+          input: false,
+          description: `Unload one tabs or all ${numLoaded} tabs?`,
+          buttons: ['Cancel', 'One', 'All']  // Cancel is default
+        });
+        // abort if user cancelled
+        if ((!result) || (! ['All', 'One'].includes(result.button))) return;
+        uStyle = result.button.toLowerCase();
+      }
+      if ('one' === uStyle) {
+        await cursor.unload({ reason: 'userAction' });
+        this.setStatus(`unloaded ${cursor.toLine()}`);
+      }
+      else if ('all' === uStyle) {
+        for (const tabNode of loadedTabs) {
+          await tabNode.unload({ reason: 'userAction' });
+        }
+        this.setStatus(`unloaded ${numLoaded} nodes`);
+      }
+    }
+    else {
+      cursor.unload({ reason: 'userAction' });
+      this.setStatus(`unloaded ${cursor.toLine()}`);
+    }
   }
 
   action_loadNode (event) {

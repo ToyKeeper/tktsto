@@ -29,6 +29,8 @@ class OptionsPage extends ThemedPage {
       // TreeView
       expandedRowPrefix: true,
       cursorFollowsActiveTab: true,
+      unloadExpandedBranchStyle: 'ask',
+      unloadCollapsedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
       pinnedTabsOpenNewTabsPinnedToo: false,
     };
@@ -64,6 +66,14 @@ class OptionsPage extends ThemedPage {
       new Option(this, {
         cfgKey: 'cursorFollowsActiveTab',
         inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'unloadCollapsedBranchStyle',
+        inputType: 'select',
+      }),
+      new Option(this, {
+        cfgKey: 'unloadExpandedBranchStyle',
+        inputType: 'select',
       }),
       new Option(this, {
         cfgKey: 'deleteExpandedBranchStyle',

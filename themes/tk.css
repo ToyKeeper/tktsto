@@ -1002,9 +1002,10 @@ select {
   /*background: linear-gradient(var(--dialog-bg-top), var(--dialog-bg-bot));*/
   background: var(--dialog-bg-top);
   border-radius: var(--dialog-radius);
-  padding: var(--dialog-padding);
+  padding: calc(var(--dialog-padding) * 0.5);
   color: var(--dialog-fg);
   font-size: var(--global-font-size);
+  margin: 0.1em 0.1em;
 }
 
 
