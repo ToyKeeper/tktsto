@@ -251,6 +251,16 @@ export class Node {
     return false;
   }
 
+  hasUnloadedTabs () {
+    // check if any descendant are unloaded tabs or wasLoaded tabs
+    // (but try to minimize the amount of CPU cycles to calculate this)
+    for (const node of this.nodes)
+      if (node.isUnloadedTab()) return true;
+    for (const node of this.nodes)
+      if ((! node.isWindow()) && node.hasUnloadedTabs()) return true;
+    return false;
+  }
+
   //countLoadedTabs () {
   //  const numOpenTabs = this.countNodes(
   //    function (node) { return (node.isLoaded() && (! node.isWindow())); },
@@ -402,6 +412,13 @@ export class Node {
   }
 
   isActive () { return this.active; }
+
+  isLoadable () {
+    if (this.isUnloadedTab()) return true;
+    if (this.isUnloadedWindow()) return true;
+    if (this.isBookmark()) return true;
+    return false;
+  }
 
   isUnloadable () {
     if (this.loaded || this.wasLoaded) return true;

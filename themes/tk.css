@@ -774,6 +774,11 @@ foo {
   box-shadow: none;
 }
 
+#hover-menu .load-button, .load-button {
+  /* click to load */
+  color: var(--tab-loaded-fg);
+}
+
 #hover-menu .unload-button, .unload-button {
   /* click to unload */
   color: var(--tab-unloaded-fg);

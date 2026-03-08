@@ -32,6 +32,8 @@ class OptionsPage extends ThemedPage {
       hideTreeLines: false,
       hideCursorTreeLines: false,
       cursorFollowsActiveTab: true,
+      loadExpandedBranchStyle: 'ask',
+      loadCollapsedBranchStyle: 'ask',
       unloadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
@@ -81,6 +83,14 @@ class OptionsPage extends ThemedPage {
       new Option(this, {
         cfgKey: 'cursorFollowsActiveTab',
         inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'loadCollapsedBranchStyle',
+        inputType: 'select',
+      }),
+      new Option(this, {
+        cfgKey: 'loadExpandedBranchStyle',
+        inputType: 'select',
       }),
       new Option(this, {
         cfgKey: 'unloadCollapsedBranchStyle',

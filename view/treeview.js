@@ -34,6 +34,8 @@ export class TreeView extends Tree {
       doubleClickMs: 500,
       treeViewZoomLevel: 1.0,
       alwaysShowNodeStats: true,
+      loadCollapsedBranchStyle: 'ask',
+      loadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
       unloadExpandedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
@@ -943,7 +945,6 @@ export class TreeView extends Tree {
     let cursor = this.whichCursor(event);
     // abort if nothing to unload
     if (! cursor) return;
-    //if (! cursor.isLoaded()) return;
 
     // non-window branch w/ loaded tabs needs special care
     if (cursor.hasLoadedTabs() && (! cursor.isWindow())) {
@@ -952,33 +953,49 @@ export class TreeView extends Tree {
       const cursorLoaded = cursor.isLoadedTab();
       const numLoaded = loadedTabs.length;
       // if collapsed, unload all but maybe ask first
-      let uStyle;
+      let actionStyle;
       if (cursor.isCollapsed()) {
-        uStyle = this.cfg.unloadCollapsedBranchStyle;
+        actionStyle = this.cfg.unloadCollapsedBranchStyle;
       }
       // if expanded, behavior is configurable
-      else { uStyle = this.cfg.unloadExpandedBranchStyle; }
-      if ('ask' === uStyle) {
+      else { actionStyle = this.cfg.unloadExpandedBranchStyle; }
+      if ('ask' === actionStyle) {
+        let description;
+        let buttons;
+        if (cursorLoaded) {
+          description = `Unload one (cursor) tab or all ${numLoaded} tabs?`;
+          buttons = ['Cancel', 'One', 'All'];  // Cancel is default
+        } else {
+          description = `Unload all ${numLoaded} tabs?`;
+          buttons = ['Cancel', 'All'];  // Cancel is default
+        }
         const result = await this.inputDialog({
           doc: document,
           title: 'Unload Tabs',
           input: false,
-          description: `Unload one tabs or all ${numLoaded} tabs?`,
-          buttons: ['Cancel', 'One', 'All']  // Cancel is default
+          description: description,
+          buttons: buttons,
         });
         // abort if user cancelled
         if ((!result) || (! ['All', 'One'].includes(result.button))) return;
-        uStyle = result.button.toLowerCase();
+        actionStyle = result.button.toLowerCase();
       }
-      if ('one' === uStyle) {
-        await cursor.unload({ reason: 'userAction' });
-        this.setStatus(`unloaded ${cursor.toLine()}`);
+      if ('one' === actionStyle) {
+        const success = await cursor.unload({ reason: 'userAction' });
+        if (success) this.setStatus(`unloaded ${cursor.toLine()}`);
+        else this.setStatus(`failed to unload ${cursor.toLine()}`);
       }
-      else if ('all' === uStyle) {
+      else if ('all' === actionStyle) {
+        let numSucceeded = 0;
+        let numFailed = 0;
         for (const tabNode of loadedTabs) {
-          await tabNode.unload({ reason: 'userAction' });
+          const success = await tabNode.unload(
+            { reason: 'userAction', wasLoaded: true });
+          if (success) numSucceeded ++;
+          else numFailed ++;
         }
-        this.setStatus(`unloaded ${numLoaded} nodes`);
+        const failText = (numFailed ? `, ${numFailed} failed` : '');
+        this.setStatus(`unloaded ${numSucceeded} nodes${failText}`);
       }
     }
     else {
@@ -987,9 +1004,117 @@ export class TreeView extends Tree {
     }
   }
 
-  action_loadNode (event) {
+  async action_loadNode (event) {
     debug('action_loadNode');
-    return this.action_loadOrEditNode(event, false);
+    if ('command' !== event.type) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
+    // abort if nothing to do
+    if (! cursor) return;
+
+    // some cases need an action other than "load tabs"
+    if (cursor.isLeaf()
+      || cursor.isWindow()
+      || (cursor.isLoadedTab() && (! cursor.isActive()))
+    ) return this.action_loadOrEditNode(event, false);
+
+    // gather some data about the kids (god that sounds wrong)
+    const loadedTabs = cursor.findNodes(
+      (n) => n.isLoadedTab(), (n) => (! n.isWindow())
+    );
+    if (cursor.isLoadedTab()) loadedTabs.push(cursor);
+
+    const wasLoadedTabs = cursor.findNodes(
+      (n) => n.isWasLoadedTab(), (n) => (! n.isWindow())
+    );
+    if (cursor.isWasLoadedTab()) wasLoadedTabs.push(cursor);
+
+    const unloadedTabs = cursor.findNodes(
+      (n) => n.isUnloadedTab(), (n) => (! n.isWindow())
+    );
+    if (cursor.isUnloadedTab()) unloadedTabs.push(cursor);
+
+    //debug('loadedTabs, wasLoadedTabs, unloadedTabs:', loadedTabs, wasLoadedTabs, unloadedTabs);
+
+    const noUnloadedTabs = ((wasLoadedTabs.length <= 0)
+      && (unloadedTabs.length <= 0));
+    if (noUnloadedTabs) {
+      if (cursor.isBookmark())
+        return this.action_loadOrEditNode(event, false);
+      // nothing to do, everything is already loaded
+      this.setStatus('nothing to load');
+      return;
+    }
+
+    // check user prefs for what to do
+    let actionStyle;
+    if (cursor.isCollapsed()) {
+      actionStyle = this.cfg.loadCollapsedBranchStyle;
+    }
+    // if expanded, behavior is configurable
+    else { actionStyle = this.cfg.loadExpandedBranchStyle; }
+
+    // if cursor is the only node affected, we don't need to ask what to do
+    if (wasLoadedTabs[0] === cursor) actionStyle = 'one';
+    else if ((wasLoadedTabs.length === 0)
+      && (unloadedTabs[0] === cursor))
+      actionStyle = 'one';
+
+    // decide what we're loading
+    let numToLoad = wasLoadedTabs.length;
+    let styleToLoad = 'wasLoaded';
+    let queue = wasLoadedTabs;
+    if (! numToLoad) {
+      numToLoad = unloadedTabs.length;
+      styleToLoad = 'unloaded';
+      queue = unloadedTabs;
+    }
+
+    // if cursor is unaffected, the "one" actionStyle makes no sense
+    const cursorInQueue = (queue[queue.length - 1] === cursor);
+
+    // this would be the appropriate time ask, if we're gonna
+    if ('ask' === actionStyle) {
+      let description;
+      let buttons;
+      if (cursorInQueue) {
+        description = `Load one (cursor) or all ${numToLoad} ${styleToLoad} tabs?`;
+        buttons = ['Cancel', 'One', 'All'];  // Cancel is default
+      } else {
+        description = `Load all ${numToLoad} ${styleToLoad} tabs?`;
+        buttons = ['Cancel', 'All'];  // Cancel is default
+      }
+      const result = await this.inputDialog({
+        doc: document,
+        title: 'Load Tabs',
+        input: false,
+        description: description,
+        buttons: buttons,
+      });
+      // abort if user cancelled
+      if ((!result) || (! ['All', 'One'].includes(result.button))) return;
+      actionStyle = result.button.toLowerCase();
+    }
+
+    if ('one' === actionStyle) {
+      const success = await cursor.load({ reason: 'userAction' });
+      if (success) this.setStatus(`loaded ${cursor.toLine()}`);
+      else this.setStatus(`failed to load ${cursor.toLine()}`);
+    }
+    else if ('all' === actionStyle) {
+      let numSucceeded = 0;
+      let numFailed = 0;
+      for (const tabNode of queue) {
+        const success = await tabNode.load({ reason: 'userAction' });
+        if (success) numSucceeded ++;
+        else numFailed ++;
+      }
+      const failText = (numFailed ? `, ${numFailed} failed` : '');
+      this.setStatus(`loaded ${numSucceeded} nodes${failText}`);
+    }
   }
 
   async action_loadOrEditNode (event, allowEdit = true) {
@@ -998,9 +1123,10 @@ export class TreeView extends Tree {
       event.preventDefault();
       event.stopPropagation();
     }
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
     // abort if nothing to do
-    if (! this.cursor) return;
-    let cursor = this.cursor;
+    if (! cursor) return;
 
     // if bookmark, clone a new child and load it
     if (cursor.isBookmark()) {
@@ -1665,6 +1791,9 @@ export class TreeView extends Tree {
     if (! this.$hoverMenuUnload) {
       this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'U', 'unloadNode');
     }
+    if (! this.$hoverMenuLoad) {
+      this.$hoverMenuLoad = makeBtn(this, 'load-button', 'L', 'loadNode');
+    }
     if (! this.$hoverMenuTask) {
       this.$hoverMenuTask = makeBtn(this, 'task-button', 'T', 'taskEdit');
     }
@@ -1692,34 +1821,59 @@ export class TreeView extends Tree {
     // skip extra drawing if the menu hasn't changed
     if (this.hoverMenuLast === this.mouseNode) return;
     this.hoverMenuLast = this.mouseNode;
+    const mouseNode = this.mouseNode;
+
     // adjust menu position
     const rect = this.$mouseRow.getBoundingClientRect();
     const zoomLevel = this.cfg.treeViewZoomLevel;
     let hTop = (rect.top + window.scrollY - (3 * zoomLevel))
       / zoomLevel;
     this.$hoverMenu.style.top = String(hTop) + 'px';
+
     // show or hide the 'unload' button
-    if (this.mouseNode.isUnloadable()) {
+    if (mouseNode.isUnloadable() || mouseNode.hasLoadedTabs()) {
       this.$hoverMenuUnload.style.display = 'inline-block';
       this.$hoverMenuUnload.classList.remove('unloaded');
     }
-    else if (this.mouseNode.isUnloadedTab()) {
+    else if (mouseNode.isUnloadedTab()) {
       this.$hoverMenuUnload.style.display = 'inline-block';
       this.$hoverMenuUnload.classList.add('unloaded');
     }
     else this.$hoverMenuUnload.style.display = 'none';
+
+    let winNode;
+    if (mouseNode.isWindow()) winNode = mouseNode;
+    else winNode = mouseNode.getWindowNode();
+
+    // show or hide the 'load' button
+    let loadable;
+    if (mouseNode.isRoot()) loadable = false;
+    else if (mouseNode.isLeaf()) loadable = false;
+    else if (! mouseNode.hasUnloadedTabs()) loadable = false;
+    else if (mouseNode.isWindow()) loadable = false;
+    else if (mouseNode.isLoadable()) loadable = true;
+    else loadable = (winNode && mouseNode.hasUnloadedTabs());
+    if (loadable) {
+      this.$hoverMenuLoad.style.display = 'inline-block';
+      this.$hoverMenuLoad.classList.remove('loaded');
+    }
+    else this.$hoverMenuLoad.style.display = 'none';
+
     // show or hide the 'task' button
-    if ((! this.mouseNode.hasCheckbox()) && (! this.mouseNode.isRoot()))
+    if ((! mouseNode.hasCheckbox()) && (! mouseNode.isRoot()))
       this.$hoverMenuTask.style.display = 'inline-block';
     else this.$hoverMenuTask.style.display = 'none';
+
     // show or hide the 'mark' button
-    if (this.mouseNode.isMarkable())
+    if (mouseNode.isMarkable())
       this.$hoverMenuMark.style.display = 'inline-block';
     else this.$hoverMenuMark.style.display = 'none';
+
     // show or hide the 'delete' button
-    if (this.mouseNode.isDeletable())
+    if (mouseNode.isDeletable())
       this.$hoverMenuDelete.style.display = 'inline-block';
     else this.$hoverMenuDelete.style.display = 'none';
+
     // show the menu
     this.$hoverMenu.classList.remove('hidden');
   }
@@ -2228,6 +2382,7 @@ export const keyBindings = {
   ///// add / remove nodes
   'Enter': 'loadOrEditNode',
   'D': 'deleteNode',
+  'L': 'loadNode',
   'U': 'unloadNode',
   'O': 'addNodeAsNextVisibleRow',
   'Shift+O': 'addNodeAsPrevVisibleRow',
