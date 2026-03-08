@@ -129,8 +129,7 @@ export class Tree {
         this.cfg.watch('hideCollapsedTabs',
           this.onHideCollapsedTabsChanged.bind(this), 1000);
     }
-    if (! this.isInert)
-      await this.cfg.init(this.cfgDefaults);
+    await this.cfg.init(this.cfgDefaults);
     this.initListeners();
   }
 

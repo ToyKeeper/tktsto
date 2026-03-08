@@ -491,8 +491,9 @@ foo {
 }
 
 .node-stats {
-  font-size: 0.8em;
   font-weight: bold;
+  font-size: calc(var(--global-font-size) * 0.8);
+  line-height: calc(var(--global-font-size) * 0.8);
   color: var(--node-stat-dim-color);
 }
 .node-stat-open, .node-stat-total {

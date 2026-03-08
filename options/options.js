@@ -27,7 +27,8 @@ class OptionsPage extends ThemedPage {
       // theme
       theme: 'TK Night',
       // TreeView
-      expandedRowPrefix: true,
+      expandedRowPrefix: false,
+      alwaysShowNodeStats: true,
       cursorFollowsActiveTab: true,
       unloadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
@@ -61,6 +62,10 @@ class OptionsPage extends ThemedPage {
       // TreeView options
       new Option(this, {
         cfgKey: 'expandedRowPrefix',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'alwaysShowNodeStats',
         inputType: 'checkbox',
       }),
       new Option(this, {

@@ -23,7 +23,8 @@ export class ThemedPage {
     this.cfg = new Config();
     this.cfgDefaults = {
       theme: this.defaultTheme,
-      expandedRowPrefix: true,
+      expandedRowPrefix: false,
+      alwaysShowNodeStats: true,
     };
   }
 
@@ -39,6 +40,9 @@ export class ThemedPage {
       this.updateTheme();
     });
     this.cfg.watch('expandedRowPrefix', (key, newVal, oldVal) => {
+      this.updateStyleOptions();
+    });
+    this.cfg.watch('alwaysShowNodeStats', (key, newVal, oldVal) => {
       this.updateStyleOptions();
     });
   }
@@ -116,6 +120,13 @@ export class ThemedPage {
         + "\n.expanded.row::before {"
         + `\n  content: "+";`
         + '\n  margin-left: -2px;'
+        + '\n}';
+    }
+    // show node stats before expanded rows?
+    if (this.cfg.alwaysShowNodeStats) {
+      styleText = styleText
+        + "\n#tree-view .expanded .node-stats {"
+        + '\n  display: unset;'
         + '\n}';
     }
     //debug(`ThemedPage.updateStyleOptions()`, data);

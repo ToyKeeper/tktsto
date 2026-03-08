@@ -140,6 +140,8 @@ export class NodeView extends Node {
     const doc = this.tree.document;
     this.$row.innerHTML = '';  // start empty
 
+    const cfg = this.tree.cfg;
+
     // reset classes
     //this.$row.className = 'row';
     this.$row.classList.add('row');
@@ -183,7 +185,9 @@ export class NodeView extends Node {
     // node stats
     // unsure if always include stats or only when collapsed
     //if (this.hasKids()) {  // always
-    if (this.hasKids() && this.isCollapsed()) {  // only when collapsed
+    if (this.hasKids()
+      && (this.isCollapsed() || cfg.alwaysShowNodeStats)
+    ) {  // only when collapsed or user config forces it
       //  count all open descendants
       const openChildren = this.countNodes(
         function (node) { return node.isLoaded(); }

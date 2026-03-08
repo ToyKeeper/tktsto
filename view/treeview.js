@@ -33,6 +33,7 @@ export class TreeView extends Tree {
       nodesPerPage: 20,
       doubleClickMs: 500,
       treeViewZoomLevel: 1.0,
+      alwaysShowNodeStats: true,
       unloadCollapsedBranchStyle: 'ask',
       unloadExpandedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
@@ -129,6 +130,9 @@ export class TreeView extends Tree {
         (key, newVal, oldVal) => this.setZoomLevel(newVal, oldVal));
       this.setZoomLevel(this.cfg.treeViewZoomLevel, this.cfg.treeViewZoomLevel);
     }
+
+    // config watchers for inert DocTreeViews
+    this.cfg.watch('alwaysShowNodeStats', () => this.$renderWholeTree());
 
     this.nodeIdMimeType = 'application/x-tktsto-node-id';
     // get the window this view is attached to
