@@ -468,6 +468,30 @@ foo {
   content: " ~ ";
 }
 
+/* hr divider rows */
+.node-divider1,
+.node-divider2 {
+  display: inline-block;
+  width: 100%;
+  background: transparent;
+  height: 0;
+  border-top: 0.05em solid var(--tree-line);
+  border-bottom: none;
+  border-left: none;
+  border-right: none;
+  margin: 0.3em 0;
+}
+.node-divider2 {
+  height: 0.1em;
+  margin: 0.2em 0;
+  border-top: 0.05em solid var(--tree-line);
+  border-bottom: 0.05em solid var(--tree-line);
+}
+.cursor .node-divider1,
+.cursor .node-divider2 {
+  border-color: var(--tree-line-cursor);
+}
+
 .expanded.row::before {
   font-weight: bold;
   margin: 0;

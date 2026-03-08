@@ -295,7 +295,15 @@ export class NodeView extends Node {
         $rowTitle.append($nodeLink);
       }
       else {  // label only
-        $rowTitle.append($label);
+        // dividers
+        if (['-', '='].includes(this.label)) {
+          const $hr = doc.createElement('hr');
+          $hr.className = 'node-divider1';
+          if ('=' === this.label) $hr.className = 'node-divider2';
+          $rowTitle.append($hr);
+        } else {  // normal label
+          $rowTitle.append($label);
+        }
       }
     }
     else if (this.url) {  // href only
