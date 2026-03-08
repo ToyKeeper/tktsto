@@ -318,6 +318,7 @@ class Dialog {
           if (! keyName) return;
           const parts = keyName.split('+');
           let last = parts[parts.length-1];
+          let first = parts[0];
           // special cases
           const map = { '': '+', 'Space': ' ' };
           if (map[last]) last = map[last];
@@ -345,8 +346,8 @@ class Dialog {
           // or lowercase with shift+key
           const lower = last.toLowerCase();
           const upper = last.toUpperCase();
-          if (lower === last) last = upper;
-          else last = lower;
+          if ('Shift' === first) last = lower;
+          else last = upper;
           // any single-character key simply becomes a new checkbox value
           if (1 === last.length) return finish({checkbox: last }, event);
           // ... and other keys are simply ignored
