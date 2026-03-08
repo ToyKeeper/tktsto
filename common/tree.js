@@ -9,7 +9,8 @@ import {
 } from '/api.js';
 
 import {
-  log, debug, warn, error, emit, jsonSchema, dateTupleStrings
+  log, debug, warn, error, emit,
+  jsonSchema, dateTupleStrings, isNewTabPage
 } from '/common/common.js';
 import { Node } from '/common/node.js';
 import { Mutex } from '/common/mutex.js';
@@ -1541,28 +1542,5 @@ function findClosestWindowMatch(needle, haystack) {
   const line = bestCandidate ? bestCandidate.winNode.toLine() : '';
   debug(`findClosestWindowMatch() => ${bestScore}: ${line}`);
   return bestCandidate;
-}
-
-
-function isNewTabPage (url) {
-  const prefixes = [
-    // firefox, librewolf, ...
-    'about:newtab',
-    'about:blank',
-    'about:home',
-    'about://newtab',
-    'about://blank',
-    'about://home',
-    // chrome, chromium, ...
-    'chrome://newtab',
-    // edge
-    'edge://newtab',
-    'edge://new-tab-page',
-    // vivaldi
-    'chrome://vivaldi-webui/startpage',
-  ];
-  for (const prefix of prefixes)
-    if (url.startsWith(prefix)) return true;
-  return false;
 }
 

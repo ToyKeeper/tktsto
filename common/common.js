@@ -272,3 +272,26 @@ export function isIllegalURL (url) {
   return false;
 }
 
+
+export function isNewTabPage (url) {
+  const prefixes = [
+    // firefox, librewolf, ...
+    'about:newtab',
+    'about:blank',
+    'about:home',
+    'about://newtab',
+    'about://blank',
+    'about://home',
+    // chrome, chromium, ...
+    'chrome://newtab',
+    // edge
+    'edge://newtab',
+    'edge://new-tab-page',
+    // vivaldi
+    'chrome://vivaldi-webui/startpage',
+  ];
+  for (const prefix of prefixes)
+    if (url.startsWith(prefix)) return true;
+  return false;
+}
+

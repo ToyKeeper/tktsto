@@ -6,7 +6,7 @@
 import { api, isChrome, isFirefox, isZenBrowser } from '/api.js';
 
 import {
-  log, warn, error, debug, emit, isIllegalURL
+  log, warn, error, debug, emit, isIllegalURL, isNewTabPage
 } from '/common/common.js';
 
 
@@ -320,7 +320,7 @@ export class Node {
     if (this.label
       || this.note
       || this.hasCheckbox()
-      || this.isPinned()
+      || (this.isPinned() && (! isNewTabPage(this.url)))
       || this.isBookmark()
       //|| (this.type !== '')  // is a window or something
     ) return true;
