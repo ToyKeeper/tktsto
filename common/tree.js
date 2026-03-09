@@ -816,7 +816,7 @@ export class Tree {
       return error(`Tree.onTabMoved() can't find windowId="${moveInfo.windowId}"`);
     }
     const tabNode = this.getNodeByTabId(tabId);
-    debug(`Tree.onTabMoved(): ${tabNode.toLine()}`);
+    debug(`Tree.onTabMoved(): ${tabNode?.toLine()}`);
     if (! tabNode) {
       // FIXME: also shouldn't happen
       return error(`Tree.onTabMoved() can't find tabId="${tabId}"`);
