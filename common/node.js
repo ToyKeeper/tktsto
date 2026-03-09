@@ -1625,7 +1625,7 @@ export class Node {
     if (! this.isWindow()) return;
 
     // handle the changes after no events have occurred for this long
-    const delayTime = 100;  // ms
+    const delayTime = 150;  // ms
     // reset our timer on each new event
     // so it only fires after events stop coming in
     if (this.setActiveTabTimer) {

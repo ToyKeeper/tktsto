@@ -605,6 +605,8 @@ export class Tree {
       const activeTabs = await api.tabs.query({
         active: true, windowId: tab.windowId });
       const activeTab = activeTabs[0];
+      // FIXME: ensure activeTab and activeTabNode are the same tab
+      // (activeTabNode can be null on rare occasions, not sure how)
       const activeTabNode = winNode.getActiveTab();
       const loadedTabNodes = winNode.getLoadedTabs();
       //debug(`Tree.onTabCreated(): new tab is ${tab.index+1} of ${loadedTabNodes.length}`);
@@ -616,7 +618,7 @@ export class Tree {
       }
 
       // if the active tab is pinned, open just after the "Pinned" area
-      if (activeTabNode.isPinned()
+      if (activeTabNode?.isPinned()
         && (! this.cfg.pinnedTabsOpenNewTabsPinnedToo)
       ) {
         debug(`Tree.onTabCreated(active = pinned): moving new tab outside Pinned area`);

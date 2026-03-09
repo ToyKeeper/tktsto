@@ -949,16 +949,23 @@ export class TreeView extends Tree {
     // non-window branch w/ loaded tabs needs special care
     if (cursor.hasLoadedTabs() && (! cursor.isWindow())) {
       const loadedTabs = cursor.getLoadedTabs();
+      loadedTabs.reverse();  // unload from bottom to top
       if (cursor.isLoadedTab()) loadedTabs.push(cursor);
+      // TODO: sort loadedTabs so active tab (if any) is last
       const cursorLoaded = cursor.isLoadedTab();
       const numLoaded = loadedTabs.length;
-      // if collapsed, unload all but maybe ask first
-      let actionStyle;
-      if (cursor.isCollapsed()) {
-        actionStyle = this.cfg.unloadCollapsedBranchStyle;
-      }
-      // if expanded, behavior is configurable
-      else { actionStyle = this.cfg.unloadExpandedBranchStyle; }
+
+      // check user prefs for what to do
+      let actionStyle = cursor.isCollapsed()
+        ? this.cfg.unloadCollapsedBranchStyle
+        : this.cfg.unloadExpandedBranchStyle;
+
+      // can't use a dialog without a mouse when invoked via command
+      // so change "ask" to "one"
+      if (('ask' === actionStyle) && ('command' === event.type))
+      { actionStyle = 'one'; }
+
+      // ask, if we're gonna
       if ('ask' === actionStyle) {
         let description;
         let buttons;
@@ -1024,17 +1031,17 @@ export class TreeView extends Tree {
     // gather some data about the kids (god that sounds wrong)
     const loadedTabs = cursor.findNodes(
       (n) => n.isLoadedTab(), (n) => (! n.isWindow())
-    );
+    );  loadedTabs.reverse();
     if (cursor.isLoadedTab()) loadedTabs.push(cursor);
 
     const wasLoadedTabs = cursor.findNodes(
       (n) => n.isWasLoadedTab(), (n) => (! n.isWindow())
-    );
+    );  wasLoadedTabs.reverse();
     if (cursor.isWasLoadedTab()) wasLoadedTabs.push(cursor);
 
     const unloadedTabs = cursor.findNodes(
       (n) => n.isUnloadedTab(), (n) => (! n.isWindow())
-    );
+    );  unloadedTabs.reverse();
     if (cursor.isUnloadedTab()) unloadedTabs.push(cursor);
 
     //debug('loadedTabs, wasLoadedTabs, unloadedTabs:', loadedTabs, wasLoadedTabs, unloadedTabs);
@@ -1050,12 +1057,14 @@ export class TreeView extends Tree {
     }
 
     // check user prefs for what to do
-    let actionStyle;
-    if (cursor.isCollapsed()) {
-      actionStyle = this.cfg.loadCollapsedBranchStyle;
-    }
-    // if expanded, behavior is configurable
-    else { actionStyle = this.cfg.loadExpandedBranchStyle; }
+    let actionStyle = cursor.isCollapsed()
+      ? this.cfg.loadCollapsedBranchStyle
+      : this.cfg.loadExpandedBranchStyle;
+
+    // can't use a dialog without a mouse when invoked via command
+    // so change "ask" to "one"
+    if (('ask' === actionStyle) && ('command' === event.type))
+    { actionStyle = 'one'; }
 
     // if cursor is the only node affected, we don't need to ask what to do
     if (wasLoadedTabs[0] === cursor) actionStyle = 'one';
@@ -1064,6 +1073,9 @@ export class TreeView extends Tree {
       actionStyle = 'one';
 
     // decide what we're loading
+    // (the queue puts the top-most row last, so focus will go to the tab
+    //  which is closest to the original cursor position, because that tab
+    //  gets loaded last)
     let numToLoad = wasLoadedTabs.length;
     let styleToLoad = 'wasLoaded';
     let queue = wasLoadedTabs;
@@ -1114,6 +1126,18 @@ export class TreeView extends Tree {
       }
       const failText = (numFailed ? `, ${numFailed} failed` : '');
       this.setStatus(`loaded ${numSucceeded} nodes${failText}`);
+
+      // setActive tab events can get confused when loading so much so fast,
+      // so do it explicitly afterward
+      const lastLoaded = queue[queue.length - 1];
+      if (lastLoaded) {
+        const winNode = lastLoaded.getWindowNode();
+        if (winNode) {
+          setTimeout(() =>
+            winNode.setActiveTab({ reason: 'action_loadNodeBatch' }),
+            500);
+        }
+      }
     }
   }
 
