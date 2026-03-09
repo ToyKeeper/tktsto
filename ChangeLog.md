@@ -3,6 +3,84 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.124.0 (2026-03-09)
+
+Update your preferences in **Options** after updating to this release.
+New stuff was added, and some defaults were changed.  Recommended settings:
+
+- [ ] Draw a + before expanded branches?
+- [ ] Show node stats before expanded branches?
+- [X] Hide tree lines (dim, outside cursor branch)?
+- [ ] Hide cursor branch tree lines?
+- [X] Tree view cursor follows active (focused) tab?
+- When (un)loading/deleting: Ask
+- [ ] When a pinned tab is active and a new tab is opened, pin the new tab too?
+- Automatic backups every 1 to 24 hours
+
+Changes:
+
+- New feature: **hide collapsed tabs** (Firefox only, since Chrome can't
+  hide tabs).  Collapsing a branch hides the tabs in that branch.
+
+- Added ability to **load or unload entire branches**, similar to saving and
+  restoring a window, but for the tabs inside of a branch.
+
+- Added options for **what to do when unloading a branch with loaded tabs**.
+  Unload one, unload all, or ask.  Default is "ask".
+
+- Added an option for **what to do when deleting an expanded parent node**.
+  Delete one (old behavior), delete all, or ask.  Default is "ask".
+
+- Added an option for **whether pinned tabs should open new tabs pinned too**,
+  or if new tabs should be moved outside the "Pinned" area.
+
+- Added options to **hide tree lines** on regular and cursor branches, for
+  those who prefer going without indent lines.
+
+- Added an option to **show node stats on expanded branches**.  Unsure if it
+  should be default, or if the old "show + before expanded branches" should
+  remain as default.  I don't like having either one enabled, but it's good
+  for teaching new users they can click there to collapse the branch.
+
+- Added **divider rows** by adding a node with a label of `-` or `=`.
+  Blank rows can serve a similar purpose, setting a label to ` ` (Space).
+
+- Made **unsaved config options glow** until they're auto-saved, to let user
+  know when it happened.
+
+- **Documentation** updates:  Reorganized the index page.  Added a page
+  documenting **node types**.  Made drag-n-drop docs clearer visually.
+  Re-worded some things.  Improved some aesthetics a little.
+
+Internal:
+
+- New config manager system, so I can finally add **user config options**
+  without a lot of development overhead and complications.
+
+Bug fixes:
+
+- **CapsLock no longer breaks key bindings.**  Oops.  I don't even have
+  a CapsLock key, so I never tried that before.
+
+- Made "cursor follows active tab" work for new tabs too.
+
+- Fixed regression: Two tabs could be marked as active in one window, if the
+  user moved a branch with an active tab from another window.
+
+- The tutorial no longer puts itself before the pinned tabs.  Before,
+  generating a tutorial would unpin all the pinned tabs.
+
+- The "add node" function no longer allows inserting between a window node
+  and its "Pinned" branch, if it has any loaded tabs.  Because that would
+  unpin everything.
+
+- Being pinned is no longer enough to make a "new tab" page count as "not
+  boring".  So closing a pinned "new tab" page with no metadata now deletes
+  it, instead of keeping it.
+
+- Fixed color of bookmark and other icons on cursor row in TK Day theme.
+
+
 ## 0.1.97.1 (2026-03-02)
 
 - Made markdown renderer even safer, to address a warning from Firefox's lint
