@@ -27,6 +27,13 @@ export class ThemedPage {
       alwaysShowNodeStats: true,
       hideTreeLines: false,
       hideCursorTreeLines: false,
+      hideWindowTreeLines: true,
+      fontFamily: '',
+      indentMargin: '',
+      indentPadding: '',
+      indentPaddingWindow: '',
+      detailsBoxHeight: '',
+      detailsBoxHeightNotesOnly: '',
     };
   }
 
@@ -41,18 +48,23 @@ export class ThemedPage {
     this.cfg.watch('theme', (key, newVal, oldVal) => {
       this.updateTheme();
     });
-    this.cfg.watch('expandedRowPrefix', (key, newVal, oldVal) => {
-      this.updateStyleOptions();
-    });
-    this.cfg.watch('alwaysShowNodeStats', (key, newVal, oldVal) => {
-      this.updateStyleOptions();
-    });
-    this.cfg.watch('hideTreeLines', (key, newVal, oldVal) => {
-      this.updateStyleOptions();
-    });
-    this.cfg.watch('hideCursorTreeLines', (key, newVal, oldVal) => {
-      this.updateStyleOptions();
-    });
+    for (const option of [
+      'expandedRowPrefix',
+      'alwaysShowNodeStats',
+      'hideTreeLines',
+      'hideCursorTreeLines',
+      'hideWindowTreeLines',
+      'fontFamily',
+      'indentMargin',
+      'indentPadding',
+      'indentPaddingWindow',
+      'detailsBoxHeight',
+      'detailsBoxHeightNotesOnly',
+    ]) {
+      this.cfg.watch(option, (key, newVal, oldVal) => {
+        this.updateStyleOptions();
+      });
+    }
   }
 
   initElements () {
@@ -151,8 +163,30 @@ export class ThemedPage {
         + '\n  border-left-color: transparent;'
         + '\n}';
     }
+    // hide tree lines for first children of window nodes
+    if (this.cfg.hideWindowTreeLines) {
+      styleText = styleText
+        + "\n.window > .nodes, .cursor.window > .nodes {"
+        + '\n  border-left-color: transparent;'
+        + '\n}';
+    }
+    // CSS variables
+    styleText += '\n:root {';
+    for (const [opt, varName] of [
+      ['fontFamily', '--font-family'],
+      ['indentMargin', '--indent-margin'],
+      ['indentPadding', '--indent-padding'],
+      ['indentPaddingWindow', '--indent-padding-window'],
+      ['detailsBoxHeight', '--details-box-height'],
+      ['detailsBoxHeightNotesOnly', '--details-box-height-notes-only'],
+    ]) {
+      const val = this.cfg[opt];
+      if (val) { styleText += `\n  ${varName}: ${val};`; }
+    }
+    styleText += '\n}';
     //debug(`ThemedPage.updateStyleOptions()`, data);
     // apply the changes
+    //debug('styleOptions:', styleText);
     this.$styleOptions.textContent = styleText;
   }
 

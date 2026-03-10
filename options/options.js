@@ -26,11 +26,18 @@ class OptionsPage extends ThemedPage {
       localBackupInterval: null,
       // theme
       theme: 'TK Night',
-      // TreeView
       expandedRowPrefix: false,
       alwaysShowNodeStats: true,
       hideTreeLines: false,
       hideCursorTreeLines: false,
+      hideWindowTreeLines: true,
+      fontFamily: '',
+      indentMargin: '',
+      indentPadding: '',
+      indentPaddingWindow: '',
+      detailsBoxHeight: '',
+      detailsBoxHeightNotesOnly: '',
+      // TreeView behavior
       cursorFollowsActiveTab: true,
       loadExpandedBranchStyle: 'ask',
       loadCollapsedBranchStyle: 'ask',
@@ -62,8 +69,6 @@ class OptionsPage extends ThemedPage {
         cfgKey: 'theme',
         inputType: 'select',
       }),
-
-      // TreeView options
       new Option(this, {
         cfgKey: 'expandedRowPrefix',
         inputType: 'checkbox',
@@ -80,6 +85,42 @@ class OptionsPage extends ThemedPage {
         cfgKey: 'hideCursorTreeLines',
         inputType: 'checkbox',
       }),
+      new Option(this, {
+        cfgKey: 'hideWindowTreeLines',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'fontFamily',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'indentMargin',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'indentPadding',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'indentPaddingWindow',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'detailsBoxHeight',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'detailsBoxHeightNotesOnly',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+
+      // TreeView behavior
       new Option(this, {
         cfgKey: 'cursorFollowsActiveTab',
         inputType: 'checkbox',

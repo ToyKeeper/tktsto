@@ -16,15 +16,20 @@ foo {
   color: var(--cursor-fg-override);
 }
 
+/* .cursor.row .icon, .cursor.row .node-note-icon { */
 .cursor.row .icon {
   background-color: var(--cursor-fg-override);
 }
 
 /* make node stats easier to read on window nodes */
-.window.row .node-stats * {
+.window.row .node-stats *,
+.window.row .icon,
+.window.row .node-note-icon {
   color: var(--window-loaded-fg);
 }
-.window.row.active .node-stats * {
+.window.row.active .node-stats *,
+.window.row.active .icon,
+.window.row.active .node-note-icon {
   color: var(--window-active-fg);
 }
 .window.row * {

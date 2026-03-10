@@ -250,9 +250,9 @@ foo {
   display: block;
   padding: 0;
   margin: 0;
-  margin-left: 0.27rem;
+  margin-left: var(--indent-margin);
   border-left: 2px solid var(--tree-line);
-  padding-left: 0.4rem;
+  padding-left: var(--indent-padding);
   /* border-radius: 0 0 0 3px; */
 }
 
@@ -537,6 +537,14 @@ foo {
 
 
 /******************** window nodes ********************/
+
+.window > .nodes {
+  padding-left: var(--indent-padding-window);
+  border-left: 2px solid var(--tree-line-window);
+}
+.cursor.window > .nodes {
+  border-left: 2px solid var(--tree-line-window-cursor);
+}
 
 .window.node {
   /* put some extra space between window nodes */
@@ -1094,6 +1102,9 @@ select {
   --button-font-size: 1rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
+  --indent-margin: 0.27rem;
+  --indent-padding: 0.4rem;
+  --indent-padding-window: 0;
   --1px: 0.08rem;  /* Like 1 pixel, but scalable */
   --2px: 0.15rem;
   --shadow-color: #000000c0;
@@ -1122,6 +1133,8 @@ select {
   /***** main tree view *****/
   /***** tree lines *****/
   --tree-line-dragging: #f0f;
+  --tree-line-window: var(--tree-line);
+  --tree-line-window-cursor: var(--tree-line-cursor);
   /***** window nodes *****/
   --window-title-text-shadow: var(--fancy-text-shadow);
   --window-branch-shadow: 0.10em 0.10em 0.25em var(--shadow-color);
