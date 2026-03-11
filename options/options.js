@@ -46,10 +46,8 @@ class OptionsPage extends ThemedPage {
       unloadCollapsedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
       pinnedTabsOpenNewTabsPinnedToo: false,
+      hideCollapsedTabs: false,
     };
-    if (isFirefox) {
-      this.cfgDefaults.hideCollapsedTabs = true;
-    }
   }
 
   async init () {

@@ -44,7 +44,7 @@ export class Tree {
       clientId: null,
       humanFriendlyBackups: false,
       localBackupLastTimeCompleted: 0,
-      hideCollapsedTabs: (!! isFirefox),
+      hideCollapsedTabs: false,
       hideCollapsedTabGroups: true,
       pinnedTabsOpenNewTabsPinnedToo: false,
     };
