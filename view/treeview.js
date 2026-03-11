@@ -30,6 +30,7 @@ export class TreeView extends Tree {
 
     this.cfgDefaults = { ...this.cfgDefaults,
       cursorFollowsActiveTab: true,
+      activeTabExpandsItsParents: true,
       nodesPerPage: 20,
       doubleClickMs: 500,
       treeViewZoomLevel: 1.0,
@@ -131,6 +132,21 @@ export class TreeView extends Tree {
       this.cfg.watch('treeViewZoomLevel',
         (key, newVal, oldVal) => this.setZoomLevel(newVal, oldVal));
       this.setZoomLevel(this.cfg.treeViewZoomLevel, this.cfg.treeViewZoomLevel);
+
+      // clear "expanded" overrides when this option is turned off
+      this.cfg.watch('activeTabExpandsItsParents',
+        (key, newVal, oldVal) => {
+          if (! newVal) {
+            this.viewRoot.findNodes(
+              (n) => { n.expandedOverride = undefined; return true; },
+              (n) => true,
+            );
+            this.ensureCursorVisible();
+            this.$renderWholeTree();
+          }
+        },
+        1000  // debounce a bit since this change is expensive
+      );
     }
 
     // config watchers for inert DocTreeViews
@@ -1984,8 +2000,13 @@ export class TreeView extends Tree {
       // if active tab exists but is hidden, put cursor on visible parent
       // otherwise put cursor on window node
       let visibleNode = activeTabNode ? activeTabNode : viewRoot;
-      if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot)))
-        visibleNode = visibleNode.prevVisibleNode(viewRoot);
+      if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot))) {
+        if (this.cfg.activeTabExpandsItsParents) {
+          visibleNode.setActive(true, { localOverride: true });
+        } else {
+          visibleNode = visibleNode.prevVisibleNode(viewRoot);
+        }
+      }
       debug(`TreeView.ensureCursorVisible(visibleNode)`, visibleNode);
       return await this.setCursor(visibleNode);
     }

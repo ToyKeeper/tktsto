@@ -718,6 +718,11 @@ export class NodeView extends Node {
   }
 
   isExpanded () {
+    if (undefined !== this.expandedOverride) {
+      if (this.expandedOverride === this.expanded)
+        this.expandedOverride = undefined;
+      else return this.expandedOverride;
+    }
     // Session mode is simple, no overrides needed
     if ('window' !== this.tree.viewScope) return this.expanded;
     // in "Window" view mode,
@@ -758,8 +763,16 @@ export class NodeView extends Node {
         changed = false;
       }
     }
+    // local override when cfg.activeTabExpandsItsParents
+    else if (args.localOverride && ('userAction' === args.reason)) {
+      // fake expanded state, this view only
+      wasExpanded = this.isExpanded();
+      this.expandedOverride = expanded;
+      changed = (expanded !== wasExpanded);
+    }
     else {
       wasExpanded = this.expanded;
+      this.expandedOverride = undefined;
       changed = await super.setExpanded(expanded, args);
     }
 
@@ -793,7 +806,9 @@ export class NodeView extends Node {
   }
 
   async setActive (active, ...args) {
-    const changed = super.setActive(active, ...args);
+    let changed;
+    if (args.localOverride) changed = true;
+    else changed = super.setActive(active, ...args);
     // abort on no-op
     if (! changed) return;
     // move the cursor maybe
@@ -802,7 +817,30 @@ export class NodeView extends Node {
       const winNode = this.getWindowNode();
       if (winNode.windowId === this.tree.windowId) {
         const activeTab = winNode.getActiveTab();
-        if (activeTab) this.tree.setCursor(activeTab);
+        if (activeTab) {
+          if (this.tree.cfg.activeTabExpandsItsParents) {
+            // un-override previous active tab
+            let node = winNode.prevActiveTab;
+            while (node && node.isChildOf(winNode)
+              && (! activeTab.isChildOf(node))
+            ) {
+              node.setExpanded(node.expanded, {
+                reason: 'userAction', localOverride: true,
+              });
+              node = node.parent;
+            }
+            // force expand new active tab
+            node = activeTab.parent;
+            while (node && node.isChildOf(winNode)) {
+              node.setExpanded(true, {
+                reason: 'userAction', localOverride: true,
+              });
+              node = node.parent;
+            }
+          }
+          this.tree.setCursor(activeTab);
+          winNode.prevActiveTab = activeTab;
+        }
       }
     }
     return await this.renderIfChanged(changed);

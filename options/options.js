@@ -39,6 +39,7 @@ class OptionsPage extends ThemedPage {
       detailsBoxHeightNotesOnly: '',
       // TreeView behavior
       cursorFollowsActiveTab: true,
+      activeTabExpandsItsParents: true,
       loadExpandedBranchStyle: 'ask',
       loadCollapsedBranchStyle: 'ask',
       unloadExpandedBranchStyle: 'ask',
@@ -123,6 +124,10 @@ class OptionsPage extends ThemedPage {
       // TreeView behavior
       new Option(this, {
         cfgKey: 'cursorFollowsActiveTab',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'activeTabExpandsItsParents',
         inputType: 'checkbox',
       }),
       new Option(this, {
