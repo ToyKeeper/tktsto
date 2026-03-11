@@ -33,6 +33,7 @@ class OptionsPage extends ThemedPage {
       hideWindowTreeLines: true,
       fontFamily: '',
       indentMargin: '',
+      indentMarginWindow: '',
       indentPadding: '',
       indentPaddingWindow: '',
       detailsBoxHeight: '',
@@ -95,6 +96,11 @@ class OptionsPage extends ThemedPage {
       }),
       new Option(this, {
         cfgKey: 'indentMargin',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'indentMarginWindow',
         inputType: 'line',
         debounceTime: 2000,
       }),

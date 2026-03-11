@@ -539,6 +539,7 @@ foo {
 /******************** window nodes ********************/
 
 .window > .nodes {
+  margin-left: var(--indent-margin-window);
   padding-left: var(--indent-padding-window);
   border-left: 2px solid var(--tree-line-window);
 }
@@ -1102,9 +1103,10 @@ select {
   --button-font-size: 1rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
-  --indent-margin: 0.27rem;
-  --indent-padding: 0.4rem;
-  --indent-padding-window: 0;
+  --indent-margin: 0.27em;
+  --indent-margin-window: 0;
+  --indent-padding: 0.4em;
+  --indent-padding-window: 0.2em;
   --1px: 0.08rem;  /* Like 1 pixel, but scalable */
   --2px: 0.15rem;
   --shadow-color: #000000c0;

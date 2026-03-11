@@ -30,6 +30,7 @@ export class ThemedPage {
       hideWindowTreeLines: true,
       fontFamily: '',
       indentMargin: '',
+      indentMarginWindow: '',
       indentPadding: '',
       indentPaddingWindow: '',
       detailsBoxHeight: '',
@@ -56,6 +57,7 @@ export class ThemedPage {
       'hideWindowTreeLines',
       'fontFamily',
       'indentMargin',
+      'indentMarginWindow',
       'indentPadding',
       'indentPaddingWindow',
       'detailsBoxHeight',
@@ -175,6 +177,7 @@ export class ThemedPage {
     for (const [opt, varName] of [
       ['fontFamily', '--font-family'],
       ['indentMargin', '--indent-margin'],
+      ['indentMarginWindow', '--indent-margin-window'],
       ['indentPadding', '--indent-padding'],
       ['indentPaddingWindow', '--indent-padding-window'],
       ['detailsBoxHeight', '--details-box-height'],
