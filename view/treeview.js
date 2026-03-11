@@ -415,7 +415,7 @@ export class TreeView extends Tree {
     let $node;  // Node's ul.node element
     let $row;  // Node's div.row element
     let $elem;  // most specific element we care about
-    //debug(`mouseEvent(${eventType}):`, $target);
+    //debug(`mouseEvent(${eventType}):`, $target, event);
     while ($target && $target.classList) {
       const className = $target.classList[0];
       if ((! $elem) && [
@@ -1483,7 +1483,11 @@ export class TreeView extends Tree {
     //if (! this.mouseDragStartNode) this.mouseDragStartNode = this.mouseNode;
     //this.mouseDragStartNode = this.mouseNode;
 
-    // add info for internal use, when dragging between 2 tktsto panels
+    // add info for internal use
+    // browser blocks event.dataTransfer.getData() during a drag,
+    // so we have to embed the data into the mimetype itself :(
+    const mimeTypeHack = `${this.nodeIdMimeType}-${this.mouseDragStartNode.id}`;
+    event.dataTransfer.setData(mimeTypeHack, this.mouseDragStartNode.id);
     event.dataTransfer.setData(this.nodeIdMimeType, this.mouseDragStartNode.id);
 
     // attach a text representation in case the user drops into a text field
@@ -1509,8 +1513,9 @@ export class TreeView extends Tree {
   getMouseDragTarget (event) {
     const result = {};
     // drop target
-    let sourceNode = this.mouseDragStartNode;
+    let sourceNode;
     let targetNode = this.mouseNode;
+    //debug(`targetNode:`, targetNode);
     // abort on no-op
     if (! targetNode) return result;
 
@@ -1519,31 +1524,41 @@ export class TreeView extends Tree {
     // internal (from a TreeView in this extension)
     if (types.includes(this.nodeIdMimeType)) {
       result.source = 'internal';
-      // if (sourceNode) { drop to/from same sidepanel, extra code needed }
-      if (! sourceNode) {
-        // drop from one sidepanel to another
-        const nodeId = event.dataTransfer.getData(this.nodeIdMimeType);
-        if (nodeId) {
-          sourceNode = this.nodes[nodeId];
-          if (! sourceNode) {
-            // return result;
-            // dragged from other tktsto instance with different node IDs?
-            result.source = undefined;
-          }
-        }
+      // drop within a single sidepanel, or from one sidepanel to another
+      let nodeId = event.dataTransfer.getData(this.nodeIdMimeType);
+      if (! nodeId) {
+        // 1st method only works at the end of a drag, not during the middle
+        // extract node ID from the mimetype itself
+        const prefix = this.nodeIdMimeType + '-';
+        nodeId = types.find(t => t.startsWith(prefix))?.slice(prefix.length);
       }
+      //debug(`nodeId: ${nodeId}`, nodeId);
+      if (nodeId) {
+        sourceNode = this.nodes[nodeId];
+        if (! sourceNode) {
+          // return result;
+          // dragged from other tktsto instance with different node IDs?
+          result.source = undefined;
+        }
+      } // else { debug('no nodeId'); }
+      // don't move a parent into its own child list
+      if (sourceNode === targetNode) return result;
+      if (sourceNode && targetNode.isChildOf(sourceNode)) return result;
     }
-    // drop from some other source
-    if (! result.source) result.source = 'external';
 
-    // don't move a parent into its own child list
-    if (sourceNode && targetNode.isChildOf(sourceNode)) return result;
+    // drop from some other source
+    if (! result.source) {
+      //debug('source: external');
+      result.source = 'external';
+      sourceNode = undefined;
+    }
 
     // source and target confirmed
     result.sourceNode = sourceNode;
     result.targetNode = targetNode;
     // external drops are complicated
     if ('external' === result.source) {
+      result.sourceNode = undefined;
       // URL (Firefox)
       if (types.includes('text/x-moz-url')) {
         result.type = 'url';
@@ -1611,10 +1626,10 @@ export class TreeView extends Tree {
     this.scrollDuringDrag (event);
     // figure out where to drop it
     const drop = this.getMouseDragTarget(event);
-    // abort on no-op
-    if (! drop.targetNode) return;
     // remove styles of previous drop target
     this.clearDropTargetNodeStyles();
+    // abort on no-op
+    if (! drop.targetNode) return;
     // save new drop target
     this.dropTargetNode = drop.targetNode;
     // set styles on new drop target
@@ -1687,6 +1702,7 @@ export class TreeView extends Tree {
     // clean up at the end
     let finished = false;
     const finish = (msg) => {
+      debug(`mouseDrop.finish(): ${msg}`);
       // only finish once
       if (finished) return;
       finished = true;
@@ -1697,13 +1713,13 @@ export class TreeView extends Tree {
     // figure out where to drop it
     const drop = this.getMouseDragTarget(event);
     // abort on no-op
-    if (! drop.targetNode) return finish('drop aborted');
-    if (drop.targetNode === drop.sourceNode) return finish('drop aborted');
+    if (! drop.targetNode) return finish('drop aborted (no target)');
     // internal source: move the node
     if ('internal' === drop.source) {
+      if (drop.targetNode === drop.sourceNode) return finish('drop aborted (self target)');
       // don't move a parent into its own child list
       if (drop.targetNode.isChildOf(drop.sourceNode))
-        return finish('drop aborted');
+        return finish('drop aborted (own child)');
       // prevent cursor from disappearing or jumping
       const wasCursor = this.cursor === drop.sourceNode;
       if (wasCursor && (drop.destParent.isCollapsed()))
@@ -1779,12 +1795,10 @@ export class TreeView extends Tree {
     }
     // clean up, just in case
     // (because 'dragend' event doesn't trigger sometimes)
-    finish();
+    finish('drop cleanup');
   }
 
   action_mouseDragEnd (event) {
-    // abort on no-op
-    //if (! this.mouseDragStartNode) return;
     // fix how the node looks
     if (this.mouseDragStartNode)
       this.mouseDragStartNode.$.classList.remove('dragging');
@@ -1795,6 +1809,7 @@ export class TreeView extends Tree {
     this.dragInProgress = false;
     // stop any scrolling in progress
     this.dragScrollSpeed = 0;
+    this.actualScrollSpeed = 0;
   }
 
   action_mouseDragLeave (event) {
