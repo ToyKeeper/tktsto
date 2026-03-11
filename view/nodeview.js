@@ -544,7 +544,10 @@ export class NodeView extends Node {
     //newNode.window = this.window;  // redundant?
 
     // display it
-    if (details.render && newNode.isChildOf(this.tree.viewRoot, true)) {
+    if (details.render
+      && this.isExpanded()
+      && newNode.isChildOf(this.tree.viewRoot, true)
+    ) {
       // ensure our elements exist before modifying them
       if (! this.$nodes) this.$render();
 
@@ -560,6 +563,8 @@ export class NodeView extends Node {
       } else {
         this.$nodes.appendChild(newNode.$);
       }
+    }
+    if (details.render) {
       // refresh displayed info
       this.$refreshAncestry();
     }
