@@ -75,6 +75,20 @@ export class TreeStore extends Tree {
     if (numLoaded !== numIds) {
       await this.reattachOrphanedNodes(nodeIds);
     }
+
+    // look for empty boring windows and delete them
+    // (because Firefox, for some reason, keeps accumulating these)
+    const boringEmptyWinNodes = this.root.findNodes(
+      (n) => (n.isWindow()
+        && (! n.hasKids())
+        && (! n.shouldUnloadNotDelete())),
+      (n) => true,
+    );
+    for (const toDelete of boringEmptyWinNodes) {
+      debug(`delete boringEmptyWinNodes: ${toDelete.toLine()}`, toDelete);
+      await toDelete.deleteSelf({ reason: 'emptyWindowClosed' });
+    }
+    // TODO: if lost+found exists with nothing inside, delete it too?
   }
 
   async reattachOrphanedNodes (nodeIds) {

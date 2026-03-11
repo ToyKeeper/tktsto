@@ -323,7 +323,26 @@ class Bkgd {
         // detect whether tab is already in tree
         // (it usually should be, since findMatchingWindow() attaches tabIds)
         const tabNode = this.tree.getNodeByTabId(tab.id);
-        if (tabNode) continue;
+        if (tabNode) {
+          // if found, ensure tab node matches browser tab's data
+          debug(`Found: ${tabNode.toLine()}`, tabNode);
+          const changes = {
+            loaded: true,
+            wasLoaded: false,
+            windowId: tab.windowId,
+            active: tab.active,
+            discarded: tab.discarded,
+            frozen: tab.frozen,
+            hidden: tab.hidden,
+            incognito: tab.incognito,
+          };
+          let changed = false;
+          for (const [key, value] of Object.entries(changes))
+          { if (tabNode[key] !== value) changed = true; }
+          if (changed) await tabNode.setTabFields(changes,
+            { reason: 'mergeOpenWindowsIntoTree' });
+          continue;
+        }
         // if not, add new tab to the tree
         // TODO: ... in an appropriate position
         let destParent = winNode;
@@ -344,6 +363,7 @@ class Bkgd {
           title: tab.title,
           url: tab.url,
           loaded: true,
+          wasLoaded: false,
           active: tab.active,
           discarded: tab.discarded,
           frozen: tab.frozen,

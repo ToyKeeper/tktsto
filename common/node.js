@@ -998,7 +998,8 @@ export class Node {
     if ([
       'onTabCreated', 'onTabUpdated', 'onTabReplaced',
       'onWindowCreated', 'onWindowFocusChanged', 'onWindowBoundsChanged',
-      'userAction', 'convertNodeToWindow', 'convertNodeFromWindow'
+      'userAction', 'convertNodeToWindow', 'convertNodeFromWindow',
+      'mergeOpenWindowsIntoTree'
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'setTabFields',
