@@ -3,6 +3,40 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.135.0 (2026-03-12)
+
+Changes:
+
+- Added **appearance options**: font, indentation, window tree lines, details
+  box size, user styles (full CSS editing).
+
+- Added feature to **expand branches when the cursor follows active tab**.
+  That means you can keep your headings collapsed, and they'll open/close on
+  their own as you change tabs.
+
+- Firefox: Turned off "hide collapsed tabs" by default, since it'll likely
+  confuse new users and it interacts badly with the new auto-expand
+  auto-collapse branch feature.
+
+- Reorganized the Options page a bit.
+
+- Reduced indentation of top-level items within a window.
+
+Bug fixes:
+
+- **Fixed** a bunch of cases where **drag-n-drop** didn't work.
+
+- **Fsck now deletes boring empty window nodes**, so if those have been
+  accumulating in your session, they should clean themselves up now.
+
+- Fixed issue where **saved windows wouldn't load** because they were
+  **partially offscreen**.
+
+- Fixed some cases where tab data didn't update while attaching windows at
+  boot time.
+
+- Fixed wrong color of note icon in window nodes in TK Day theme.
+
 ## 0.1.124.0 (2026-03-09)
 
 Update your preferences in **Options** after updating to this release.
