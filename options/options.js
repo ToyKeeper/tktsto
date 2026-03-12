@@ -38,6 +38,7 @@ class OptionsPage extends ThemedPage {
       indentPaddingWindow: '',
       detailsBoxHeight: '',
       detailsBoxHeightNotesOnly: '',
+      userStyles: '',
       // TreeView behavior
       cursorFollowsActiveTab: true,
       activeTabExpandsItsParents: true,
@@ -122,6 +123,11 @@ class OptionsPage extends ThemedPage {
       new Option(this, {
         cfgKey: 'detailsBoxHeightNotesOnly',
         inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'userStyles',
+        inputType: 'text',
         debounceTime: 2000,
       }),
 

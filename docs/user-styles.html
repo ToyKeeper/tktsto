@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- tktsto documentation page
+  -- Copyright (C) 2026 Selene ToyKeeper
+  -- SPDX-License-Identifier: AGPL-3.0-or-later
+  -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="module" src="./docs.js"></script>
+  <title>User Styles</title>
+</head>
+<body class="docs">
+
+<h2> User Styles </h2>
+
+<p>
+
+In the "user styles" config option, you can enter any CSS you want, to change
+the appearance of the Tree Views and other TKTSTO pages.
+
+</p><p>
+
+For example, this is what someone might write there to make rows light up
+purple when the mouse passes over them, and hide the hover menu, and
+increase the spacing between rows a little bit:
+
+</p>
+
+<pre>
+/* highlight the row under the mouse in purple */
+.row:hover {
+  background: linear-gradient(#62116c, #2f183b) !important;
+  outline: var(--1px) solid #f0f8 !important;
+  border-radius: 0.5em;
+}
+.row:hover * {
+  /* very light purple text */
+  color: #fcf !important;
+}
+
+/* don't show the hover menu at all, ever */
+#hover-menu {
+  display: none;
+}
+
+:root {
+  /* space out the rows a little bit */
+  --row-padding: 0.1em;
+}
+</pre>
+
+<p>
+
+To see what specific stylings might be useful to override, take a look at
+the default
+<a href="/themes/tk.css">theme base</a>, the
+<a href="/themes/tk-night.css">night theme</a>, and the
+<a href="/themes/tk-day.css">day theme</a>.
+Particularly the parts at the bottom, inside of <code>:root { ... }</code>
+because those variables are relatively easy to modify.
+
+</p><p>
+
+... and if you make a cool theme, send it in so it can be included
+for everyone else to use!  &lt;3
+
+</p>
+
+</body>
+</html>
+

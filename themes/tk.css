@@ -325,8 +325,11 @@ foo {
   line-height: var(--row-line-height);
   min-height: var(--row-min-height);  /* ensure row still visible even when empty */
   font-size: var(--global-font-size);
+  padding-top: var(--row-padding);
+  padding-bottom: var(--row-padding);
   padding-left: 2px;
   width: unset;
+
 }
 
 .row a {
@@ -924,7 +927,8 @@ foo {
 
 .dialog input,
 .dialog textarea,
-.options input {
+.options input,
+.options textarea {
   background: var(--dialog-input-bg);
   border: var(--1px) inset var(--dialog-input-border);
   border-radius: 3px;
@@ -956,11 +960,17 @@ foo {
   margin-right: 0.5em;
 }
 
-.dialog textarea {
+.dialog textarea,
+.options textarea {
   /* height: 100%; */
   min-height: 10em;
   color: var(--note-fg);
   font-size: calc(var(--global-font-size) * 0.8);
+}
+.options textarea {
+  margin: 0 0.25em;
+  max-width: calc(100% - 1em);
+  min-height: 4em;
 }
 
 #dialogButtons {
@@ -1103,6 +1113,7 @@ select {
   --button-font-size: 1rem;
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
+  --row-padding: 0;
   --indent-margin: 0.27em;
   --indent-margin-window: 0;
   --indent-padding: 0.4em;

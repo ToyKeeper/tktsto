@@ -35,6 +35,7 @@ export class ThemedPage {
       indentPaddingWindow: '',
       detailsBoxHeight: '',
       detailsBoxHeightNotesOnly: '',
+      userStyles: '',
     };
   }
 
@@ -48,6 +49,9 @@ export class ThemedPage {
     // config watchers
     this.cfg.watch('theme', (key, newVal, oldVal) => {
       this.updateTheme();
+    });
+    this.cfg.watch('userStyles', (key, newVal, oldVal) => {
+      this.updateUserStyles();
     });
     for (const option of [
       'expandedRowPrefix',
@@ -194,8 +198,11 @@ export class ThemedPage {
   }
 
   updateUserStyles () {
-    // TODO: add support for user styles
-    //   (a text area in the config options where user CSS can go)
+    // full user stylesheet, can contain anything
+    // (a text area in the config options where user CSS can go)
+    let styleText = '';
+    if (this.cfg.userStyles) styleText = this.cfg.userStyles;
+    this.$userStyles.textContent = styleText;
   }
 
 }
