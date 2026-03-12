@@ -701,7 +701,11 @@ class Bkgd {
             // ignore their saved position
             // It's stupid that we have to do this, instead of the browser just
             // moving the window to an allowed position+size.
-            delete createData.geometry;
+            debug('deleting invalid window bounds');
+            delete createData.width;
+            delete createData.height;
+            delete createData.left;
+            delete createData.top;
             await api.windows.create(createData);
           }
           else { throw err; }
