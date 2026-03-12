@@ -4,7 +4,7 @@
   color: var(--tab-loaded-fg);
   font-size: calc(var(--global-font-size) * 0.9);
   padding: 0.1em 0.2em;
-  margin-bottom: var(--dialog-padding);
+  margin-top: var(--dialog-padding);
 }
 
 .short-input {

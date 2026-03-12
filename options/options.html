@@ -30,71 +30,66 @@
   </ul>
 
   <form id="options-form" accept-charset="utf-8">
-    <label for="clientId">ID for this browser: (a-z and 0-9 only)</label>
+    <label>
     <input type="text" maxlength="8" class="short-input"
       id="clientId" name="clientId" required />
+    ID for this browser: (a-z and 0-9 only)
+    </label>
   </form>
 
 
-  <h2>Theme</h2>
+  <h2>Appearance</h2>
 
   <div>
-    <label>Theme:</label>
+    <label>
     <select id="theme" name="theme">
       <option value="TK Night">TK Night</option>
       <option value="TK Day">TK Day</option>
     </select>
+    Theme
+    </label>
   </div>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="expandedRowPrefix" name="expandedRowPrefix">
     Draw a <code>+</code> before expanded branches?
     </label>
-    </p>
   </div>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="alwaysShowNodeStats" name="alwaysShowNodeStats">
     Show node stats before expanded branches?
     </label>
-    </p>
   </div>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="hideTreeLines" name="hideTreeLines">
     Hide tree lines?
     </label>
-    </p>
   </div>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="hideCursorTreeLines" name="hideCursorTreeLines">
     Hide cursor branch tree lines?
     </label>
-    </p>
   </div>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="hideWindowTreeLines" name="hideWindowTreeLines">
     Hide window tree lines?
     </label>
-    </p>
   </div>
 
   <div>
-    <label>Font family:
+    <label>
     <input type="text" id="fontFamily" name="fontFamily"
       placeholder="Arial, Tahoma, Geneva, sans-serif" />
+    Font family:
     </label>
     <small>
     Arial, Georgia, Humor Sans, Comic Sans MS, Quicksand, DejaVu Sans, Verdana,
@@ -104,46 +99,52 @@
   </div>
 
   <div>
-    <label>Indent margin:
+    <label>
     <input type="text" id="indentMargin" name="indentMargin"
       placeholder="0.27em" />
+    Indent margin
     </label>
   </div>
 
   <div>
-    <label>Indent margin (window nodes):
+    <label>
     <input type="text" id="indentMarginWindow" name="indentMarginWindow"
       placeholder="0" />
+    Indent margin (window nodes)
     </label>
   </div>
 
   <div>
-    <label>Indent padding:
+    <label>
     <input type="text" id="indentPadding" name="indentPadding"
       placeholder="0.4em" />
+    Indent padding:
     </label>
     0.4em, 1em, ...
   </div>
 
   <div>
-    <label>Indent padding (window nodes):
+    <label>
     <input type="text" id="indentPaddingWindow" name="indentPaddingWindow"
       placeholder="0.2em" />
+    Indent padding (window nodes)
     </label>
   </div>
 
   <div>
-    <label>Details box height:
+    <label>
     <input type="text" id="detailsBoxHeight" name="detailsBoxHeight"
       placeholder="8rem" />
+    Details box height:
     </label>
     Example: 25vh or 12em
   </div>
 
   <div>
-    <label>Details box height (in "notes" mode):
+    <label>
     <input type="text" id="detailsBoxHeightNotesOnly" name="detailsBoxHeightNotesOnly"
       placeholder="8rem" />
+    Details box height (in "notes" mode):
     </label>
     Example: 10vh or 6em
   </div>
@@ -159,89 +160,91 @@
   <h2>Tree View behavior</h2>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="cursorFollowsActiveTab"
                            name="cursorFollowsActiveTab">
     Tree view cursor follows active (focused) tab?
     </label>
-    </p>
   </div>
 
   <div>
-    <p>
     <label>
     <input type="checkbox" id="activeTabExpandsItsParents"
                            name="activeTabExpandsItsParents">
     While following active tab, expand the tab's parents?
     </label>
-    </p>
   </div>
 
   <div>
-    <label>When loading an expanded parent node with saved tabs:</label>
-    <select id="loadExpandedBranchStyle" name="loadExpandedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Load parent only</option>
-      <option value="all">Load entire branch without asking</option>
-    </select>
-  </div>
-
-  <div>
-    <label>When loading a collapsed parent node with saved tabs:</label>
-    <select id="loadCollapsedBranchStyle" name="loadCollapsedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Load parent only</option>
-      <option value="all">Load entire branch without asking</option>
-    </select>
-  </div>
-
-  <div>
-    <label>When unloading an expanded parent node:</label>
-    <select id="unloadExpandedBranchStyle" name="unloadExpandedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Unload parent only</option>
-      <option value="all">Unload entire branch without asking</option>
-    </select>
-  </div>
-
-  <div>
-    <label>When unloading a collapsed parent node:</label>
-    <select id="unloadCollapsedBranchStyle" name="unloadCollapsedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Unload parent only</option>
-      <option value="all">Unload entire branch without asking</option>
-    </select>
-  </div>
-
-  <div>
-    <label>When deleting an expanded parent node:</label>
-    <select id="deleteExpandedBranchStyle" name="deleteExpandedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Delete parent and promote all children</option>
-      <option value="all">Delete entire branch without asking</option>
-    </select>
+    <label>
+    <input type="checkbox" id="pinnedTabsOpenNewTabsPinnedToo"
+                           name="pinnedTabsOpenNewTabsPinnedToo">
+    When a pinned tab is active and a new tab is opened, pin the new tab too?
+    </label>
   </div>
 
   <div class="isFirefox">
-    <p>
     <label>
     <input type="checkbox" id="hideCollapsedTabs"
                            name="hideCollapsedTabs">
     Hide tabs in browser's tab bar when those tabs are in a collapsed branch?
     (Firefox-based browsers only)
     </label>
-    </p>
   </div>
 
   <div>
-    <p>
     <label>
-    <input type="checkbox" id="pinnedTabsOpenNewTabsPinnedToo"
-                           name="pinnedTabsOpenNewTabsPinnedToo">
-    When a pinned tab is active and a new tab is opened, pin the new tab too?
+    <select id="loadExpandedBranchStyle" name="loadExpandedBranchStyle">
+      <option value="ask">Ask what to do</option>
+      <option value="one">Load parent only</option>
+      <option value="all">Load entire branch without asking</option>
+    </select>
+    When loading an expanded parent node with saved tabs
     </label>
-    </p>
+  </div>
+
+  <div>
+    <label>
+    <select id="loadCollapsedBranchStyle" name="loadCollapsedBranchStyle">
+      <option value="ask">Ask what to do</option>
+      <option value="one">Load parent only</option>
+      <option value="all">Load entire branch without asking</option>
+    </select>
+    When loading a collapsed parent node with saved tabs
+    </label>
+  </div>
+
+  <div>
+    <label>
+    <select id="unloadExpandedBranchStyle" name="unloadExpandedBranchStyle">
+      <option value="ask">Ask what to do</option>
+      <option value="one">Unload parent only</option>
+      <option value="all">Unload entire branch without asking</option>
+    </select>
+    When unloading an expanded parent node
+    </label>
+  </div>
+
+  <div>
+    <label>
+    <select id="unloadCollapsedBranchStyle" name="unloadCollapsedBranchStyle">
+      <option value="ask">Ask what to do</option>
+      <option value="one">Unload parent only</option>
+      <option value="all">Unload entire branch without asking</option>
+    </select>
+    When unloading a collapsed parent node
+    </label>
+  </div>
+
+  <div>
+    <label>
+    <select id="deleteExpandedBranchStyle" name="deleteExpandedBranchStyle">
+      <option value="ask">Ask what to do</option>
+      <option value="one">Delete parent and promote all children</option>
+      <option value="all">Delete entire branch without asking</option>
+    </select>
+    When deleting an expanded parent node
+    </label>
   </div>
 
 
@@ -292,7 +295,7 @@
   extension), unzip it with <code>zstd -d myfile.json.zst</code> or
   <code>unzstd myfile.json.zst</code>.</p>
 
-  <h3>TKTSTO files</h3>
+  <h4>TKTSTO files</h4>
   <div class="file-input">
   <!-- <form id="tktsto-import-form" accept-charset="utf-8"> -->
     <input type="file" id="tktsto-file-input">
@@ -300,7 +303,7 @@
     <!-- </form> -->
   </div>
 
-  <h3>Tabs Outliner files</h3>
+  <h4>Tabs Outliner files</h4>
   <p>If you used Tabs Outliner and have session file backups, import those
   here.</p>
 
