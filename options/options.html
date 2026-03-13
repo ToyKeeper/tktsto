@@ -60,14 +60,19 @@
   <div>
     <label>
     <input type="checkbox" id="alwaysShowNodeStats" name="alwaysShowNodeStats">
-    Show node stats before expanded branches?
+    Show node stats
+    <span class="node-stats">[<span class="node-stat-open">7</span>/<span class="node-stat-total">42</span>] </span>
+    before expanded branches?
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="wasLoadedNodeStats" name="wasLoadedNodeStats">
-    Show <span class="was-loaded">wasLoaded</span> in node stats?
+    Show
+    <span class="row was-loaded"><span class="url-title">wasLoaded</span></span>
+    in node stats?
+    <span class="node-stats">[<span class="node-stat-open">7</span>+<span class="node-stat-was-loaded">2</span>/<span class="node-stat-total">42</span>] </span>
     </label>
   </div>
 
@@ -75,20 +80,27 @@
     <label>
     <input type="checkbox" id="hideTreeLines" name="hideTreeLines">
     Hide tree lines?
+    <span class="tree-line-color">(dim)</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="hideCursorTreeLines" name="hideCursorTreeLines">
-    Hide cursor branch tree lines?
+    Hide
+    <span class="row cursor loaded expanded"><span class="row-title"><span class="url-title">cursor branch</span></span></span>
+    tree lines?
+    <span class="tree-line-cursor-color">(bright)</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="hideWindowTreeLines" name="hideWindowTreeLines">
-    Hide window tree lines?
+    Hide
+    <span class="row window expanded loaded active"><span class="row-title">window</span></span>
+    tree lines?
+    <span class="tree-line-window-color">(window)</span>
     </label>
   </div>
 
@@ -117,7 +129,8 @@
     <label>
     <input type="text" id="indentMarginWindow" name="indentMarginWindow"
       placeholder="0" />
-    Indent margin (window nodes)
+    Indent margin
+    <span class="row window expanded loaded active"><span class="row-title">(window nodes)</span></span>
     </label>
   </div>
 
@@ -134,7 +147,8 @@
     <label>
     <input type="text" id="indentPaddingWindow" name="indentPaddingWindow"
       placeholder="0.2em" />
-    Indent padding (window nodes)
+    Indent padding
+    <span class="row window expanded loaded active"><span class="row-title">(window nodes)</span></span>
     </label>
   </div>
 
@@ -142,7 +156,8 @@
     <label>
     <input type="text" id="detailsBoxHeight" name="detailsBoxHeight"
       placeholder="8rem" />
-    Details box height:
+    <span id="bottom-area" class="inline"><span id="details-box" class="all-details"><span id="detail-note"><b>Details&nbsp;box</b></span></span></span>
+    height:
     </label>
     Example: 25vh or 12em
   </div>
@@ -151,7 +166,8 @@
     <label>
     <input type="text" id="detailsBoxHeightNotesOnly" name="detailsBoxHeightNotesOnly"
       placeholder="8rem" />
-    Details box height (in "notes" mode):
+    <span id="bottom-area" class="inline"><span id="details-box" class="notes-only"><span id="detail-label"><b>Details&nbsp;box</b></span></span></span>
+    height (in <b>notes</b> mode):
     </label>
     Example: 10vh or 6em
   </div>
@@ -170,7 +186,10 @@
     <label>
     <input type="checkbox" id="cursorFollowsActiveTab"
                            name="cursorFollowsActiveTab">
-    Tree view cursor follows active (focused) tab?
+    Tree view
+    <span class="row cursor loaded collapsed"><span class="row-title"><span class="url-title">cursor</span></span></span>
+    follows
+    <span class="row active loaded"><b class="url-title">active (focused) tab?</b></span>
     </label>
   </div>
 
@@ -186,7 +205,10 @@
     <label>
     <input type="checkbox" id="pinnedTabsOpenNewTabsPinnedToo"
                            name="pinnedTabsOpenNewTabsPinnedToo">
-    When a pinned tab is active and a new tab is opened, pin the new tab too?
+    When a
+    <span class="row loaded"><span class="url-title">
+      <span class="icon pinned"> </span> pinned tab</span></span>
+    is active and a new tab is opened, pin the new tab too?
     </label>
   </div>
 
@@ -206,7 +228,9 @@
       <option value="one">Load parent only</option>
       <option value="all">Load entire branch without asking</option>
     </select>
-    When loading an expanded parent node with saved tabs
+    When
+    <b class="row loaded"><span class="url-title">loading</span></b>
+    an expanded parent node with saved tabs
     </label>
   </div>
 
@@ -217,7 +241,9 @@
       <option value="one">Load parent only</option>
       <option value="all">Load entire branch without asking</option>
     </select>
-    When loading a collapsed parent node with saved tabs
+    When
+    <b class="row loaded"><span class="url-title">loading</span></b>
+    a collapsed parent node with saved tabs
     </label>
   </div>
 
@@ -228,7 +254,9 @@
       <option value="one">Unload parent only</option>
       <option value="all">Unload entire branch without asking</option>
     </select>
-    When unloading an expanded parent node
+    When
+    <b class="row"><span class="url-title">unloading</span></b>
+    an expanded parent node
     </label>
   </div>
 
@@ -239,7 +267,9 @@
       <option value="one">Unload parent only</option>
       <option value="all">Unload entire branch without asking</option>
     </select>
-    When unloading a collapsed parent node
+    When
+    <b class="row"><span class="url-title">unloading</span></b>
+    a collapsed parent node
     </label>
   </div>
 
@@ -250,7 +280,7 @@
       <option value="one">Delete parent and promote all children</option>
       <option value="all">Delete entire branch without asking</option>
     </select>
-    When deleting an expanded parent node
+    When <span class="delete-button">deleting</span> an expanded parent node
     </label>
   </div>
 
@@ -266,12 +296,14 @@
     <input type="checkbox" id="humanFriendlyBackups" name="humanFriendlyBackups">
     Human readable backup files
     </label>
+    (larger, "pretty printed" json)
   </div>
 
   <div>
     <p>
     Automatic local backups are saved to your "Downloads" folder if enabled.
     Set to 0 to disable this.  1 day = 24, 1 week = 168, 1 month = 720.
+    <small>(recommended: 1 to 24 hours)</small>
     </p>
     <label>
     <input type="number" id="localBackupHours" name="localBackupHours"

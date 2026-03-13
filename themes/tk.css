@@ -12,7 +12,7 @@ html, body {
   flex-direction: column;
   overflow-x: hidden;
   background: var(--tree-view-bg);
-  color: #ccc;
+  color: var(--tab-unloaded-fg);
   font-family: var(--font-family);
   font-size: var(--global-font-size):
 }
@@ -48,6 +48,12 @@ html, body {
   border-top: var(--bottom-area-edge);
   background: var(--bottom-area-bg);
   padding-top: 0.25rem;
+}
+
+#bottom-area.inline {
+  display: inline-block;
+  box-shadow: none;
+  width: min-content;
 }
 
 #top-bar,
@@ -974,6 +980,7 @@ foo {
   margin: 0 0.25em;
   max-width: calc(100% - 1em);
   min-height: 4em;
+  height: 6em;
 }
 
 #dialogButtons {
@@ -1103,6 +1110,10 @@ select {
 .icon.bookmark {
   mask-image: url("/img/fa/bookmark.svg");
 }
+
+.tree-line-color { color: var(--tree-line); }
+.tree-line-cursor-color { color: var(--tree-line-cursor); }
+.tree-line-window-color { color: var(--tree-line-window); }
 
 /******************** vars ********************/
 
