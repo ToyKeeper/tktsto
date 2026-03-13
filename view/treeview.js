@@ -1042,7 +1042,7 @@ export class TreeView extends Tree {
 
     // some cases need an action other than "load tabs"
     if (cursor.isLeaf()
-      || cursor.isWindow()
+      || cursor.isUnloadedWindow()
       || (cursor.isLoadedTab() && (! cursor.isActive()))
     ) return this.action_loadOrEditNode(event, false);
 
@@ -1898,18 +1898,8 @@ export class TreeView extends Tree {
     }
     else this.$hoverMenuUnload.style.display = 'none';
 
-    let winNode;
-    if (mouseNode.isWindow()) winNode = mouseNode;
-    else winNode = mouseNode.getWindowNode();
-
     // show or hide the 'load' button
-    let loadable;
-    if (mouseNode.isRoot()) loadable = false;
-    else if (mouseNode.isLeaf()) loadable = false;
-    else if (! mouseNode.hasUnloadedTabs()) loadable = false;
-    else if (mouseNode.isWindow()) loadable = false;
-    else if (mouseNode.isLoadable()) loadable = true;
-    else loadable = (winNode && mouseNode.hasUnloadedTabs());
+    const loadable = mouseNode.isBatchLoadable();
     if (loadable) {
       this.$hoverMenuLoad.style.display = 'inline-block';
       this.$hoverMenuLoad.classList.remove('loaded');

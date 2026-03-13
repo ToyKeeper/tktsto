@@ -415,8 +415,20 @@ export class Node {
 
   isLoadable () {
     if (this.isUnloadedTab()) return true;
-    if (this.isUnloadedWindow()) return true;
     if (this.isBookmark()) return true;
+    if (this.isUnloadedWindow() && this.hasUnloadedTabs()) return true;
+    return false;
+  }
+
+  isBatchLoadable () {  // has loadable kids
+    if (this.isRoot()) return false;
+    if (this.isLeaf()) return false;
+
+    // can batch load anything with unloaded tabs,
+    // but only if it is a window, or is inside a window
+    const winNode = this.isWindow() ? this : this.getWindowNode();
+    if (winNode && this.hasUnloadedTabs()) return true;
+
     return false;
   }
 
