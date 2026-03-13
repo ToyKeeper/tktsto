@@ -35,6 +35,7 @@ export class TreeView extends Tree {
       doubleClickMs: 500,
       treeViewZoomLevel: 1.0,
       alwaysShowNodeStats: true,
+      wasLoadedNodeStats: true,
       loadCollapsedBranchStyle: 'ask',
       loadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
@@ -151,6 +152,7 @@ export class TreeView extends Tree {
 
     // config watchers for inert DocTreeViews
     this.cfg.watch('alwaysShowNodeStats', () => this.$renderWholeTree());
+    this.cfg.watch('wasLoadedNodeStats', () => this.$renderWholeTree());
 
     this.nodeIdMimeType = 'application/x-tktsto-node-id';
     // get the window this view is attached to

@@ -32,6 +32,9 @@ foo {
 .window.row.active .node-note-icon {
   color: var(--window-active-fg);
 }
+.window.row .node-stat-was-loaded {
+  color: var(--tab-was-loaded-fg);
+}
 .window.row * {
   text-shadow: var(--window-title-text-shadow);
 }

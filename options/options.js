@@ -28,6 +28,7 @@ class OptionsPage extends ThemedPage {
       theme: 'TK Night',
       expandedRowPrefix: false,
       alwaysShowNodeStats: true,
+      wasLoadedNodeStats: true,
       hideTreeLines: false,
       hideCursorTreeLines: false,
       hideWindowTreeLines: true,
@@ -76,6 +77,10 @@ class OptionsPage extends ThemedPage {
       }),
       new Option(this, {
         cfgKey: 'alwaysShowNodeStats',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'wasLoadedNodeStats',
         inputType: 'checkbox',
       }),
       new Option(this, {

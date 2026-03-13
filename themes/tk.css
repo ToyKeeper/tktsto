@@ -523,7 +523,7 @@ foo {
   line-height: calc(var(--global-font-size) * 0.8);
   color: var(--node-stat-dim-color);
 }
-.node-stat-open, .node-stat-total {
+.node-stat-open, .node-stat-was-loaded, .node-stat-total {
   font-weight: normal;
   color: var(--node-stat-bright-color);
   padding-left: 0.15em;
@@ -531,6 +531,9 @@ foo {
 }
 .node-stat-open {
   color: var(--tab-loaded-fg);
+}
+.node-stat-was-loaded {
+  color: var(--tab-was-loaded-fg);
 }
 
 /* expanded parent nodes have extra padding below */

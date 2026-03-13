@@ -188,25 +188,37 @@ export class NodeView extends Node {
     if (this.hasKids()
       && (this.isCollapsed() || cfg.alwaysShowNodeStats)
     ) {  // only when collapsed or user config forces it
+      const nodeStats = [];  // Array<[Number, String]>
+      const totalChildren = this.countNodes();
       //  count all open descendants
       const openChildren = this.countNodes(
         function (node) { return node.isLoaded(); }
       );
-      const totalChildren = this.countNodes();
+      nodeStats.push([openChildren, 'open']);
       const $nodeStats = doc.createElement('span');
+      // count pink tabs, maybe
+      if (cfg.wasLoadedNodeStats) {
+        const wasLoadedChildren = this.countNodes(
+          (n) => n.isWasLoadedTab(),
+          (n) => (! n.isWindow()),
+        );
+        nodeStats.push([wasLoadedChildren, 'was-loaded']);
+      }
+      nodeStats.push([totalChildren, 'total']);
+
       $nodeStats.className = 'node-stats';
       $nodeStats.append('[');
-      const $statTotal = doc.createElement('span');
-      $statTotal.className = 'node-stat-total';
-      $statTotal.textContent = totalChildren;
-      // only show "open" if non-zero
-      if (openChildren > 0) {
-        const $statOpen = doc.createElement('span');
-        $statOpen.className = 'node-stat-open';
-        $statOpen.textContent = openChildren;
-        $nodeStats.append($statOpen, '/', $statTotal);
-      } else {
-        $nodeStats.append($statTotal);
+      let segments = 0;
+      for (const [num, type] of nodeStats) {
+        if (num > 0) {
+          segments ++;
+          const $span = doc.createElement('span');
+          $span.className = `node-stat-${type}`;
+          $span.textContent = num;
+          if ((2 == segments) && ('was-loaded' === type)) $nodeStats.append('+');
+          else if (segments > 1) $nodeStats.append('/');
+          $nodeStats.append($span);
+        }
       }
       $nodeStats.append('] ');
       this.$row.append($nodeStats);
