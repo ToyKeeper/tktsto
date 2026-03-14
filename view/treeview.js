@@ -2097,7 +2097,7 @@ export class TreeView extends Tree {
     }
 
     // abort if tree is already scrolling for other reasons
-    if (this.dragInProgress || this.actualScrollSpeed) return;
+    if (this.dragInProgress) return;
 
     // given "now" can be *before* smoothScrollStartTime on loaded systems
     // so take a fresh timestamp instead and make sure elapsed can never
