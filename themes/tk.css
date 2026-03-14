@@ -318,7 +318,7 @@ foo {
   /* margin-left: -4px;: */
 }
 /* top-level nodes */
-.root-nodes > .nodes > .node {
+#noderoot > .nodes > .node {
   /* put some space between top-level nodes */
   margin-bottom: 1em;
 }
@@ -544,8 +544,24 @@ foo {
 
 /* expanded parent nodes have extra padding below */
 .node.expanded {
-  padding-bottom: 3px;
+  padding-bottom: var(--expanded-branch-bottom-padding);
 }
+/* put some space between a leaf and a branch */
+/* (but not at root level) */
+.nodes .nodes > .node.leaf:has(+ .node:not(.leaf)),
+.nodes .nodes > .node.collapsed:has(+ .node) {
+  margin-bottom: var(--leaf-to-branch-spacing);
+}
+.nodes .nodes > .node.leaf + .node:not(.leaf),
+.nodes .nodes > .node:not(.leaf) + .node {
+  margin-top: var(--leaf-to-branch-spacing);
+}
+/* put some space (and a drop target) between top-level items in a window */
+/* dang, doesn't work if I set a var... gotta inject the entire clause in js
+.window.node > .nodes > .node:has(+ .node) {
+  padding-bottom: var(--window-top-level-node-padding);
+}
+*/
 
 
 /******************** window nodes ********************/
@@ -1128,6 +1144,9 @@ select {
   --row-min-height: 1.5rem;
   --row-line-height: 1.5rem;
   --row-padding: 0;
+  --expanded-branch-bottom-padding: 0.2em;
+  --leaf-to-branch-spacing: 0;
+  /* --window-top-level-node-padding: unset; */
   --indent-margin: 0.27em;
   --indent-margin-window: 0;
   --indent-padding: 0.4em;

@@ -33,6 +33,9 @@ export class ThemedPage {
       indentMarginWindow: '',
       indentPadding: '',
       indentPaddingWindow: '',
+      expandedBranchBottomPadding: '',
+      leafToBranchSpacing: '',
+      windowTopLevelNodeSpacing: '',
       detailsBoxHeight: '',
       detailsBoxHeightNotesOnly: '',
       userStyles: '',
@@ -64,6 +67,9 @@ export class ThemedPage {
       'indentMarginWindow',
       'indentPadding',
       'indentPaddingWindow',
+      'expandedBranchBottomPadding',
+      'leafToBranchSpacing',
+      'windowTopLevelNodeSpacing',
       'detailsBoxHeight',
       'detailsBoxHeightNotesOnly',
     ]) {
@@ -176,6 +182,15 @@ export class ThemedPage {
         + '\n  border-left-color: transparent;'
         + '\n}';
     }
+    // window top level node padding doesn't work as a simple variable,
+    // gotta inject the entire clause :(
+    if (this.cfg.windowTopLevelNodeSpacing) {
+      // "important" to override leafToBranchSpacing
+      styleText = styleText
+        + "\n.window.node > .nodes > .node:has(+ .node) {"
+        + `\n  margin-bottom: var(--window-top-level-node-spacing) !important;`
+        + '\n}';
+    }
     // CSS variables
     styleText += '\n:root {';
     for (const [opt, varName] of [
@@ -184,6 +199,9 @@ export class ThemedPage {
       ['indentMarginWindow', '--indent-margin-window'],
       ['indentPadding', '--indent-padding'],
       ['indentPaddingWindow', '--indent-padding-window'],
+      ['expandedBranchBottomPadding', '--expanded-branch-bottom-padding'],
+      ['leafToBranchSpacing', '--leaf-to-branch-spacing'],
+      ['windowTopLevelNodeSpacing', '--window-top-level-node-spacing'],
       ['detailsBoxHeight', '--details-box-height'],
       ['detailsBoxHeightNotesOnly', '--details-box-height-notes-only'],
     ]) {

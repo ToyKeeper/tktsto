@@ -37,6 +37,9 @@ class OptionsPage extends ThemedPage {
       indentMarginWindow: '',
       indentPadding: '',
       indentPaddingWindow: '',
+      expandedBranchBottomPadding: '',
+      leafToBranchSpacing: '',
+      windowTopLevelNodeSpacing: '',
       detailsBoxHeight: '',
       detailsBoxHeightNotesOnly: '',
       userStyles: '',
@@ -117,6 +120,21 @@ class OptionsPage extends ThemedPage {
       }),
       new Option(this, {
         cfgKey: 'indentPaddingWindow',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'expandedBranchBottomPadding',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'leafToBranchSpacing',
+        inputType: 'line',
+        debounceTime: 2000,
+      }),
+      new Option(this, {
+        cfgKey: 'windowTopLevelNodeSpacing',
         inputType: 'line',
         debounceTime: 2000,
       }),
