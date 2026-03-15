@@ -3,6 +3,33 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.145.0 (2026-03-15)
+
+Changes:
+
+- Added **options for vertical spacing** of the tree view, for people who
+  want it to be less dense.
+
+- Added a count of **wasLoaded** tabs in the **node stats** widget.
+
+- Made **batch load** work on loaded **window nodes**, so you can load the
+  rest of the unloaded tabs all at once if you want.
+
+- `Ctrl+Enter` now saves in the Edit Node dialog.
+
+- Made it easier to tell what items in the Options page do.
+
+Bug fixes:
+
+- Fixed global "load node" hotkey not working on bookmarks with kids.
+
+- Fixed issue where keyboard scrolling could break after a drag-n-drop.
+
+- Fixed manual expand/collapse taking a few tries when auto-expanded.
+
+- Fixed stale "active" tab state at boot, in a specific corner case.
+
+
 ## 0.1.135.0 (2026-03-12)
 
 Changes:
