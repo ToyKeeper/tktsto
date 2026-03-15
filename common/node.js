@@ -1461,6 +1461,7 @@ export class Node {
   }
 
   async setExpanded (expanded, args) {
+    //debug(`setExpanded: ${this.expanded} => ${expanded}`, args);
     if (! args) return;
     // abort on no-op
     if (expanded === this.expanded) return;

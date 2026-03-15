@@ -786,11 +786,14 @@ export class NodeView extends Node {
       wasExpanded = this.isExpanded();
       this.expandedOverride = expanded;
       changed = (expanded !== wasExpanded);
+      //debug(`localOverride: ${wasExpanded} => ${expanded}`);
     }
     else {
-      wasExpanded = this.expanded;
+      wasExpanded = this.isExpanded();
       this.expandedOverride = undefined;
-      changed = await super.setExpanded(expanded, args);
+      changed = await super.setExpanded(expanded, args)
+        || (expanded !== wasExpanded);
+      //debug(`noOverride: ${wasExpanded} => ${expanded} => ${this.expanded}`);
     }
 
     // if no change, do nothing
@@ -800,6 +803,7 @@ export class NodeView extends Node {
     if (this.isInViewScope()) {
       // if collapsing, delete subtree and show stats
       if (wasExpanded) {
+        //debug(`collapse`);
         this.$destroyChildren();
         this.$render();
         // promote the cursor if we just hid it in a fold
@@ -807,6 +811,7 @@ export class NodeView extends Node {
       }
       // if expanding, create subtree and hide stats
       else {
+        //debug(`expand`);
         this.$renderChildren();
         this.$render();
       }
