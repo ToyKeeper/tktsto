@@ -1130,6 +1130,8 @@ export class TreeView extends Tree {
     }
 
     if ('one' === actionStyle) {
+      if (cursor.isBookmark())
+        return this.action_loadOrEditNode(event, false);
       const success = await cursor.load({ reason: 'userAction' });
       if (success) this.setStatus(`loaded ${cursor.toLine()}`);
       else this.setStatus(`failed to load ${cursor.toLine()}`);
