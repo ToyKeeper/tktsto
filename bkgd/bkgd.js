@@ -279,7 +279,7 @@ class Bkgd {
 
     console.time('mergeOpenWindowsIntoTree');
     // attach browser windows to window nodes
-    let attached = [];
+    let attachedWindows = [];
     for (const window of windows) {
       debug(`Window ID: ${window.id}`);
       // detect whether window is already in tree
@@ -297,7 +297,7 @@ class Bkgd {
           { reason: 'mergeOpenWindowsIntoTree' });
       }
       // mark this winNode as actually attached to a real window
-      attached.push({ winNode, window });
+      attachedWindows.push({ winNode, window });
     }
 
     // remove "loaded" status from window nodes which didn't get attached
@@ -306,7 +306,7 @@ class Bkgd {
       (n) => { return n.isWindow(); });
     for (const node of winNodeList) {
       let found = false;
-      for (const obj of attached) {
+      for (const obj of attachedWindows) {
         if (node.id === obj.winNode.id) found = true;
       }
       if ((! found) && (node.isLoaded() || node.hasLoadedTabs())) {
@@ -315,9 +315,10 @@ class Bkgd {
     }
 
     // attach tabs now
-    for (const obj of attached) {
+    for (const obj of attachedWindows) {
       const winNode = obj.winNode;
       const window = obj.window;
+      const attachedTabs = {};
       for (const tab of window.tabs) {
         debug(`Tab ID: ${tab.id}, URL: ${tab.url}`, tab);
         // detect whether tab is already in tree
@@ -341,6 +342,7 @@ class Bkgd {
           { if (tabNode[key] !== value) changed = true; }
           if (changed) await tabNode.setTabFields(changes,
             { reason: 'mergeOpenWindowsIntoTree' });
+          attachedTabs[tabNode.id] = tabNode;
           continue;
         }
         // if not, add new tab to the tree
@@ -357,7 +359,7 @@ class Bkgd {
             warn(`tab ${tab.id} has openerTabId ${tab.openerTabId} but no parent found`);
           }
         }
-        await destParent.addChild(destIndex, {
+        const newNode = await destParent.addChild(destIndex, {
           windowId: window.id,
           tabId: tab.id,
           title: tab.title,
@@ -371,7 +373,25 @@ class Bkgd {
           incognito: tab.incognito,
           atime: tab.lastAccessed
           }, { reason: 'mergeOpenWindowsIntoTree' });
+        if (newNode) attachedTabs[newNode.id] = newNode;
       }
+
+      // remove stale "active" status if it exists
+      // (happens when extension page is active and extension restarted,
+      //  because the page gets closed while extension isn't running)
+      winNode.setActiveTab({ reason: 'mergeOpenWindowsIntoTree' });
+
+      // find tabs marked as "loaded" which aren't loaded any more,
+      // and remove their "loaded" status
+      // (should be unnecessary, leaving this here for later
+      //  in case I find out it can actually happen)
+      //const loadedTabs = winNode.getLoadedTabs();
+      //for (const node of loadedTabs) {
+      //  if (! attachedTabs[node.id]) {
+      //    debug(`stale loaded state: ${node.toLine()}`, node);
+      //    node.unload({ reason: 'mergeOpenWindowsIntoTree' });
+      //  }
+      //}
     }
 
     console.timeEnd('mergeOpenWindowsIntoTree');
