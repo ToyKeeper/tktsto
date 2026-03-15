@@ -610,6 +610,14 @@ class Dialog {
       $form.addEventListener('submit', handleSubmit);
       $dialog.appendChild($form);
 
+      // submit on Ctrl+Enter even if textarea is focused
+      $dialog.addEventListener('keydown', (ev) => {
+        const keyName = buildEventName(ev);
+        if (['Ctrl+Enter', 'MacCtrl+Enter',
+          'Alt+Enter', 'Meta+Enter',
+        ].includes(keyName)) return handleSubmit(ev);
+      });
+
       // if the user pressed Escape to dismiss the dialog
       $dialog.addEventListener('close', () => {
         $dialog.remove();
