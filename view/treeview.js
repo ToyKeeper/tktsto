@@ -36,6 +36,7 @@ export class TreeView extends Tree {
       treeViewZoomLevel: 1.0,
       alwaysShowNodeStats: true,
       wasLoadedNodeStats: true,
+      hideTopButtonsDuringSearch: false,
       loadCollapsedBranchStyle: 'ask',
       loadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
@@ -44,6 +45,8 @@ export class TreeView extends Tree {
     };
     // TODO: determine whether full view or single-window
 
+    // { nodeId: node, ... }
+    this.expandOverrides = {};
   }
 
   destroy () {
@@ -57,6 +60,9 @@ export class TreeView extends Tree {
 
     this.cursor = null;
 
+    this.$topBar = doc.getElementById('top-bar');
+    this.$bottomBar = doc.getElementById('bottom-bar');
+
     this.$viewScopeBtn = doc.getElementById('view-scope-btn');
 
     // zoom buttons
@@ -66,6 +72,21 @@ export class TreeView extends Tree {
     this.zoomSteps = 12;
     this.zoomMax = 3;
     this.zoomMin = 1 / this.zoomMax;
+
+    this.$searchBar = doc.getElementById('search-bar');
+    this.$searchEntry = doc.getElementById('search-entry');
+    this.$searchCount = doc.getElementById('search-count');
+    if (! this.isInert) {
+      this.$searchEntry.addEventListener('input', (event) => {
+        return this.onSearchEntryUpdated(event);
+      });
+      this.$searchEntry.addEventListener('focus', (event) => {
+        return this.onSearchEntryFocused(event);
+      });
+      this.$searchEntry.addEventListener('blur', (event) => {
+        return this.onSearchEntryUnfocused(event);
+      });
+    }
 
     // drag-n-drop scroll zone size
     this.dragScrollZone = 0.15;  // 15% top and bottom
@@ -138,10 +159,7 @@ export class TreeView extends Tree {
       this.cfg.watch('activeTabExpandsItsParents',
         (key, newVal, oldVal) => {
           if (! newVal) {
-            this.viewRoot.findNodes(
-              (n) => { n.expandedOverride = undefined; return true; },
-              (n) => true,
-            );
+            this.expandOverrideClear();
             this.ensureCursorVisible();
             this.$renderWholeTree();
           }
@@ -215,7 +233,7 @@ export class TreeView extends Tree {
     // restore state
     if (oldCursor) {
       const newCursor = this.nodes[oldCursor];
-      await this.setCursor(newCursor, true);
+      await this.setCursor(newCursor, { instant: true });
     }
   }
 
@@ -283,6 +301,279 @@ export class TreeView extends Tree {
 
   onMarkedCountClick (event) {
     this.action_pasteMarked(event);
+  }
+
+  showSearch () {
+    this.$searchBar.classList.remove('hidden');
+    this.$searchCount.classList.remove('hidden');
+  }
+
+  hideSearch () {
+    this.$searchBar.classList.add('hidden');
+    this.$searchCount.classList.add('hidden');
+  }
+
+  focusSearchBar () {
+    this.$searchEntry.classList.add('focused');
+    this.$searchEntry.focus();
+  }
+
+  unfocusSearchBar () {
+    this.$searchEntry.classList.remove('focused');
+    this.$searchEntry.blur();
+  }
+
+  async startSearch () {
+    // hover menu unfocuses $searchEntry, force hide it
+    this.hideHoverMenu();
+    // disable the main key event handler while $searchEntry is focused
+    this.searchCaptureInput = true;
+    // separate flag for whether a search is in progress,
+    // even when main key event handler is enabled
+    this.searchActive = true;
+    this.showSearch();
+    if (this.cfg.hideTopButtonsDuringSearch) {
+      this.$topBar.classList.add('hidden');
+    }
+    await this.updateSearch();
+    this.focusSearchBar();
+  }
+
+  keepSearchAndReleaseFocus () {
+    // give keyboard focus back to main TreeView
+    // but let the search stay active
+    debug('keepSearchAndReleaseFocus');
+    this.searchCaptureInput = false;
+    this.searchActive = true;
+    this.unfocusSearchBar();
+  }
+
+  async cancelSearch () {
+    this.$topBar.classList.remove('hidden');
+    this.unfocusSearchBar();
+    this.hideSearch();
+    this.searchString = '';
+    this.$searchEntry.value = '';
+    this.searchMatchNum = 0;
+    this.searchTotal = 0;
+    await this.updateSearch();
+    this.searchCaptureInput = false;
+    this.searchActive = false;
+  }
+
+  async updateSearch () {
+    if (! this.searchString) {
+      this.searchMatchNum = 0;
+      this.searchTotal = 0;
+      this.searchMatches = [];
+      this.updateSearchCount();
+      // don't collapse the most recent match yet
+      //await this.activateSearchMatch(null);
+      return;
+    }
+
+    const matches = this.viewRoot.search(this.searchString);
+    this.searchMatches = matches;
+    this.searchTotal = matches.length;
+    if (matches.length <= 0) {
+      this.searchMatchNum = 0;
+      this.searchTotal = 0;
+      await this.activateSearchMatch(null);
+    }
+    else if (matches.includes(this.cursor)) {
+      await this.activateSearchMatch(this.cursor);
+    }
+    else {
+      await this.activateSearchMatch(matches[0]);
+    }
+  }
+
+  async activateSearchMatch (node) {
+    debug(`${node?.toLine()}`);
+    const oldMatch = this.searchMatch;
+    const newMatch = node;
+    this.searchMatch = newMatch;
+
+    if (newMatch) {
+      this.hideHoverMenu();
+      await this.expandOverride(newMatch, true);
+    }
+    if (oldMatch && (oldMatch !== newMatch))
+      await this.expandOverride(oldMatch, null);
+    if (newMatch) {
+      // wait for expansion changes to take effect before moving cursor
+      setTimeout(() => { this.setCursor(newMatch); }, 1);
+    }
+    this.updateSearchCount();
+  }
+
+  updateSearchCount () {
+    let num, denom;
+    if (this.searchMatches) {
+      this.searchTotal = this.searchMatches.length;
+      if (this.searchMatch)
+        this.searchMatchNum = this.searchMatches.indexOf(this.searchMatch);
+      else this.searchMatchNum = 0;
+      num = this.searchMatchNum + 1;
+      denom = this.searchTotal;
+      if (! denom) num = '-';
+    } else {
+      this.searchTotal = 0;
+      this.searchMatchNum = 0;
+      num = '-';
+      denom = '0';
+    }
+    this.$searchCount.innerText = `${num}/${denom}`;
+  }
+
+  async action_beginSearch () {
+    // search by text entry
+    debug('beginSearch');
+    await this.startSearch();
+  }
+
+  async action_searchForCurrent (event) {
+    // search by node
+    debug('searchForCurrent');
+    const cursor = this.whichCursor(event);
+    if (! cursor) return;
+    this.searchString = cursor;
+    this.$searchEntry.value = `node:${cursor.id}`;
+    await this.startSearch();
+    await this.keepSearchAndReleaseFocus();
+  }
+
+  async action_endSearch () {
+    // cancel the search, or un-override expanded branches
+    debug('endSearch');
+    if (this.searchActive) await this.cancelSearch();
+    else await this.expandOverrideClear();
+  }
+
+  async action_nextSearchResult (event, prev = false) {
+    debug(`prev: ${prev}`);
+    if (this.searchMatches.length > 0) {
+      if (prev) {
+        this.searchMatchNum --;
+        if (this.searchMatchNum < 0)
+          this.searchMatchNum = this.searchMatches.length - 1;
+      } else {
+        this.searchMatchNum = (this.searchMatchNum + 1) % this.searchTotal;
+      }
+      const newMatch = this.searchMatches[this.searchMatchNum];
+      await this.activateSearchMatch(newMatch);
+    }
+  }
+
+  action_prevSearchResult (event) {
+    return this.action_nextSearchResult(event, true);
+  }
+
+  searchKeyHandler (event) {
+    const keyName = buildEventName(event);
+    // allow specific events to fall through to non-search key handler
+    const passThru = {
+      //'Escape' : true,
+      'ArrowUp' : true,
+      'ArrowDown' : true,
+      'PageUp' : true,
+      'PageDown' : true,
+    };
+    if (passThru[keyName]) return true;
+
+    switch (keyName) {
+      case 'Escape':
+        event.preventDefault();
+        event.stopPropagation();
+        this.cancelSearch();
+        break;
+      case 'Enter':
+        event.preventDefault();
+        event.stopPropagation();
+        this.keepSearchAndReleaseFocus();
+        break;
+      default:
+        // gaaaaah, search entry keeps getting unfocused
+        // after each keystroke... why???
+        // (but only if I haven't clicked in it)
+        //setTimeout(() => this.$searchEntry.focus(), 1);
+        // okay, the problem was the hover menu... it blurs $searchEntry
+        // as soon as it appears ... so hiding it eliminated the need
+        // for this icky kludge
+        break;
+    }
+  }
+
+  async onSearchEntryUpdated (event) {
+    if (! this.searchActive) return;
+
+    // debounce, so it won't update too fast while typing
+    if (this.onSearchEntryUpdatedTimer)
+      clearTimeout(this.onSearchEntryUpdatedTimer);
+    this.onSearchEntryUpdatedTimer = setTimeout(() => {
+      const oldVal = this.searchString;
+      const newVal = this.$searchEntry.value;
+      debug(`search: ${newVal}`);
+      this.searchString = newVal;
+      if (newVal !== oldVal) this.updateSearch();
+    }, 250);
+  }
+
+  onSearchEntryFocused (event) {
+    debug('focus');
+    this.searchCaptureInput = true;
+    this.$searchEntry.classList.add('focused');
+  }
+
+  onSearchEntryUnfocused (event) {
+    debug('unfocus');
+    this.searchCaptureInput = false;
+    this.$searchEntry.classList.remove('focused');
+  }
+
+  async expandOverrideClear () {
+    // un-override all locally-expanded nodes
+    for (const [nodeId, node] of Object.entries(this.expandOverrides)) {
+      await this.expandOverride(node, null);
+    }
+  }
+
+  async expandOverride (node, expand) {
+    // expand: true or null
+    // (expand or unset)
+    // (was going to support "false = collapse" too, but there's no need)
+    if (! node) return;
+    //debug(`${expand}, ${node.toLine()}`)
+    const viewRoot = this.viewRoot;
+    if (expand) {
+      this.expandOverrides[node.id] = node;
+      // force expand
+      const origNode = node;
+      node = node.parent;
+      // override a node and all its parents
+      while (node && node.isChildOf(viewRoot)) {
+        //debug(`override ${node.toLine()}`);
+        await node.setExpanded(true, {
+          reason: 'override', localOverride: true,
+        });
+        node = node.parent;
+      }
+    }
+    //else if (false === expand) {
+    //}
+    else if (this.expandOverrides[node.id]) {
+      // TODO: redraw affected node
+      delete this.expandOverrides[node.id];
+      let n = node;
+      // un-override a node and its parents,
+      // until it intersects another override's parents
+      while (n && n.isChildOf(viewRoot) && (! n.isExpandedOverride())) {
+        await n.setExpanded(n.expanded, {
+          reason: 'override', localOverride: true,
+        });
+        n = n.parent;
+      }
+    }
   }
 
   async inputDialog (...args) {
@@ -362,6 +653,11 @@ export class TreeView extends Tree {
   keyHandler (event) {
     // don't try to handle key events while a dialog is visible
     if (this.dialogActive) return;
+    // pause regular handling while user is typing in search terms
+    if (this.searchCaptureInput) {
+      const passThru = this.searchKeyHandler(event);
+      if (! passThru) return;
+    }
     // calculate a more complete name for this event,
     // then call the keyboard event dispatcher
     const keyName = buildEventName(event);
@@ -399,6 +695,7 @@ export class TreeView extends Tree {
     //debug(`TreeView.mouseEvent(${eventType})`, event);
     // don't try to handle mouse events while a dialog is visible
     if (this.dialogActive) return;
+    if (this.searchCaptureInput) return;
 
     // stop scrolling if mouse left the tree view
     if ((isFirefox && (! event.relatedTarget))
@@ -1439,7 +1736,8 @@ export class TreeView extends Tree {
     // save for later potential drag-n-drop
     this.mouseDragStartNode = this.mouseNode;
     // place the cursor (and *don't* await)
-    this.setCursor(this.mouseNode, false, this.cfg.doubleClickMs);
+    this.setCursor(this.mouseNode,
+      { instanc: false, scrollDelay: this.cfg.doubleClickMs });
     // maybe modify a checkbox
     if (this.$mouseElem.classList.contains('node-checkbox')) {
       await this.action_taskEdit(event);
@@ -1877,6 +2175,9 @@ export class TreeView extends Tree {
     //debug(`showHoverMenu: ${this.mouseNode.toLine()}`);
     // skip if we're in the middle of a drag-n-drop
     if (this.dragInProgress || this.smoothScrollHideHoverMenu) return;
+    // hover menu totally breaks $searchEntry, so don't allow it
+    // (hover menu steals focus somehow, if mouse is over the TreeView)
+    if (this.searchCaptureInput) return;
     // skip extra drawing if the menu hasn't changed
     if (this.hoverMenuLast === this.mouseNode) return;
     this.hoverMenuLast = this.mouseNode;
@@ -1927,19 +2228,28 @@ export class TreeView extends Tree {
     this.$hoverMenu.classList.remove('hidden');
   }
 
-  async setCursor (node, instant = false, scrollDelay = 0) {
+  async setCursor (node, args) {
+    // { instant: false, scrollDelay: 0, expand: false}) {
     //debug(`TreeView.setCursor(): ${node.toLine()}`);
     // ensure cursor is on a visible node in our view scope
     const viewRoot = this.viewRoot;
     if ((! node.isInViewScope()) || (! node.isVisible(viewRoot))) {
-      // if node is visible, put cursor on it
-      // if node exists but is hidden, put cursor on visible parent
-      // otherwise put cursor on window node
-      let visibleNode = node ? node : viewRoot;
-      if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot)))
-        visibleNode = visibleNode.prevVisibleNode(viewRoot);
-      node = visibleNode;
-      //debug(`TreeView.setCursor(-->): ${node.toLine()}`);
+      if (false) {}  // I was going to handle overrides here, but aborted
+      // might still want to do this later?
+      //if (args?.expand) {
+      //  // un-expand any previous override
+      //  const prevCursor = this.cursor;
+      //}
+      else {
+        // if node is visible, put cursor on it
+        // if node exists but is hidden, put cursor on visible parent
+        // otherwise put cursor on window node
+        let visibleNode = node ? node : viewRoot;
+        if ((visibleNode !== viewRoot) && (! visibleNode.isVisible(viewRoot)))
+          visibleNode = visibleNode.prevVisibleNode(viewRoot);
+        node = visibleNode;
+        //debug(`TreeView.setCursor(-->): ${node.toLine()}`);
+      }
     }
 
     // update the cursor position
@@ -1954,13 +2264,13 @@ export class TreeView extends Tree {
 
       // maybe wait a moment to let user finish a double click
       let scrollDuration = 200;  // TODO: load from this.scrollDurationDefault
-      if (scrollDelay) {
-        scrollDuration = scrollDelay;
-        await new Promise(r => setTimeout(r, scrollDelay));
+      if (args?.scrollDelay) {
+        scrollDuration = args.scrollDelay;
+        await new Promise(r => setTimeout(r, args.scrollDelay));
       }
 
       // ensure node is visible
-      if (instant) scrollDuration = 0;
+      if (args?.instant) scrollDuration = 0;
       this.scrollNodeIntoView(node, scrollDuration);
     }
     else {
@@ -1980,7 +2290,7 @@ export class TreeView extends Tree {
     const cursor = this.cursor;
     if (cursor?.isInViewScope() && (! cursor.isVisible(viewRoot))) {
       const newCursor = cursor.prevVisibleNode(viewRoot);
-      if (newCursor) return await this.setCursor(newCursor);
+      if (newCursor) return await this.setCursor(newCursor, { instant: true });
     }
 
     // move the cursor to this window's active tab
@@ -2017,9 +2327,9 @@ export class TreeView extends Tree {
         }
       }
       debug(`TreeView.ensureCursorVisible(visibleNode)`, visibleNode);
-      return await this.setCursor(visibleNode);
+      return await this.setCursor(visibleNode, { instant: true });
     }
-    return await this.setCursor(this.cursor);
+    return await this.setCursor(this.cursor, { instant: true });
   }
 
   scrollNodeIntoView (node, duration = 200) {
@@ -2446,13 +2756,13 @@ export const keyBindings = {
   ///// task status
   'T': 'taskEdit',
   ///// search
-  //'/': 'beginSearch',
-  //'Shift+*': 'searchForCurrent',  // match current label, url, or title
+  '/': 'beginSearch',
+  'Shift+*': 'searchForCurrent',  // match current label, url, or title
   //'Ctrl+F': 'beginSearch',
   //'Ctrl+G': 'nextSearchResult',
-  //'N': 'nextSearchResult',
-  //'Shift+N': 'prevSearchResult',
-  //'Escape': 'endSearch',
+  'N': 'nextSearchResult',
+  'Shift+N': 'prevSearchResult',
+  'Escape': 'endSearch',
   ///// cursor movement
   'ArrowUp': 'cursorUp',
   'ArrowDown': 'cursorDown',

@@ -129,7 +129,7 @@ export class NodeView extends Node {
   }
 
   $destroy () {
-    debug('NodeView.$destroy');
+    //debug('NodeView.$destroy');
     if (this.$) {
       //debug('remove');
       this.$.remove();
@@ -734,12 +734,20 @@ export class NodeView extends Node {
     return false;
   }
 
-  isExpanded () {
-    if (undefined !== this.expandedOverride) {
-      if (this.expandedOverride === this.expanded)
-        this.expandedOverride = undefined;
-      else return this.expandedOverride;
+  isExpandedOverride () {
+    // check if we're overridden
+    for (const [ nodeId, node ]
+      of Object.entries(this.tree.expandOverrides)
+    ) {
+      //if (this === node) return node;
+      if (this.isParentOf(node)) return node;
     }
+    return false;
+  }
+
+  isExpanded (allowOverrides = true) {
+    if (allowOverrides && this.isExpandedOverride()) return true;
+
     // Session mode is simple, no overrides needed
     if ('window' !== this.tree.viewScope) return this.expanded;
     // in "Window" view mode,
@@ -780,17 +788,20 @@ export class NodeView extends Node {
         changed = false;
       }
     }
-    // local override when cfg.activeTabExpandsItsParents
-    else if (args.localOverride && ('userAction' === args.reason)) {
+    // local view-specific override, doesn't change the node
+    else if (args.localOverride
+      && (['userAction','override'].includes(args.reason))
+    ) {
       // fake expanded state, this view only
-      wasExpanded = this.isExpanded();
-      this.expandedOverride = expanded;
-      changed = (expanded !== wasExpanded);
+      wasExpanded = this.expanded;
+      //changed = (expanded !== wasExpanded);
+      changed = true;  // always redraw
       //debug(`localOverride: ${wasExpanded} => ${expanded}`);
     }
     else {
       wasExpanded = this.isExpanded();
-      this.expandedOverride = undefined;
+      // remove node from overrides
+      this.tree.expandOverride(this, null);
       changed = await super.setExpanded(expanded, args)
         || (expanded !== wasExpanded);
       //debug(`noOverride: ${wasExpanded} => ${expanded} => ${this.expanded}`);
@@ -801,19 +812,19 @@ export class NodeView extends Node {
 
     // only render stuff which is in scope
     if (this.isInViewScope()) {
+      // if expanding, create subtree and hide stats
+      if (expanded) {
+        //debug(`expand`);
+        this.$renderChildren();
+        this.$render();
+      }
       // if collapsing, delete subtree and show stats
-      if (wasExpanded) {
+      else {
         //debug(`collapse`);
         this.$destroyChildren();
         this.$render();
         // promote the cursor if we just hid it in a fold
         this.tree.ensureCursorVisible();
-      }
-      // if expanding, create subtree and hide stats
-      else {
-        //debug(`expand`);
-        this.$renderChildren();
-        this.$render();
       }
     }
 
@@ -841,24 +852,11 @@ export class NodeView extends Node {
         const activeTab = winNode.getActiveTab();
         if (activeTab) {
           if (this.tree.cfg.activeTabExpandsItsParents) {
-            // un-override previous active tab
-            let node = winNode.prevActiveTab;
-            while (node && node.isChildOf(winNode)
-              && (! activeTab.isChildOf(node))
-            ) {
-              node.setExpanded(node.expanded, {
-                reason: 'userAction', localOverride: true,
-              });
-              node = node.parent;
-            }
             // force expand new active tab
-            node = activeTab.parent;
-            while (node && node.isChildOf(winNode)) {
-              node.setExpanded(true, {
-                reason: 'userAction', localOverride: true,
-              });
-              node = node.parent;
-            }
+            this.tree.expandOverride(activeTab, true);
+            // un-override previous active tab
+            if (activeTab !== winNode.prevActiveTab)
+              this.tree.expandOverride(winNode.prevActiveTab, null);
           }
           this.tree.setCursor(activeTab);
           winNode.prevActiveTab = activeTab;

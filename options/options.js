@@ -46,13 +46,14 @@ class OptionsPage extends ThemedPage {
       // TreeView behavior
       cursorFollowsActiveTab: true,
       activeTabExpandsItsParents: true,
+      pinnedTabsOpenNewTabsPinnedToo: false,
+      hideTopButtonsDuringSearch: false,
+      hideCollapsedTabs: false,
       loadExpandedBranchStyle: 'ask',
       loadCollapsedBranchStyle: 'ask',
       unloadExpandedBranchStyle: 'ask',
       unloadCollapsedBranchStyle: 'ask',
       deleteExpandedBranchStyle: 'ask',
-      pinnedTabsOpenNewTabsPinnedToo: false,
-      hideCollapsedTabs: false,
     };
   }
 
@@ -164,6 +165,14 @@ class OptionsPage extends ThemedPage {
         inputType: 'checkbox',
       }),
       new Option(this, {
+        cfgKey: 'pinnedTabsOpenNewTabsPinnedToo',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'hideTopButtonsDuringSearch',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
         cfgKey: 'loadCollapsedBranchStyle',
         inputType: 'select',
       }),
@@ -182,10 +191,6 @@ class OptionsPage extends ThemedPage {
       new Option(this, {
         cfgKey: 'deleteExpandedBranchStyle',
         inputType: 'select',
-      }),
-      new Option(this, {
-        cfgKey: 'pinnedTabsOpenNewTabsPinnedToo',
-        inputType: 'checkbox',
       }),
 
       // backups

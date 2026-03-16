@@ -600,6 +600,63 @@ export class Node {
     return found;
   }
 
+  search (needle) {
+    let matches = [];
+
+    // search helpers
+    const fields = ['label', 'title', 'url', 'note'];
+    const strSearch = (node, text) => {
+      text = text.toLowerCase();
+      for (const field of fields) {
+        if (node[field] && node[field].toLowerCase().includes(text))
+          return true;
+      }
+      return false;
+    };
+    const regexSearch = (node, re) => {
+      for (const field of fields) {
+        if (node[field] && re.test(node[field])) return true;
+      }
+      return false;
+    };
+    const nodeSearch = (node, other) => {
+      for (const field of fields) {
+        if (node[field] && other[field]
+          && (node[field] === other[field])
+        ) return true;
+      }
+      return false;
+    };
+
+    // search by node to find duplicates
+    if ('object' === typeof(needle)) {
+      matches = this.findNodes( (n) => nodeSearch(n, needle) );
+    }
+    // search by text entry
+    else if ('string' === typeof needle) {
+      // make a list of regexes or plain strings
+      const regexes = [];
+      for (const word of needle.split(' ')) {
+        try { regexes.push(new RegExp(word, 'i')); }
+        catch (e) { regexes.push(word); }  // invalid regex = plain string
+      }
+      matches = this.findNodes(
+        // must match *all* search terms
+        (n) => {
+          for (const re of regexes) {
+            let found = false;
+            if ('string' === typeof(re)) found = strSearch(n, re);
+            else found = regexSearch(n, re);
+            if (! found) return false;
+          }
+          return true;
+        }
+      );
+    }
+
+    return matches;
+  }
+
   findParent (fn) {
     //debug('findParent', this.parent, fn(this.parent));
     // search ancestors for one which satisfies the "fn" condition

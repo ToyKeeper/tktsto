@@ -55,6 +55,14 @@ html, body {
   box-shadow: none;
   width: min-content;
 }
+#top-area.inline {
+  box-shadow: none;
+}
+#top-area.inline .button {
+  margin-top: 0.25em;
+  line-height: 1em;
+  vertical-align: top;
+}
 
 #top-bar,
 #bottom-bar {
@@ -82,15 +90,70 @@ html, body {
   padding-left: 0.25em;
 }
 
+/******************** floating notification area ********************/
+
+#top-area {
+  position: relative;
+  z-index: 1;
+}
+
+#notifications {
+  position: absolute;
+  z-index: 2;
+  /* top: 1rem; */
+  top: 100%;
+  right: 1rem;
+  margin-top: 0.5rem;
+}
+
+#notifications div {
+  display: inline-block;
+}
+
+/******************** search widgets ********************/
+
+.search-bar {
+  min-height: var(--toolbar-height);
+}
+
+.search-entry {
+  width: calc(100% - 1em);
+  margin: 0.33em 0.25em;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  font-size: var(--global-font-size);
+  background: var(--details-box-bg);
+  color: var(--details-box-fg);
+  border-radius: 8px;
+  border: var(--details-box-border);
+  box-shadow: var(--details-box-shadow);
+}
+
+.search-count {
+  border-radius: var(--cursor-branch-radius);
+  padding: 0.1em 0.35em;
+  font-size: 110%;
+  color: var(--tab-loaded-fg);
+  /* background: var(--top-area-bg); */
+  /*
+  background: var(--button-bg);
+  border: var(--button-border)
+  */
+  /* background: var(--details-box-bg); */
+}
+.search-entry:focus {
+  color: var(--tab-loaded-fg);
+}
+
+
 /******************** node details box ********************/
 
+/* .search-entry, */
 #details-box {
   /* width: calc(100% - 1rem); */
   width: calc(100% - 0.75rem);
   padding-left: 0.25rem;
   padding-right: 0.25rem;
-  height: var(--details-box-height);
-  max-height: var(--details-box-height);
   overflow-x: wrap;
   overflow-y: auto;
   background: var(--details-box-bg);
@@ -98,6 +161,13 @@ html, body {
   border-radius: 8px;
   border: var(--details-box-border);
   box-shadow: var(--details-box-shadow);
+}
+
+#details-box {
+  height: var(--details-box-height);
+  max-height: var(--details-box-height);
+  overflow-x: wrap;
+  overflow-y: auto;
 }
 
 #details-box.hidden + #bottom-bar {
@@ -198,6 +268,7 @@ body.options::-webkit-scrollbar-thumb {
   padding-bottom: 5px;
 }
 
+.search-count,
 .toolbar .button,
 #dialogButtons button,
 .options button,
@@ -218,6 +289,7 @@ foo {
   transition: var(--button-transition);
   user-select: none;
 }
+.search-count:hover,
 .toolbar .button:hover,
 #dialogButtons button:hover,
 .options button:hover,
@@ -752,12 +824,14 @@ foo {
   text-shadow: var(--marked-count-text-shadow);
 }
 
+/*
 #marked-count {
   position: fixed;
   z-index: 2;
   top: calc(var(--toolbar-height) + 0.5rem);
   right: 1rem;
 }
+*/
 
 #marked-count:hover {
   color: var(--marked-count-fg-hover);
@@ -1067,7 +1141,8 @@ foo {
 }
 
 .dialog *:focus,
-*:focus {
+*:focus,
+.focused {
   outline: var(--focus-outline);
 }
 
@@ -1088,7 +1163,7 @@ select {
 
 .hidden {
   /* add/remove 'hidden' class to hide or show elements */
-  display: none;
+  display: none !important;
 }
 
 /******************** icons ********************/
