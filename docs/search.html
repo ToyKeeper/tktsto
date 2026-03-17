@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<!-- tktsto documentation page
+  -- Copyright (C) 2026 Selene ToyKeeper
+  -- SPDX-License-Identifier: AGPL-3.0-or-later
+  -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script type="module" src="./docs.js"></script>
+  <title>Search</title>
+</head>
+<body class="docs">
+
+<h2> Search </h2>
+
+<p>
+
+To search the tree, a few commands are available:
+
+</p>
+
+<ul>
+
+  <li><code>/</code> : Start a search, or re-focus the search bar during
+    a search.</li>
+
+  <li><code>Shift+*</code> : Start a search for anything matching the current
+    node's label, title, url, or note.  Returns focus to the tree view
+    immediately since no further search details can be entered.  Is useful
+    for finding duplicates and similar items.</li>
+
+  <li><code>Enter</code> while the search bar is focused: Give focus back to
+    the TreeView, and keep the search active.  Can also just
+    <code>Click</code> in the TreeView to focus it.</li>
+
+  <li><code>N</code> / <code>Shift+N</code> : Go to the next (or previous)
+    match.</li>
+
+  <li><code>m</code> / <code>Shift+M</code> / <code>p</code> :
+    <span class="row marked">Mark</span> the current node, <b>unmark</b>
+    all nodes, or <b>paste</b> all marked nodes.</li>
+
+  <li><code>Escape</code> : End or cancel the search.</li>
+
+  <li><code>Escape</code> (again): Close any branches which were temporarily
+    expanded to show hidden nodes.</li>
+
+</ul>
+
+<p>One common workflow is to find everything matching a given query, then
+pull them all together into one place.  To do this, type <code>/foo</code> to
+do a search for "foo", then press <code>Enter</code> to go back to the
+TreeView.  Press <code>n</code> and <code>m</code> repeatedly to go to the
+next match and <span class="row marked">mark</span> it.  Then move the cursor
+to the place where you want all those nodes to be, and press <code>p</code>
+to <b>paste</b> everything.  Finally, <code>Shift+M</code> to unmark
+everything, and <code>Escape</code> once or twice to cancel the search.</p>
+
+
+<h3> Search Terms </h3>
+
+<p>
+
+Searches look through all of a node's attached data.  In particular, it
+checks the <b>label</b>, <b>title</b>, <b>url</b>, and <b>note</b>.  If you
+don't see why a particular node was included as a match, open the <b>details
+box</b> to see more of the data it searched through.
+
+</p><p>
+
+Searches are made of one or more search terms, separated by spaces.  Results
+only include nodes which match <b>all</b> search terms.  Searches are <b>not
+case sensitive</b>.  Each individual term is a <b>regular expression</b>, so
+it can be pretty complex if you like... but in most cases, it is easiest to
+just type a word or two.
+
+</p><p>
+
+The
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions">
+  full scope of what regular expressions can do</a>
+is way more than we can cover here, but here are a few simple tricks:
+
+</p>
+
+<ul>
+
+  <li><code>.</code> matches any single character.</li>
+
+  <li><code>\.</code> matches a literal <code>.</code> character, and also
+    works to escape other special symbols.</li>
+
+  <li><code>x*</code> matches any number of <code>x</code> characters, like
+    <code>ab*c</code> would match <b>abc</b>, <b>abbbbbbc</b>, and
+    <b>ac</b>.</li>
+
+  <li><code>x+</code> matches one or more <code>x</code> characters. </li>
+
+  <li><code>x?</code> matches zero or one of <code>x</code>, making it
+    optional.</li>
+
+  <li><code>x{n,m}</code> matches at least <b>n</b> instances of "x", and can
+    match up to <b>m</b> instances.  Can also be used as <code>x{n}</code>
+    for exactly <b>n</b> instances, or <code>x{n,}</code> for <b>n or
+    more</b> instances.</li>
+
+  <li><code>^foo</code> matches "foo" but only at the beginning of
+    a string.</li>
+
+  <li><code>foo$</code> matches "foo" but only at the end of a string.</li>
+
+  <li><code>[abc]</code> matches any of the characters inside the
+    brackets.  It can also include ranges, like <code>[a-z]</code> would
+    match any letter from a to z.</li>
+
+  <li><code>[^abc]</code> matches anything <b>except</b> the characters
+    inside the brackets.</li>
+
+  <li><code>(abc)</code> groups everything inside it together, making it
+    count as a single object.  This can then have other modifiers, like
+    <code>(word)?</code> to make the <b>word</b> optional, or
+    <code>(word)+</code> to match one or more of <b>word</b> in a row.</li>
+
+  <li><code>x|y</code> matches "x" <b>OR</b> "y".  This is typically used
+    with groups, like
+    <code>(Alice|Bob|Carol|Dave)\s(Anon|Doe|Smith|Hacker)</code> would match
+    "Alice Smith", "Bob Doe", "Carol Hacker", "Dave Anon", and every other
+    combination of the first group and second group.</li>
+
+  <li><code>\x</code> matches a predefined set of characters, depending on
+    what <code>x</code> is.  <code>\d</code> is a digit, <code>\D</code> is
+    anything except a digit, <code>\w</code> is the same as
+    <code>[A-Za-z0-9_]</code>, <code>\s</code> matches whitespace,
+    <code>\S</code> matches non-whitespace, and there are a bunch more.</li>
+
+</ul>
+
+<p> Examples: </p>
+
+<ul>
+
+  <li><code>face.*mess</code> would match anything containing "face" and then
+    "mess", with anything (or nothing) between.  Like "Facebook Messenger".
+    Or you could do <code>am.*ing</code> to match "amazing", "amending",
+    "amusing", "clamping", "dreaming", "jamming", "rambling", and many
+    other words.</li>
+
+  <li><code>(www\.)?(foo|bar|baz)\.(com|net|org)</code> would match
+    "www.foo.com", "foo.org", "www.bar.net", "baz.com", and every other
+    combination of the second group and third group... both with and without
+    a "www." at the beginning.</li>
+
+  <li><code>(\d{3}-)?\d{3}-\d{4}</code> would match a certain type of
+    <b>phone numbers</b>, like "123-4567" and "123-456-7890".</li>
+
+</ul>
+
+<p> But most of the time, you probably won't need more than just a simple
+word or two, to find what you're looking for. </p>
+
+</body>
+</html>
+

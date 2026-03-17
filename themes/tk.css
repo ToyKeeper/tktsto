@@ -1142,7 +1142,7 @@ foo {
 
 .dialog *:focus,
 *:focus,
-.focused {
+not(body).focused {
   outline: var(--focus-outline);
 }
 
