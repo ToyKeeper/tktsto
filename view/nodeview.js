@@ -675,6 +675,8 @@ export class NodeView extends Node {
     let wasInViewScope = true;
     if ('window' === viewScope) wasInViewScope = this.isInViewScope();
     const wasPinned = this.isPinned();
+    const destWasExpanded = destParent.isExpanded();
+    const wasOverride = this.isExpandedOverride();
 
     // move it
     const changed = await super.moveTo(destParent, destIndex, ...extra);
@@ -685,7 +687,13 @@ export class NodeView extends Node {
     if (oldParent != destParent) oldParent.$refreshAncestry();
 
     // if pinned status changed, refresh this node and all children
-    if (wasPinned !== this.isPinned()) this.$renderChildren();
+    // (or if there are override shenanigans happening)
+    if ((wasPinned !== this.isPinned()) || wasOverride)
+      this.$renderChildren();
+
+    // if destination got expanded by this, re-render it
+    if ((! destWasExpanded) && destParent.isExpanded())
+      destParent.$renderChildren();
 
     // update the #marked-count widget
     // (can change when nodes move into / out of marked nodes)
@@ -770,6 +778,8 @@ export class NodeView extends Node {
   async setExpanded (expanded, args) {
     let wasExpanded;
     let changed;
+    const overrideNode = this.isExpandedOverride();
+
     // special case for view root in window mode
     // (because its expanded state is fake)
     if ( (this === this.tree.viewRoot)
@@ -797,11 +807,27 @@ export class NodeView extends Node {
       //changed = (expanded !== wasExpanded);
       changed = true;  // always redraw
       //debug(`localOverride: ${wasExpanded} => ${expanded}`);
+      // un-override it if we set it to the original state
+      //if (expanded === wasExpanded)
+      //  this.tree.expandOverride(this, null);
+    }
+    else if (overrideNode && ('userAction' === args.reason)) {
+      // we are a parent of an override node, so...
+      // un-override it, and override our own parent instead?
+      debug(`parent of override: expand=${expanded}`, this, overrideNode);
+      wasExpanded = this.isExpanded();
+      if (overrideNode !== this) {
+        this.tree.expandOverride(this.parent, true);
+      }
+      this.tree.expandOverride(overrideNode, null);
+      changed = await super.setExpanded(expanded, args)
+        || (expanded !== wasExpanded);
     }
     else {
       wasExpanded = this.isExpanded();
       // remove node from overrides
-      this.tree.expandOverride(this, null);
+      if (overrideNode) this.tree.expandOverride(overrideNode, null);
+
       changed = await super.setExpanded(expanded, args)
         || (expanded !== wasExpanded);
       //debug(`noOverride: ${wasExpanded} => ${expanded} => ${this.expanded}`);
@@ -858,6 +884,7 @@ export class NodeView extends Node {
             if (activeTab !== winNode.prevActiveTab)
               this.tree.expandOverride(winNode.prevActiveTab, null);
           }
+          if (activeTab.hasKids()) activeTab.$renderChildren();
           this.tree.setCursor(activeTab);
           winNode.prevActiveTab = activeTab;
         }

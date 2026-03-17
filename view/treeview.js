@@ -314,12 +314,12 @@ export class TreeView extends Tree {
   }
 
   focusSearchBar () {
-    this.$searchEntry.classList.add('focused');
+    this.$searchEntry.classList.add('focus');
     this.$searchEntry.focus();
   }
 
   unfocusSearchBar () {
-    this.$searchEntry.classList.remove('focused');
+    this.$searchEntry.classList.remove('focus');
     this.$searchEntry.blur();
   }
 
@@ -522,13 +522,13 @@ export class TreeView extends Tree {
   onSearchEntryFocused (event) {
     debug('focus');
     this.searchCaptureInput = true;
-    this.$searchEntry.classList.add('focused');
+    this.$searchEntry.classList.add('focus');
   }
 
   onSearchEntryUnfocused (event) {
     debug('unfocus');
     this.searchCaptureInput = false;
-    this.$searchEntry.classList.remove('focused');
+    this.$searchEntry.classList.remove('focus');
   }
 
   async expandOverrideClear () {
@@ -1013,7 +1013,6 @@ export class TreeView extends Tree {
     const destParent = this.cursor.parent.nodes[this.cursor.indexOf() - 1];
 
     let destIndex;
-    let newCursor = this.cursor;
     // if destParent expanded, make this node the last child
     if (destParent.isExpanded()) {
       destIndex = destParent.nodes.length;
@@ -1022,13 +1021,10 @@ export class TreeView extends Tree {
     // TODO: destination should be configurable
     else {
       destIndex = 0;
-      newCursor = destParent;
-      //newCursor = this.cursor.nextVisibleNode();
     }
 
     // move it
     const moved = await this.cursorNodeMoveTo(destParent, destIndex, 'right');
-    if (moved) await this.setCursor(newCursor);
   }
 
   async action_moveNodeLeft (event) {
