@@ -702,7 +702,7 @@ export class Tree {
     finally { unlock(); }
   }
 
-  onTabRemoved (tabId, removeInfo) {
+  async onTabRemoved (tabId, removeInfo) {
     // tabId: number
     // removeInfo.isWindowClosing: boolean
     // removeInfo.windowId: number
@@ -717,13 +717,14 @@ export class Tree {
     //   delete the tab node...
     //   and if the window was boring too, delete it too
 
+    //debug('tabNode', {...tabNode});
+
     // if tab unloaded manually by user, and we're just cleaning up
     // (without tabClosedReason, it's likely the user closed the tab
     //  and caused a new service worker to spawn)
     if ('unload' === tabNode.tabClosedReason) {
       // finalize the unload now that the browser tab is actually closed
-      tabNode.tabClosedReason = undefined;  // message received, reset it
-      return tabNode.unload({ reason: 'onTabRemoved', detail: 'manualUnload' });
+      await tabNode.unload({ reason: 'onTabRemoved', detail: 'manualUnload' });
     }
     // if tab closed only because its window is closing
     else if (removeInfo && removeInfo.isWindowClosing) {
@@ -737,28 +738,30 @@ export class Tree {
             && (! winNode.shouldUnloadNotDelete())
             && (! tabNode.shouldUnloadNotDelete())
           ) {
-            return tabNode.deleteSelf({ reason: 'onTabRemoved', detail: 'boringFinalLeafInBoringWindow' });
+            await tabNode.deleteSelf({ reason: 'onTabRemoved', detail: 'boringFinalLeafInBoringWindow' });
+            return;
           }
         }
       }
       // keep unloaded tab as part of the user's saved window
-      return tabNode.unload({ reason: 'onWindowRemoved', detail: 'saveWindow' });
+      await tabNode.unload({ reason: 'onWindowRemoved', detail: 'saveWindow' });
     }
     // if tab closed manually by user, but it has label/notes
     else if (tabNode.shouldUnloadNotDelete()) {
       // keep tab in tree to preserve its metadata
-      return tabNode.unload({ reason: 'onTabRemoved', detail: 'hasMetadata' });
+      await tabNode.unload({ reason: 'onTabRemoved', detail: 'hasMetadata' });
     }
     // if tab is boring but has kids
     else if (tabNode.hasKids()) {
       // delete the node, but keep its kids
-      return tabNode.deleteSelfAndPromoteKids({ reason: 'onTabRemoved', detail: 'hasKids' });
+      await tabNode.deleteSelfAndPromoteKids({ reason: 'onTabRemoved', detail: 'hasKids' });
     }
     // tab is a leaf node with no label or anything interesting
     else {
       // delete boring tabs on close
-      return tabNode.deleteSelf({ reason: 'onTabRemoved', detail: 'boringLeaf' });
+      await tabNode.deleteSelf({ reason: 'onTabRemoved', detail: 'boringLeaf' });
     }
+    delete tabNode['tabClosedReason'];  // message received, reset it
   }
 
   async onTabActivated (windowId, tabId) {
