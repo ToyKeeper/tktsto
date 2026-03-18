@@ -666,6 +666,7 @@ h2, h3 {
   border-radius: var(--cursor-radius-collapsed);
   font-weight: normal;
   color: var(--window-unloaded-fg);
+  padding: 0.1em 0.2em;
 }
 .window.row .row-title,
 h2, h3 {
@@ -697,9 +698,6 @@ foo {
   /* make focused window stand out more */
   background: var(--window-active-row-bg, var(--window-row-bg));
   box-shadow: var(--window-active-row-shadow);
-}
-.window.row.active {
-  padding: 0.1em 0.2em;
 }
 
 .window.row.cursor .row-title {

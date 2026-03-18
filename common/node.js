@@ -1646,6 +1646,7 @@ export class Node {
     if (undefined !== args.loaded) this.loaded = args.loaded;
     // let others know
     if (['userAction', 'onTabActivated', 'onTabAttached',
+      'onWindowFocusChanged',
       'reorderAllTabsInThisWindow'
     ].includes(args.reason)) {
       // in case the 'loaded' state somehow got desynced or corrupted,
@@ -1653,7 +1654,7 @@ export class Node {
       this.loaded = true;
       // let others know
       await emit('tree_nodeChanged',
-        { nodeId: this.id, type: 'setActive', active: this.active,
+        { ...args, nodeId: this.id, type: 'setActive', active: this.active,
           loaded: this.loaded,
           when: this.atime });
 

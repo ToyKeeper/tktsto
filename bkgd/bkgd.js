@@ -434,11 +434,21 @@ class Bkgd {
     // update the window geometry and stuff
     // (because Firefox has no onWindowBoundsChanged event)
     // (so this is a workaround for that)
-    const win = await api.windows.get(windowId);
-    if (win) { await this.tree.onWindowBoundsChanged(win, winNode); }
+    const winObj = await api.windows.get(windowId);
+    if (winObj) { await this.tree.onWindowBoundsChanged(winObj, winNode); }
 
-    // TODO: set window node as 'active' and set others as just 'loaded'?
-    //   (so the focused window can have a brighter row in the tree view)
+    // set window node as 'active' and set others as just 'loaded'
+    // (so the focused window can have a brighter row in the tree view
+    //  and "session" mode TreeViews can auto-scroll to the focused window)
+    const loadedWinNodes = this.tree.root.findNodes(
+      (n) => (n.isWindow() && n.isLoaded())
+    );
+    for (const win of loadedWinNodes) {
+      const focused = (win === winNode);
+      if (win.active !== focused)
+        await win.setActive(focused,
+          { reason: 'onWindowFocusChanged', 'focusedNodeId': winNode.id });
+    }
   }
 
   async onWindowBoundsChanged (win) {
