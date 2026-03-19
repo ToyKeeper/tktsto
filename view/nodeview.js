@@ -868,6 +868,7 @@ export class NodeView extends Node {
     let changed;
     debug(`NodeView.setActive(${active}): ${this.toLine()}`, this);
     if (args.localOverride) changed = true;
+    else if (args.onWindowRemoved) changed = true;
     else changed = super.setActive(active, args);
     // abort on no-op
     if (! changed) return;

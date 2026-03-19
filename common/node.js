@@ -706,7 +706,7 @@ export class Node {
       // Vivaldi does this when closing a window
       // and it's fine... it closes the tabs afterward
       const loadedTabs = this.getLoadedTabs();
-      warn(`Window closed with ${loadedTabs.length} open tabs: ${this.toLine()}`);
+      debug(`Window closed with ${loadedTabs.length} open tabs: ${this.toLine()}`);
     }
     // notify others
     if ('onWindowRemoved' === args.reason)
@@ -1257,6 +1257,10 @@ export class Node {
             // (and Firefox generates an error for that, while Chrome doesn't)
           }
         }
+        // just in case, make sure we're not still marked active
+        await this.setActive(false, {
+          reason: 'onWindowRemoved', 'onWindowRemoved': true,
+        });
       }
       else {
         warn(`Node.unload() called on Node with no tabId`, this);
@@ -1635,7 +1639,7 @@ export class Node {
   async setActive (active, args) {
     if (! args) return;
     // abort on no-op
-    if (active === this.active) return;
+    if ((active === this.active) && (! args.onWindowRemoved)) return;
     // do we need to sync the hidden state?
     let syncHide = false;
     // Do The Thing
@@ -1646,12 +1650,12 @@ export class Node {
     if (undefined !== args.loaded) this.loaded = args.loaded;
     // let others know
     if (['userAction', 'onTabActivated', 'onTabAttached',
-      'onWindowFocusChanged',
+      'onWindowFocusChanged', 'onWindowRemoved',
       'reorderAllTabsInThisWindow'
     ].includes(args.reason)) {
       // in case the 'loaded' state somehow got desynced or corrupted,
       // this event means we know it *must* be in a loaded state
-      this.loaded = true;
+      if (active) this.loaded = true;
       // let others know
       await emit('tree_nodeChanged',
         { ...args, nodeId: this.id, type: 'setActive', active: this.active,

@@ -417,7 +417,7 @@ class Bkgd {
     const node = this.tree.root.getWindowId(windowId);
     if (node) {
       debug('bkgd.onWindowRemoved(): found window node', windowId, node);
-      return node.windowClosed({ reason: 'onWindowRemoved' });
+      return await node.windowClosed({ reason: 'onWindowRemoved' });
     }
     else {
       debug('bkgd.onWindowRemoved(): no window node found', windowId);
@@ -440,14 +440,28 @@ class Bkgd {
     // set window node as 'active' and set others as just 'loaded'
     // (so the focused window can have a brighter row in the tree view
     //  and "session" mode TreeViews can auto-scroll to the focused window)
-    const loadedWinNodes = this.tree.root.findNodes(
-      (n) => (n.isWindow() && n.isLoaded())
+    const now = Date.now();
+    const winNodes = this.tree.root.findNodes(
+      // all loaded or recently-closed windows (less than 3 seconds ago)
+      (n) => (n.isWindow() && (n.isLoaded() || (n.mtime > (now - 3000))))
     );
-    for (const win of loadedWinNodes) {
+    for (const win of winNodes) {
+      //debug(`win: ${win.toLine()}`, win);
       const focused = (win === winNode);
-      if (win.active !== focused)
-        await win.setActive(focused,
-          { reason: 'onWindowFocusChanged', 'focusedNodeId': winNode.id });
+      if (win.active !== focused) {
+        //debug(`changed: ${win.toLine()}`);
+        await win.setActive(focused, {
+          reason: 'onWindowFocusChanged', 'focusedNodeId': winNode.id,
+        });
+      }
+      // also force-unfocus recently closed windows
+      else if (! win.isLoaded()) {
+        //debug(`setActive(false) recently closed window: ${win.toLine()}`);
+        await win.setActive(focused, {
+          reason: 'onWindowFocusChanged', 'focusedNodeId': winNode.id,
+          'onWindowRemoved': true,
+        });
+      }
     }
   }
 
