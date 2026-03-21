@@ -2001,6 +2001,7 @@ export class TreeView extends Tree {
     let finished = false;
     const finish = (msg) => {
       debug(`mouseDrop.finish(): ${msg}`);
+      this.dragInProgress = false;
       // only finish once
       if (finished) return;
       finished = true;
@@ -2277,6 +2278,7 @@ export class TreeView extends Tree {
   async ensureCursorVisible () {
     if (this.isInert) return;
     const viewRoot = this.viewRoot;
+    this.dragInProgress = false;
     //debug(`TreeView.ensureCursorVisible(cursor):`, this.cursor);
     //debug(`TreeView.ensureCursorVisible(viewRoot):`, viewRoot);
 
