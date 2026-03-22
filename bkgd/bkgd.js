@@ -36,6 +36,13 @@ class Bkgd {
     this.nodesLoading = [];
     this.windowsLoading = [];
 
+    // internal map of treeId : TreeViewInfo,
+    // tracks the port and viewType and viewScope of each open TreeView
+    // so we can decide where to send global hotkey events
+    // (usually send to current window, but in "Tabs Outliner mode",
+    //  send to a separate window)
+    this.treeViews = {};
+
     // local backups
     this.localBackupAlarmName = 'periodicLocalBackup';
 
@@ -588,9 +595,38 @@ class Bkgd {
   onConnect (port) {
     // keep a list of connected TreeView instances
     this.ports.push(port);
+    //debug('ports', this.ports);
+
+    // handle posted messages
+    port.onMessage.addListener((msg) => { this.onPortMessage(port, msg); });
+
+    // delete associated TreeView on disconnect
     port.onDisconnect.addListener(() => {
+      debug('bkgd_portDisconnect()', port);
+      //debug('treeViews[]:', this.treeViews);
+      for (const treeId of Object.keys({ ...this.treeViews })) {
+        const tv = this.treeViews[treeId];
+        if (tv?.port === port) {
+          debug(`disconnect TreeView ${treeId}`);
+          delete this.treeViews[treeId];
+          //debug('treeViews[]:', this.treeViews);
+        }
+      }
       this.ports = this.ports.filter(p => p !== port);
     });
+  }
+
+  onPortMessage (port, msg) {
+    //debug(`Bkgd.onPortMessage(${msg.msg})`, msg, port);
+    // there is only one message type expected
+    if ('bkgdPort_registerTreeView' === msg?.msg) {
+      // save the ID so we can tell which one disconnected later
+      this.bkgdPort_registerTreeView(msg);
+      if (msg.treeId) {
+        const tv = this.treeViews[msg.treeId];
+        if (tv) tv.port = port;
+      }
+    }
   }
 
   onMessage (msg, sender, sendResponse) {
@@ -628,7 +664,7 @@ class Bkgd {
       //await this.configLoaded;  // wait for config to finish loading
       // actually handle the event
       //debug(`bkgd: ${msg.msg}()`);
-      const result = await handler.bind(this)(msg);
+      const result = await handler.bind(this)(msg, sender);
       //debug('bkgd sendResponse:', result);
       sendResponse(result);
       return;
@@ -641,8 +677,46 @@ class Bkgd {
     return error(err);
   }
 
-  async bkgd_ping (msg) {
+  async bkgd_ping (msg, sender) {
+    const update = async () => {
+      this.bkgdPort_registerTreeView(msg, sender);
+      this.pruneDeadTreeViews();
+    };
+    update();  // put update on the queue to do after we respond to sender
     return Date.now();
+  }
+
+  bkgdPort_registerTreeView (msg, sender) {
+    //debug('bkgdPort_registerTreeView()', msg, sender);
+    // data:
+    //   msg.treeId
+    //   msg.windowId
+    //   msg.viewScope ('session' or 'window')
+    //   msg.viewType ('tab' or 'sidepanel')
+    //   sender?.documentId?
+    //   sender?.tab?.id
+    //   ? lastPingTime
+    const key = msg.treeId;
+    if (! key) return warn('no treeId', msg, sender);
+    let oldValue = this.treeViews[key];
+    if (! oldValue) oldValue = {};
+    const value = { ...oldValue, ...msg, lastPing: Date.now() };
+    if (sender?.tab?.id) value.tabId = sender.tab.id;
+    if (! this.treeViews[key])
+      debug(`registered TreeView ${value.treeId} (${value.viewScope} ${value.viewType})`);
+    this.treeViews[key] = value;
+  }
+
+  pruneDeadTreeViews () {
+    const cutoff = Date.now() - (20 * 1000);  // 20 seconds ago
+    for (const treeId of Object.keys({ ...this.treeViews })) {
+      const data = this.treeViews[treeId];
+      if (data.lastPing < cutoff) {
+        debug(`pruning TreeView ${treeId}`);
+        delete this.treeViews[treeId];
+      }
+    }
+    //debug('treeViews[]:', this.treeViews);
   }
 
   async bkgd_newNodeId (msg) {
@@ -1246,6 +1320,8 @@ class Bkgd {
       'bookmarkCurrentTab',
       'unmarkAll',
       'backupSession',
+      //'prevTab',  // TODO
+      //'nextTab',  // TODO
     ];
     // decide whether Bkgd or TreeView should handle the command
     if (bkgdCommands.includes(command)) {
@@ -1255,16 +1331,31 @@ class Bkgd {
       await handler.bind(this)(tab);
       return;
     }
+
     // otherwise, send the command to the current window's TreeView
     // get the focused window
+    let windowId, origWindowId;
     const window = await chrome.windows.getLastFocused();
-    if (window) {
-      debug(`Bkgd.onCommand(${command})`, window);
+    if (window) windowId = window.id;
+
+    // in "Tabs Outliner mode" (just 1 TreeView in its own window),
+    // send commands there instead of the current window
+    // (works with any lone TreeView in session mode)
+    const treeViewIds = Object.keys(this.treeViews);
+    const firstTreeView = this.treeViews[treeViewIds[0]];
+    if ((1 === treeViewIds.length)
+      && ('session' === firstTreeView?.viewScope)
+    ) {
+      origWindowId = windowId;
+      windowId = firstTreeView.windowId;
+    }
+
+    if (windowId) {
+      //debug(`Bkgd.onCommand(${command})`, windowId);
       // send a message to the sidepanel of that window
       emit(`treeview_onCommand`, {
-        windowId: window.id,
         action: command,
-        tab: tab
+        windowId, tab, origWindowId,
       });
     }
   }

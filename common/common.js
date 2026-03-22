@@ -181,15 +181,18 @@ export function fmtDate (date) {
 }
 
 
-export async function emit (name, args, retry = true) {
+export async function emit (name, args, extra) {
   if (emit.disabled) return;  // abort if we're turned off
+  let retry = (undefined === extra?.retry) ? true : extra.retry;
+  const port = extra?.port;
+
   // ensure valid args
   if (!((typeof name === 'string') || (name instanceof String)))
     throw new TypeError(`emit(name): name was not a string: ${name}`);
   if (undefined === args) args = {};
   args['msg'] = name;
   // debug info except for noisy pings
-  if ('bkgd_ping' !== name) debug(1, `emit(${name})`, args);
+  if ('bkgd_ping' !== name) debug(1, `emit(${name})`, args, extra);
   // abort if we're the Bkgd script and there are no receivers
   if (emit.isBkgd && (0 === emit.bkgd.ports.length)) {
     debug(1, 'emit(bkgd): no receivers');
@@ -208,7 +211,14 @@ export async function emit (name, args, retry = true) {
   const startTime = performance.now();
   while (retry && (! response) && (tryNum < maxTries)) {
     try {
-      response = await api.runtime.sendMessage(args);
+      // Port.postMessage() returns void, no reply expected
+      if (port) {
+        //debug(1, `portEmit(${name}):`, port, args);
+        port.postMessage(args);
+        response = {};
+      }
+      // runtime.sendMessage() expects a reply
+      else { response = await api.runtime.sendMessage(args); }
       retry = false;
       if ('bkgd_ping' !== name)
         debug(1, `emit(${name}) response:`, response);

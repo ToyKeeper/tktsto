@@ -176,6 +176,12 @@ export class Tree {
     }
   }
 
+  async newNodeId () {
+    const nextId = await emit('bkgd_newNodeId');
+    //debug('Tree.newNodeId():', nextId);
+    return nextId;
+  }
+
   async loadTreeFromBkgd () {
     // TODO: get entire tree state from bkgd
     //   ... and populate this tree with that data

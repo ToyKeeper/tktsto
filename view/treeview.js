@@ -181,6 +181,7 @@ export class TreeView extends Tree {
       // init connection to bkgd
       await this.initBkgdPort();
       this.initBkgdPing();
+      this.id = await this.newNodeId();
       // TODO: load the nodes from storage and render them
       await this.loadTreeFromBkgd(false);
     }
@@ -199,6 +200,9 @@ export class TreeView extends Tree {
       { defaultViewScope = 'session'; }
       this.viewScope = await this.getWindowConfig('viewScope', defaultViewScope);
       if (! this.viewScope) this.viewScope = defaultViewScope;
+
+      await this.detectTabOrSidepanel();
+      this.registerWithBkgd();
     }
 
     this.$renderViewScopeBtn();
@@ -2462,29 +2466,63 @@ export class TreeView extends Tree {
 
   initBkgdPort () {
     this.port = api.runtime.connect();
+    //debug('port', this.port);
     this.port.onDisconnect.addListener(async () => {
       debug("TreeView.port disconnected, reconnecting...");
       await new Promise(r => setTimeout(r, 100));
       this.initBkgdPort();
+      this.registerWithBkgd();
     });
+    // tell bkgd about us, after we've had a chance to load
+    //setTimeout(() => { this.registerWithBkgd(); }, 1000);
   }
 
   initBkgdPing () {
-    this.bkgdPing = setInterval(this.pingBkgd, 15 * 1000);
+    this.bkgdPing = setInterval(() => { return this.pingBkgd(); }, 15 * 1000);
   }
 
   async pingBkgd () {
     // keep service worker alive
     // so it won't have to keep reloading the tree from persistent storage
+    // also, update the bkgd on our ID and status
+    const msg = this.registerWithBkgd(false);
     const before = Date.now();
     //const response = await api.runtime.sendMessage({ 'msg': 'bkgd_ping' });
-    const response = await emit('bkgd_ping');
+    const response = await emit('bkgd_ping', msg);
     const after = Date.now();
     if (! response) { return warn('bkgd ping failed'); }
     const elapsed = after - before;
     const oneway = response - before;
     if (elapsed > 30)  // don't log fast pings, only slow pings
       debug(`view => bkgd ping: 0 -> ${oneway} ms -> ${elapsed} ms`);
+  }
+
+  registerWithBkgd (send = true) {
+    const msg = {
+      treeId: this.id,
+      windowId: this.windowId,
+      viewScope: this.viewScope,
+      viewType: this.viewType,
+    };
+    // needs to send via Port.postMessage() instead of runtime.sendMessage()
+    // because it needs Port.onDisconnect to detect when a TreeView closes
+    // and this associates the TreeView.id with a port
+    if (send) emit('bkgdPort_registerTreeView', msg, { port: this.port });
+    return msg;
+  }
+
+  async detectTabOrSidepanel () {
+    const tab = await api.tabs.getCurrent();
+    // no tab = sidepanel, in every browser I'm aware of
+    if (! tab) this.viewType = 'sidepanel';
+    else {
+      // Firefox, and most Chrome browsers: tab = running in a tab
+      // Vivaldi: sidepanel is also a tab (but not listed in its own window)
+      const realTabs = await api.tabs.query({ windowId: tab.windowId });
+      const isRealTab = realTabs.some((t) => (t.id === tab.id));
+      this.viewType = isRealTab ? 'tab' : 'sidepanel';
+    }
+    log(`running in ${this.viewType} mode`);
   }
 
   initButtonHandlers () {
@@ -2542,6 +2580,8 @@ export class TreeView extends Tree {
     this.$renderWholeTree();
     this.ensureCursorVisible();
     this.setStatus(`View scope: ${this.viewScope}`);
+    // tell bkgd we changed viewScope
+    this.registerWithBkgd();
   }
 
   $renderViewScopeBtn () {
@@ -2727,7 +2767,8 @@ export class TreeView extends Tree {
       try {
         this.setStatus(`key: ${msg.action}`);
         // event type tells handlers to use keyboard cursor, not mouse
-        await handler.bind(this)({ type: 'command',  tab: msg.tab });
+        //await handler.bind(this)({ type: 'command',  tab: msg.tab });
+        await handler.bind(this)({ type: 'command',  ...msg });
       }
       finally { unlock(); }
       return;

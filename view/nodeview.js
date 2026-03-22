@@ -24,15 +24,6 @@ export class NodeView extends Node {
     this.$nodes = null;  // <ul>
   }
 
-  async newNodeId () {
-    // NodeView.newNodeId() and NodeStore.newNodeId()
-    // are totally different, and Node.newNodeId() doesn't exist
-    //super.newNodeId();  // unnecessary, doesn't exist
-    const nextId = await emit('bkgd_newNodeId');
-    //debug('NodeView.newNodeId():', nextId);
-    return nextId;
-  }
-
   $render () {
     //debug('NodeView.$render');
     if (!this.tree.document) return;
@@ -550,7 +541,7 @@ export class NodeView extends Node {
     const prevNodeAtIndex = this.nodes[index];
 
     // must allocate ID before creating node and emitting notifications
-    if (! details.id) { details.id = await this.newNodeId(); }
+    if (! details.id) { details.id = await this.tree.newNodeId(); }
     // create new Node object
     const newNode = await super.addChild(index, details, ...extra);
     //newNode.window = this.window;  // redundant?
