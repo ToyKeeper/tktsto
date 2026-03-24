@@ -44,6 +44,7 @@ foo {
     var(--window-branch-bot));
   /* --doc-text-fg: #c8ccd4; */
   --doc-text-fg: #ccc;
+  --doc-li-bg: #68f1;
   /***** main tree view *****/
   --tree-view-bg: #191919;
   --label-loaded-fg: #12ee6a;

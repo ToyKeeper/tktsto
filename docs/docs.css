@@ -98,10 +98,10 @@ ul:not(.nodes), ol:not(.nodes) {
 li:not(.node) {
   margin: 0.5em;
   padding: 0.25em 0.5em;
-  outline: var(--1px) outset var(--cursor-branch-hl);
-  background: linear-gradient(var(--cursor-branch-top), var(--cursor-branch-bot));
   border-radius: var(--cursor-branch-radius);
-  box-shadow: var(--cursor-branch-shadow);
+  border: var(--doc-li-border);
+  background: var(--doc-li-bg);
+  box-shadow: var(--doc-li-shadow);
   font-size: var(--doc-font-size);
 }
 

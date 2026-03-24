@@ -93,6 +93,7 @@ foo {
     var(--window-branch-top),
     var(--window-branch-bot));
   --doc-text-fg: #246;
+  --doc-li-bg: #fff8;
   /***** main tree view *****/
   --tree-view-bg: #e2e2f4;
   --label-loaded-fg: #005400;
