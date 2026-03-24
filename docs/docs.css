@@ -125,8 +125,12 @@ div#tree-view, div.tree-view {
   height: unset;
   max-width: min-content;
   padding: 0.25em;
-  margin: 0.25em 0.5em;
+  margin: 0.25em 0;
   overflow-y: hidden;
+}
+
+.row {
+  padding-right: 0.25em;
 }
 
 table.fit {
@@ -139,6 +143,16 @@ table.fit {
 table.fit tr, table.fit td {
   vertical-align: top;
 }
+
+.fit td {
+  padding: 0 0.5em;
+  text-align: justify;
+}
+
+.fit td p {
+ padding: 0 0.2em;
+}
+
 
 .flexbox {
   display: flex;
