@@ -668,6 +668,8 @@ export class NodeView extends Node {
     const wasPinned = this.isPinned();
     const destWasExpanded = destParent.isExpanded();
     const wasOverride = this.isExpandedOverride();
+    const wasExpanded = this.isExpanded();
+    const wasVisible = this.isVisible();
 
     // move it
     const changed = await super.moveTo(destParent, destIndex, ...extra);
@@ -677,24 +679,19 @@ export class NodeView extends Node {
     // refresh old parent if needed
     if (oldParent != destParent) oldParent.$refreshAncestry();
 
+    let needsKidsRendered = false;
     // if pinned status changed, refresh this node and all children
     // (or if there are override shenanigans happening)
     if ((wasPinned !== this.isPinned()) || wasOverride)
-      this.$renderChildren();
+      needsKidsRendered = true;
+
+    if (((! wasVisible) || (! wasExpanded))
+      && (this.isExpanded())
+    ) needsKidsRendered = true;
 
     // if destination got expanded by this, re-render it
     if ((! destWasExpanded) && destParent.isExpanded())
       destParent.$renderChildren();
-
-    // update the #marked-count widget
-    // (can change when nodes move into / out of marked nodes)
-    this.tree.updateMarkedCount();
-
-    // if has cursor and new position hidden,
-    // move cursor to nearest visible parent
-    // (this can happen when a collapsed parent is becoming its own child)
-    // (when the user moved tabs via the tab bar)
-    this.tree.ensureCursorVisible();
 
     // "this window only" mode needs extra care
     if ('window' === viewScope) {
@@ -706,9 +703,21 @@ export class NodeView extends Node {
       // force render
       else if (this.isInViewScope() && (! wasInViewScope)) {
         debug(`NodeView.moveTo(): moved into viewScope`);
-        this.$renderChildren();
+        needsKidsRendered = true;
       }
     }
+
+    if (needsKidsRendered) this.$renderChildren();
+
+    // update the #marked-count widget
+    // (can change when nodes move into / out of marked nodes)
+    this.tree.updateMarkedCount();
+
+    // if has cursor and new position hidden,
+    // move cursor to nearest visible parent
+    // (this can happen when a collapsed parent is becoming its own child)
+    // (when the user moved tabs via the tab bar)
+    this.tree.ensureCursorVisible();
 
     // ensure cursor is in the viewport
     if (this === this.tree.cursor) this.tree.scrollNodeIntoView(this);
