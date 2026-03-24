@@ -3,6 +3,39 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.156.0 (2026-03-23)
+
+Changes:
+
+- Added **search** functions.  Like Vim, press `/` or `*` to start a search,
+  `Enter` to lock it in, and `n` or `Shift+N` to go through matches.  Then
+  `Escape` to cancel it, or again to collapse all temporarily-expanded
+  branches.
+
+- Added an option for "hide top buttons during search".  Also added a doc
+  page for search.
+
+- Improved **Tabs Outliner mode** (session mode in a standalone window).
+  The session-mode cursor now follows the active tab in *other* windows.
+  Window nodes change their "active" status and styling when focused.
+  Browser global hotkeys now work in this mode too -- if there is only one
+  TreeView and it's in Session mode, hotkeys get sent there regardless of
+  which window actually has focus.
+
+Bug fixes:
+
+- Fixed case where boring tabs would be kept when closed, if they had
+  previously been unloaded and reloaded.
+
+- Fixed drag-n-drop breaking cursor scrolling... again.
+
+- Reduced time window where a tab could be attached to the wrong node after
+  failing to load a saved tab.  Was 3 seconds, now 1 second.
+
+- Fixed failure to render child nodes after moving an invisible branch to
+  a visible location.
+
+
 ## 0.1.145.0 (2026-03-15)
 
 Changes:
