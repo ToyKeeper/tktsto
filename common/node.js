@@ -1825,6 +1825,13 @@ export class Node {
       return;
     }
 
+    // ensure window actually still exists
+    let winObj;
+    try { winObj = await api.windows.get(windowNode.windowId); }
+    catch (e) {
+      return log(`can't reorder tabs, window already closed: ${windowNode.windowId}`);
+    }
+
     // drop reorder requests when one is already pending
     const bkgd = this.tree.bkgd;
     if (bkgd.tabReorderInProgress) return;

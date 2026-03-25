@@ -441,7 +441,8 @@ class Bkgd {
     // update the window geometry and stuff
     // (because Firefox has no onWindowBoundsChanged event)
     // (so this is a workaround for that)
-    const winObj = await api.windows.get(windowId);
+    let winObj;
+    try { winObj = await api.windows.get(windowId); } catch (e) { }
     if (winObj) { await this.tree.onWindowBoundsChanged(winObj, winNode); }
 
     // set window node as 'active' and set others as just 'loaded'
