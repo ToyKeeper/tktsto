@@ -2646,8 +2646,18 @@ export class TreeView extends Tree {
       createProperties.url = api.runtime.getURL(url);
     else
       createProperties.url = url;
-    const win = await api.windows.getCurrent({ populate: false });
-    const [tab] = await api.tabs.query({ active: true, windowId: win.id });
+    // if we're in Tabs Outliner mode, open in cursor's window
+    // otherwise open in our own window
+    let windowId;
+    if ('session' === this.viewScope) {
+      const winNode = this.cursor.getWindowNode();
+      if (winNode) windowId = winNode.windowId;
+    }
+    if (! windowId) {
+      const win = await api.windows.getCurrent({ populate: false });
+      windowId = win.id;
+    }
+    const [tab] = await api.tabs.query({ active: true, windowId });
     debug(`openLinkInNewTab() parent tab:`, tab);
     createProperties.windowId = tab.windowId;
     // Chrome can't open internal pages in incognito windows
