@@ -1230,7 +1230,7 @@ export class Node {
           await api.tabs.remove(tabId);
           //debug(`Node.deleteSelf() removed tab: "${tabId}"`);
         } catch (err) {
-          warn(`Node.unloaded() tried to remove tab twice: "${tabId}"`);
+          warn(`Node.unloaded() failed: "${tabId}", ${err}`);
         }
       }
       else if (this.isWindow()) {  // a window has no tabId and it's fine
@@ -1860,83 +1860,92 @@ export class Node {
       let success = false;
       let tries = 0;
       const msPerTry = 500;
-      const maxTrySeconds = 30;
+      const maxTrySeconds = 30;  // how long will a user do a single drag?
       while ((! success) && (tries < (maxTrySeconds * 1000 / msPerTry))) {
-        try {
-          // Zen Browser is fucked
-          let zeroIndex = 0;
-          if (isZenBrowser) {
-            const tabArray = await api.tabs.query(
-              { windowId: windowNode.windowId });
-            zeroIndex = tabArray[0].index;
-          }
+        tries ++;
+        // Zen Browser is fucked
+        let zeroIndex = 0;
+        if (isZenBrowser) {
+          const tabArray = await api.tabs.query(
+            { windowId: windowNode.windowId });
+          zeroIndex = tabArray[0].index;
+        }
 
-          debug(`Node.reorderAllTabsInThisWindow():`,
-            zeroIndex, tabIds, updates);
+        debug(`Node.reorderAllTabsInThisWindow():`,
+          zeroIndex, tabIds, updates);
 
-          // attempt to reorder the tabs
-          const results = [];
-          let movePromise;
-          if (tabIds.length > 0) {
-            // pull tabs into the correct window first
-            results.push( api.tabs.move(tabIds,
-              { index: zeroIndex, windowId: windowNode.windowId }) );
-            // then we can update pinned status
-            for (const { tabId, updateProperties } of updates) {
-              if (tabId)
-                results.push( api.tabs.update(tabId, updateProperties) );
-            }
-            // and then finally move tabs to the correct order
-            movePromise = api.tabs.move(tabIds,
-              { index: zeroIndex, windowId: windowNode.windowId });
+        // attempt to reorder the tabs
+        const results = [];
+        let movePromise;
+        if (tabIds.length > 0) {
+          // pull tabs into the correct window first
+          results.push( api.tabs.move(tabIds,
+            { index: zeroIndex, windowId: windowNode.windowId }) );
+          // then we can update pinned status
+          for (const { tabId, updateProperties } of updates) {
+            if (tabId)
+              results.push( api.tabs.update(tabId, updateProperties) );
           }
-          if (movePromise) {
-            movePromise.then(
-              () => success = true,
-              () => success = false);
-          }
-          // FIXME: must try / catch while awaiting each promise,
-          // because otherwise only the first error is caught
-          // (this generates a ton of errors in Brave when dragging a tab)
-          for (const promise of results) {
-            await promise;
-          }
-          await movePromise;
+          // and then finally move tabs to the correct order
+          movePromise = api.tabs.move(tabIds,
+            { index: zeroIndex, windowId: windowNode.windowId });
+          results.push(movePromise);
+        }
+        if (movePromise) {
+          movePromise.then(
+            () => success = true,
+            () => success = false);
+        }
+        // must try / catch while awaiting each promise,
+        // because otherwise only the first error is caught
+        // (this generates a ton of errors in Brave when dragging a tab)
+        const errors = [];
+        for (const promise of results) {
+          try { await promise; }
+          catch (err) { errors.push(err); }
+        }
+        if (errors.length <= 0) {
           if (isFirefox) await this.syncTabHideState();
           debug('tab reorder success');
           //success = true;
-          tries ++;
-        } catch (err) {
+        } else {
           // handle Brave's "Error: Tabs cannot be edited right now (user may be dragging a tab)."
-          if (err.message.includes('Tabs cannot be edited right now')) {
+          if (errors.some((err) =>
+            err.message.includes('Tabs cannot be edited right now'))
+          ) {
             // wait before trying again
-            debug(`Tab reorder blocked, trying again in ${msPerTry}ms...`, err);
+            debug(`Tab reorder blocked, trying again in ${msPerTry}ms...`);
             await new Promise(resolve => setTimeout(resolve, msPerTry));
           }
-          // tabIds are out of sync with browser
-          // so attempt to fix the issue and try again
-          else if (
-            err.message.includes('Invalid tab ID:')  // Firefox
-            || err.message.includes('No tab with id:')  // Chrome
-          ) {
-            warn(true, 'Invalid tab ID', err);
-            // unset node.tabId and try again
-            let handled = false;
-            let badId = Number(err.message.split(' ').pop());
-            if (badId) {
-              const badNode = this.tree.getNodeByTabId(badId);
-              if (badNode) {
-                await badNode.unload({ reason: 'badTabId' });
-                // remove tabId from our list
-                const index = tabIds.indexOf(badId);
-                if (-1 !== index) {
-                  tabIds.splice(index, 1);
-                  handled = true;
+          for (const err of errors) {
+            if (err.message.includes('Tabs cannot be edited right now')) {
+              // already handled above
+            }
+            // tabIds are out of sync with browser
+            // so attempt to fix the issue and try again
+            else if (
+              err.message.includes('Invalid tab ID:')  // Firefox
+              || err.message.includes('No tab with id:')  // Chrome
+            ) {
+              warn('Invalid tab ID', err);
+              // unset node.tabId and try again
+              let handled = false;
+              let badId = Number(err.message.split(' ').pop());
+              if (badId) {
+                const badNode = this.tree.getNodeByTabId(badId);
+                if (badNode) {
+                  await badNode.unload({ reason: 'badTabId' });
+                  // remove tabId from our list
+                  const index = tabIds.indexOf(badId);
+                  if (-1 !== index) {
+                    tabIds.splice(index, 1);
+                    handled = true;
+                  }
                 }
               }
-            }
-            if (! handled) throw err;
-          } else { throw err; }
+              if (! handled) throw err;
+            } else { throw err; }
+          }
         }
       }
       if (bkgd.onTabAttachedRequested) {
