@@ -1317,12 +1317,12 @@ export class Node {
     return lastChild.lastVisibleDescendant();
   }
 
-  nextVisibleNode (root) {
+  nextVisibleNode (root, enableKids = true) {
     // TODO: check if we're visible.  If not, return nearest visible parent
     if (root && (! this.isChildOf(root, true))) return root;
 
     // if we have visible kids, return the first child
-    if (this.hasKids() && this.isExpanded()) return this.nodes[0];
+    if (enableKids && this.hasKids() && this.isExpanded()) return this.nodes[0];
 
     // otherwise, search without looking at kids
     const nextNode = this.nextVisibleNodeNoKids(root);
@@ -1357,11 +1357,7 @@ export class Node {
 
   nextVisibleNodeNotMyChild (root) {
     // find next visible node... but exclude our own kids
-    const wasExpanded = this.expanded;
-    this.expanded = false;
-    const result = this.nextVisibleNode(root);
-    this.expanded = wasExpanded;
-    return result;
+    return this.nextVisibleNode(root, false);
   }
 
   insertChild (node, index) {
@@ -1899,6 +1895,9 @@ export class Node {
               () => success = true,
               () => success = false);
           }
+          // FIXME: must try / catch while awaiting each promise,
+          // because otherwise only the first error is caught
+          // (this generates a ton of errors in Brave when dragging a tab)
           for (const promise of results) {
             await promise;
           }
