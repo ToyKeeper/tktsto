@@ -1840,23 +1840,6 @@ export class Node {
     try {
       bkgd.tabReorderInProgress = true;
 
-      // get a list of all loaded tab nodes in this window node, in order
-      const tabNodeList = windowNode.getLoadedTabs();
-
-      // tell browser to move *all* tabs in this window to that order
-      const tabIds = [];
-      const updates = [];
-      for (const node of tabNodeList) {
-        if (node.tabId) {
-          tabIds.push(node.tabId);
-          // ... and update the pinned status too
-          updates.push({
-            tabId: node.tabId,
-            updateProperties: { pinned: node.isPinned() }
-          });
-        }
-      }
-
       // wait a moment; Firefox wants this sometimes
       // (like, when dragging a tab to the void,
       //  it needs to create a window before the tabs can be reordered)
@@ -1870,6 +1853,24 @@ export class Node {
       const maxTrySeconds = 30;  // how long will a user do a single drag?
       while ((! success) && (tries < (maxTrySeconds * 1000 / msPerTry))) {
         tries ++;
+
+        // get a list of all loaded tab nodes in this window node, in order
+        const tabNodeList = windowNode.getLoadedTabs();
+
+        // tell browser to move *all* tabs in this window to that order
+        const tabIds = [];
+        const updates = [];
+        for (const node of tabNodeList) {
+          if (node.tabId) {
+            tabIds.push(node.tabId);
+            // ... and update the pinned status too
+            updates.push({
+              tabId: node.tabId,
+              updateProperties: { pinned: node.isPinned() }
+            });
+          }
+        }
+
         // Zen Browser is fucked
         let zeroIndex = 0;
         if (isZenBrowser) {
@@ -1922,11 +1923,17 @@ export class Node {
           ) {
             // wait before trying again
             debug(`Tab reorder blocked, trying again in ${msPerTry}ms...`);
+            bkgd.tabReorderStalled = true;
             await new Promise(resolve => setTimeout(resolve, msPerTry));
+            bkgd.tabReorderStalled = false;
           }
           for (const err of errors) {
             if (err.message.includes('Tabs cannot be edited right now')) {
               // already handled above
+            }
+            else if (err.message.includes('No window with id')) {
+              // Chrome makes and deletes a window so fast we can't query it
+              debug(err);
             }
             // tabIds are out of sync with browser
             // so attempt to fix the issue and try again

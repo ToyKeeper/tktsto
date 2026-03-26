@@ -525,7 +525,7 @@ class Bkgd {
     // moveInfo.toIndex: number
     // moveInfo.windowId: number
     debug(`bkgd.onTabMoved(tabId=${tabId}, windowId=${moveInfo.windowId}): ${moveInfo.fromIndex} -> ${moveInfo.toIndex}`);
-    if (this.tabReorderInProgress)
+    if (this.tabReorderInProgress && (! this.tabReorderStalled))
       return debug('bkgd.onTabMoved ignored (tabReorderInProgress)');
     await this.treeLoaded;
     await this.tree.onTabMoved(tabId, moveInfo);
