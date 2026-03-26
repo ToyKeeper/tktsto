@@ -791,13 +791,13 @@ class Bkgd {
     // - push node to be loaded, and open it (new window or existing window)
     this.nodesLoading.push(node);
     const popNode = (node, failed = false) => {
-      if (failed) warn('bkgd_loadSavedNode failed:', node);
       const index = this.nodesLoading.indexOf(node);
       if (index !== -1) {
+        if (failed) warn('bkgd_loadSavedNode failed:', node);
         this.nodesLoading.splice(index, 1);
       }
     };
-    setTimeout(() => { popNode(node, true); }, 1000);  // failsafe
+    setTimeout(() => { popNode(node, true); }, 500);  // failsafe
 
     // actually open the tab
     const createProperties = {};
