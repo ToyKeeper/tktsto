@@ -24,6 +24,10 @@ export class TreeView extends Tree {
     this.document = document;
     this.window = window;
 
+    this.treeViewLoaded = new Promise(resolve => {
+      this.resolveTreeViewLoaded = resolve;
+    });
+
     // false = interactive "real" TreeView
     // true = static read-only TreeView for demonstration purposes
     this.isInert = args.isInert;
@@ -217,6 +221,9 @@ export class TreeView extends Tree {
 
     // ensure the cursor is somewhere sane when sidepanel opens
     this.ensureCursorVisible();
+
+    // let listeners know the tree is loaded
+    this.resolveTreeViewLoaded();
   }
 
   async loadTreeFromBkgd (render = true) {

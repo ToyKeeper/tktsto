@@ -501,6 +501,7 @@ export class NodeView extends Node {
   }
 
   async renderIfChanged (promise, updateParents = false) {
+    await this.tree.treeViewLoaded;
     // do it
     const changed = await promise;
     // show it
@@ -513,6 +514,7 @@ export class NodeView extends Node {
   }
 
   async deleteSelf (...extra) {
+    await this.tree.treeViewLoaded;
     if (this.isRoot()) return;  // never delete root
     let newCursor;
     if (this.isCursor()) {
@@ -536,6 +538,7 @@ export class NodeView extends Node {
   }
 
   async addChild (index, details, ...extra) {
+    await this.tree.treeViewLoaded;
     //debug('NodeView.addChild():', details);
     // index is required; assume 1st child if not given
     if (undefined === index) index = 0;
@@ -661,6 +664,7 @@ export class NodeView extends Node {
   }
 
   async moveTo (destParent, destIndex, ...extra) {
+    await this.tree.treeViewLoaded;
     const viewRoot = this.tree.viewRoot;
     const viewScope = this.tree.viewScope;
     // save some info before moving...
@@ -778,6 +782,7 @@ export class NodeView extends Node {
   }
 
   async setExpanded (expanded, args) {
+    await this.tree.treeViewLoaded;
     let wasExpanded;
     let changed;
     const overrideNode = this.isExpandedOverride();
@@ -867,6 +872,7 @@ export class NodeView extends Node {
   }
 
   async setActive (active, args) {
+    await this.tree.treeViewLoaded;
     let changed;
     debug(`NodeView.setActive(${active}): ${this.toLine()}`, this);
     if (args.localOverride) changed = true;
