@@ -1395,9 +1395,17 @@ export class Node {
     const newWindowNode = destParent.getWindowNode();
     const thisHasLoadedTabs = this.isLoaded() || this.hasLoadedTabs();
     if (thisHasLoadedTabs && (! this.isWindow())) {
-      if (! newWindowNode)
-        return setStatus('moveTo: no destination window');
-      if (oldWindowNode.isIncognito() !== newWindowNode.isIncognito()) {
+      if (! newWindowNode) {
+        if (! this.url) {  // not a tab or a bookmark
+          // convert heading to a window
+          const changed = await this.convertToWindow({ type: 'window' }, {});
+          if (! changed) return setStatus('convert to window failed');
+          // wait for browser to catch up
+          await new Promise(r => setTimeout(r, 250));
+        }
+        else return setStatus('moveTo: no destination window');
+      }
+      else if (oldWindowNode.isIncognito() !== newWindowNode.isIncognito()) {
         return setStatus("moveTo: incognito mismatch");
       }
     }
