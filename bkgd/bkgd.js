@@ -914,6 +914,7 @@ class Bkgd {
     const changes = {
       type: '',
       loaded: false, wasLoaded: false,
+      windowId: undefined,
       incognito: undefined,
     };
     const parentWindowNode = node.parent.getWindowNode();
