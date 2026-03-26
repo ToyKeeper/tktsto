@@ -933,15 +933,15 @@ foo {
 .drop-target-left:not(.dragging),
 .window.node.expanded.drop-target-left:not(.dragging):not(.drop-external-text),
 foo {
-  border-left: 0.25em solid var(--tree-line-dragging);
-  border-bottom: 0.5em solid var(--tree-line-dragging);
-  border-bottom-left-radius: 1rem;
+  border-left: var(--drop-target-left-width) solid var(--tree-line-dragging);
+  border-bottom: var(--drop-target-bottom-width) solid var(--tree-line-dragging);
+  border-bottom-left-radius: var(--drop-target-border-radius);
 }
 /* draw tree line only below, not to left */
 .drop-target-right,
 .cursor.row.drop-target-right:not(.dragging .cursor) {
-  border-bottom: 0.5em solid transparent;
-  border-bottom-left-radius: 1rem;
+  border-bottom: var(--drop-target-bottom-width) solid transparent;
+  border-bottom-left-radius: var(--drop-target-border-radius);
   border-image: linear-gradient(to right,
     transparent 0%,
     transparent 8%,
@@ -1254,6 +1254,9 @@ select {
   --tree-line-dragging: #f0f;
   --tree-line-window: var(--tree-line);
   --tree-line-window-cursor: var(--tree-line-cursor);
+  --drop-target-left-width: 0.25em;
+  --drop-target-bottom-width: 0.5em;
+  --drop-target-border-radius: 1em;
   /***** window nodes *****/
   --window-title-text-shadow: var(--fancy-text-shadow);
   --window-branch-shadow: 0.10em 0.10em 0.25em var(--shadow-color);

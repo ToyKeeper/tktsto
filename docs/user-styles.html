@@ -20,11 +20,17 @@ the appearance of the Tree Views and other TKTSTO pages.
 
 </p><p>
 
-For example, this is what someone might write there to make rows light up
-purple when the mouse passes over them, and hide the hover menu, and
-increase the spacing between rows a little bit:
+For example, this is what someone might write there to modify a few
+relatively simple things...
 
 </p>
+
+<ul>
+  <li> make rows light up purple when the mouse passes over them </li>
+  <li> hide the hover menu </li>
+  <li> increase the spacing between rows a little bit </li>
+  <li> make stuff move around less during a drag-n-drop </li>
+</ul>
 
 <pre>
 /* highlight the row under the mouse in purple */
@@ -39,9 +45,7 @@ increase the spacing between rows a little bit:
 }
 
 /* don't show the hover menu at all, ever */
-#hover-menu {
-  display: none;
-}
+#hover-menu { display: none; }
 
 /* put some space (and a drop target) between top-level items in a window */
 .window.node > .nodes > .node {
@@ -51,6 +55,11 @@ increase the spacing between rows a little bit:
 :root {
   /* space out the rows a little bit */
   --row-padding: 0.1em;
+
+  /* make drag-n-drop lines thinner and less "wiggly" */
+  --drop-target-left-width: 0.15em;
+  --drop-target-bottom-width: 0.15em;
+  --drop-target-border-radius: 0.5em;
 }
 </pre>
 

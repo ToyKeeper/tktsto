@@ -634,17 +634,17 @@ export class TreeView extends Tree {
     this.$treeRoot.addEventListener('dblclick',
       (event) => { this.mouseEvent('dblclick', event) });
     // drag-n-drop
-    this.$treeRoot.addEventListener('dragstart',
+    this.$.addEventListener('dragstart',
       (event) => { this.mouseEvent('DragStart', event) });
-    this.$treeRoot.addEventListener('drag',
+    this.$.addEventListener('drag',
       (event) => { this.mouseEvent('Drag', event) });
-    this.$treeRoot.addEventListener('drop',
+    this.$.addEventListener('drop',
       (event) => { this.mouseEvent('Drop', event) });
-    this.$treeRoot.addEventListener('dragend',
+    this.$.addEventListener('dragend',
       (event) => { this.mouseEvent('DragEnd', event) });
-    this.$treeRoot.addEventListener('dragleave',
+    this.$.addEventListener('dragleave',
       (event) => { this.mouseEvent('DragLeave', event) });
-    this.$treeRoot.addEventListener('dragover',
+    this.$.addEventListener('dragover',
       (event) => { this.mouseEvent('DragOver', event) });
     // show/hide the hover menu
     this.$treeRoot.addEventListener('mouseover',
@@ -713,7 +713,7 @@ export class TreeView extends Tree {
     const eventName = buildEventName(event, eventType);
     //this.setStatus(`mouse: ${eventName}`);
     // identify which row the event was in, if any
-    let node;  // which Tree Node object was clicked?
+    let node = this.root;  // which Tree Node object was clicked?
     let $target = event.target;
     let $node;  // Node's ul.node element
     let $row;  // Node's div.row element
@@ -741,6 +741,23 @@ export class TreeView extends Tree {
     this.$mouseNode = $node;
     this.$mouseRow = $row;
     this.$mouseElem = $elem;
+    this.mouseNodeNonRoot = this.mouseNode;
+
+    // sometimes we need a non-root node, like for drag-n-drop
+    if (this.mouseNode?.isRoot()) {
+      // check the bounding box of each root-level item,
+      // find the closest one above the mouse
+      const y = event.clientY;
+      let bestTop = -Infinity;
+      for (const node of this.viewRoot.nodes) {
+        const rect = node.$.getBoundingClientRect();
+        if (rect.top <= y && rect.top > bestTop) {
+          this.mouseNodeNonRoot = node;
+          bestTop = rect.top;
+        }
+      }
+    }
+
     //debug(`${eventName} ${node.id} `, node, this.$mouseRow);
     //debug(`node: ${node.id}: ${node.toLine()}`, node);
     // identify which part of the row the event was in
@@ -1734,12 +1751,12 @@ export class TreeView extends Tree {
     // abort on no-op
     if (! this.mouseNode) return;
     // save for later potential drag-n-drop
-    this.mouseDragStartNode = this.mouseNode;
+    this.mouseDragStartNode = this.mouseNodeNonRoot;
     // place the cursor (and *don't* await)
-    this.setCursor(this.mouseNode,
-      { instanc: false, scrollDelay: this.cfg.doubleClickMs });
+    this.setCursor(this.mouseNodeNonRoot,
+      { instant: false, scrollDelay: this.cfg.doubleClickMs });
     // maybe modify a checkbox
-    if (this.$mouseElem.classList.contains('node-checkbox')) {
+    if (this.$mouseElem?.classList.contains('node-checkbox')) {
       await this.action_taskEdit(event);
       return;
     }
@@ -1816,7 +1833,7 @@ export class TreeView extends Tree {
     const result = {};
     // drop target
     let sourceNode;
-    let targetNode = this.mouseNode;
+    let targetNode = this.mouseNodeNonRoot;
     //debug(`targetNode:`, targetNode);
     // abort on no-op
     if (! targetNode) return result;
@@ -1935,8 +1952,10 @@ export class TreeView extends Tree {
     // save new drop target
     this.dropTargetNode = drop.targetNode;
     // set styles on new drop target
-    let elem = ('drop-target-left' === drop.targetClass)
-      ? drop.targetNode.$ : drop.targetNode.$row;
+    let elem = (
+        ('drop-target-left' === drop.targetClass)
+        && (drop.targetNode !== this.root)
+      ) ? drop.targetNode.$ : drop.targetNode.$row;
     elem.classList.add(drop.targetClass);
     if ('external' === drop.source)
       elem.classList.add(`drop-external-${drop.type}`);
