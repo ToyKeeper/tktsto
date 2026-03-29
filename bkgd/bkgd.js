@@ -8,6 +8,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 import {
   log, debug, warn, error, fmtDate, emit, jsonSchema, isIllegalURL
 } from '/common/common.js';
+import { Mutex } from '/common/mutex.js';
 import { Config } from '/common/config.js';
 import { IdGenerator } from '/common/id-generator.js';
 import * as sidepanel from './sidepanel.js';
@@ -33,6 +34,8 @@ class Bkgd {
 
     // queues for saved nodes which are in the process of being loaded
     // (empty except during brief moments before browser opens stuff)
+    // ... and a mutex so others can wait until the queue is empty.
+    this.nodesLoadingMutex = new Mutex();
     this.nodesLoading = [];
     this.windowsLoading = [];
 
@@ -287,15 +290,36 @@ class Bkgd {
     console.time('mergeOpenWindowsIntoTree');
     // attach browser windows to window nodes
     let attachedWindows = [];
+    const extUrl = api.runtime.getURL(`/`);
+    let delay = 500;  // wait a bit to reopen extension pages
+    const delayPerTab = 50;
     for (const window of windows) {
       debug(`Window ID: ${window.id}`);
       // detect whether window is already in tree
       // match by windowId (old, unreliable, windowId changes or goes stale)
       //let winNode = this.tree.root.getWindowId(window.id);
       // search for a Window in the tree with matching tabs
-      let winNode = this.tree.findMatchingWindow(window);
+      const match = this.tree.findMatchingWindow(window);
+      let winNode = match.winNode;
       if (winNode) {
         winNode.load({ reason: 'mergeOpenWindowsIntoTree' });
+        // reload any extension pages which failed to re-open
+        // after browser restart or extension restart
+        // (but do it slowly, to give the browser time to load)
+        const previouslyLoaded = match.loadedTabNodesWithNoTab;
+        if (previouslyLoaded?.length > 0) {
+          const deferredLoad = async () => {
+            for (const node of previouslyLoaded) {
+              if (node.url?.startsWith(extUrl)) {  // internal pages only
+                debug(`restoreLoadedTab: ${node.toLine()}`);
+                await node.load({reason: 'restoreLoadedTab' });
+                await new Promise(r => setTimeout(r, delayPerTab));
+              }
+            }
+          };
+          setTimeout(deferredLoad, delay);
+          delay += (delayPerTab + 10) * previouslyLoaded.length;
+        }
       }
       // if nothing found, add new window node to the tree
       else {
@@ -789,6 +813,10 @@ class Bkgd {
       // TODO: actually open the window?
     }
     // - push node to be loaded, and open it (new window or existing window)
+    if (this.nodesLoading.length <= 0) {
+      if (this.nodesLoadingMutexUnlock) this.nodesLoadingMutexUnlock();
+      this.nodesLoadingMutexUnlock = await this.nodesLoadingMutex.lock();
+    }
     this.nodesLoading.push(node);
     const popNode = (node, failed = false) => {
       const index = this.nodesLoading.indexOf(node);
@@ -796,8 +824,10 @@ class Bkgd {
         if (failed) warn('bkgd_loadSavedNode failed:', node);
         this.nodesLoading.splice(index, 1);
       }
+      if ((this.nodesLoading.length <= 0) && this.nodesLoadingMutexUnlock)
+          this.nodesLoadingMutexUnlock();
     };
-    setTimeout(() => { popNode(node, true); }, 500);  // failsafe
+    setTimeout(() => { popNode(node, true); }, 1000);  // failsafe
 
     // actually open the tab
     const createProperties = {};

@@ -563,13 +563,19 @@ export class Tree {
       let savedTabNode;
       if (this.bkgd && (this.bkgd.nodesLoading.length > 0)) {
         savedTabNode = this.bkgd.nodesLoading.shift();
-        debug(`Tree.onTabCreated() loadingSavedTab=${savedTabNode.id}`);
+        debug(`Tree.onTabCreated() loadingSavedTab: ${savedTabNode.toLine()}`,
+          savedTabNode, tab, [...this.bkgd.nodesLoading]);
+        if ((this.bkgd.nodesLoading.length <= 0) && this.bkgd.nodesLoadingMutexUnlock)
+          this.bkgd.nodesLoadingMutexUnlock();
+      }
+      else {
+        debug(`Tree.onTabCreated() new tab: ${tab.id}`, tab);
       }
 
       // if we're loading a saved tab,
       // use that node instead of making a new one
       if (savedTabNode) {
-        debug(`Tree.onTabCreated(): restoring nodeId=${savedTabNode.id}`);
+        debug(`Tree.onTabCreated() restoring node: ${savedTabNode.toLine()}`, savedTabNode);
         // re-attach this tab to the found Node
         await savedTabNode.setTabFields({
           tabId: tab.id,
@@ -1057,6 +1063,7 @@ export class Tree {
     // wait, if a tab is currently being created or replaced
     const otcUnlock = await this.onTabCreatedMutex.lock();  otcUnlock();
     const otrUnlock = await this.onTabReplacedMutex.lock();  otrUnlock();
+    const nlUnlock = await this.bkgd.nodesLoadingMutex.lock();  nlUnlock();
 
     // detect if it's a Vivaldi sidePanel, and ignore it
     if (isChrome) {
@@ -1069,6 +1076,10 @@ export class Tree {
     if (! tabNode) {
       warn(`Tree.onTabUpdated(${tabId}): no tab found`);
       return await this.onTabCreated(tab);
+    }
+    else {
+      debug(`Tree.onTabUpdated(${tabId}): ${tabNode.toLine()}`,
+        tabNode, changeInfo);
     }
 
     // change ... multiple things
@@ -1349,6 +1360,8 @@ export class Tree {
   // broken by which window occurs first in the session tree.
   findMatchingWindow (window) {
     // find the "needle" (realTabList) in the "haystack"
+    const result = {};  // data to return
+    result.loadedTabNodesWithNoTab = [];
     //const realTabList = [...window.tabs];
     const realTabList = [];
     for (const realTab of window.tabs) {
@@ -1410,13 +1423,16 @@ export class Tree {
         if ((! found) && tabNode.isLoaded()) {
           // FIXME: use tabNode.setWasLoaded()
           // (that would allow for any syncing and stuff to happen)
+          tabNode.tabId = undefined;
           tabNode.loaded = false;
           tabNode.wasLoaded = true;
+          result.loadedTabNodesWithNoTab.push(tabNode);
         }
       }
-      return bestMatch.winNode;
+      result.winNode = bestMatch.winNode;
+      return result;
     }
-    return null;
+    return result;
   }
 }
 

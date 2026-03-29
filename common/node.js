@@ -1096,7 +1096,8 @@ export class Node {
     this.bump('atime', args);
 
     // notify others, if event originated here
-    if (['userAction', 'onTabCreated', 'mergeOpenWindowsIntoTree'
+    if (['userAction', 'onTabCreated', 'mergeOpenWindowsIntoTree',
+      'restoreLoadedTab',
     ].includes(args.reason))
       await emit('tree_nodeChanged',
         { nodeId: this.id, type: 'load',
@@ -1105,16 +1106,18 @@ export class Node {
     // AFTER everyone has marked the tab as loaded,
     // then it's finally safe to open the tab itself
     // if not already opened by browser, opened the tab
-    if ('userAction' === args.reason) {
+    if (['userAction', 'restoreLoadedTab'].includes(args.reason)) {
       // there's some jank involved, so it's much easier to
       // only let the bkgd script open the actual tab
       // (so it can keep some internal state for its onTabCreated handler
       //  and also open a saved window if necessary)
-      if (! this.isWindow())  // load a saved tab
-        await emit('bkgd_loadSavedNode',
-          { nodeId: this.id, reason: args.reason,
-            discarded: args.discarded,
-            when: this.atime });
+      if (! this.isWindow()) {  // load a saved tab
+        const params = { nodeId: this.id, reason: args.reason,
+              discarded: args.discarded,
+              when: this.atime };
+        if (this.tree.bkgd) await this.tree.bkgd.bkgd_loadSavedNode(params);
+        else await emit('bkgd_loadSavedNode', params);
+      }
       // if window, load the window
       else {
         debug(`loading saved window: ${this.id}`);
