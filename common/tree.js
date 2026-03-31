@@ -642,9 +642,16 @@ export class Tree {
       // ... make it the 1st child of the active tab
       else if (isNewTabPage(tabPendingUrl)) {
         destParent = activeTabNode;
-        if (! destParent) destParent = winNode;
-        destIndex = 0;
-        debug(`Tree.onTabCreated(newTabPage) moving new tab to the right of: "${destParent.toLine()}"`);
+        if (destParent) {
+          destIndex = 0;
+          debug(`Tree.onTabCreated(newTabPage) moving to the right of: "${destParent.toLine()}"`);
+        }
+        else {
+          destParent = winNode;
+          // don't take place of "Pinned"
+          if (winNode.nodes[0]?.isPinnedBranch()) destIndex = 1;
+          debug(`Tree.onTabCreated(newTabPage) new tab in window: "${destParent.toLine()}"`);
+        }
       }
       // find the right place to put this tab in the tree
       else if (tab.openerTabId) {
