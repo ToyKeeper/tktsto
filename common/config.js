@@ -111,7 +111,7 @@ export class Config {
     for (const [key, value] of Object.entries(items)) {
       this.keys.set(key, true);
       this[key] = value;
-      debug(`${key} => ${value}`);
+      //debug(`${key} => ${value}`);
     }
   }
 
