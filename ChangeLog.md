@@ -3,6 +3,56 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.177.0 (2026-03-31)
+
+Mostly bugfixes and small usability improvements this time.
+
+Changes:
+
+- Made tree drag-n-drop handle **root-level drops** in a **more intuitive**
+  way, so you can drop at root level and things land where it looks like they
+  should.
+
+- Added user stylesheet example for how to **style the drop indicators**.
+
+- Made it possible to **drag** a "heading with loaded tabs" outside of
+  a window.  This now causes the **heading to become a window**.
+
+- Made **internal extension pages re-open after browser restart** or
+  extension restart.  No more need to manually re-open the TreeView after
+  browser restart when using "Tabs Outliner mode".
+
+- Made **Options / Help pages open in other window** when using "Tabs
+  Outliner mode", instead of opening as a tab in the narrow TreeView window.
+
+- Made TreeView update a bit faster when changing tabs, and handle "user
+  holding the change-tab key down" better.
+
+- Improved some formatting in Options / Help pages.
+
+- Added **Floorp** as a supported browser.  Works the same as Firefox.
+
+Bug fixes:
+
+- **Fixed dragging tabs** around the native tab bar in Chrome:  Could only
+  move one space, and got errors about "Tabs cannot be edited right now".
+
+- Fixed issue when moving a collapsed parent downward via keyboard while
+  expanded via an override.  It got mixed signals about its expanded state
+  and tried to become its own child.
+
+- Fixed Firefox occasionally creating a new node, on slow computers, when
+  trying to load a saved tab.
+
+- Fixed some errors about "No window with id: foo".
+
+- Fixed bogus warning about loadSavedNode failing when it didn't.
+
+- Fixed TreeView trying to run boot-up code in the wrong order in Vivaldi.
+
+- Fixed case where a new tab could potentially unpin pinned tabs.
+
+
 ## 0.1.156.0 (2026-03-23)
 
 Changes:
