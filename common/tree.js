@@ -1293,7 +1293,10 @@ export class Tree {
     // find nodes
     const node = this.nodes[nodeId];
     if (! node) {
-      return error(`tree_nodeChanged(): couldn't find node "${nodeId}"`);
+      // setActive(false) can get called after deletion sometimes,
+      // but it's fine (like, Chrome temp windows which exist only for 1ms)
+      const func = ('setActive' === changeType) ? warn : error;
+      return func(`tree_nodeChanged(${changeType}): couldn't find node "${nodeId}"`);
     }
 
     // while syncing between threads,
