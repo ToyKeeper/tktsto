@@ -8,13 +8,14 @@ What to expect in each type of browser.
   - [Vivaldi](#vivaldi)
   - [Maxthon](#maxthon)
 - [Firefox](#firefox)
+  - [Floorp](#floorp)
   - [Zen Browser](#zen-browser)
 - [Other known issues / not browser-specific](#general)
 - [Unsupported browsers](#unsupported-browsers)
 
 ## Firefox
 
-Tested: Firefox ESR 115 to 140
+Tested: Firefox ESR 115 to 140, 149 (via Floorp)
 
 Known issues:
 
@@ -25,13 +26,6 @@ Known issues:
 
 - Can sometimes save unwanted windows in the tree, requiring manual deletion
   later.
-
-- When **moving pinned tabs from one window to another**, like with
-  mark-n-paste from one "Pinned" branch to another, sometimes Firefox changes
-  the order and pinned state *after* everything has already been moved
-  successfully.  Can avoid this by pasting them outside the "Pinned" branch
-  to move them into the target window, then doing a second paste to put them
-  into the "Pinned" branch.
 
 - Doesn't remember window geometry unless you focus a different window and
   then return to the original window.  Because Firefox doesn't implement the
@@ -50,7 +44,7 @@ Known issues:
 
 ## Chrome / Chromium
 
-Tested: Chromium 134 to 143
+Tested: Chromium 134 to 146
 
 Includes Ungoogled Chromium.
 
@@ -90,7 +84,7 @@ Known issues:
 
 ## Brave
 
-Tested: Brave 1.78
+Tested: Brave 1.78, 1.88 (Chromium 136, 146)
 
 Behaves the same as [Chrome](#chrome-chromium).
 
@@ -158,11 +152,22 @@ Known issues:
   is a bug in Maxthon, and it won't cause the entire browser to exit.
 
 
+## Floorp
+
+Tested: 12.12.0 (FF 149)
+
+Behaves the same as [Firefox](#firefox), but with some nice extras.  Works
+well.  Can turn off the native tab bar entirely.
+
+- Haven't tried to support Workspaces yet.
+
+
 ## Zen Browser
 
 Tested: 1.18.3b
 
-Inherits most [Firefox](#firefox) issues.
+Inherits most [Firefox](#firefox) issues, but has **way more bugs**, and most
+**can't be fixed**.  Not recommended.
 
 - To get TKTSTO working in Zen Browser, you **MUST turn off "Window Sync"**.
   Window Sync is fundamentally incompatible with TKTSTO and can probably
