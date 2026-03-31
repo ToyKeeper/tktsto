@@ -1708,7 +1708,14 @@ export class Node {
     if (! this.isWindow()) return;
 
     // handle the changes after no events have occurred for this long
-    const delayTime = 150;  // ms
+    // (handle 1st event quickly, then debounce repeated events
+    //  until they stop)
+    const delayTime = 250;  // ms
+    let actualDelay = delayTime;
+    const now = Date.now();
+    const sinceLast = now - this.lastSetActiveTabTime;
+    this.lastSetActiveTabTime = now;
+    if ((NaN === sinceLast) || (sinceLast > delayTime)) actualDelay = 10;
     // reset our timer on each new event
     // so it only fires after events stop coming in
     if (this.setActiveTabTimer) {
@@ -1735,6 +1742,8 @@ export class Node {
           // bugfix: Vivaldi panels are briefly "active" when current tab closes
           // and they generate spurious "setActiveTab" events
           // so ignore errors on those
+          // also, this may be trying to set the active tab on a window
+          // after the window was closed, which isn't a problem
           if (! this.tree.tabBlacklist[`${tab.id}`])
             warn(`Node.setActiveTab(): can't find tab "${tab.id}"`);
         }
@@ -1758,9 +1767,10 @@ export class Node {
       finally {
         // get ready for next time
         this.setActiveTabTimer = null;
+        this.lastSetActiveTabTime = Date.now();
         return changed;
       }
-    }, delayTime);
+    }, actualDelay);
 
     const result = await this.setActiveTabTimer;
     return result;

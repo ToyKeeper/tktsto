@@ -614,13 +614,14 @@ export class Tree {
       // find the active tab so we can compare to the new tab
       // (some browsers (Maxthon) set tab.index *instead of* tab.openerTabId,
       //  so detecting parent must be done by index in those browsers)
+      // FIXME: ensure activeTab and activeTabNode are the same tab
+      // (activeTabNode can be null on rare occasions, not sure how)
+      // activeTabNode is what was active *before* new tab was created
+      const activeTabNode = winNode.getActiveTab();
+      const loadedTabNodes = winNode.getLoadedTabs();
       const activeTabs = await api.tabs.query({
         active: true, windowId: tab.windowId });
       const activeTab = activeTabs[0];
-      // FIXME: ensure activeTab and activeTabNode are the same tab
-      // (activeTabNode can be null on rare occasions, not sure how)
-      const activeTabNode = winNode.getActiveTab();
-      const loadedTabNodes = winNode.getLoadedTabs();
       //debug(`Tree.onTabCreated(): new tab is ${tab.index+1} of ${loadedTabNodes.length}`);
 
       // Zen opens "New Tab" at the far left for some reason
