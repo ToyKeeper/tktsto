@@ -302,6 +302,7 @@ class Bkgd {
       const match = this.tree.findMatchingWindow(window);
       let winNode = match.winNode;
       if (winNode) {
+        //debug('winNode before loading:', winNode.asTextBranch());
         winNode.load({ reason: 'mergeOpenWindowsIntoTree' });
         // reload any extension pages which failed to re-open
         // after browser restart or extension restart
@@ -357,7 +358,7 @@ class Bkgd {
         const tabNode = this.tree.getNodeByTabId(tab.id);
         if (tabNode) {
           // if found, ensure tab node matches browser tab's data
-          debug(`Found: ${tabNode.toLine()}`, tabNode);
+          debug(`Found: ${tabNode.toLine()}`, {...tabNode});
           const changes = {
             loaded: true,
             wasLoaded: false,

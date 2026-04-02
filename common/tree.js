@@ -1045,7 +1045,7 @@ export class Tree {
     await windowNode.setActiveTab({ reason: 'onTabAttached' });
   }
 
-  async onTabUpdated(tabId, changeInfo, tab) {
+  async onTabUpdated (tabId, changeInfo, tab) {
     // tabId: number
     // tab: https://developer.chrome.com/docs/extensions/reference/api/tabs#type-Tab
     // changeInfo.title: string
@@ -1079,6 +1079,16 @@ export class Tree {
     }
 
     const tabNode = this.getNodeByTabId(tabId);
+
+    // Brave likes to unpin tabs before closing a window,
+    // so detect that and ignore it if it happens
+    if (tabNode && (false === changeInfo.pinned)) {
+      // in my testing, the onTabRemoved({ isWindowClosing: true })
+      // comes about 20ms after onTabUpdated({ pinned: false })
+      debug('waiting to see if unpin is real or isWindowClosing');
+      await new Promise(r => setTimeout(r, 50));  // wait 50ms
+      if (! tabNode.isLoaded()) return;
+    }
 
     // if tab doesn't exist, create a node for it
     if (! tabNode) {
