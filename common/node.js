@@ -1395,6 +1395,7 @@ export class Node {
     // don't allow moving loaded tabs between incognito and regular windows
     // and don't allow moving loaded tabs entirely out of a window
     const oldWindowNode = this.getWindowNode();
+    const oldParentWindowNode = this.parent.getWindowNode();
     const newWindowNode = destParent.getWindowNode();
     const thisHasLoadedTabs = this.isLoaded() || this.hasLoadedTabs();
     if (thisHasLoadedTabs && (! this.isWindow())) {
@@ -1525,6 +1526,19 @@ export class Node {
       for (const kid of loadedKids) kid.updateOpenerTabId();
 
     }
+
+    // maybe convert window back to a heading, if dropped into another window
+    if (this.tree.cfg.convertFromWindowWhenDroppedIntoWindow
+      && ('userAction' === args.reason)
+      && thisHasLoadedTabs && this.isWindow()
+      && newWindowNode && (newWindowNode !== oldParentWindowNode)
+      && this.canBeConvertedFromWindow()
+    ) {
+      // convert window to a heading
+      const changed = await this.convertFromWindow({}, {});
+      if (! changed) return setStatus('convert from window failed');
+    }
+
     return true;  // the data changed
   }
 

@@ -47,6 +47,7 @@ export class Tree {
       hideCollapsedTabs: false,
       hideCollapsedTabGroups: true,
       pinnedTabsOpenNewTabsPinnedToo: false,
+      convertFromWindowWhenDroppedIntoWindow: true,
     };
 
     this.createRootNode();
