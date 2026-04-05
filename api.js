@@ -5,12 +5,10 @@
 "use strict";
 
 // browser (Firefox) vs chrome (Chromium)
-export const isFirefox = (typeof browser !== 'undefined');
+export let isFirefox = (typeof browser !== 'undefined')
+  && (!! browser?.runtime?.getBrowserInfo);
 // if not Firefox, it's some flavor of Chromium
-export const isChrome = (! isFirefox);
-
-// select a base symbol for all browser API calls
-export const api = isFirefox ? browser : chrome;
+export let isChrome = (! isFirefox);
 
 // MS Edge
 export let isEdge = / Edg\//.test(navigator.userAgent);
@@ -24,7 +22,8 @@ if (navigator.userAgentData?.brands) {
 export const isBrave = (typeof navigator.brave !== 'undefined');
 
 // Vivaldi ... is hard to detect
-export const isVivaldi = undefined
+export const isVivaldi = isChrome
+  && (0 === navigator?.userAgentData?.brands?.length);
 
 // Maxthon
 export const isMaxthon = (typeof maxthon !== 'undefined');
@@ -50,6 +49,13 @@ if (isFirefox) {
     } catch { isZenBrowser = false; }
   })();
 }
+
+if (isEdge || isBrave || isMaxthon || isVivaldi) {
+  isFirefox = false; isChrome = true;
+}
+
+// select a base symbol for all browser API calls
+export const api = isFirefox ? browser : chrome;
 
 // show browser type at boot time
 console.log('Browser type:'
