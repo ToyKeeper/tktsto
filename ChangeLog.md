@@ -3,6 +3,34 @@
 What changed, and when?  You know the drill.
 
 
+## 0.1.181.0 (2026-04-06)
+
+Google Chrome (and no other Chrome-based browsers, as far as I can tell)
+recently started pretending to be Firefox, by defining "browser" as
+a top-level object in its API.  This makes extensions break when they use the
+most common method of detecting the browser type, a method which was simple
+and reliable for the past decade but suddenly no longer works.  This update
+fixes that.
+
+Changes:
+
+- Dragging a window into another window in the TreeView can optionally
+  convert that window to a heading, and move all tabs into the destination
+  window.  This only affects loaded windows.
+
+Bug fixes:
+
+- Fixed browser detection in Google Chrome.  Many things broke when Google
+  Chrome added "browser" as a synonym for "chrome" in its API, but now we use
+  a different method to detect Firefox vs Chrome, which should fix all the
+  things caused by the failed detection.
+
+- Fixed tabs getting unpinned when closing a window in Chrome-based browsers.
+  The browser sends an "unpin" event right before closing the window, and
+  TKTSTO was respecting that event... even when it shouldn't.  So now it
+  waits a moment and ignores the "unpin" if the window or tab got closed.
+
+
 ## 0.1.177.0 (2026-03-31)
 
 Mostly bugfixes and small usability improvements this time.
