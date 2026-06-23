@@ -2255,9 +2255,19 @@ export class TreeView extends Tree {
       this.$hoverMenuMark.style.display = 'inline-block';
     else this.$hoverMenuMark.style.display = 'none';
 
-    // show or hide the 'flatten' button
-    if (mouseNode.isFlattenable())
+    // show or hide the 'flatten' button, and color it by what it'll do:
+    // green ('flatten-collapse') = collapse this node's subtree inward,
+    // magenta ('flatten-hoist') = hoist a lone flat level up to siblings
+    if (mouseNode.isFlattenable()) {
       this.$hoverMenuFlatten.style.display = 'inline-block';
+      if (mouseNode.hasGrandKids()) {
+        this.$hoverMenuFlatten.classList.add('flatten-collapse');
+        this.$hoverMenuFlatten.classList.remove('flatten-hoist');
+      } else {
+        this.$hoverMenuFlatten.classList.add('flatten-hoist');
+        this.$hoverMenuFlatten.classList.remove('flatten-collapse');
+      }
+    }
     else this.$hoverMenuFlatten.style.display = 'none';
 
     // show or hide the 'delete' button

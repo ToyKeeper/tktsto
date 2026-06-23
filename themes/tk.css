@@ -942,6 +942,15 @@ foo {
 #hover-menu .flatten-button, .flatten-button {
   color: var(--label-loaded-fg);
 }
+/* flatten button color encodes which action it will perform */
+#hover-menu .flatten-button.flatten-collapse, .flatten-button.flatten-collapse {
+  /* green: collapse this node's whole subtree inward */
+  color: #3ad13a;
+}
+#hover-menu .flatten-button.flatten-hoist, .flatten-button.flatten-hoist {
+  /* magenta: hoist a lone flat level up to become siblings */
+  color: #e25be2;
+}
 
 /******************** drag-n-drop ********************/
 
