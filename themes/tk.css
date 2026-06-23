@@ -922,6 +922,10 @@ foo {
   color: var(--marked-count-color);
 }
 
+#hover-menu .flatten-button, .flatten-button {
+  color: var(--label-loaded-fg);
+}
+
 /******************** drag-n-drop ********************/
 
 .dragging {

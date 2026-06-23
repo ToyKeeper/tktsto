@@ -181,6 +181,58 @@ export class Node {
     return false;
   }
 
+  isFlattenable () {
+    // true if there are descendants nested deeper than direct children
+    // (we don't flatten the contents of nested windows, so ignore those)
+    if (this.isRoot()) return false;
+    for (const kid of this.nodes) {
+      if (kid.isWindow()) continue;
+      if (kid.hasKids()) return true;
+    }
+    return false;
+  }
+
+  async flatten (args) {
+    debug('Node.flatten()');
+    if (! args) { error(`Node.flatten(): no args`); return null; }
+    if (this.isRoot()) return null;
+    // collect all descendants in pre-order, but don't reach into nested
+    // windows (their loaded tabs have to stay inside their own window)
+    const descendants = this.findNodes(null, (n) => ! n.isWindow());
+    if (descendants.length <= 0) return null;
+    // remember where everything started, so this can be undone later
+    const original = descendants.map((node) => ({
+      nodeId: node.id,
+      parentId: node.parent.id,
+      index: node.indexOf(),
+    }));
+    // move every descendant up to be a direct child of this node,
+    // keeping their original (pre-order) visual order intact
+    let moved = 0;
+    for (let i = 0; i < descendants.length; i++) {
+      if (await descendants[i].moveTo(this, i, args)) moved ++;
+    }
+    debug(`flatten(moved ${moved} / ${descendants.length} descendants)`);
+    if (moved <= 0) return null;
+    return original;
+  }
+
+  async restoreFlatten (original, args) {
+    // undo a flatten() by moving each node back to where it started;
+    // 'original' is in pre-order, so parents are restored before their
+    // kids and the tree rebuilds itself level by level
+    debug('Node.restoreFlatten()');
+    if (! original) return false;
+    let moved = 0;
+    for (const rec of original) {
+      const node = this.tree.nodes[rec.nodeId];
+      const parent = this.tree.nodes[rec.parentId];
+      if ((! node) || (! parent)) continue;
+      if (await node.moveTo(parent, rec.index, args)) moved ++;
+    }
+    return (moved > 0);
+  }
+
   indexOf () {
     if (!this.parent) return 0;
     if (!this.parent.nodes) return 0;

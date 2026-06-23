@@ -51,6 +51,9 @@ export class TreeView extends Tree {
 
     // { nodeId: node, ... }
     this.expandOverrides = {};
+
+    // stack of { label, undo: async fn } entries for undoable actions
+    this.undoStack = [];
   }
 
   destroy () {
@@ -112,6 +115,9 @@ export class TreeView extends Tree {
     this.$donateBtn = doc.getElementById('donate-btn');
     // open the extension's help page
     this.$helpBtn = doc.getElementById('help-btn');
+
+    // undo button (currently used by the "flatten" action)
+    this.$undoBtn = doc.getElementById('undo-btn');
 
     // count of marked nodes when non-zero
     this.$markedCount = doc.getElementById('marked-count');
@@ -2187,6 +2193,9 @@ export class TreeView extends Tree {
     if (! this.$hoverMenuMark) {
       this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');
     }
+    if (! this.$hoverMenuFlatten) {
+      this.$hoverMenuFlatten = makeBtn(this, 'flatten-button', 'F', 'flattenNode');
+    }
     if (! this.$hoverMenuDelete) {
       this.$hoverMenuDelete = makeBtn(this, 'delete-button', 'D', 'deleteNode');
     }
@@ -2245,6 +2254,11 @@ export class TreeView extends Tree {
     if (mouseNode.isMarkable())
       this.$hoverMenuMark.style.display = 'inline-block';
     else this.$hoverMenuMark.style.display = 'none';
+
+    // show or hide the 'flatten' button
+    if (mouseNode.isFlattenable())
+      this.$hoverMenuFlatten.style.display = 'inline-block';
+    else this.$hoverMenuFlatten.style.display = 'none';
 
     // show or hide the 'delete' button
     if (mouseNode.isDeletable())
@@ -2560,6 +2574,12 @@ export class TreeView extends Tree {
     this.$treeViewInTabBtn.addEventListener('click', () => {
       this.onTreeViewInTabBtnClick();
     });
+    // undo the most recent undoable action
+    if (this.$undoBtn) {
+      this.$undoBtn.addEventListener('click', () => {
+        this.onUndoBtnClick();
+      });
+    }
     // zoom in and out
     this.$zoomOutBtn.addEventListener('click', () => {
       this.onZoomBtn(-1);
@@ -2616,6 +2636,69 @@ export class TreeView extends Tree {
     const label = this.viewScope.charAt(0).toUpperCase()
       + this.viewScope.slice(1);
     this.$viewScopeBtn.innerText = label;
+  }
+
+  // ---- undo support ----------------------------------------------------
+
+  pushUndo (entry) {
+    // entry: { label, undo: async () => {...} }
+    this.undoStack.push(entry);
+    this.$renderUndoBtn();
+  }
+
+  $renderUndoBtn () {
+    if (! this.$undoBtn) return;
+    if (this.undoStack.length > 0)
+      this.$undoBtn.classList.remove('greyed-out');
+    else
+      this.$undoBtn.classList.add('greyed-out');
+  }
+
+  async onUndoBtnClick () {
+    return this.action_undo({ type: 'click' });
+  }
+
+  async action_undo (event) {
+    const entry = this.undoStack.pop();
+    this.$renderUndoBtn();
+    if (! entry) {
+      this.setStatus('nothing to undo');
+      return;
+    }
+    await entry.undo();
+    this.setStatus(`undid: ${entry.label}`);
+  }
+
+  async action_flattenNode (event) {
+    debug('flattenNode');
+    // choose mouse or keyboard cursor based on event type
+    let cursor = this.whichCursor(event);
+    // skip no-op cases
+    if (! cursor) return;
+    if (! cursor.isFlattenable()) {
+      this.setStatus('nothing to flatten');
+      return;
+    }
+
+    // move keyboard cursor if this was a mouse click
+    if (cursor !== this.cursor) await this.setCursor(cursor);
+
+    const line = cursor.toLine();
+    const target = cursor;
+    // flatten() returns the data needed to put everything back
+    const original = await target.flatten({ reason: 'userAction' });
+    if (! original) {
+      this.setStatus('nothing to flatten');
+      return;
+    }
+    // make the action undoable
+    this.pushUndo({
+      label: `flatten ${line}`,
+      undo: async () => {
+        await target.restoreFlatten(original, { reason: 'userAction' });
+      },
+    });
+    this.setStatus(`flattened ${original.length} nodes under ${line}`);
   }
 
   action_detailsButton (event) {
