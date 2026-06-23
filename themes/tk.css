@@ -338,6 +338,17 @@ foo {
   border-left: 2px solid var(--tree-line-cursor);
 }
 
+/* single-child flattening:
+ * if a node has exactly one child, display that child as a sibling --
+ * drop the indentation of its (one-item) child list so the lone child
+ * lines up with its parent's row instead of nesting beneath it.
+ * (chains of single children all collapse onto the same level) */
+.nodes:not(.root-nodes):has(> .node:only-child) {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+
 /* outer structure...
  * #tree-root.nodes.root-nodes
  *   #noderoot.node.root-nodes
@@ -593,6 +604,12 @@ foo {
 }
 #tree-view .collapsed .node-stats {
   display: unset;
+}
+/* ...but a single-child node is flattened (its lone child is shown as a
+ * sibling), so its own tab counter is redundant -- hide it.  (needs the
+ * #tree-view id to outrank the ".collapsed .node-stats" rule above) */
+#tree-view .node:has(> .nodes:not(.root-nodes) > .node:only-child) > .row .node-stats {
+  display: none;
 }
 
 .node-stats {
