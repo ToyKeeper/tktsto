@@ -1507,12 +1507,21 @@ export class TreeView extends Tree {
       cursor.load({ reason: 'userAction' });
       this.setStatus(`loaded ${cursor.toLine()}`);
     }
-    // if loaded tab but not focused, focus it
-    else if (cursor.isLoaded()
-      && (!cursor.isActive())
-      && (!cursor.isWindow())
-    ) {
-      cursor.setActive(true, { reason: 'userAction' });
+    // if loaded tab that isn't already the active tab of the focused
+    // window, switch to it: activate the tab and raise its window.
+    // (activating a tab alone doesn't bring its window to the foreground,
+    //  so a tab in another window needs an explicit window focus too)
+    else if (cursor.isLoadedTab()) {
+      const windowNode = cursor.getWindowNode(true);
+      const windowFocused = !! (windowNode && windowNode.isActive());
+      if ((! cursor.isActive()) || (! windowFocused)) {
+        if (! cursor.isActive())
+          await cursor.setActive(true, { reason: 'userAction' });
+        if (windowNode) await windowNode.focusWindow({ reason: 'userAction' });
+        this.setStatus(`focused ${cursor.toLine()}`);
+      }
+      // already the active tab of the focused window -> edit it
+      else if (allowEdit) this.action_editNode(event);
     }
     // if loaded window other than the focused one, switch to / focus it
     else if (cursor.isWindow()
