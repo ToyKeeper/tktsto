@@ -1251,8 +1251,7 @@ class Bkgd {
           // parse data.url
           if (d.url) details.url = d.url;
           // parse data.favIconUrl
-          // (browser uses favIconUrl, but we store it as faviconUrl)
-          if (d.favIconUrl) details.faviconUrl = d.favIconUrl;
+          if (d.favIconUrl) details.favIconUrl = d.favIconUrl;
           // parse data.lastAccessed
           if (d.lastAccessed) details.atime = Number(d.lastAccessed);
         }

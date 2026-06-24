@@ -274,12 +274,12 @@ export class NodeView extends Node {
 
     // favicon
     // (only for actual pages, not windows/labels/dividers)
-    if (cfg.showFavicons && this.faviconUrl && this.url && (! this.isWindow())) {
+    if (cfg.showFavicons && this.favIconUrl && this.url && (! this.isWindow())) {
       const $favicon = doc.createElement('img');
       $favicon.className = 'node-favicon';
       $favicon.draggable = false;
       $favicon.alt = '';  // decorative
-      $favicon.src = this.faviconUrl;
+      $favicon.src = this.favIconUrl;
       // hide gracefully if the icon fails to load (dead/blocked URL)
       $favicon.addEventListener('error',
         () => $favicon.classList.add('broken'));

@@ -14,10 +14,10 @@ Changes:
 
 Bug fixes:
 
-- Favicon data captured from the browser was being stored under the wrong
-  field name (`favIconUrl` instead of `faviconUrl`), so it never got saved or
-  displayed.  Now it's normalized to a single name everywhere, including the
-  Tabs Outliner importer.
+- Favicon data captured from the browser (as `favIconUrl`) was being stored
+  and serialized under a different field name (`faviconUrl`), so it never got
+  saved or displayed.  The naming is now unified on the browser's own
+  `favIconUrl` everywhere, including the Tabs Outliner importer.
 
 
 ## 0.1.181.0 (2026-04-06)

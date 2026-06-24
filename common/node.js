@@ -35,7 +35,7 @@ export class Node {
     this.title = undefined;
     this.url = undefined;
     this.bookmark = undefined;
-    this.faviconUrl = undefined;
+    this.favIconUrl = undefined;
     this.expanded = true;
     this.loaded = false;
     this.active = false;
@@ -717,7 +717,7 @@ export class Node {
 
   async addChild (index = 0, details, args) {
     // details to pass:
-    // id, label, note, title, url, faviconUrl, expanded
+    // id, label, note, title, url, favIconUrl, expanded
     const newNode = new this.constructor(this.tree, this);
     this.nodes.splice(index, 0, newNode);
     for (const key in details) {
