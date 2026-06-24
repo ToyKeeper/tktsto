@@ -1514,6 +1514,15 @@ export class TreeView extends Tree {
     ) {
       cursor.setActive(true, { reason: 'userAction' });
     }
+    // if loaded window other than the focused one, switch to / focus it
+    else if (cursor.isWindow()
+      && cursor.isLoaded()
+      && (! cursor.isActive())
+    ) {
+      const ok = await cursor.focusWindow({ reason: 'userAction' });
+      if (ok) this.setStatus(`focused ${cursor.toLine()}`);
+      else this.setStatus(`failed to focus ${cursor.toLine()}`);
+    }
     // if unloaded window, load it
     else if (cursor.isUnloadedWindow()) {
       cursor.load({ reason: 'userAction' });
