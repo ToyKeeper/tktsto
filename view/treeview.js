@@ -51,6 +51,10 @@ export class TreeView extends Tree {
 
     // { nodeId: node, ... }
     this.expandOverrides = {};
+
+    // undo/redo stacks of { label, undo: async fn, redo: async fn } entries
+    this.undoStack = [];
+    this.redoStack = [];
   }
 
   destroy () {
@@ -69,9 +73,12 @@ export class TreeView extends Tree {
 
     this.$viewScopeBtn = doc.getElementById('view-scope-btn');
 
-    // zoom buttons
-    this.$zoomOutBtn = doc.getElementById('zoom-out-btn');
-    this.$zoomInBtn = doc.getElementById('zoom-in-btn');
+    // undo / redo buttons
+    this.$undoBtn = doc.getElementById('undo-btn');
+    this.$redoBtn = doc.getElementById('redo-btn');
+
+    // zoom bounds (zoom level is driven by config; toolbar +/- buttons were
+    // replaced by the redo button, but the zoom machinery still applies)
     // number of steps per "octave"
     this.zoomSteps = 12;
     this.zoomMax = 3;
@@ -1218,10 +1225,17 @@ export class TreeView extends Tree {
     // delete depending on the node type and state
     const toDelete = cursor;
     const line = cursor.toLine();
+    // remember where it lived so the delete can be undone
+    const parentId = toDelete.parent.id;
+    const delIndex = toDelete.indexOf();
+    const rootId = toDelete.id;
     // if leaf, just delete it... simple
     if (cursor.isLeaf()) {
       //debug('delete leaf node');
+      const dicts = toDelete.serializeSubtree();
       await toDelete.deleteSelf({ reason: 'userAction' });
+      this.pushUndo(
+        this.$makeWholeDeleteUndo(rootId, dicts, parentId, delIndex, line));
       this.setStatus(`deleted ${line}`);
     }
     // don't delete an open window; unload it instead
@@ -1245,7 +1259,11 @@ export class TreeView extends Tree {
         dStyle = result.button.toLowerCase();
       }
       if ('one' === dStyle) {
+        const ownDict = toDelete.toDict();
+        const kidIds = toDelete.nodes.map((k) => k.id);
         await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
+        this.pushUndo(this.$makePromoteDeleteUndo(
+          rootId, ownDict, parentId, delIndex, kidIds, line));
         this.setStatus(`deleted ${line}`);
       }
       //else if ('row1' === dStyle) {
@@ -1254,7 +1272,10 @@ export class TreeView extends Tree {
       //  this.setStatus(`deleted ${line}`);
       //}
       else if ('all' === dStyle) {
+        const dicts = toDelete.serializeSubtree();
         await toDelete.deleteSelf({ reason: 'userAction' });
+        this.pushUndo(
+          this.$makeWholeDeleteUndo(rootId, dicts, parentId, delIndex, line));
         this.setStatus(`deleted ${numToDelete} nodes`);
       }
     }
@@ -1273,9 +1294,37 @@ export class TreeView extends Tree {
       // abort if user cancelled
       if ((!result) || ('OK' !== result.button)) return;
       // otherwise, actually delete it
+      const dicts = toDelete.serializeSubtree();
       await toDelete.deleteSelf({ reason: 'userAction' });
+      this.pushUndo(
+        this.$makeWholeDeleteUndo(rootId, dicts, parentId, delIndex, line));
       this.setStatus(`deleted ${numToDelete} nodes`);
     }
+  }
+
+  $makeWholeDeleteUndo (rootId, dicts, parentId, index, label) {
+    const self = this;
+    return {
+      label: `delete ${label}`,
+      undo: async () => self.restoreSubtree(rootId, dicts, parentId, index),
+      redo: async () => {
+        const n = self.nodes[rootId];
+        if (n) await n.deleteSelf({ reason: 'userAction' });
+      },
+    };
+  }
+
+  $makePromoteDeleteUndo (rootId, ownDict, parentId, index, kidIds, label) {
+    const self = this;
+    return {
+      label: `delete ${label}`,
+      undo: async () =>
+        self.restoreNodeAndAdopt(rootId, ownDict, parentId, index, kidIds),
+      redo: async () => {
+        const n = self.nodes[rootId];
+        if (n) await n.deleteSelfAndPromoteKids({ reason: 'userAction' });
+      },
+    };
   }
 
   async action_unloadNode (event) {
@@ -2560,12 +2609,12 @@ export class TreeView extends Tree {
     this.$treeViewInTabBtn.addEventListener('click', () => {
       this.onTreeViewInTabBtnClick();
     });
-    // zoom in and out
-    this.$zoomOutBtn.addEventListener('click', () => {
-      this.onZoomBtn(-1);
+    // undo / redo
+    if (this.$undoBtn) this.$undoBtn.addEventListener('click', () => {
+      this.onUndoBtnClick();
     });
-    this.$zoomInBtn.addEventListener('click', () => {
-      this.onZoomBtn(1);
+    if (this.$redoBtn) this.$redoBtn.addEventListener('click', () => {
+      this.onRedoBtnClick();
     });
     // when details-btn clicked, toggle the details box
     this.$detailsBtn.addEventListener('click', () => {
@@ -2594,6 +2643,94 @@ export class TreeView extends Tree {
     this.$markedCount.addEventListener('click', () => {
       this.onMarkedCountClick();
     });
+  }
+
+  // ---- undo / redo ------------------------------------------------------
+
+  pushUndo (entry) {
+    // entry: { label, undo: async () => {}, redo: async () => {} }
+    this.undoStack.push(entry);
+    // a fresh action invalidates the redo history
+    this.redoStack = [];
+    this.$renderUndoRedoBtns();
+  }
+
+  $renderUndoRedoBtns () {
+    if (this.$undoBtn)
+      this.$undoBtn.classList.toggle('greyed-out', this.undoStack.length === 0);
+    if (this.$redoBtn)
+      this.$redoBtn.classList.toggle('greyed-out', this.redoStack.length === 0);
+  }
+
+  onUndoBtnClick () { return this.action_undo({ type: 'click' }); }
+  onRedoBtnClick () { return this.action_redo({ type: 'click' }); }
+
+  async action_undo (event) {
+    const entry = this.undoStack.pop();
+    if (! entry) { this.setStatus('nothing to undo'); return; }
+    await entry.undo();
+    this.redoStack.push(entry);
+    this.$renderUndoRedoBtns();
+    this.setStatus(`undid: ${entry.label}`);
+  }
+
+  async action_redo (event) {
+    const entry = this.redoStack.pop();
+    if (! entry) { this.setStatus('nothing to redo'); return; }
+    await entry.redo();
+    this.undoStack.push(entry);
+    this.$renderUndoRedoBtns();
+    this.setStatus(`redid: ${entry.label}`);
+  }
+
+  // turn a serialized node dict back into addChild() details:
+  // a restored node comes back unloaded, since its live tab (if any) is gone
+  $restoreDetails (dict) {
+    const details = { ...dict, render: true };
+    delete details.parent;
+    delete details.nodes;
+    details.tabId = undefined;
+    details.windowId = undefined;
+    if (details.loaded) details.wasLoaded = true;
+    details.loaded = false;
+    details.active = false;
+    return details;
+  }
+
+  // rebuild a whole deleted subtree (from Node.serializeSubtree()) under
+  // parentId at index, restoring each node's original id and order
+  async restoreSubtree (rootId, dicts, parentId, index) {
+    const parent = this.nodes[parentId];
+    if (! parent) { this.setStatus('undo: parent is gone'); return false; }
+    const restored = await this.$rebuildNode(rootId, dicts, parent, index);
+    if (restored) await this.setCursor(restored);
+    return (! ! restored);
+  }
+
+  async $rebuildNode (id, dicts, parent, index) {
+    const dict = dicts[id];
+    if (! dict) return null;
+    const newNode = await parent.addChild(
+      index, this.$restoreDetails(dict), { reason: 'userAction' });
+    const childIds = dict.nodes || [];
+    for (let i = 0; i < childIds.length; i++)
+      await this.$rebuildNode(childIds[i], dicts, newNode, i);
+    return newNode;
+  }
+
+  // undo a "delete node, promote its kids" operation: recreate just the
+  // node, then move its (still-alive) promoted kids back underneath it
+  async restoreNodeAndAdopt (rootId, ownDict, parentId, index, kidIds) {
+    const parent = this.nodes[parentId];
+    if (! parent) { this.setStatus('undo: parent is gone'); return false; }
+    const newNode = await parent.addChild(
+      index, this.$restoreDetails(ownDict), { reason: 'userAction' });
+    for (let i = 0; i < kidIds.length; i++) {
+      const kid = this.nodes[kidIds[i]];
+      if (kid) await kid.moveTo(newNode, i, { reason: 'userAction' });
+    }
+    await this.setCursor(newNode);
+    return true;
   }
 
   onViewScopeBtnClick () {
@@ -2744,15 +2881,6 @@ export class TreeView extends Tree {
       if (zoomLevel !== oldZoomLevel) {
         this.setStatus(`Zoom: ${(100 * this.zoomLevel).toFixed(2)}%`);
       }
-    }
-
-    // grey out or activate zoom buttons if maxed out
-    if (this.$zoomInBtn) {
-      const grey = 'greyed-out';
-      if (zoomLevel >= this.zoomMax) this.$zoomInBtn.classList.add(grey);
-      else this.$zoomInBtn.classList.remove(grey);
-      if (zoomLevel <= this.zoomMin) this.$zoomOutBtn.classList.add(grey);
-      else this.$zoomOutBtn.classList.remove(grey);
     }
   }
 
