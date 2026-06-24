@@ -605,10 +605,12 @@ foo {
 #tree-view .collapsed .node-stats {
   display: unset;
 }
-/* ...but a single-child node is flattened (its lone child is shown as a
+/* ...but a single-child *tab* is flattened (its lone child is shown as a
  * sibling), so its own tab counter is redundant -- hide it.  (needs the
- * #tree-view id to outrank the ".collapsed .node-stats" rule above) */
-#tree-view .node:has(> .nodes:not(.root-nodes) > .node:only-child) > .row .node-stats {
+ * #tree-view id to outrank the ".collapsed .node-stats" rule above)
+ * non-tab nodes (windows, headings, ...) keep their counter and follow the
+ * normal collapsed/config visibility rules above. */
+#tree-view .node.tab:has(> .nodes:not(.root-nodes) > .node:only-child) > .row .node-stats {
   display: none;
 }
 

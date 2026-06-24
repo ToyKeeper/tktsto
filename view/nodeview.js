@@ -85,6 +85,16 @@ export class NodeView extends Node {
       this.$row.classList.remove('window');
     }
 
+    // are we a tab? (vs a window, heading, or other non-tab node)
+    if (this.isTab()) {
+      this.$.classList.add('tab');
+      this.$row.classList.add('tab');
+    }
+    else {
+      this.$.classList.remove('tab');
+      this.$row.classList.remove('tab');
+    }
+
     // if the details box is showing this node, update it
     if (this.isCursor()) {
       this.$renderDetails(this.tree.$detailsBox);
