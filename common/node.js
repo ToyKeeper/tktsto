@@ -1698,6 +1698,20 @@ export class Node {
     return true;
   }
 
+  async focusWindow (args) {
+    // bring this (loaded) browser window to the foreground
+    if (! this.isWindow()) return false;
+    if (! this.isLoaded()) return false;
+    if (! this.windowId) return false;
+    try {
+      await api.windows.update(this.windowId, { focused: true });
+    } catch (e) {
+      warn(`Node.focusWindow(): can't focus window ${this.windowId}`, e);
+      return false;
+    }
+    return true;
+  }
+
   getActiveTab () {
     const nodes = this.findNodes(
       function (node) { return node.isActive() && node.isLoaded(); },
