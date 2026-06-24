@@ -277,7 +277,7 @@ Client (browser extension):
     - [x] Checkboxes
     - [x] Window nodes
     - [x] Basic metadata: node IDs, timestamps, tab state, etc
-    - [ ] favicons
+    - [x] favicons
 - Tab / Window / browsing functions
     - [x] Handle browser events, like opening or closing tabs and windows
     - [x] Load / unload tabs

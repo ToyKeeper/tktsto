@@ -711,6 +711,8 @@ export class Tree {
         tabId: tab.id,
         title: tab.title,
         url: tab.url,
+        // browser uses favIconUrl, but we store it as faviconUrl
+        faviconUrl: tab.favIconUrl,
         loaded: true,
         active: tab.active,
         discarded: tab.discarded,
@@ -1113,8 +1115,10 @@ export class Tree {
       if (undefined === value) value = tab[field];
       // clean up sloppy titles
       if ('title' === field) value = value.trim().replace(/\s+/g, ' ');
+      // browser uses favIconUrl, but we store it as faviconUrl
+      const nodeField = ('favIconUrl' === field) ? 'faviconUrl' : field;
       // if data actually changed, add it to the outgoing message
-      if (tabNode[field] !== value) changes[field] = value;
+      if (tabNode[nodeField] !== value) changes[nodeField] = value;
     }
     // apply changes, if any
     if (Object.keys(changes).length > 0) {
@@ -1157,8 +1161,10 @@ export class Tree {
           let value = tab[field];
           // clean up sloppy titles
           if ('title' === field) value = value.trim().replace(/\s+/g, ' ');
+          // browser uses favIconUrl, but we store it as faviconUrl
+          const nodeField = ('favIconUrl' === field) ? 'faviconUrl' : field;
           // if data actually changed, add it to the outgoing message
-          if (tabNode[field] !== value) changes[field] = value;
+          if (tabNode[nodeField] !== value) changes[nodeField] = value;
         }
       }
       await tabNode.setTabFields(changes, { reason: 'onTabReplaced' });

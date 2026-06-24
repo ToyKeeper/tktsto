@@ -272,8 +272,19 @@ export class NodeView extends Node {
       this.$row.append($noteIcon);
     }
 
-    // TODO: favicon
-    let faviconText = '';
+    // favicon
+    // (only for actual pages, not windows/labels/dividers)
+    if (cfg.showFavicons && this.faviconUrl && this.url && (! this.isWindow())) {
+      const $favicon = doc.createElement('img');
+      $favicon.className = 'node-favicon';
+      $favicon.draggable = false;
+      $favicon.alt = '';  // decorative
+      $favicon.src = this.faviconUrl;
+      // hide gracefully if the icon fails to load (dead/blocked URL)
+      $favicon.addEventListener('error',
+        () => $favicon.classList.add('broken'));
+      this.$row.append($favicon);
+    }
 
     // main node text
     const $rowTitle = doc.createElement('span');

@@ -106,7 +106,7 @@ def html2tree(html):
         parts = []
         if node.loaded: parts.append('-')
         else: parts.append('*')
-        if node.favIcon: parts.append('@')
+        if node.faviconUrl: parts.append('@')
         if node.label:
             if node.title: parts.append(f'{node.label} ~')
             else: parts.append(node.label)
@@ -153,7 +153,7 @@ def html2tree(html):
             key = 'data-node-icon-for-html-export'
             if img:
                 try:
-                    e.favIcon = str(img[key])
+                    e.faviconUrl = str(img[key])
                 except KeyError:
                     pass
         # note / window / group node

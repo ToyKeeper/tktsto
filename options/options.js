@@ -29,6 +29,7 @@ class OptionsPage extends ThemedPage {
       expandedRowPrefix: false,
       alwaysShowNodeStats: true,
       wasLoadedNodeStats: true,
+      showFavicons: true,
       hideTreeLines: false,
       hideCursorTreeLines: false,
       hideWindowTreeLines: true,
@@ -86,6 +87,10 @@ class OptionsPage extends ThemedPage {
       }),
       new Option(this, {
         cfgKey: 'wasLoadedNodeStats',
+        inputType: 'checkbox',
+      }),
+      new Option(this, {
+        cfgKey: 'showFavicons',
         inputType: 'checkbox',
       }),
       new Option(this, {

@@ -3,6 +3,23 @@
 What changed, and when?  You know the drill.
 
 
+## Unreleased
+
+Changes:
+
+- Favicons!  TKTSTO now grabs, stores, and shows the favicon for each tab and
+  saved page, both for live tabs and ones restored from a saved session or an
+  imported backup.  This can be turned off in the options page (it's on by
+  default), and favicons which fail to load are hidden gracefully.
+
+Bug fixes:
+
+- Favicon data captured from the browser was being stored under the wrong
+  field name (`favIconUrl` instead of `faviconUrl`), so it never got saved or
+  displayed.  Now it's normalized to a single name everywhere, including the
+  Tabs Outliner importer.
+
+
 ## 0.1.181.0 (2026-04-06)
 
 Google Chrome (and no other Chrome-based browsers, as far as I can tell)
