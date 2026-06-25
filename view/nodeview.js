@@ -281,9 +281,12 @@ export class NodeView extends Node {
       const u = new URL(api.runtime.getURL('/_favicon/'));
       u.searchParams.set('pageUrl', this.url);
       u.searchParams.set('size', '32');
-      // mtime bumps whenever the tab updates (including a favicon change),
-      // so this busts the image cache and a refreshed favicon re-loads
-      u.searchParams.set('v', this.mtime);
+      // Key the cache-buster on the page's own favIconUrl, so the icon is
+      // only re-requested when the page actually changes its favicon.
+      // (onTabUpdated sets favIconUrl only on a real favicon change.)
+      // Unrelated tab updates -- title, status, etc. -- keep the same URL,
+      // so the cached icon is reused and doesn't blink.
+      if (this.favIconUrl) u.searchParams.set('v', this.favIconUrl);
       const $favicon = doc.createElement('img');
       $favicon.className = 'node-favicon';
       $favicon.draggable = false;
