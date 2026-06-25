@@ -22,6 +22,7 @@ export class NodeView extends Node {
     this.$ = null;  // outermost element is a <li>
     this.$row = null;  // <div> for label, title+url, favicon, etc
     this.$nodes = null;  // <ul>
+    this.$favicon = null;  // persistent <img>, reused across re-renders
   }
 
   $render () {
@@ -278,21 +279,30 @@ export class NodeView extends Node {
     // often fails due to its Cross-Origin-Resource-Policy header
     // (e.g. claude.ai/favicon.ico); served from our origin, it never does.
     if (isChrome && cfg.showFavicons && this.url && (! this.isWindow())) {
+      // Reuse one persistent <img> across re-renders (the row's innerHTML is
+      // wiped each render).  Re-appending the same element doesn't reload it,
+      // so a title-only update never reloads the favicon.
+      if (! this.$favicon) {
+        this.$favicon = doc.createElement('img');
+        this.$favicon.className = 'node-favicon';
+        this.$favicon.draggable = false;
+        this.$favicon.alt = '';  // decorative
+      }
       const u = new URL(api.runtime.getURL('/_favicon/'));
       u.searchParams.set('pageUrl', this.url);
       u.searchParams.set('size', '32');
       // Key the cache-buster on the page's own favIconUrl, so the icon is
       // only re-requested when the page actually changes its favicon.
       // (onTabUpdated sets favIconUrl only on a real favicon change.)
-      // Unrelated tab updates -- title, status, etc. -- keep the same URL,
-      // so the cached icon is reused and doesn't blink.
       if (this.favIconUrl) u.searchParams.set('v', this.favIconUrl);
-      const $favicon = doc.createElement('img');
-      $favicon.className = 'node-favicon';
-      $favicon.draggable = false;
-      $favicon.alt = '';  // decorative
-      $favicon.src = u.toString();
-      this.$row.append($favicon);
+      const src = u.toString();
+      // only (re)assign src when it actually changed, so an unchanged
+      // favicon isn't reloaded
+      if (this.$favicon.dataset.src !== src) {
+        this.$favicon.dataset.src = src;
+        this.$favicon.src = src;
+      }
+      this.$row.append(this.$favicon);
     }
 
     // main node text
