@@ -19,6 +19,13 @@ Bug fixes:
   saved or displayed.  The naming is now unified on the browser's own
   `favIconUrl` everywhere, including the Tabs Outliner importer.
 
+- On Chromium browsers, favicons now come from the browser's own favicon
+  cache (via the `_favicon` API) instead of loading each site's favicon URL
+  directly.  Some sites serve their favicon with a `Cross-Origin-Resource-Policy`
+  header that blocks the extension from loading it (e.g. claude.ai), which
+  caused the icon to fail and flicker; the cached icon is served from the
+  extension's own origin, so it always loads.
+
 
 ## 0.1.181.0 (2026-04-06)
 
