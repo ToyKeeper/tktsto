@@ -51,6 +51,10 @@ export class TreeView extends Tree {
 
     // { nodeId: node, ... }
     this.expandOverrides = {};
+
+    // undo/redo stacks of { label, undo: async fn, redo: async fn } entries
+    this.undoStack = [];
+    this.redoStack = [];
   }
 
   destroy () {
@@ -69,7 +73,11 @@ export class TreeView extends Tree {
 
     this.$viewScopeBtn = doc.getElementById('view-scope-btn');
 
-    // zoom buttons
+    // undo / redo buttons
+    this.$undoBtn = doc.getElementById('undo-btn');
+    this.$redoBtn = doc.getElementById('redo-btn');
+
+    // zoom buttons (kept compact, alongside undo/redo)
     this.$zoomOutBtn = doc.getElementById('zoom-out-btn');
     this.$zoomInBtn = doc.getElementById('zoom-in-btn');
     // number of steps per "octave"
@@ -1218,10 +1226,17 @@ export class TreeView extends Tree {
     // delete depending on the node type and state
     const toDelete = cursor;
     const line = cursor.toLine();
+    // remember where it lived so the delete can be undone
+    const parentId = toDelete.parent.id;
+    const delIndex = toDelete.indexOf();
+    const rootId = toDelete.id;
     // if leaf, just delete it... simple
     if (cursor.isLeaf()) {
       //debug('delete leaf node');
+      const dicts = toDelete.serializeSubtree();
       await toDelete.deleteSelf({ reason: 'userAction' });
+      this.pushUndo(
+        this.$makeWholeDeleteUndo(rootId, dicts, parentId, delIndex, line));
       this.setStatus(`deleted ${line}`);
     }
     // don't delete an open window; unload it instead
@@ -1245,7 +1260,11 @@ export class TreeView extends Tree {
         dStyle = result.button.toLowerCase();
       }
       if ('one' === dStyle) {
+        const ownDict = toDelete.toDict();
+        const kidIds = toDelete.nodes.map((k) => k.id);
         await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
+        this.pushUndo(this.$makePromoteDeleteUndo(
+          rootId, ownDict, parentId, delIndex, kidIds, line));
         this.setStatus(`deleted ${line}`);
       }
       //else if ('row1' === dStyle) {
@@ -1254,7 +1273,10 @@ export class TreeView extends Tree {
       //  this.setStatus(`deleted ${line}`);
       //}
       else if ('all' === dStyle) {
+        const dicts = toDelete.serializeSubtree();
         await toDelete.deleteSelf({ reason: 'userAction' });
+        this.pushUndo(
+          this.$makeWholeDeleteUndo(rootId, dicts, parentId, delIndex, line));
         this.setStatus(`deleted ${numToDelete} nodes`);
       }
     }
@@ -1273,9 +1295,43 @@ export class TreeView extends Tree {
       // abort if user cancelled
       if ((!result) || ('OK' !== result.button)) return;
       // otherwise, actually delete it
+      const dicts = toDelete.serializeSubtree();
       await toDelete.deleteSelf({ reason: 'userAction' });
+      this.pushUndo(
+        this.$makeWholeDeleteUndo(rootId, dicts, parentId, delIndex, line));
       this.setStatus(`deleted ${numToDelete} nodes`);
     }
+  }
+
+  $makeWholeDeleteUndo (rootId, dicts, parentId, index, label) {
+    const self = this;
+    return {
+      label: `delete ${label}`,
+      undo: async () => {
+        const toRoot = await self.restoreSubtree(rootId, dicts, parentId, index);
+        if (toRoot) return `restored ${label} to root (original parent gone)`;
+      },
+      redo: async () => {
+        const n = self.nodes[rootId];
+        if (n) await n.deleteSelf({ reason: 'userAction' });
+      },
+    };
+  }
+
+  $makePromoteDeleteUndo (rootId, ownDict, parentId, index, kidIds, label) {
+    const self = this;
+    return {
+      label: `delete ${label}`,
+      undo: async () => {
+        const toRoot = await self.restoreNodeAndAdopt(
+          rootId, ownDict, parentId, index, kidIds);
+        if (toRoot) return `restored ${label} to root (original parent gone)`;
+      },
+      redo: async () => {
+        const n = self.nodes[rootId];
+        if (n) await n.deleteSelfAndPromoteKids({ reason: 'userAction' });
+      },
+    };
   }
 
   async action_unloadNode (event) {
@@ -2560,6 +2616,13 @@ export class TreeView extends Tree {
     this.$treeViewInTabBtn.addEventListener('click', () => {
       this.onTreeViewInTabBtnClick();
     });
+    // undo / redo
+    if (this.$undoBtn) this.$undoBtn.addEventListener('click', () => {
+      this.onUndoBtnClick();
+    });
+    if (this.$redoBtn) this.$redoBtn.addEventListener('click', () => {
+      this.onRedoBtnClick();
+    });
     // zoom in and out
     this.$zoomOutBtn.addEventListener('click', () => {
       this.onZoomBtn(-1);
@@ -2594,6 +2657,112 @@ export class TreeView extends Tree {
     this.$markedCount.addEventListener('click', () => {
       this.onMarkedCountClick();
     });
+  }
+
+  // ---- undo / redo ------------------------------------------------------
+
+  pushUndo (entry) {
+    // entry: { label, undo: async () => {}, redo: async () => {} }
+    this.undoStack.push(entry);
+    // a fresh action invalidates the redo history
+    this.redoStack = [];
+    this.$renderUndoRedoBtns();
+  }
+
+  $renderUndoRedoBtns () {
+    if (this.$undoBtn)
+      this.$undoBtn.classList.toggle('greyed-out', this.undoStack.length === 0);
+    if (this.$redoBtn)
+      this.$redoBtn.classList.toggle('greyed-out', this.redoStack.length === 0);
+  }
+
+  onUndoBtnClick () { return this.action_undo({ type: 'click' }); }
+  onRedoBtnClick () { return this.action_redo({ type: 'click' }); }
+
+  async action_undo (event) {
+    const entry = this.undoStack.pop();
+    if (! entry) { this.setStatus('nothing to undo'); return; }
+    // undo() may return a status note (e.g. when it relocated the node);
+    // prefer it over the generic message so it isn't overwritten/lost
+    const note = await entry.undo();
+    this.redoStack.push(entry);
+    this.$renderUndoRedoBtns();
+    this.setStatus(note || `undid: ${entry.label}`);
+  }
+
+  async action_redo (event) {
+    const entry = this.redoStack.pop();
+    if (! entry) { this.setStatus('nothing to redo'); return; }
+    const note = await entry.redo();
+    this.undoStack.push(entry);
+    this.$renderUndoRedoBtns();
+    this.setStatus(note || `redid: ${entry.label}`);
+  }
+
+  // turn a serialized node dict back into addChild() details:
+  // a restored node comes back unloaded, since its live tab (if any) is gone
+  $restoreDetails (dict) {
+    const details = { ...dict, render: true };
+    delete details.parent;
+    delete details.nodes;
+    details.tabId = undefined;
+    details.windowId = undefined;
+    if (details.loaded) details.wasLoaded = true;
+    details.loaded = false;
+    details.active = false;
+    return details;
+  }
+
+  // resolve where a restored node should go.  if its original parent is
+  // no longer in the tree, fall back to appending at the end of root.
+  // returns toRoot=true when that fallback happened (so the caller can
+  // tell the user, rather than silently relocating the node).
+  $resolveRestoreParent (parentId, index) {
+    let parent = this.nodes[parentId];
+    let toRoot = false;
+    if (! parent) {
+      parent = this.root;
+      index = parent.nodes.length;  // append at end of root
+      toRoot = true;
+    }
+    return { parent, index, toRoot };
+  }
+
+  // rebuild a whole deleted subtree (from Node.serializeSubtree()) under
+  // parentId at index, restoring each node's original id and order.
+  // returns true if the original parent was gone and it went to root.
+  async restoreSubtree (rootId, dicts, parentId, index) {
+    const { parent, index: at, toRoot } =
+      this.$resolveRestoreParent(parentId, index);
+    const restored = await this.$rebuildNode(rootId, dicts, parent, at);
+    if (restored) await this.setCursor(restored);
+    return toRoot;
+  }
+
+  async $rebuildNode (id, dicts, parent, index) {
+    const dict = dicts[id];
+    if (! dict) return null;
+    const newNode = await parent.addChild(
+      index, this.$restoreDetails(dict), { reason: 'userAction' });
+    const childIds = dict.nodes || [];
+    for (let i = 0; i < childIds.length; i++)
+      await this.$rebuildNode(childIds[i], dicts, newNode, i);
+    return newNode;
+  }
+
+  // undo a "delete node, promote its kids" operation: recreate just the
+  // node, then move its (still-alive) promoted kids back underneath it
+  async restoreNodeAndAdopt (rootId, ownDict, parentId, index, kidIds) {
+    const { parent, index: at, toRoot } =
+      this.$resolveRestoreParent(parentId, index);
+    const newNode = await parent.addChild(
+      at, this.$restoreDetails(ownDict), { reason: 'userAction' });
+    for (let i = 0; i < kidIds.length; i++) {
+      const kid = this.nodes[kidIds[i]];
+      if (kid) await kid.moveTo(newNode, i, { reason: 'userAction' });
+    }
+    await this.setCursor(newNode);
+    return toRoot;
   }
 
   onViewScopeBtnClick () {

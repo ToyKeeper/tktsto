@@ -187,6 +187,14 @@ export class Node {
     return this.parent.nodes.indexOf(this);
   }
 
+  serializeSubtree (acc = {}) {
+    // capture this node and all descendants as a { id: dict, ... } hash,
+    // suitable for rebuilding the subtree later (e.g. to undo a delete)
+    acc[this.id] = this.toDict();
+    for (const kid of this.nodes) kid.serializeSubtree(acc);
+    return acc;
+  }
+
   //indexOfTab () {
   //  if (! this.parent) return 0;
   //  const windowNode = this.getWindowNode();

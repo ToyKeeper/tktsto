@@ -318,6 +318,15 @@ foo {
   box-shadow: var(--button-pressed-shadow);
   transition: var(--button-transition);
 }
+/* zoom +/- buttons: keep them compact and non-growing, so the text
+ * buttons (Session / Tab / Undo / Redo) get the room instead */
+#zoom-out-btn, #zoom-in-btn {
+  flex: 0 0 auto;
+  min-width: 1.4em;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  font-weight: bold;
+}
 .greyed-out {
   opacity: 50%;
 }
