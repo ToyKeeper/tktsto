@@ -543,10 +543,6 @@ foo {
 .row.loaded .node-favicon {
   opacity: 1;
 }
-/* hide favicons that failed to load, so there's no broken-image icon */
-.node-favicon.broken {
-  display: none;
-}
 
 .row .node-label,
 .row .node-note-icon {

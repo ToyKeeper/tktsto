@@ -7,24 +7,13 @@ What changed, and when?  You know the drill.
 
 Changes:
 
-- Favicons!  TKTSTO now grabs, stores, and shows the favicon for each tab and
-  saved page, both for live tabs and ones restored from a saved session or an
-  imported backup.  This can be turned off in the options page (it's on by
-  default), and favicons which fail to load are hidden gracefully.
-
-Bug fixes:
-
-- Favicon data captured from the browser (as `favIconUrl`) was being stored
-  and serialized under a different field name (`faviconUrl`), so it never got
-  saved or displayed.  The naming is now unified on the browser's own
-  `favIconUrl` everywhere, including the Tabs Outliner importer.
-
-- On Chromium browsers, favicons now come from the browser's own favicon
-  cache (via the `_favicon` API) instead of loading each site's favicon URL
-  directly.  Some sites serve their favicon with a `Cross-Origin-Resource-Policy`
-  header that blocks the extension from loading it (e.g. claude.ai), which
-  caused the icon to fail and flicker; the cached icon is served from the
-  extension's own origin, so it always loads.
+- Favicons!  On Chromium browsers, the tree now shows each page's favicon.
+  Icons come from the browser's own favicon cache (the `_favicon` API), served
+  from the extension's own origin, rather than loading each site's favicon URL
+  directly -- the latter is blocked for some sites by their
+  `Cross-Origin-Resource-Policy` header (e.g. claude.ai).  Favicons update
+  when a page changes its icon, and can be turned off in the options page.
+  (Firefox is not supported yet.)
 
 
 ## 0.1.181.0 (2026-04-06)

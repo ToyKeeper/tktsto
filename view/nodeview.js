@@ -272,36 +272,24 @@ export class NodeView extends Node {
       this.$row.append($noteIcon);
     }
 
-    // favicon
-    // (only for actual pages, not windows/labels/dividers)
-    if (cfg.showFavicons && this.url && (! this.isWindow())) {
-      let faviconSrc;
-      if (isChrome) {
-        // Chrome's built-in favicon cache, served from our OWN origin.
-        // Loading a site's favicon URL directly often fails due to its
-        // Cross-Origin-Resource-Policy header (e.g. claude.ai/favicon.ico),
-        // but this never does, since the browser hands us the cached icon.
-        const u = new URL(api.runtime.getURL('/_favicon/'));
-        u.searchParams.set('pageUrl', this.url);
-        u.searchParams.set('size', '32');
-        faviconSrc = u.toString();
-      }
-      else if (this.favIconUrl) {
-        // Firefox has no _favicon endpoint; its tab.favIconUrl is
-        // normally loadable directly.
-        faviconSrc = this.favIconUrl;
-      }
-      if (faviconSrc) {
-        const $favicon = doc.createElement('img');
-        $favicon.className = 'node-favicon';
-        $favicon.draggable = false;
-        $favicon.alt = '';  // decorative
-        $favicon.src = faviconSrc;
-        // hide gracefully if the icon fails to load (dead/blocked URL)
-        $favicon.addEventListener('error',
-          () => $favicon.classList.add('broken'));
-        this.$row.append($favicon);
-      }
+    // favicon (Chromium only)
+    // Use the browser's own favicon cache, served from our extension's
+    // origin (the _favicon API).  Loading a site's favicon URL directly
+    // often fails due to its Cross-Origin-Resource-Policy header
+    // (e.g. claude.ai/favicon.ico); served from our origin, it never does.
+    if (isChrome && cfg.showFavicons && this.url && (! this.isWindow())) {
+      const u = new URL(api.runtime.getURL('/_favicon/'));
+      u.searchParams.set('pageUrl', this.url);
+      u.searchParams.set('size', '32');
+      // mtime bumps whenever the tab updates (including a favicon change),
+      // so this busts the image cache and a refreshed favicon re-loads
+      u.searchParams.set('v', this.mtime);
+      const $favicon = doc.createElement('img');
+      $favicon.className = 'node-favicon';
+      $favicon.draggable = false;
+      $favicon.alt = '';  // decorative
+      $favicon.src = u.toString();
+      this.$row.append($favicon);
     }
 
     // main node text
