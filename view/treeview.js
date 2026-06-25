@@ -77,8 +77,9 @@ export class TreeView extends Tree {
     this.$undoBtn = doc.getElementById('undo-btn');
     this.$redoBtn = doc.getElementById('redo-btn');
 
-    // zoom bounds (zoom level is driven by config; toolbar +/- buttons were
-    // replaced by the redo button, but the zoom machinery still applies)
+    // zoom buttons (kept compact, alongside undo/redo)
+    this.$zoomOutBtn = doc.getElementById('zoom-out-btn');
+    this.$zoomInBtn = doc.getElementById('zoom-in-btn');
     // number of steps per "octave"
     this.zoomSteps = 12;
     this.zoomMax = 3;
@@ -2616,6 +2617,13 @@ export class TreeView extends Tree {
     if (this.$redoBtn) this.$redoBtn.addEventListener('click', () => {
       this.onRedoBtnClick();
     });
+    // zoom in and out
+    this.$zoomOutBtn.addEventListener('click', () => {
+      this.onZoomBtn(-1);
+    });
+    this.$zoomInBtn.addEventListener('click', () => {
+      this.onZoomBtn(1);
+    });
     // when details-btn clicked, toggle the details box
     this.$detailsBtn.addEventListener('click', () => {
       this.onDetailsBtnClick();
@@ -2891,6 +2899,15 @@ export class TreeView extends Tree {
       if (zoomLevel !== oldZoomLevel) {
         this.setStatus(`Zoom: ${(100 * this.zoomLevel).toFixed(2)}%`);
       }
+    }
+
+    // grey out or activate zoom buttons if maxed out
+    if (this.$zoomInBtn) {
+      const grey = 'greyed-out';
+      if (zoomLevel >= this.zoomMax) this.$zoomInBtn.classList.add(grey);
+      else this.$zoomInBtn.classList.remove(grey);
+      if (zoomLevel <= this.zoomMin) this.$zoomOutBtn.classList.add(grey);
+      else this.$zoomOutBtn.classList.remove(grey);
     }
   }
 
