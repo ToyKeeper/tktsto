@@ -3,6 +3,19 @@
 What changed, and when?  You know the drill.
 
 
+## Unreleased
+
+Changes:
+
+- Favicons!  On Chromium browsers, the tree now shows each page's favicon.
+  Icons come from the browser's own favicon cache (the `_favicon` API), served
+  from the extension's own origin, rather than loading each site's favicon URL
+  directly -- the latter is blocked for some sites by their
+  `Cross-Origin-Resource-Policy` header (e.g. claude.ai).  Favicons update
+  when a page changes its icon, and can be turned off in the options page.
+  (Firefox is not supported yet.)
+
+
 ## 0.1.181.0 (2026-04-06)
 
 Google Chrome (and no other Chrome-based browsers, as far as I can tell)

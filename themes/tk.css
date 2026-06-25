@@ -527,6 +527,23 @@ foo {
 .node-checkbox.n8 { color: var(--checkbox-fg-8); }
 .node-checkbox.n9 { color: var(--checkbox-fg-9); }
 
+/* favicons */
+.node-favicon {
+  display: inline-block;
+  width: calc(0.8 * var(--row-line-height));
+  height: calc(0.8 * var(--row-line-height));
+  vertical-align: text-bottom;
+  object-fit: contain;
+  margin-right: 0.25rem;
+}
+/* unloaded/wasLoaded tabs get a dimmed favicon, to match their text */
+.row.was-loaded .node-favicon {
+  opacity: 0.6;
+}
+.row.loaded .node-favicon {
+  opacity: 1;
+}
+
 .row .node-label,
 .row .node-note-icon {
   color: var(--label-unloaded-fg);

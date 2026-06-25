@@ -19,7 +19,8 @@
     "storage",
     "downloads",
     "tabs",
-    "alarms"
+    "alarms",
+    "favicon"
   ],
   "optional_permissions": [
   ],

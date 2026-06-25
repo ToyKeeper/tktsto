@@ -29,6 +29,7 @@ class OptionsPage extends ThemedPage {
       expandedRowPrefix: false,
       alwaysShowNodeStats: true,
       wasLoadedNodeStats: true,
+      showFavicons: true,
       hideTreeLines: false,
       hideCursorTreeLines: false,
       hideWindowTreeLines: true,
@@ -222,6 +223,19 @@ class OptionsPage extends ThemedPage {
       );
     } else {
       this.greyOut('hideCollapsedTabs');
+    }
+
+    // favicons come from Chromium's _favicon cache, so the option is
+    // Chrome-only; grey it out elsewhere
+    if (isChrome) {
+      this.options.push(
+        new Option(this, {
+          cfgKey: 'showFavicons',
+          inputType: 'checkbox',
+        })
+      );
+    } else {
+      this.greyOut('showFavicons');
     }
 
     for (const option of this.options) {
