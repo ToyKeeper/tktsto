@@ -1307,7 +1307,10 @@ export class TreeView extends Tree {
     const self = this;
     return {
       label: `delete ${label}`,
-      undo: async () => self.restoreSubtree(rootId, dicts, parentId, index),
+      undo: async () => {
+        const toRoot = await self.restoreSubtree(rootId, dicts, parentId, index);
+        if (toRoot) return `restored ${label} to root (original parent gone)`;
+      },
       redo: async () => {
         const n = self.nodes[rootId];
         if (n) await n.deleteSelf({ reason: 'userAction' });
@@ -1319,8 +1322,11 @@ export class TreeView extends Tree {
     const self = this;
     return {
       label: `delete ${label}`,
-      undo: async () =>
-        self.restoreNodeAndAdopt(rootId, ownDict, parentId, index, kidIds),
+      undo: async () => {
+        const toRoot = await self.restoreNodeAndAdopt(
+          rootId, ownDict, parentId, index, kidIds);
+        if (toRoot) return `restored ${label} to root (original parent gone)`;
+      },
       redo: async () => {
         const n = self.nodes[rootId];
         if (n) await n.deleteSelfAndPromoteKids({ reason: 'userAction' });
@@ -2676,19 +2682,21 @@ export class TreeView extends Tree {
   async action_undo (event) {
     const entry = this.undoStack.pop();
     if (! entry) { this.setStatus('nothing to undo'); return; }
-    await entry.undo();
+    // undo() may return a status note (e.g. when it relocated the node);
+    // prefer it over the generic message so it isn't overwritten/lost
+    const note = await entry.undo();
     this.redoStack.push(entry);
     this.$renderUndoRedoBtns();
-    this.setStatus(`undid: ${entry.label}`);
+    this.setStatus(note || `undid: ${entry.label}`);
   }
 
   async action_redo (event) {
     const entry = this.redoStack.pop();
     if (! entry) { this.setStatus('nothing to redo'); return; }
-    await entry.redo();
+    const note = await entry.redo();
     this.undoStack.push(entry);
     this.$renderUndoRedoBtns();
-    this.setStatus(`redid: ${entry.label}`);
+    this.setStatus(note || `redid: ${entry.label}`);
   }
 
   // turn a serialized node dict back into addChild() details:
@@ -2707,23 +2715,28 @@ export class TreeView extends Tree {
 
   // resolve where a restored node should go.  if its original parent is
   // no longer in the tree, fall back to appending at the end of root.
+  // returns toRoot=true when that fallback happened (so the caller can
+  // tell the user, rather than silently relocating the node).
   $resolveRestoreParent (parentId, index) {
     let parent = this.nodes[parentId];
+    let toRoot = false;
     if (! parent) {
       parent = this.root;
       index = parent.nodes.length;  // append at end of root
-      this.setStatus('undo: original parent gone, restored to root');
+      toRoot = true;
     }
-    return { parent, index };
+    return { parent, index, toRoot };
   }
 
   // rebuild a whole deleted subtree (from Node.serializeSubtree()) under
-  // parentId at index, restoring each node's original id and order
+  // parentId at index, restoring each node's original id and order.
+  // returns true if the original parent was gone and it went to root.
   async restoreSubtree (rootId, dicts, parentId, index) {
-    const { parent, index: at } = this.$resolveRestoreParent(parentId, index);
+    const { parent, index: at, toRoot } =
+      this.$resolveRestoreParent(parentId, index);
     const restored = await this.$rebuildNode(rootId, dicts, parent, at);
     if (restored) await this.setCursor(restored);
-    return (! ! restored);
+    return toRoot;
   }
 
   async $rebuildNode (id, dicts, parent, index) {
@@ -2740,7 +2753,8 @@ export class TreeView extends Tree {
   // undo a "delete node, promote its kids" operation: recreate just the
   // node, then move its (still-alive) promoted kids back underneath it
   async restoreNodeAndAdopt (rootId, ownDict, parentId, index, kidIds) {
-    const { parent, index: at } = this.$resolveRestoreParent(parentId, index);
+    const { parent, index: at, toRoot } =
+      this.$resolveRestoreParent(parentId, index);
     const newNode = await parent.addChild(
       at, this.$restoreDetails(ownDict), { reason: 'userAction' });
     for (let i = 0; i < kidIds.length; i++) {
@@ -2748,7 +2762,7 @@ export class TreeView extends Tree {
       if (kid) await kid.moveTo(newNode, i, { reason: 'userAction' });
     }
     await this.setCursor(newNode);
-    return true;
+    return toRoot;
   }
 
   onViewScopeBtnClick () {
