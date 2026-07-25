@@ -2,10 +2,20 @@
   "manifest_version": 3,
   "name": "__MSG_extName__",
   "description": "__MSG_extDescription__",
-  "version": "{VERSION}",
+  "version": "0.5.1",
   "author": "ToyKeeper",
   "homepage_url": "https://toykeeper.net/tktsto",
   "default_locale": "en",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "tktsto-dev-build@toykeeper.net",
+      "strict_min_version": "115.0",
+      "data_collection_permissions": {
+        "required": ["none"],
+        "optional": ["browsingActivity"]
+      }
+    }
+  },
   "minimum_chrome_version": "114.0.0.0",
   "icons": {
     "16": "img/icon-16.png",
@@ -19,25 +29,38 @@
     "storage",
     "downloads",
     "tabs",
+    "tabHide",
     "alarms"
   ],
   "optional_permissions": [
   ],
   "optional_host_permissions": [
-    "http://localhost:*/*",
+    "http://localhost/*",
     "<all_urls>"
   ],
   "offline_enabled": true,
   "options_page": "options/options.html",
   "background": {
     "service_worker": "bkgd/bkgd.js",
+    "scripts": ["bkgd/bkgd.js"],
     "type": "module"
   },
   "side_panel": {
     "default_path": "view/sidepanel.html"
   },
+  "sidebar_action": {
+    "default_title": "__MSG_extName__",
+    "default_panel": "view/sidepanel.html",
+    "default_icon": {
+      "16": "img/icon-16.png",
+      "32": "img/icon-32.png",
+      "48": "img/icon-48.png",
+      "64": "img/icon-64.png",
+      "128": "img/icon-128.png"
+    }
+  },
   "action": {
-    "default_title": "TKTSTO Sidebar",
+    "default_title": "__MSG_action_defaultTitle__",
     "default_icon": {
       "16": "img/icon-16.png",
       "32": "img/icon-32.png",
@@ -48,91 +71,113 @@
   },
   "commands": {
     "_execute_action": {
-      "description": "Toggle Side Panel",
+      "description": "__MSG_cmd_toggleSidePanel__",
       "suggested_key": { "default": "Alt+T" }
     },
+    "_execute_sidebar_action": {
+      "description": "__MSG_cmd_toggleSidePanel__",
+      "suggested_key": { "default": "F1" }
+    },
     "backupSession": {
-      "description": "Back up session now"
+      "description": "__MSG_cmd_backupSession__"
     },
     "unloadCurrentTab": {
-      "description": "Unload current tab",
+      "description": "__MSG_cmd_unloadCurrentTab__",
       "suggested_key": { "default": "Alt+U" }
     },
     "bookmarkCurrentTab": {
-      "description": "Bookmark current tab",
+      "description": "__MSG_cmd_bookmarkCurrentTab__",
       "suggested_key": { "default": "Alt+B" }
     },
     "addNoteToCurrentTab": {
-      "description": "Add highlighted text to current tab's notes"
+      "description": "__MSG_cmd_addNoteToCurrentTab__"
     },
     "cursorUp": {
-      "description": "Move cursor up"
+      "description": "__MSG_cmd_cursorUp__",
+      "suggested_key": { "default": "Alt+Up" }
     },
     "cursorDown": {
-      "description": "Move cursor down"
+      "description": "__MSG_cmd_cursorDown__",
+      "suggested_key": { "default": "Alt+Down" }
     },
     "cursorLeft": {
-      "description": "Move cursor left (to parent)"
+      "description": "__MSG_cmd_cursorLeft__"
     },
     "cursorRight": {
-      "description": "Move cursor right (to 1st child)"
+      "description": "__MSG_cmd_cursorRight__"
     },
     "cursorPgUp": {
-      "description": "Move cursor up 1 page"
+      "description": "__MSG_cmd_cursorPgUp__",
+      "suggested_key": { "default": "Alt+PageUp" }
     },
     "cursorPgDown": {
-      "description": "Move cursor down 1 page"
+      "description": "__MSG_cmd_cursorPgDown__",
+      "suggested_key": { "default": "Alt+PageDown" }
     },
     "cursorHome": {
-      "description": "Move cursor home (up to first sibling)"
+      "description": "__MSG_cmd_cursorHome__"
     },
     "cursorEnd": {
-      "description": "Move cursor end (down to last sibling)"
+      "description": "__MSG_cmd_cursorEnd__",
+      "suggested_key": { "default": "Alt+End" }
     },
     "loadNode": {
-      "description": "Load or switch to highlighted node"
+      "description": "__MSG_cmd_loadNode__",
+      "suggested_key": { "default": "Alt+L" }
     },
     "unloadNode": {
-      "description": "Unload highlighted node"
+      "description": "__MSG_cmd_unloadNode__",
+      "suggested_key": { "default": "Shift+Alt+U" }
     },
     "toggleExpanded": {
-      "description": "Expand/Collapse highlighted node"
+      "description": "__MSG_cmd_toggleExpanded__",
+      "suggested_key": { "default": "Alt+Space" }
     },
     "toggleMarked": {
-      "description": "Mark or unmark the current node"
+      "description": "__MSG_cmd_toggleMarked__",
+      "suggested_key": { "default": "Alt+M" }
     },
     "unmarkAll": {
-      "description": "Unmark all nodes"
+      "description": "__MSG_cmd_unmarkAll__",
+      "suggested_key": { "default": "Shift+Alt+M" }
     },
     "pasteMarked": {
-      "description": "Move marked nodes to after cursor"
+      "description": "__MSG_cmd_pasteMarked__",
+      "suggested_key": { "default": "Alt+P" }
     },
     "pasteMarkedBefore": {
-      "description": "Move marked nodes to before cursor"
+      "description": "__MSG_cmd_pasteMarkedBefore__",
+      "suggested_key": { "default": "Shift+Alt+P" }
     },
     "moveNodeUp": {
-      "description": "Move highlighted node up"
+      "description": "__MSG_cmd_moveNodeUp__",
+      "suggested_key": { "default": "Shift+Alt+Up" }
     },
     "moveNodeDown": {
-      "description": "Move highlighted node down"
+      "description": "__MSG_cmd_moveNodeDown__",
+      "suggested_key": { "default": "Shift+Alt+Down" }
     },
     "moveNodeLeft": {
-      "description": "Move highlighted node left (toward parent)"
+      "description": "__MSG_cmd_moveNodeLeft__",
+      "suggested_key": { "default": "Shift+Alt+Left" }
     },
     "moveNodeRight": {
-      "description": "Move highlighted node right (child of prev sibling)"
+      "description": "__MSG_cmd_moveNodeRight__",
+      "suggested_key": { "default": "Shift+Alt+Right" }
     },
     "moveNodeHome": {
-      "description": "Move highlighted node home (up to first sibling)"
+      "description": "__MSG_cmd_moveNodeHome__",
+      "suggested_key": { "default": "Shift+Alt+Home" }
     },
     "moveNodeEnd": {
-      "description": "Move highlighted node end (down to last sibling)"
+      "description": "__MSG_cmd_moveNodeEnd__",
+      "suggested_key": { "default": "Shift+Alt+End" }
     },
     "prevTab": {
-      "description": "Focus the previous tab"
+      "description": "__MSG_cmd_prevTab__"
     },
     "nextTab": {
-      "description": "Focus the next tab"
+      "description": "__MSG_cmd_nextTab__"
     }
   }
 }
