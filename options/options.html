@@ -6,39 +6,38 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>TK Tree Style Tab Outliner Options</title>
+  <title data-i18n="options_title">TK Tree Style Tab Outliner Options</title>
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="options.js"></script>
 </head>
 <body class="options">
-  <h1>TK Tree Style Tab Outliner Options</h1>
+  <h1 data-i18n="options_title">TK Tree Style Tab Outliner Options</h1>
 
-  <h2>Client ID</h2>
+  <h2 data-i18n="options_heading_clientId">Client ID</h2>
 
-  <p>
-
-  Each browser you use needs its own unique identifier.  Use something <b>very
+  <p data-i18n="options_desc_clientId">
+  Each browser you use needs its own unique identifier. Use something <b>very
   short with no spaces or punctuation</b>, ideally 3 letters or less, because
   it will become part of the ID for each tree node and transaction created by
-  that browser.  For example:
-
+  that browser. For example:
   </p>
 
   <ul>
-    <li><code>pc</code>: Your desktop computer.</li>
-    <li><code>nb</code>: Your notebook computer.</li>
-    <li><code>w</code>: Your work computer.</li>
+    <li><code>pc</code>: <span data-i18n="options_client_pc">Your desktop computer.</span></li>
+    <li><code>nb</code>: <span data-i18n="options_client_nb">Your notebook computer.</span></li>
+    <li><code>w</code>: <span data-i18n="options_client_w">Your work computer.</span></li>
   </ul>
 
   <form id="options-form" accept-charset="utf-8">
     <label>
     <input type="text" maxlength="8" class="short-input"
       id="clientId" name="clientId" required />
-    ID for this browser: (a-z and 0-9 only)
+    <span data-i18n="options_label_idForBrowser">ID for this browser: (a-z and 0-9 only)</span>
     </label>
   </form>
 
 
-  <h2>Appearance</h2>
+  <h2 data-i18n="options_heading_appearance">Appearance</h2>
 
   <div>
     <label>
@@ -46,61 +45,49 @@
       <option value="TK Night">TK Night</option>
       <option value="TK Day">TK Day</option>
     </select>
-    Theme
+    <span data-i18n="options_label_theme">Theme</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="expandedRowPrefix" name="expandedRowPrefix">
-    Draw a <code>+</code> before expanded branches?
+    <span data-i18n="options_label_expandedRowPrefix">Draw a + before expanded branches?</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="alwaysShowNodeStats" name="alwaysShowNodeStats">
-    Show node stats
-    <span class="node-stats">[<span class="node-stat-open">7</span>/<span class="node-stat-total">42</span>] </span>
-    before expanded branches?
+    <span data-i18n="options_label_alwaysShowNodeStats">Show node stats before expanded branches?</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="wasLoadedNodeStats" name="wasLoadedNodeStats">
-    Show
-    <span class="row was-loaded"><span class="url-title">wasLoaded</span></span>
-    in node stats?
-    <span class="node-stats">[<span class="node-stat-open">7</span>+<span class="node-stat-was-loaded">2</span>/<span class="node-stat-total">42</span>] </span>
+    <span data-i18n="options_label_wasLoadedNodeStats">Show wasLoaded in node stats?</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="hideTreeLines" name="hideTreeLines">
-    Hide tree lines?
-    <span class="tree-line-color">(dim)</span>
+    <span data-i18n="options_label_hideTreeLines">Hide tree lines?</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="hideCursorTreeLines" name="hideCursorTreeLines">
-    Hide
-    <span class="row cursor loaded expanded"><span class="row-title"><span class="url-title">cursor branch</span></span></span>
-    tree lines?
-    <span class="tree-line-cursor-color">(bright)</span>
+    <span data-i18n="options_label_hideCursorTreeLines">Hide cursor branch tree lines?</span>
     </label>
   </div>
 
   <div>
     <label>
     <input type="checkbox" id="hideWindowTreeLines" name="hideWindowTreeLines">
-    Hide
-    <span class="row window expanded loaded active"><span class="row-title">window</span></span>
-    tree lines?
-    <span class="tree-line-window-color">(window)</span>
+    <span data-i18n="options_label_hideWindowTreeLines">Hide window tree lines?</span>
     </label>
   </div>
 
@@ -108,7 +95,7 @@
     <label>
     <input type="text" id="fontFamily" name="fontFamily"
       placeholder="Arial, Tahoma, Geneva, sans-serif" />
-    Font family:
+    <span data-i18n="options_label_fontFamily">Font family:</span>
     </label>
     <small>
     Arial, Georgia, Humor Sans, Comic Sans MS, Quicksand, DejaVu Sans, Verdana,
@@ -121,7 +108,7 @@
     <label>
     <input type="text" id="indentMargin" name="indentMargin"
       placeholder="0.27em" />
-    Indent margin
+    <span data-i18n="options_label_indentMargin">Indent margin</span>
     </label>
   </div>
 
@@ -129,8 +116,7 @@
     <label>
     <input type="text" id="indentMarginWindow" name="indentMarginWindow"
       placeholder="0" />
-    Indent margin
-    <span class="row window expanded loaded active"><span class="row-title">(window nodes)</span></span>
+    <span data-i18n="options_label_indentMarginWindow">Indent margin (window nodes)</span>
     </label>
   </div>
 
@@ -138,7 +124,7 @@
     <label>
     <input type="text" id="indentPadding" name="indentPadding"
       placeholder="0.4em" />
-    Indent padding:
+    <span data-i18n="options_label_indentPadding">Indent padding:</span>
     </label>
     0.4em, 1em, ...
   </div>
@@ -147,8 +133,7 @@
     <label>
     <input type="text" id="indentPaddingWindow" name="indentPaddingWindow"
       placeholder="0.2em" />
-    Indent padding
-    <span class="row window expanded loaded active"><span class="row-title">(window nodes)</span></span>
+    <span data-i18n="options_label_indentPaddingWindow">Indent padding (window nodes)</span>
     </label>
   </div>
 
@@ -156,7 +141,7 @@
     <label>
     <input type="text" id="expandedBranchBottomPadding" name="expandedBranchBottomPadding"
       placeholder="0.2em" />
-    Expanded branch bottom padding
+    <span data-i18n="options_label_expandedBranchBottomPadding">Expanded branch bottom padding</span>
     </label>
   </div>
 
@@ -164,7 +149,7 @@
     <label>
     <input type="text" id="leafToBranchSpacing" name="leafToBranchSpacing"
       placeholder="0" />
-    Space between leaf (or collapsed branch) and branch
+    <span data-i18n="options_label_leafToBranchSpacing">Space between leaf (or collapsed branch) and branch</span>
     </label>
   </div>
 
@@ -172,7 +157,7 @@
     <label>
     <input type="text" id="windowTopLevelNodeSpacing" name="windowTopLevelNodeSpacing"
       placeholder="" />
-    Space between top-level nodes in a window
+    <span data-i18n="options_label_windowTopLevelNodeSpacing">Space between top-level nodes in a window</span>
     </label>
   </div>
 
@@ -180,8 +165,7 @@
     <label>
     <input type="text" id="detailsBoxHeight" name="detailsBoxHeight"
       placeholder="8rem" />
-    <span id="bottom-area" class="inline"><span id="details-box" class="all-details"><span id="detail-note"><b>Details&nbsp;box</b></span></span></span>
-    height:
+    <span data-i18n="options_label_detailsBoxHeight">Details box height:</span>
     </label>
     Example: 25vh or 12em
   </div>
@@ -190,30 +174,27 @@
     <label>
     <input type="text" id="detailsBoxHeightNotesOnly" name="detailsBoxHeightNotesOnly"
       placeholder="8rem" />
-    <span id="bottom-area" class="inline"><span id="details-box" class="notes-only"><span id="detail-label"><b>Details&nbsp;box</b></span></span></span>
-    height (in <b>notes</b> mode):
+    <span data-i18n="options_label_detailsBoxHeightNotesOnly">Details box height (in notes mode):</span>
     </label>
     Example: 10vh or 6em
   </div>
 
   <div>
-    <label>User stylesheet (add any CSS you like):</label>
-    <a href="/docs/user-styles.html">(documentation)</a>
+    <label><span data-i18n="options_label_userStyles">User stylesheet (add any CSS you like):</span></label>
+    <a href="/docs/user-styles.html" data-i18n="options_doc_link">(documentation)</a>
     <textarea id="userStyles" name="userStyles"
+      data-i18n-placeholder="options_placeholder_userStyles"
       placeholder="see /themes/tk-night.css for an example"></textarea>
   </div>
 
 
-  <h2>Tree View behavior</h2>
+  <h2 data-i18n="options_heading_treeBehavior">Tree View behavior</h2>
 
   <div>
     <label>
     <input type="checkbox" id="cursorFollowsActiveTab"
                            name="cursorFollowsActiveTab">
-    Tree view
-    <span class="row cursor loaded collapsed"><span class="row-title"><span class="url-title">cursor</span></span></span>
-    follows
-    <span class="row active loaded"><b class="url-title">active (focused) tab?</b></span>
+    <span data-i18n="options_label_cursorFollowsActiveTab">Tree view cursor follows active (focused) tab?</span>
     </label>
   </div>
 
@@ -221,7 +202,7 @@
     <label>
     <input type="checkbox" id="activeTabExpandsItsParents"
                            name="activeTabExpandsItsParents">
-    While following active tab, expand the tab's parents?
+    <span data-i18n="options_label_activeTabExpandsItsParents">While following active tab, expand the tab's parents?</span>
     </label>
   </div>
 
@@ -229,10 +210,7 @@
     <label>
     <input type="checkbox" id="pinnedTabsOpenNewTabsPinnedToo"
                            name="pinnedTabsOpenNewTabsPinnedToo">
-    When a
-    <span class="row loaded"><span class="url-title">
-      <span class="icon pinned"> </span> pinned tab</span></span>
-    is active and a new tab is opened, pin the new tab too?
+    <span data-i18n="options_label_pinnedTabsOpenNewTabsPinnedToo">When a pinned tab is active and a new tab is opened, pin the new tab too?</span>
     </label>
   </div>
 
@@ -240,11 +218,7 @@
     <label>
     <input type="checkbox" id="convertFromWindowWhenDroppedIntoWindow"
                            name="convertFromWindowWhenDroppedIntoWindow">
-    Convert
-    <span class="row loaded window"><span class="node-label">loaded window</span></span>
-    into a
-    <span class="row loaded"><span class="node-label">heading</span></span>
-    when moved into another window?
+    <span data-i18n="options_label_convertFromWindowWhenDroppedIntoWindow">Convert loaded window into a heading when moved into another window?</span>
     </label>
   </div>
 
@@ -252,9 +226,7 @@
     <label>
     <input type="checkbox" id="hideTopButtonsDuringSearch"
                            name="hideTopButtonsDuringSearch">
-    Hide
-    <span id="top-area" class="inline"><span class="toolbar"><span class="button">Top</span>&nbsp;<span class="button">bar</span>&nbsp;<span class="button">buttons</span></span></span>
-    during a search?
+    <span data-i18n="options_label_hideTopButtonsDuringSearch">Hide Top bar buttons during a search?</span>
     </label>
   </div>
 
@@ -262,170 +234,128 @@
     <label>
     <input type="checkbox" id="hideCollapsedTabs"
                            name="hideCollapsedTabs">
-    Hide tabs in browser's tab bar when those tabs are in a collapsed branch?
-    (Firefox-based browsers only)
+    <span data-i18n="options_label_hideCollapsedTabs">Hide tabs in browser's tab bar when those tabs are in a collapsed branch? (Firefox-based browsers only)</span>
     </label>
   </div>
 
   <div>
     <label>
     <select id="loadExpandedBranchStyle" name="loadExpandedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Load parent only</option>
-      <option value="all">Load entire branch without asking</option>
+      <option value="ask" data-i18n="options_branch_ask">Ask what to do</option>
+      <option value="one" data-i18n="options_branch_load_one">Load parent only</option>
+      <option value="all" data-i18n="options_branch_load_all">Load entire branch without asking</option>
     </select>
-    When
-    <b class="row loaded"><span class="url-title">loading</span></b>
-    an expanded parent node with saved tabs
+    <span data-i18n="options_label_loadExpanded">When loading an expanded parent node with saved tabs</span>
     </label>
   </div>
 
   <div>
     <label>
     <select id="loadCollapsedBranchStyle" name="loadCollapsedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Load parent only</option>
-      <option value="all">Load entire branch without asking</option>
+      <option value="ask" data-i18n="options_branch_ask">Ask what to do</option>
+      <option value="one" data-i18n="options_branch_load_one">Load parent only</option>
+      <option value="all" data-i18n="options_branch_load_all">Load entire branch without asking</option>
     </select>
-    When
-    <b class="row loaded"><span class="url-title">loading</span></b>
-    a collapsed parent node with saved tabs
+    <span data-i18n="options_label_loadCollapsed">When loading a collapsed parent node with saved tabs</span>
     </label>
   </div>
 
   <div>
     <label>
     <select id="unloadExpandedBranchStyle" name="unloadExpandedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Unload parent only</option>
-      <option value="all">Unload entire branch without asking</option>
+      <option value="ask" data-i18n="options_branch_ask">Ask what to do</option>
+      <option value="one" data-i18n="options_branch_unload_one">Unload parent only</option>
+      <option value="all" data-i18n="options_branch_unload_all">Unload entire branch without asking</option>
     </select>
-    When
-    <b class="row"><span class="url-title">unloading</span></b>
-    an expanded parent node
+    <span data-i18n="options_label_unloadExpanded">When unloading an expanded parent node</span>
     </label>
   </div>
 
   <div>
     <label>
     <select id="unloadCollapsedBranchStyle" name="unloadCollapsedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Unload parent only</option>
-      <option value="all">Unload entire branch without asking</option>
+      <option value="ask" data-i18n="options_branch_ask">Ask what to do</option>
+      <option value="one" data-i18n="options_branch_unload_one">Unload parent only</option>
+      <option value="all" data-i18n="options_branch_unload_all">Unload entire branch without asking</option>
     </select>
-    When
-    <b class="row"><span class="url-title">unloading</span></b>
-    a collapsed parent node
+    <span data-i18n="options_label_unloadCollapsed">When unloading a collapsed parent node</span>
     </label>
   </div>
 
   <div>
     <label>
     <select id="deleteExpandedBranchStyle" name="deleteExpandedBranchStyle">
-      <option value="ask">Ask what to do</option>
-      <option value="one">Delete parent and promote all children</option>
-      <option value="all">Delete entire branch without asking</option>
+      <option value="ask" data-i18n="options_branch_ask">Ask what to do</option>
+      <option value="one" data-i18n="options_branch_delete_one">Delete parent and promote all children</option>
+      <option value="all" data-i18n="options_branch_delete_all">Delete entire branch without asking</option>
     </select>
-    When <span class="delete-button">deleting</span> an expanded parent node
+    <span data-i18n="options_label_deleteExpanded">When deleting an expanded parent node</span>
     </label>
   </div>
 
 
-  <h2>Backups</h2>
+  <h2 data-i18n="options_heading_backups">Backups</h2>
 
   <div>
-    <p>
+    <p data-i18n="options_desc_backups">
     Backup files can either be human friendly (easier to view in a text editor)
     or not (smaller files).
     </p>
     <label>
     <input type="checkbox" id="humanFriendlyBackups" name="humanFriendlyBackups">
-    Human readable backup files
+    <span data-i18n="options_label_humanFriendlyBackups">Human readable backup files (larger, "pretty printed" json)</span>
     </label>
-    (larger, "pretty printed" json)
   </div>
 
   <div>
-    <p>
+    <p data-i18n="options_desc_localBackup">
     Automatic local backups are saved to your "Downloads" folder if enabled.
-    Set to 0 to disable this.  1 day = 24, 1 week = 168, 1 month = 720.
-    <small>(recommended: 1 to 24 hours)</small>
+    Set to 0 to disable this. 1 day = 24, 1 week = 168, 1 month = 720.
+    (recommended: 1 to 24 hours)
     </p>
     <label>
     <input type="number" id="localBackupHours" name="localBackupHours"
       min="0" max="1000" step="0.5">
-    Back up locally every N hours
+    <span data-i18n="options_label_localBackupHours">Back up locally every N hours</span>
     </label>
   </div>
 
 
-  <h2>Import Session Files</h2>
+  <h2 data-i18n="options_heading_import">Import Session Files</h2>
 
-  <p>Old session backup files can be imported here.  Note that imported
-  sessions will <i>add to</i> your current session, not <i>replace</i> your
-  session.  If you have sessions from a few different browsers and want to
+  <p data-i18n="options_desc_import1">Old session backup files can be imported here. Note that imported
+  sessions will add to your current session, not replace your
+  session. If you have sessions from a few different browsers and want to
   merge them into one, import each session and they'll all get added to one big
-  tree.  Be prepared to do some manual re-organization and de-duplication
+  tree. Be prepared to do some manual re-organization and de-duplication
   afterward though, because the import process does not attempt to de-duplicate
   for you.</p>
 
-  <p>To restore old session backups from <i>this</i> extension, unzip them first
+  <p data-i18n="options_desc_import2">To restore old session backups from this extension, unzip them first
   and then put them here.</p>
 
-  <p>File decompression is not directly supported by the browser, so if the
-  backup file is compressed, unzip it first.  If it uses gzip (a
-  <code>.gz</code> extension), unzip it with a command like <code>gzip -d
-  myfile.json.gz</code> or <code>gunzip myfile.json.gz</code>.  If the file is
-  compressed with zstd (uses a <code>.zst</code> or <code>.zstd</code>
-  extension), unzip it with <code>zstd -d myfile.json.zst</code> or
-  <code>unzstd myfile.json.zst</code>.</p>
+  <p data-i18n="options_desc_import3">File decompression is not directly supported by the browser, so if the
+  backup file is compressed, unzip it first. If it uses gzip (a
+  .gz extension), unzip it with a command like gzip -d
+  myfile.json.gz or gunzip myfile.json.gz. If the file is
+  compressed with zstd (uses a .zst or .zstd
+  extension), unzip it with zstd -d myfile.json.zst or
+  unzstd myfile.json.zst.</p>
 
-  <h4>TKTSTO files</h4>
+  <h4 data-i18n="options_heading_tktstoFiles">TKTSTO files</h4>
   <div class="file-input">
-  <!-- <form id="tktsto-import-form" accept-charset="utf-8"> -->
     <input type="file" id="tktsto-file-input">
-    <button id="tktsto-file-button">Restore</button>
-    <!-- </form> -->
+    <button id="tktsto-file-button" data-i18n="options_btn_restore">Restore</button>
   </div>
 
-  <h4>Tabs Outliner files</h4>
-  <p>If you used Tabs Outliner and have session file backups, import those
+  <h4 data-i18n="options_heading_tabsOutlinerFiles">Tabs Outliner files</h4>
+  <p data-i18n="options_desc_tabsOutliner">If you used Tabs Outliner and have session file backups, import those
   here.</p>
 
   <div class="file-input">
-  <!-- <form id="tabs-outliner-import-form" accept-charset="utf-8"> -->
     <input type="file" id="tabs-outliner-file-input" />
-    <button id="tabs-outliner-file-button">Import</button>
-  <!-- </form> -->
+    <button id="tabs-outliner-file-button" data-i18n="options_btn_import">Import</button>
   </div>
-
-
-  <!-- TODO:
-    - Split config options into multiple tabs
-    - Add link to help/doc pages and other internal pages
-    - User styles text widget
-    - Configure server URL and type
-      - None (local manual snapshots only)
-      - Simple backup server
-        - configure schedule
-      - Multi-browser sync server
-        - also a link to manage the configured server
-      - Maybe some other external server types?
-      - show sync status (last sync date + type + status, at least)
-    + import / restore snapshots
-      - from this extension
-      + import Tabs Outliner backups
-    - export/import *all* TKTSTO settings and data for a complete backup
-    - Configure tree behavior
-      - New "C-t" tab location
-      - New "link opened from this page" tab location
-      - New "tab opened some other way" tab location
-    - Key bindings
-    - visibility and maybe order of buttons in top/bottom bars
-    - whether to grab, store, and show favicons
-  -->
 
 </body>
 </html>
-
-

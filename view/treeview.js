@@ -11,6 +11,7 @@ import {
 import { ThemedPage } from '/themes/themes.js';
 import { buildEventName } from '/common/events.js';
 import { inputDialog, checkboxDialog, nodeEditDialog } from '/common/dialog.js';
+import { getMessage } from '/common/i18n.js';
 import { NodeView } from './nodeview.js';
 import { Tree } from '/common/tree.js';
 import { Mutex } from '/common/mutex.js';
@@ -791,7 +792,7 @@ export class TreeView extends Tree {
         if (! [
           'mouseHoverMenu', 'rejectEvent', 'mouseDragEnd'
         ].includes(handlerName))
-          this.setStatus(`mouse: ${handlerName}`);
+          this.setStatus(getMessage('status_mouse', [handlerName]));
         // equivalent to this.handler(event);
         await handler.bind(this)(event);
       }
@@ -1137,11 +1138,11 @@ export class TreeView extends Tree {
     };
     // prompt for details
     const result = await this.nodeEditDialog({
-      doc: this.document, title: 'Add Node', node: fake
+      doc: this.document, title: getMessage('dialog_title_addNode'), node: fake
     });
 
     // abort if user cancelled
-    if ((!result) || ('OK' !== result.button)) return;
+    if ((!result) || (getMessage('btn_ok') !== result.button && 'OK' !== result.button)) return;
 
     // figure out where to put the new node (determine parent and index)
     let destParent = this.root;  // default if empty tree or no cursor
@@ -1233,16 +1234,19 @@ export class TreeView extends Tree {
       let dStyle = this.cfg.deleteExpandedBranchStyle;
       const numToDelete = 1 + toDelete.countNodes();
       if ('ask' === dStyle) {
+        const btnOne = getMessage('btn_one');
+        const btnAll = getMessage('btn_all');
+        const btnCancel = getMessage('btn_cancel');
         const result = await this.inputDialog({
           doc: document,
-          title: 'Delete Nodes',
+          title: getMessage('dialog_title_deleteNodes'),
           input: false,
-          description: `Delete one node or all ${numToDelete} nodes?`,
-          buttons: ['Cancel', 'One', 'All']  // Cancel is default
+          description: getMessage('dialog_desc_deleteNodes_one_all', [numToDelete]),
+          buttons: [btnCancel, btnOne, btnAll]  // Cancel is default
         });
         // abort if user cancelled
-        if ((!result) || (! ['All', 'One'].includes(result.button))) return;
-        dStyle = result.button.toLowerCase();
+        if ((!result) || (! [btnAll, btnOne, 'All', 'One'].includes(result.button))) return;
+        dStyle = (result.button === btnOne || result.button === 'One') ? 'one' : 'all';
       }
       if ('one' === dStyle) {
         await toDelete.deleteSelfAndPromoteKids({ reason: 'userAction' });
@@ -1255,7 +1259,7 @@ export class TreeView extends Tree {
       //}
       else if ('all' === dStyle) {
         await toDelete.deleteSelf({ reason: 'userAction' });
-        this.setStatus(`deleted ${numToDelete} nodes`);
+        this.setStatus(getMessage('status_deleted_nodes', [numToDelete]));
       }
     }
     // if collapsed, delete entire branch
@@ -1263,18 +1267,20 @@ export class TreeView extends Tree {
       //debug('deleting entire branch recursively');
       // TODO: ask the user for confirmation
       const numToDelete = 1 + toDelete.countNodes();
+      const btnOk = getMessage('btn_ok');
+      const btnCancel = getMessage('btn_cancel');
       const result = await this.inputDialog({
         doc: document,
-        title: 'Delete Nodes',
+        title: getMessage('dialog_title_deleteNodes'),
         input: false,
-        description: `Really delete ${numToDelete} nodes?`,
-        buttons: ['Cancel', 'OK']  // Cancel is default
+        description: getMessage('dialog_desc_deleteNodes_confirm', [numToDelete]),
+        buttons: [btnCancel, btnOk]  // Cancel is default
       });
       // abort if user cancelled
-      if ((!result) || ('OK' !== result.button)) return;
+      if ((!result) || (btnOk !== result.button && 'OK' !== result.button)) return;
       // otherwise, actually delete it
       await toDelete.deleteSelf({ reason: 'userAction' });
-      this.setStatus(`deleted ${numToDelete} nodes`);
+      this.setStatus(getMessage('status_deleted_nodes', [numToDelete]));
     }
   }
 
@@ -1308,23 +1314,26 @@ export class TreeView extends Tree {
       if ('ask' === actionStyle) {
         let description;
         let buttons;
+        const btnOne = getMessage('btn_one');
+        const btnAll = getMessage('btn_all');
+        const btnCancel = getMessage('btn_cancel');
         if (cursorLoaded) {
-          description = `Unload one (cursor) tab or all ${numLoaded} tabs?`;
-          buttons = ['Cancel', 'One', 'All'];  // Cancel is default
+          description = getMessage('dialog_desc_unloadTabs_one', [numLoaded]);
+          buttons = [btnCancel, btnOne, btnAll];  // Cancel is default
         } else {
-          description = `Unload all ${numLoaded} tabs?`;
-          buttons = ['Cancel', 'All'];  // Cancel is default
+          description = getMessage('dialog_desc_unloadTabs_all', [numLoaded]);
+          buttons = [btnCancel, btnAll];  // Cancel is default
         }
         const result = await this.inputDialog({
           doc: document,
-          title: 'Unload Tabs',
+          title: getMessage('dialog_title_unloadTabs'),
           input: false,
           description: description,
           buttons: buttons,
         });
         // abort if user cancelled
-        if ((!result) || (! ['All', 'One'].includes(result.button))) return;
-        actionStyle = result.button.toLowerCase();
+        if ((!result) || (! [btnAll, btnOne, 'All', 'One'].includes(result.button))) return;
+        actionStyle = (result.button === btnOne || result.button === 'One') ? 'one' : 'all';
       }
       if ('one' === actionStyle) {
         const success = await cursor.unload({ reason: 'userAction' });
@@ -1340,8 +1349,7 @@ export class TreeView extends Tree {
           if (success) numSucceeded ++;
           else numFailed ++;
         }
-        const failText = (numFailed ? `, ${numFailed} failed` : '');
-        this.setStatus(`unloaded ${numSucceeded} nodes${failText}`);
+        this.setStatus(getMessage('status_unloaded_nodes', [numSucceeded]));
       }
     }
     else {
@@ -1391,7 +1399,7 @@ export class TreeView extends Tree {
       if (cursor.isBookmark())
         return this.action_loadOrEditNode(event, false);
       // nothing to do, everything is already loaded
-      this.setStatus('nothing to load');
+      this.setStatus(getMessage('status_nothingToLoad'));
       return;
     }
 
@@ -1431,23 +1439,27 @@ export class TreeView extends Tree {
     if ('ask' === actionStyle) {
       let description;
       let buttons;
+      const btnOne = getMessage('btn_one');
+      const btnAll = getMessage('btn_all');
+      const btnCancel = getMessage('btn_cancel');
+      const styleLabel = 'wasLoaded' === styleToLoad ? getMessage('detail_wasLoaded') : styleToLoad;
       if (cursorInQueue) {
-        description = `Load one (cursor) or all ${numToLoad} ${styleToLoad} tabs?`;
-        buttons = ['Cancel', 'One', 'All'];  // Cancel is default
+        description = getMessage('dialog_desc_loadTabs_one', [numToLoad, styleLabel]);
+        buttons = [btnCancel, btnOne, btnAll];  // Cancel is default
       } else {
-        description = `Load all ${numToLoad} ${styleToLoad} tabs?`;
-        buttons = ['Cancel', 'All'];  // Cancel is default
+        description = getMessage('dialog_desc_loadTabs_all', [numToLoad, styleLabel]);
+        buttons = [btnCancel, btnAll];  // Cancel is default
       }
       const result = await this.inputDialog({
         doc: document,
-        title: 'Load Tabs',
+        title: getMessage('dialog_title_loadTabs'),
         input: false,
         description: description,
         buttons: buttons,
       });
       // abort if user cancelled
-      if ((!result) || (! ['All', 'One'].includes(result.button))) return;
-      actionStyle = result.button.toLowerCase();
+      if ((!result) || (! [btnAll, btnOne, 'All', 'One'].includes(result.button))) return;
+      actionStyle = (result.button === btnOne || result.button === 'One') ? 'one' : 'all';
     }
 
     if ('one' === actionStyle) {
@@ -1465,8 +1477,7 @@ export class TreeView extends Tree {
         if (success) numSucceeded ++;
         else numFailed ++;
       }
-      const failText = (numFailed ? `, ${numFailed} failed` : '');
-      this.setStatus(`loaded ${numSucceeded} nodes${failText}`);
+      this.setStatus(getMessage('status_loaded_nodes', [numSucceeded]));
 
       // setActive tab events can get confused when loading so much so fast,
       // so do it explicitly afterward
@@ -1544,13 +1555,14 @@ export class TreeView extends Tree {
     if (! cursor) return;
 
     // prompt for new label/note text
+    const btnOk = getMessage('btn_ok');
     const result = await this.nodeEditDialog({
-      doc: this.document, title: 'Edit Node', node: cursor
+      doc: this.document, title: getMessage('dialog_title_editNode'), node: cursor
     });
     debug('editNode(result):', result);
     // abort if user cancelled
-    if ((!result) || ('OK' !== result.button)) {
-      this.setStatus('editNode: cancelled');
+    if ((!result) || (btnOk !== result.button && 'OK' !== result.button)) {
+      this.setStatus(getMessage('status_editNode_cancelled'));
       return;
     }
 
@@ -1569,7 +1581,7 @@ export class TreeView extends Tree {
     // attempt to change loaded window's incognito status
     // (should never happen)
     if (hasLoadedTabs && incognitoChanged) {
-      this.setStatus("editNode: Can't change incognito on loaded window");
+      this.setStatus(getMessage('status_cant_change_incognito'));
       return false;
     }
     // loaded window status changed
@@ -1580,7 +1592,7 @@ export class TreeView extends Tree {
       if (! result.isWindow) changes.wasLoaded = false;
       const changed = await cursor.setTabFields(
         changes, { reason: 'userAction' });
-      if (changed) this.setStatus(`Edited ${cursor.toLine()}`);
+      if (changed) this.setStatus(getMessage('status_edited', [cursor.toLine()]));
       return changed;
     }
     // unloaded window status changed
@@ -2151,44 +2163,39 @@ export class TreeView extends Tree {
 
     const doc = this.document;
 
-    function makeBtn (_this, className, label, funcName) {
+    function makeBtn (_this, className, labelKey, defaultLabel, tooltipKey, funcName) {
       const $div = doc.createElement('div');
       $div.classList.add(className);
-      $div.innerText = label;
+      $div.innerText = getMessage(labelKey) || defaultLabel;
       // add a tooltip
-      $div['title'] = funcName;
+      $div['title'] = getMessage(tooltipKey) || funcName;
       $div['data-toggle'] = 'tooltip';
-      // TODO: get label from user's keybinding table
-      //let binding;
       // make the button do something when clicked
       const func = function (event) {
         _this[`action_${funcName}`].bind(_this)(event);
         _this.hideHoverMenu();  // will re-appear if still over a node
       }
       if (func) $div.addEventListener('click', func);
-      //const func = _this[`action_${funcName}`];
-      //if (func) $div.addEventListener('click', func.bind(_this));
-      // add the button to the menu
       _this.$hoverMenu.append($div);
       return $div;
     }
     if (! this.$hoverMenuUnload) {
-      this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'U', 'unloadNode');
+      this.$hoverMenuUnload = makeBtn(this, 'unload-button', 'hover_unload_label', 'U', 'hover_unload_tooltip', 'unloadNode');
     }
     if (! this.$hoverMenuLoad) {
-      this.$hoverMenuLoad = makeBtn(this, 'load-button', 'L', 'loadNode');
+      this.$hoverMenuLoad = makeBtn(this, 'load-button', 'hover_load_label', 'L', 'hover_load_tooltip', 'loadNode');
     }
     if (! this.$hoverMenuTask) {
-      this.$hoverMenuTask = makeBtn(this, 'task-button', 'T', 'taskEdit');
+      this.$hoverMenuTask = makeBtn(this, 'task-button', 'hover_task_label', 'T', 'hover_task_tooltip', 'taskEdit');
     }
     if (! this.$hoverMenuEdit) {
-      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'E', 'editNode');
+      this.$hoverMenuEdit = makeBtn(this, 'edit-button', 'hover_edit_label', 'E', 'hover_edit_tooltip', 'editNode');
     }
     if (! this.$hoverMenuMark) {
-      this.$hoverMenuMark = makeBtn(this, 'mark-button', 'M', 'toggleMarked');
+      this.$hoverMenuMark = makeBtn(this, 'mark-button', 'hover_mark_label', 'M', 'hover_mark_tooltip', 'toggleMarked');
     }
     if (! this.$hoverMenuDelete) {
-      this.$hoverMenuDelete = makeBtn(this, 'delete-button', 'D', 'deleteNode');
+      this.$hoverMenuDelete = makeBtn(this, 'delete-button', 'hover_delete_label', 'D', 'hover_delete_tooltip', 'deleteNode');
     }
   }
 
@@ -2612,10 +2619,8 @@ export class TreeView extends Tree {
 
   $renderViewScopeBtn () {
     if (! this.$viewScopeBtn) return;
-    // Capitalize word and place it inside the button
-    const label = this.viewScope.charAt(0).toUpperCase()
-      + this.viewScope.slice(1);
-    this.$viewScopeBtn.innerText = label;
+    const key = 'session' === this.viewScope ? 'btn_viewScope_session' : 'btn_viewScope_window';
+    this.$viewScopeBtn.innerText = getMessage(key);
   }
 
   action_detailsButton (event) {
@@ -2642,7 +2647,7 @@ export class TreeView extends Tree {
       case 0:
         this.$detailsBtn.classList.remove('pressed');
         //this.$detailsBtn.classList.remove('half-pressed');
-        this.$detailsBtn.innerText = 'Details';
+        this.$detailsBtn.innerText = getMessage('btn_details');
         this.hideDetailsBox();
         break;
       // 1 = short / notes only
@@ -2650,7 +2655,7 @@ export class TreeView extends Tree {
         //this.$detailsBtn.classList.remove('pressed');
         //this.$detailsBtn.classList.add('half-pressed');
         this.$detailsBtn.classList.add('pressed');
-        this.$detailsBtn.innerText = 'Notes';
+        this.$detailsBtn.innerText = getMessage('btn_notes');
         this.updateDetailsBox();
         if (this.cursor) this.scrollNodeIntoView(this.cursor);
         break;
@@ -2659,7 +2664,7 @@ export class TreeView extends Tree {
       default:
         this.$detailsBtn.classList.add('pressed');
         //this.$detailsBtn.classList.remove('half-pressed');
-        this.$detailsBtn.innerText = 'Details';
+        this.$detailsBtn.innerText = getMessage('btn_details');
         this.updateDetailsBox();
         if (this.cursor) this.scrollNodeIntoView(this.cursor);
         break;

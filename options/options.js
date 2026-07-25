@@ -8,6 +8,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 import { log, warn, debug, emit } from '/common/common.js';
 import { ThemedPage } from '/themes/themes.js';
 import { Config } from '/common/config.js';
+import { getMessage } from '/common/i18n.js';
 
 log('options.js running');
 
@@ -264,7 +265,7 @@ class OptionsPage extends ThemedPage {
         const fileInput = doc.getElementById(`${$id}-input`);
         const $buttonOrigText = $button.innerText;
         if (fileInput.files.length === 0) {
-          alert("Please select a file first.");
+          alert(getMessage('alert_selectFile'));
           return;
         }
 
@@ -274,12 +275,12 @@ class OptionsPage extends ThemedPage {
           const reader = new FileReader();
 
           if ('application/json' !== file.type) {
-            alert(`Unsupported file type "${file.type}", must be "application/json".`);
+            alert(getMessage('alert_unsupportedFileType', [file.type]));
             return;
           }
 
           reader.onerror = function (event) {
-            err = 'file load failed';
+            const err = getMessage('alert_fileLoadFailed');
             warn(err, event);
             alert(err);
           }
@@ -296,19 +297,19 @@ class OptionsPage extends ThemedPage {
                 .then((response) => {
                   log(`${response.total} nodes imported from: "${file.name}"`);
                   $button.innerText = $buttonOrigText;
-                  alert(`${response.total} nodes imported from: "${file.name}"`);
+                  alert(getMessage('alert_nodesImported', [response.total, file.name]));
                 });
             } catch (error) {
               warn("Error parsing JSON:", error);
               $button.innerText = $buttonOrigText;
-              alert(`The file is not valid JSON: "${file.name}"`);
+              alert(getMessage('alert_invalidJson', [file.name]));
             }
           };
 
           // read the file; it'll trigger reader.onload when it's ready
           log(`loading ${file.name} now ...`);
           reader.readAsText(file);
-          $button.innerText = '... Loading ...';
+          $button.innerText = getMessage('btn_loading');
         }
       }
       return onClicked;

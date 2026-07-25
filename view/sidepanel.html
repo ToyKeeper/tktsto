@@ -6,7 +6,8 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>TK Tree Style Tab Outliner</title>
+    <title data-i18n="extName">TK Tree Style Tab Outliner</title>
+    <script type="module" src="/common/i18n.js"></script>
     <script type="module" src="./view.js"></script>
     <link id="theme-base" rel="stylesheet" type="text/css" href="/themes/tk.css"/>
     <link id="theme-variant" rel="stylesheet" type="text/css" href="/themes/tk-night.css"/>
@@ -15,13 +16,13 @@
   <body id="body" class="unfocused">
     <div id="top-area">
       <div id="top-bar" class="toolbar">
-        <div id="view-scope-btn" class="button">
+        <div id="view-scope-btn" class="button" data-i18n="btn_viewScope_session">
           Session
         </div>
-        <div id="tree-view-in-tab-btn" class="button">
+        <div id="tree-view-in-tab-btn" class="button" data-i18n="btn_tab">
           Tab
         </div>
-        <div id="undo-btn" class="button greyed-out">
+        <div id="undo-btn" class="button greyed-out" data-i18n="btn_undo">
           Undo
         </div>
         <div id="zoom-out-btn" class="button">
@@ -33,6 +34,7 @@
       </div>
       <div id="search-bar" class="search-bar toolbar hidden">
         <input type="text" id="search-entry" class="search-entry"
+          data-i18n-placeholder="placeholder_search"
           placeholder="search"></input>
       </div>
       <div id="notifications">
@@ -49,27 +51,21 @@
       <div id="details-box" class="hidden">
       </div>
       <div id="bottom-bar" class="toolbar">
-        <div id="details-btn" class="button">
+        <div id="details-btn" class="button" data-i18n="btn_details">
           Details
         </div>
-        <div id="backup-btn" class="button">
+        <div id="backup-btn" class="button" data-i18n="btn_backup">
           Backup
         </div>
-        <div id="options-btn" class="button">
+        <div id="options-btn" class="button" data-i18n="btn_options">
           Options
         </div>
-        <div id="donate-btn" class="button">
+        <div id="donate-btn" class="button" data-i18n="btn_donate">
           Donate
         </div>
-        <div id="help-btn" class="button">
+        <div id="help-btn" class="button" data-i18n="btn_help">
           Help
         </div>
-        <!--<div id="reddit-btn" class="button">
-          Support forum over on reddit, /r/TKTSTO or something like that
-        </div>-->
-        <!--<div id="github-btn" class="button">
-          GitHub
-        </div>-->
       </div>
       <div id="status-bar">
         <span id="status-text"></span>
@@ -78,4 +74,3 @@
     <img id="drag-arrow" src="/img/drag-arrow.png" style="display: none;" />
   </body>
 </html>
-

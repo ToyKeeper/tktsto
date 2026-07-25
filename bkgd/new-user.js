@@ -4,8 +4,8 @@
 
 "use strict";
 import { api, isChrome, isFirefox, isZenBrowser } from '/api.js';
-
 import { keyBindings } from '/view/treeview.js';
+import { getMessage } from '/common/i18n.js';
 
 
 export async function createNewUserTutorialNodes (tree, parentNode) {
@@ -19,93 +19,93 @@ export async function createNewUserTutorialNodes (tree, parentNode) {
       keymapInfo.push({ label: `${key} : ${value}` });
   }
   // define the help nodes
-  const helpInfo = { label: 'Welcome, new user!', nodes: [
-    { label: 'Click in this panel to focus it' },
-    { label: 'Then use arrow keys to move the cursor' },
-    { label: '... and Space to expand branches', expanded: false, nodes: [
-      { label: 'Just like that!' },
-      { label: 'Or click the left end of a row' },
+  const helpInfo = { label: getMessage('tutorial_welcome'), nodes: [
+    { label: getMessage('tutorial_click_panel') },
+    { label: getMessage('tutorial_arrow_keys') },
+    { label: getMessage('tutorial_space_expand'), expanded: false, nodes: [
+      { label: getMessage('tutorial_just_like_that') },
+      { label: getMessage('tutorial_click_left_row') },
     ]},
-    { label: 'Longer notes can be seen below',
-      note: 'Right here.  Be sure to check this area any time you see an "attachment" icon on the cursor row.' },
-    { label: "Here are the other key bindings", expanded: false,
-      note: "Don't worry about the details yet, these are here for later reference.",
+    { label: getMessage('tutorial_longer_notes'),
+      note: getMessage('tutorial_longer_notes_detail') },
+    { label: getMessage('tutorial_key_bindings'), expanded: false,
+      note: getMessage('tutorial_key_bindings_detail'),
       nodes: [ ...keymapInfo ]},
-    { label: 'Green text is a "label"',
-      note: 'To edit it, hover the mouse over a row and click the "E" button in the "hover menu".  Or press the "E" key on the keyboard.\n\nTry editing thsis to fffix my typooooz.'
+    { label: getMessage('tutorial_green_label'),
+      note: getMessage('tutorial_green_label_detail')
     },
-    { title: 'Grey text is an unloaded tab', loaded: false,
-      note: 'To open it, double click it or press Enter while the cursor is on it.\n\nThink of it like a "bookmark" which knows which window it goes in, and where it belongs in the tab bar.  It uses no RAM or CPU while it is unloaded.',
+    { title: getMessage('tutorial_grey_text'), loaded: false,
+      note: getMessage('tutorial_grey_text_detail'),
       url: '/docs/tutorial-grey-text.html' },
-    { label: 'Tutorial Window', type: 'window', loaded: false,
-      note: 'This is a saved window.  Double click it to open it!',
+    { label: getMessage('tutorial_window'), type: 'window', loaded: false,
+      note: getMessage('tutorial_window_detail'),
       expanded: true,
       nodes: [
-        { title: 'Pink tabs auto-open when the saved window is restored', loaded: false,
+        { title: getMessage('tutorial_pink_tabs'), loaded: false,
           wasLoaded: true, url: '/docs/wasloaded-tab.html' },
-        { title: 'Grey text is an unloaded tab', loaded: false,
+        { title: getMessage('tutorial_grey_text'), loaded: false,
           url: '/docs/tutorial-grey-text.html' },
-        { label: 'You may have also noticed...',
-          note: `... that you can nest "window" nodes.  This window node is inside of another, and it still works.  It allows you to group related windows together if you want... but you don't have to.` },
+        { label: getMessage('tutorial_nest_windows'),
+          note: getMessage('tutorial_nest_windows_detail') },
       ]},
     { expanded: false,
-      title: 'Moving nodes is easy',
+      title: getMessage('tutorial_moving_nodes'),
       url: '/docs/moving-nodes.html',
-      note: 'Open this tab to find out how\n\nYou remember how to open an unloaded tab, right?\n\n... right??' },
-    { label: 'Checkboxes', expanded: false,
-      title: 'Double click me',
+      note: getMessage('tutorial_moving_nodes_detail') },
+    { label: getMessage('tutorial_checkboxes'), expanded: false,
+      title: getMessage('hint_clickOrType'),
       url: '/docs/checkboxes.html',
       nodes: [
-        { label: 'Groceries', checkbox: '%', nodes: [
-          { label: 'Unsorted', nodes: [
-            { label: 'Ice cream', checkbox: ' ' },
-            { label: 'Soup', checkbox: ' ' },
-            { label: 'Popsicles', checkbox: ' ' },
-            { label: 'Milk', checkbox: ' ' },
-            { label: 'Crackers', checkbox: ' ' },
+        { label: getMessage('tutorial_groceries'), checkbox: '%', nodes: [
+          { label: getMessage('tutorial_unsorted'), nodes: [
+            { label: getMessage('tutorial_ice_cream'), checkbox: ' ' },
+            { label: getMessage('tutorial_soup'), checkbox: ' ' },
+            { label: getMessage('tutorial_popsicles'), checkbox: ' ' },
+            { label: getMessage('tutorial_milk'), checkbox: ' ' },
+            { label: getMessage('tutorial_crackers'), checkbox: ' ' },
           ]},
-          { label: 'Dry / Canned', checkbox: '%', nodes: [
-            { label: 'Cereal', checkbox: ' ' },
+          { label: getMessage('tutorial_dry_canned'), checkbox: '%', nodes: [
+            { label: getMessage('tutorial_cereal'), checkbox: ' ' },
           ]},
-          { label: 'Cold aisle', checkbox: '%', nodes: [
-            { label: 'Cheese', checkbox: '!' },
+          { label: getMessage('tutorial_cold_aisle'), checkbox: '%', nodes: [
+            { label: getMessage('tutorial_cheese'), checkbox: '!' },
           ]},
-          { label: 'Frozen', checkbox: '%', nodes: [
-            { label: 'Pizzas', checkbox: ' ' },
+          { label: getMessage('tutorial_frozen'), checkbox: '%', nodes: [
+            { label: getMessage('tutorial_pizzas'), checkbox: ' ' },
           ]},
         ]},
       ]},
-    { label: "Be sure to check the",
-      title: 'Options',
+    { label: getMessage('tutorial_check_options'),
+      title: getMessage('btn_options'),
       url: '/options/options.html',
-      note: 'to choose a theme, set your host name, and configure everything else to your liking.' },
-    { label: "You're probably ready",
-      note: 'to start organizing your REAL tabs and windows now.  As a first step, try giving a name to each of your windows.  Then maybe organize related tabs together, add some category labels, etc.  Tips and tricks are in the full documentation.' },
-    { label: "The rest of the documentation...",
-      note: '... is in the "Help" button at the bottom of the sidepanel.' },
-    { label: `Also if you're REALLY cool, maybe try the "Donate" button`,
-      note: `... if you like this free/open-source project and want to ensure it keeps getting updated.\n\n'cause, like, I need food and stuff.\n\nBut I understand if you don't donate; that's cool too.  Times are rough, and not all of us have spare cash.  But I gotta at least ask.\n\nPolitely.\n\nIn the hidden dark nethers of a tutorial you probably didn't even read.  If you got this far, you're already a hoopier frood than most.`,
-      title: 'Donate',
+      note: getMessage('tutorial_options_detail') },
+    { label: getMessage('tutorial_ready'),
+      note: getMessage('tutorial_ready_detail') },
+    { label: getMessage('tutorial_rest_doc'),
+      note: getMessage('tutorial_rest_doc_detail') },
+    { label: getMessage('tutorial_donate'),
+      note: getMessage('tutorial_donate_detail'),
+      title: getMessage('btn_donate'),
       url: 'https://toykeeper.net/tktsto/donate' },
-    { label: "Or join the Discord",
-      note: 'Where tech-savvy folks chat about how to fight our corporate overlords, share useful tools for productivity, and generally just hang out to talk about whatever.',
+    { label: getMessage('tutorial_discord'),
+      note: getMessage('tutorial_discord_detail'),
       title: 'Discord : TKTSTO',
       url: 'https://toykeeper.net/tktsto/discord' },
-    { label: "There's also GitHub",
-      note: 'for github-y type stuff.  You know the drill.',
+    { label: getMessage('tutorial_github'),
+      note: getMessage('tutorial_github_detail'),
       title: 'GitHub : TKTSTO',
       url: 'https://toykeeper.net/tktsto/' },
-    { label: "When you're done with this tutorial...",
-      note: '... feel free to delete it.  First collapse it, then press the red "D" button in the hover menu, or type the letter "D".\n\nYou can generate the tutorial again by pressing "?" on the keyboard.\n\nNote: Deleting the branch will also close and delete any tabs or windows remaining inside the tutorial branch.  Move those first if you want to keep anything.' },
+    { label: getMessage('tutorial_done'),
+      note: getMessage('tutorial_done_detail') },
   ]};
 
   // Zen Browser "window sync" mode is insane, turn it off
   if (isZenBrowser) {
     helpInfo.nodes.splice(4, 0,
       {
-        label: 'If you use Zen Browser...', expanded: false, nodes: [
-          { label: '... you MUST disable Window Sync.',
-            note: 'Open a tab to "about:config" and search for "window-sync" and set it as "false", then restart Zen.  Otherwise things will break every time you open a window.'
+        label: getMessage('tutorial_zen_browser'), expanded: false, nodes: [
+          { label: getMessage('tutorial_zen_disable_sync'),
+            note: getMessage('tutorial_zen_disable_sync_detail')
           },
           { label: 'Other helpful settings:' },
           { label: 'zen.urlbar.replace-newtab = false' },
@@ -147,4 +147,3 @@ export async function createNewUserTutorialNodes (tree, parentNode) {
   }
   await addItem(destParent, destIndex, helpInfo);
 }
-
