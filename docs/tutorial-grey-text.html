@@ -6,74 +6,50 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>Grey text is an unloaded tab</title>
+  <title data-i18n="tgt_title">Grey text is an unloaded tab</title>
 </head>
 <body class="docs">
 
-  <h2>
-  Grey text is an
-  <b class="row"><span class="url-title">unloaded tab</span></b>.
+  <h2 data-i18n="tgt_heading">
+  Grey text is an unloaded tab.
   </h2>
 
-  <p>
-  But now that you've opened it, the text probably changed color and became
-  <b class="row loaded"><span class="url-title">bold</span></b>, because
-  it is open and "active".  Open tabs are shown in a brighter color than
-  <b class="row"><span class="url-title">saved tabs</span></b>, and the
-  browser's current tab is shown in bold.
+  <p data-i18n="tgt_p1">
+  But now that you've opened it, the text probably changed color and became bold, because it is open and "active". Open tabs are shown in a brighter color than saved tabs, and the browser's current tab is shown in bold.
   </p>
 
-  <p>
-  And the sidepanel's cursor probably greyed out too, to show that the panel no
-  longer has keyboard focus.
+  <p data-i18n="tgt_p2">
+  And the sidepanel's cursor probably greyed out too, to show that the panel no longer has keyboard focus.
   </p>
 
-  <p>
-  Try clicking between this page and the sidepanel a few times to see how the
-  colors change as focus moves.
+  <p data-i18n="tgt_p3">
+  Try clicking between this page and the sidepanel a few times to see how the colors change as focus moves.
   </p>
 
-  <p>
-  Then try unloading this page.  There are a few ways to do this:
+  <p data-i18n="tgt_p4">
+  Then try unloading this page. There are a few ways to do this:
+  </p>
   <ul>
-    <li>Press <b><code>Alt+U</code></b> to unload the current page.</li>
-    <li>Hover the mouse over a node in the sidepanel and click the
-      <b><span class="hover-menu-button unload-button">U</span> button</b>
-      in the "<b>hover menu</b>".</li>
-    <li>Put the treeView (sidepanel) cursor on a node and press the
-      <b><code>U</code> key</b> on the keyboard.</li>
-    <li>Or <b>just close the page</b> normally.  It has a note attached, so it
-      is "<b>interesting</b>" and <b>will be saved</b> automatically.  Any node
-      with a label, note, or checkbox is considered "interesting", and is kept
-    in the tree when its browser tab is closed.</li>
+    <li data-i18n="tgt_li1">Press Alt+U to unload the current page.</li>
+    <li data-i18n="tgt_li2">Hover the mouse over a node in the sidepanel and click the U button in the "hover menu".</li>
+    <li data-i18n="tgt_li3">Put the treeView (sidepanel) cursor on a node and press the U key on the keyboard.</li>
+    <li data-i18n="tgt_li4">Or just close the page normally. It has a note attached, so it is "interesting" and will be saved automatically. Any node with a label, note, or checkbox is considered "interesting", and is kept in the tree when its browser tab is closed.</li>
   </ul>
+
+  <p data-i18n="tgt_p5">
+  Any time you unload a tab, it will be kept in the tree session in the sidepanel. You can open it again later to continue where you left off.
   </p>
 
-  <p>
-  Any time you <b>unload</b> a tab, it will be kept in the tree session in the
-  sidepanel.  You can open it again later to continue where you left off.
+  <p data-i18n="tgt_p6">
+  For reference, when you close a tab, using regular browser actions like Ctrl+W or by clicking the tab's "X" button in the tab bar, the result depends on that tab's metadata in the tree session:
   </p>
-
-  <p>
-  For reference, when you <b>close</b> a tab, using regular browser actions
-  like <code>Ctrl+W</code> or by clicking the tab's "X" button in the tab bar,
-  the result depends on that tab's metadata in the tree session:
   <ul>
-    <li>If the tab has <b>any metadata</b> attached, like a label or note or
-      checkbox, <b>it will be saved</b>.  That means the tab is "interesting",
-      and won't be deleted when you close the tab.</li>
-    <li>If the tab has <b>any interesting <i>children</i></b>, the tab will be
-      saved.  So if any child node has a label, note, or checkbox... <b>the
-        parent will be saved</b> when closed.  This applies to direct children
-      only, not grandkids.</li>
-    <li>If the tab is "<b>boring</b>" and it has <b>no "interesting"
-        children</b>, it will be <b>deleted</b> from the tree session when the
-      tab is closed.  And if it has any children, they will be promoted to the
-      parent's position in the tree.</li>
+    <li data-i18n="tgt_li5">If the tab has any metadata attached, like a label or note or checkbox, it will be saved. That means the tab is "interesting", and won't be deleted when you close the tab.</li>
+    <li data-i18n="tgt_li6">If the tab has any interesting children, the tab will be saved. So if any child node has a label, note, or checkbox... the parent will be saved when closed. This applies to direct children only, not grandkids.</li>
+    <li data-i18n="tgt_li7">If the tab is "boring" and it has no "interesting" children, it will be deleted from the tree session when the tab is closed. And if it has any children, they will be promoted to the parent's position in the tree.</li>
   </ul>
-  </p>
 
 </body>
 </html>
-

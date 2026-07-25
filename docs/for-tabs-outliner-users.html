@@ -6,200 +6,73 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>For Tabs Outliner Users</title>
+  <title data-i18n="fto_title">For Tabs Outliner Users</title>
 </head>
 <body class="docs">
 
-<p>If you're migrating from Tabs Outliner, there are a few things which would
-be helpful to know.</p>
+<p data-i18n="fto_intro">If you're migrating from Tabs Outliner, there are a few things which would be helpful to know.</p>
 
-<h2>Data transfer</h2>
+<h2 data-i18n="fto_dt_heading">Data transfer</h2>
 
-<p>
-
-<b>Back up your data in Tabs Outliner first</b>.  Do an export or backup if you
-can...  and if not, at least do an "<b>expand all nodes</b>" and then
-<code>Ctrl-S</code> to save the page.
-
-</p><p>
-
-The backup files are in .json format, and can be imported into TKTSTO
-directly.  However, you may need to rename the backup file extension from
-<code>.tree</code> to <code>.json</code> before importing it.
-
-</p><p>
-
-Saved session view pages can be converted to a usable format using an extra
-script called <code>bin/tabs-outliner-html-to-tktsto-json.py</code>.  You'll
-need to clone the
-<a href="https://toykeeper.net/tktsto">TKTSTO git repository</a>
-to get this script.
-
-</p><p>
-
-Once you have a backup file in <code>.json</code> format, <b>import it</b> into
-TKTSTO.  Open the <b>Options</b> page, then look for the <b>Import</b> section.
-A Tabs Outliner .tree backup file can go into the "Tabs Outliner files" box, or
-a saved html page converted via the script above goes into the "TKTSTO files"
-box.
-
+<p data-i18n="fto_dt_p1">
+Back up your data in Tabs Outliner first. Do an export or backup if you can... and if not, at least do an "expand all nodes" and then Ctrl+S to save the page.
 </p>
 
-<h3>Doing a Tabs Outliner backup when you have the free version</h3>
+<p data-i18n="fto_dt_p2">
+The backup files are in .json format, and can be imported into TKTSTO directly. However, you may need to rename the backup file extension from .tree to .json before importing it.
+</p>
 
-<p>Daniel contributed this handy tip:</p>
+<p data-i18n="fto_dt_p3">
+Saved session view pages can be converted to a usable format using an extra script called bin/tabs-outliner-html-to-tktsto-json.py in the TKTSTO repository.
+</p>
 
-<blockquote>
+<p data-i18n="fto_dt_p4">
+Once you have a backup file in .json format, import it into TKTSTO via the Options page -> Import section.
+</p>
 
-  <p>
+<h3 data-i18n="fto_free_heading">Doing a Tabs Outliner backup when you have the free version</h3>
 
-  Little tip for anyone looking to switch from Tabs Outliner to TKTSTO:
-
-  </p><p>
-
-You can export a backup from Tabs Outliner for import into TKTSTO without
-having to buy a Paid Mode Premium Key.
-
-  </p>
+<p data-i18n="fto_free_intro">Daniel contributed this handy tip for exporting backups without paying for Premium Mode in Tabs Outliner:</p>
 
 <ol>
-  <li>open the options page in Tabs Outliner</li>
-  <li>go to the "Backup" tab</li>
-  <li>right click in the whitespace somewhere on the page, for example in the
-    space between the first two text paragraphs. Then select "Inspect".</li>
-  <li>the developer tools will open. The "Elements" tab should be open, if not,
-    switch to it.</li>
-  <li>In there, an entry
-    <code>&lt;div id="licenseKeyAbsentBackupTabBlock" style=""&gt;</code>
-    is likely selected. Search for another entry,
-    <code>&lt;div id="licenseKeyPresentBackupTabBlock"
-      style="display: none;"&gt;</code>,
-    right next to it, and select that one. (You can also ctrl+f and search for
-    "licenseKeyPresentBackupTabBlock" to find it).</li>
-  <li>double click on the
-    <code>display: none</code>
-    to edit, and delete that text, such that the line becomes
-    <code>&lt;div id="licenseKeyPresentBackupTabBlock"&gt;</code>
-  </li>
-  <li>The backup options will now have appeared at the bottom of Tab Outliner's
-    Backup page.</li>
-  <li>Click on "Export Tree to File" to create your Tabs Outliner backup.</li>
-  <li>Rename the file ending <code>.tree</code> to <code>.json</code>.</li>
-  <li>Now you can import the backup into TKTSTO.</li>
+  <li data-i18n="fto_free_step1">open the options page in Tabs Outliner</li>
+  <li data-i18n="fto_free_step2">go to the "Backup" tab</li>
+  <li data-i18n="fto_free_step3">right click in the whitespace somewhere on the page and select "Inspect".</li>
+  <li data-i18n="fto_free_step4">the developer tools will open on the "Elements" tab.</li>
+  <li data-i18n="fto_free_step5">find the element with id "licenseKeyPresentBackupTabBlock" (which has style="display: none;").</li>
+  <li data-i18n="fto_free_step6">double click display: none to edit and delete that text.</li>
+  <li data-i18n="fto_free_step7">The backup options will now appear on the page.</li>
+  <li data-i18n="fto_free_step8">Click "Export Tree to File" to create your backup.</li>
+  <li data-i18n="fto_free_step9">Rename the file ending .tree to .json.</li>
+  <li data-i18n="fto_free_step10">Now you can import the backup into TKTSTO.</li>
 </ol>
 
-  <p>
+<h2 data-i18n="fto_sv_heading">Session View Window</h2>
 
-  These instructions are for Chrome, which should probably be most relevant for
-  Tabs Outliner. Other browsers are similar though.
-
-  </p>
-
-</blockquote>
-
-
-<h2>Session View Window</h2>
-
-<p>
-
-Tabs Outliner pretty much forced users to keep a <b>separate window</b> open to
-see the session tree, and it contained the entire session.  If you want this,
-TKTSTO can be configured to work that way:
-
+<p data-i18n="fto_sv_p1">
+Tabs Outliner forced users to keep a separate window open for the session tree. TKTSTO can work that way, but provides a better built-in sidepanel workflow.
 </p>
 
-<ol>
-  <li>Open a window.</li>
-  <li>Open the TKTSTO side panel.</li>
-  <li>Click the "<b>Tab</b>" button in the side panel to open a tree view
-    in a new tab.</li>
-  <li>Close the side panel.</li>
-  <li>Click the "<b>Window</b>" button to put it in <b>Session</b> mode
-    if it isn't already.</li>
-  <li>Position the window however you want, and keep it open.</li>
-  <li>Would also be a good idea to give the window node a name, and give the
-    tree view tab a name, to make sure they won't accidentally get deleted.
-    <b>Name anything you want to keep</b>, or otherwise attach something to it,
-    like a note or a checkbox, to prevent accidental deletion when the window
-    or tab is closed.
-  </li>
-</ol>
-
-<p>
-
-<b>However,</b> it is not recommended to use the old Tabs Outliner workflow...
-because TKTSTO has something better.  Instead of having a separate window for
-the session view, <b>reclaim that space</b> and make your browsing window(s)
-bigger.  Then open the side panel whenever you want to do outliner type tasks.
-The sidepanel can be opened or closed with <code>Alt+t</code> in Chrome-based
-browsers, or <code>F1</code> in Firefox-based browsers, or whatever key you
-assign it to.
-
-</p><p>
-
-Tabs Outliner had a feature to scroll the tree view any time a window is
-focused, to scroll to that window's part of the tree.  This is unnecessary in
-TKTSTO, because you can instead just use the side panel in "<b>Window</b>" view
-mode.  It only shows the contents of that single window.
-
-</p><p>
-
-Additionally, TKTSTO scrolls the sidepanel to make the current tab visible
-whenever you change tabs.  So even with a very large session, it will generally
-keep the current section visible automatically.
-
-</p><p>
-
-To <b>move things between windows</b>, use
-"<span class="row marked">mark</span> and <b>paste</b>".
-<span class="row marked">Mark</span> the nodes in one window,
-then switch windows, and <b>paste</b> them into the second window's tree view.
-You could <b>drag</b> nodes using the mouse, but marking is faster and easier,
-especially with a keyboard.  There is no need to drag items individually, or
-group them all under a single branch first.  Just mark as many as you like.
-And there is no need to scroll long distances between windows.  Simply mark,
-change windows, place the cursor where you want them, then paste.  More info
-is in the tutorial, in the <a href="./moving-nodes.html">Moving Nodes</a> page.
-
+<p data-i18n="fto_sv_p2">
+Instead of keeping a separate window open for the session view, reclaim that space and use TKTSTO's sidepanel (Alt+T in Chrome, F1 in Firefox). In "Window" mode, it automatically displays only the active window's tabs.
 </p>
 
-<h3>Mouse / Keyboard support</h3>
-
-<p>
-
-Tabs Outliner had keyboard support, but it was locked behind a <b>paywall</b>.
-Organizing the tree with a mouse is a pain, so this was a pretty effective way
-to get users to pay for the real version.
-
-</p><p>
-
-TKTSTO doesn't lock away the keyboard support... and it is strongly recommended
-that you <b>use a keyboard</b> for tree management unless you don't have
-a keyboard on your device.  It's much, much faster.
-
-</p><p>
-
-It would also be a good idea to configure your <b>extension shortcuts</b>, to
-let you do tree management when the sidepanel isn't focused.  The recommended
-config is to duplicate your regular key mappings, but add <code>Alt</code>.
-
+<p data-i18n="fto_sv_p3">
+To move items between windows, use "mark and paste" (M to mark, P to paste), which is much faster and easier than drag-and-drop between separate windows.
 </p>
 
-<h3>Hover menu</h3>
+<h3 data-i18n="fto_mk_heading">Mouse / Keyboard support</h3>
 
-<p>
+<p data-i18n="fto_mk_p1">
+Unlike Tabs Outliner, TKTSTO keyboard shortcuts are 100% free and not locked behind a paywall. Using the keyboard for tree management is strongly recommended.
+</p>
 
-TKTSTO has a <b>hover menu</b> which is very similar to Tabs Outliner.
-However, items are rearranged to help prevent unwanted actions, like deleting
-a node when you meant to unload or edit it.
+<h3 data-i18n="fto_hm_heading">Hover menu</h3>
 
-</p><p>
-
-The hover menu is also kind of annoying.  So it hides itself while using
-a keyboard, and after you get accustomed to the keyboard controls, it may be
-helpful to turn off the hover menu entirely.
-
+<p data-i18n="fto_hm_p1">
+TKTSTO has a hover menu similar to Tabs Outliner, but rearranged to prevent accidental deletion. It automatically hides when using the keyboard.
 </p>
 
 </body>

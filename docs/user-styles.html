@@ -6,30 +6,27 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>User Styles</title>
+  <title data-i18n="us_title">User Styles</title>
 </head>
 <body class="docs">
 
-<h2> User Styles </h2>
+<h2 data-i18n="us_heading">User Styles</h2>
 
-<p>
+<p data-i18n="us_p1">
+In the "user styles" config option, you can enter any CSS you want, to change the appearance of the Tree Views and other TKTSTO pages.
+</p>
 
-In the "user styles" config option, you can enter any CSS you want, to change
-the appearance of the Tree Views and other TKTSTO pages.
-
-</p><p>
-
-For example, this is what someone might write there to modify a few
-relatively simple things...
-
+<p data-i18n="us_p2">
+For example, this is what someone might write there to modify a few relatively simple things...
 </p>
 
 <ul>
-  <li> make rows light up purple when the mouse passes over them </li>
-  <li> hide the hover menu </li>
-  <li> increase the spacing between rows a little bit </li>
-  <li> make stuff move around less during a drag-n-drop </li>
+  <li data-i18n="us_li1">make rows light up purple when the mouse passes over them</li>
+  <li data-i18n="us_li2">hide the hover menu</li>
+  <li data-i18n="us_li3">increase the spacing between rows a little bit</li>
+  <li data-i18n="us_li4">make stuff move around less during a drag-n-drop</li>
 </ul>
 
 <pre>
@@ -63,23 +60,13 @@ relatively simple things...
 }
 </pre>
 
-<p>
+<p data-i18n="us_p3">
+To see what specific stylings might be useful to override, take a look at the default theme base, the night theme, and the day theme. Particularly the parts at the bottom, inside of :root { ... } because those variables are relatively easy to modify.
+</p>
 
-To see what specific stylings might be useful to override, take a look at
-the default
-<a href="/themes/tk.css">theme base</a>, the
-<a href="/themes/tk-night.css">night theme</a>, and the
-<a href="/themes/tk-day.css">day theme</a>.
-Particularly the parts at the bottom, inside of <code>:root { ... }</code>
-because those variables are relatively easy to modify.
-
-</p><p>
-
-... and if you make a cool theme, send it in so it can be included
-for everyone else to use!  &lt;3
-
+<p data-i18n="us_p4">
+... and if you make a cool theme, send it in so it can be included for everyone else to use! &lt;3
 </p>
 
 </body>
 </html>
-

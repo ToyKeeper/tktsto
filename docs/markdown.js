@@ -15,16 +15,53 @@
     container.textContent = 'No page specified.';
     return;
   }
-  // only allow "/dir/file.md",
-  // to ensure no external or non-markdown files are used
-  if ((! page.startsWith('/')) || (! page.endsWith('.md'))) {
+  // only allow markdown files
+  if (! page.endsWith('.md')) {
     container.textContent = 'Invalid page.';
     return;
   }
 
-  const text = await fetch(page).then(r => r.text());
+  let lang = 'en';
+  if (typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getUILanguage) {
+    lang = chrome.i18n.getUILanguage().split('-')[0].toLowerCase();
+  }
+
+  const cleanPath = page.startsWith('/') ? page.slice(1) : page;
+
+  // Search paths for localized markdown files:
+  // Allows users/translators to place localized markdown files in _locales/<lang>/<filename.md>
+  const candidates = [];
+  if (lang && lang !== 'en') {
+    candidates.push(`/_locales/${lang}/${cleanPath}`);
+  }
+  candidates.push(`/_locales/en/${cleanPath}`);
+  candidates.push(page.startsWith('/') ? page : `/${page}`);
+
+  let text = null;
+
+  for (const candidate of candidates) {
+    try {
+      const res = await fetch(candidate);
+      if (res.ok) {
+        text = await res.text();
+        break;
+      }
+    } catch (e) {
+      // continue to next candidate
+    }
+  }
+
+  if (text === null) {
+    container.textContent = 'Failed to load markdown page.';
+    return;
+  }
+
   container.innerHTML = renderMarkdown(text);
-  document.title = `TKTSTO ${page}`;
+  document.title = `TKTSTO ${cleanPath}`;
+
+  if (window.i18n) {
+    window.i18n(container);
+  }
 })();
 
 
@@ -138,7 +175,6 @@ function renderMarkdown(md) {
       // ![Title](https://example.com/image.png)
       else if (line.startsWith('!')) {
         line = line.replace(imageRegex, (match, alt, url) => {
-          //return `<img src="${url}" alt="${alt}" />`;
           return `Image: <a href="${url}" alt="${alt}">${alt} (${url})</a>`;
         });
       }
@@ -172,11 +208,10 @@ function renderMarkdown(md) {
 
 function inlineMarkdown(text) {
   // `foo` -> <code>foo</code>
-  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');  // `
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
   // **foo** -> <b>foo</b>
   text = text.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
   // *foo* -> <i>foo</i>
   text = text.replace(/\*([^*]+)\*/g, '<i>$1</i>');
   return text;
 }
-

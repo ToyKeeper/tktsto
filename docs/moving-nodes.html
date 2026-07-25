@@ -6,100 +6,41 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>Moving nodes is easy</title>
+  <title data-i18n="mn_title">Moving nodes is easy</title>
 </head>
 <body class="docs">
 
-  <h2>
+  <h2 data-i18n="mn_heading">
   Moving nodes is easy.
   </h2>
 
-  <p>
-  I put that "Tutorial Window" inside another window node.  But I personally
-  don't like putting windows inside each other.  So how about we clean that up
-  now?
-  </p>
-
-  <p class="window">
+  <p data-i18n="mn_p1">
   There are three ways to move nodes or branches around:
   </p>
+
   <ul>
-    <li><p><b>Drag &amp; Drop</b>:
-      Grab that "Tutorial Window" node with the mouse.  Put the mouse cursor
-      over it, press and hold the <code>left mouse button</code>, then move the
-      mouse cursor around.  It should let you <b>drag</b> the node to a new
-      location, with the destination indicated by some extra markers in the
-      tree structure.
-      </p><p>
-      Drag to the <b>right side</b> of a node to place the dragged item as
-      a <b>child</b> of its target.  Or drag to the far <b>left side</b> of
-      a node to place it as a next <b>sibling</b>.
-      </p><p>
-      Try dragging stuff around to get a feel for how it works.
+    <li><p data-i18n="mn_dnd_p1">
+      <b>Drag &amp; Drop</b>: Grab a node with the mouse, press and hold the left mouse button, then move the mouse cursor around.
+      Drag to the right side of a node to place it as a child. Drag to the left side to place it as a next sibling.
       </p>
     </li>
-    <li><p><b>Hotkeys</b>:
-      The mouse is great, but if you need to move a long way or move a lot of
-      items, it's kind of "a drag", so to speak.  It's slow and tedious and
-      some positions are hard to target precisely.  So use the keyboard.
-      </p><p>
-      Click in the sidepanel to focus it, put the panel cursor on the node you
-      want to move, and then hold <code>Shift</code> and press the <code>Arrow
-      keys</code> to move the node around.
-      </p><p>
-      The fastest way to move that "Tutorial Window" out of its original
-      position is to click it once to put the cursor on it, then hold
-      <code>Shift</code> and press <code>Left twice</code> to promote it to the
-      top level.  Note, if you are in <b>Window</b> view mode, it will refuse
-      to move things outside of the current window.  Gotta be in <b>Session</b>
-      view mode for that.
-      </p><p>
-      Or, if you mapped some keys in the browser's "<b>Extension shortcuts</b>"
-      config, you can use those keys instead... and don't have to focus the
-      sidepanel first.  But that's not configured by default.  I use
-      <code>Alt+Shift+Arrows</code> for that, but the default is unmapped
-      in Chrome-based browsers.  (it should be mapped in Firefox-based browsers
-      already)
+    <li><p data-i18n="mn_hk_p1">
+      <b>Hotkeys</b>: Put the cursor on a node in the sidepanel, then hold Shift and press the Arrow keys to move the node around.
+      Use Shift+Left twice to promote a node out of a branch. (Requires Session view mode to move across windows).
       </p>
     </li>
-    <li><p><b>Mark &amp; Paste:</b>
-      Whether you use mouse or keyboard, moving nodes one at a time is slow.
-      And if you use "Window" mode in your sidepanels, you can't drag or slide
-      nodes into another window that way.  So there is a more powerful way to
-      do it:
-      </p><p>
-      Click the
-      <span class="hover-menu-button mark-button">M</span>
-      button in the hover menu, or press the <code>M</code> key on the
-      keyboard, to <b>mark a node</b>.  Mark as many as you like.  It should
-      <span class="node marked">highlight the marked nodes</span>
-      and display a count of how many are marked.
-      </p><p>
-      Then navigate to the place where you want to move them to, make sure the
-      panel cursor is on the destination, and press the <code>P</code> key to
-      <b>paste</b> the nodes there.  Or click the <span class="marked-count">glowing counter</span> where it
-      shows how many nodes are marked.
-      </p><p>
-      For example, you could pick several items from a list, change to a
-      different window, then paste.  This moves all those items and their
-      children to the new window, including any open tabs attached to them.
-      </p><p>
-      When you're done, press <code>Shift+M</code> to <b>unmark</b> everything.
+    <li><p data-i18n="mn_mp_p1">
+      <b>Mark &amp; Paste</b>: Press M on the keyboard or click the M button to mark a node. Mark as many nodes as you like.
+      Then move to the destination and press P to paste them. Press Shift+M to unmark everything when done.
       </p>
     </li>
   </ul>
 
-  <p>
-  The next step in this tutorial provides a place to experiment with moving
-  nodes around.  So, go down one row and double-click where it says
-  "Checkboxes ~ Double click me".
-  </p>
+  <h2 data-i18n="mn_dnd_heading">Drag-n-drop Examples</h2>
 
-  <h2>Drag-n-drop Examples</h2>
-
-  <p>This is how things look when doing a <b>drag-n-drop to the right</b> side
-  of a branch.  It becomes a <b>child</b> of the target node:</p>
+  <p data-i18n="mn_dnd_explain1">This is how things look when doing a drag-n-drop to the right side of a branch (becomes a child):</p>
 
   <table class="fit"><tr><td>
 
@@ -180,8 +121,7 @@
 
   </td></tr></table>
 
-  <p>Or if you <b>drag-n-drop it on the left</b> third of a branch, it becomes
-  a <b>sibling</b> of the target node:</p>
+  <p data-i18n="mn_dnd_explain2">Or drag-n-drop on the left side of a branch to make it a sibling of the target node:</p>
 
   <table class="fit"><tr><td>
 
@@ -262,10 +202,9 @@
 
   </td></tr></table>
 
-  <h2>Mark-n-paste Examples</h2>
+  <h2 data-i18n="mn_mp_heading">Mark-n-paste Examples</h2>
 
-  <p>Here's how it looks when doing a <span class="row marked">mark</span> and
-  <b>paste</b> instead...</p>
+  <p data-i18n="mn_mp_explain1">Here's how it looks when doing a mark (M) and paste (P) instead...</p>
 
   <table class="fit"><tr><td>
 
@@ -390,274 +329,15 @@
 
   </td></tr></table>
 
-  <p>If you don't want to <b>paste into</b> a branch, but want to <b>paste
-  after</b> instead, <b>collapse</b> the target first.
-  Collapse it by pressing <code>Space</code>, or <code>left click</code>
-  the far left end of a row.
+  <p data-i18n="mn_mp_explain2">
+  To paste after a branch instead of inside it, collapse the target first (Space or click arrow). To paste before, press Shift+P.
   </p>
 
-  <table class="fit"><tr><td>
+  <h3 data-i18n="mn_reorder_heading">Change node order</h3>
 
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Before", "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-          { "label": "Foo" },
-          { "label": "Marked branch", "marked": true,
-          "nodes": [
-            { "label": "1" },
-            { "label": "2" },
-            { "label": "3" }
-          ]},
-          { "label": "Bar" },
-          { "label": "Target branch",
-          "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
-          "nodes": [
-            { "label": "a" },
-            { "label": "b" },
-            { "label": "c" }
-          ]},
-          { "label": "Quux" }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Collapse it (Space)", "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-          { "label": "Foo" },
-          { "label": "Marked branch", "marked": true,
-          "nodes": [
-            { "label": "1" },
-            { "label": "2" },
-            { "label": "3" }
-          ]},
-          { "label": "Bar" },
-          { "label": "Target branch",
-          "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
-          "pointer": 0.07,
-          "expanded": false,
-          "nodes": [
-            { "label": "a" },
-            { "label": "b" },
-            { "label": "c" }
-          ]},
-          { "label": "Quux" }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Then paste it (P)", "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-          { "label": "Foo" },
-          { "label": "Bar" },
-          { "label": "Target branch",
-          "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
-          "expanded": false,
-          "nodes": [
-            { "label": "a" },
-            { "label": "b" },
-            { "label": "c" }
-          ]},
-          { "label": "Marked branch", "marked": true,
-          "nodes": [
-            { "label": "1" },
-            { "label": "2" },
-            { "label": "3" }
-          ]},
-          { "label": "Quux" }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Expand it (Space)", "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-          { "label": "Foo" },
-          { "label": "Bar" },
-          { "label": "Target branch",
-          "nodeClasses": ["cursor"], "rowClasses": ["cursor"],
-          "pointer": 0.03,
-          "nodes": [
-            { "label": "a" },
-            { "label": "b" },
-            { "label": "c" }
-          ]},
-          { "label": "Marked branch", "marked": true,
-          "nodes": [
-            { "label": "1" },
-            { "label": "2" },
-            { "label": "3" }
-          ]},
-          { "label": "Quux" }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td></tr></table>
-
-  <p>You can also <b>paste before</b> the cursor row by pressing
-  <code>Shift+P</code>.</p>
-
-  <h3>Change node order</h3>
-
-  <p><span class="row marked">Mark</span> and <b>paste</b>
-  is also a quick way to change the order of many nodes at once.
-  Mark them in the order you want them to appear in, then paste.
-  They get pasted in the same order they were marked.
+  <p data-i18n="mn_reorder_p1">
+  Mark and paste is also a quick way to reorder nodes: mark them in the order you want them to appear, then paste.
   </p>
-
-  <table class="fit"><tr><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Before", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "4" },
-          { "label": "1" },
-          { "label": "3" },
-          { "label": "2" }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Mark 1", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "4" },
-          { "label": "1", "marked": true, "rowClasses": [ "cursor" ],
-            "pointer": 0.8 },
-          { "label": "3" },
-          { "label": "2" }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Mark 2", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "4" },
-          { "label": "1", "marked": true },
-          { "label": "3" },
-          { "label": "2", "marked": true, "rowClasses": [ "cursor" ],
-            "pointer": 0.8 }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Mark 3", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "4" },
-          { "label": "1", "marked": true },
-          { "label": "3", "marked": true, "rowClasses": [ "cursor" ],
-            "pointer": 0.8 },
-          { "label": "2", "marked": true }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Mark 4", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "4", "marked": true, "rowClasses": [ "cursor" ],
-            "pointer": 0.8 },
-          { "label": "1", "marked": true },
-          { "label": "3", "marked": true },
-          { "label": "2", "marked": true }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Paste", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "1", "marked": true },
-          { "label": "2", "marked": true },
-          { "label": "3", "marked": true },
-          { "label": "4", "marked": true, "rowClasses": [ "cursor" ] }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": {
-      "id": "root", "label": "Unmark", "nodes": [
-        { "label": "Window", "type": "window", "loaded": true,
-        "nodes": [
-          { "label": "1" },
-          { "label": "2" },
-          { "label": "3" },
-          { "label": "4", "rowClasses": [ "cursor" ] }
-        ]}
-      ]
-    }
-  }</script>
-
-  </td></tr></table>
 
 </body>
 </html>
-
