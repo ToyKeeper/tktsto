@@ -92,12 +92,10 @@
       "description": "__MSG_cmd_addNoteToCurrentTab__"
     },
     "cursorUp": {
-      "description": "__MSG_cmd_cursorUp__",
-      "suggested_key": { "default": "Alt+Up" }
+      "description": "__MSG_cmd_cursorUp__"
     },
     "cursorDown": {
-      "description": "__MSG_cmd_cursorDown__",
-      "suggested_key": { "default": "Alt+Down" }
+      "description": "__MSG_cmd_cursorDown__"
     },
     "cursorLeft": {
       "description": "__MSG_cmd_cursorLeft__"
@@ -106,71 +104,56 @@
       "description": "__MSG_cmd_cursorRight__"
     },
     "cursorPgUp": {
-      "description": "__MSG_cmd_cursorPgUp__",
-      "suggested_key": { "default": "Alt+PageUp" }
+      "description": "__MSG_cmd_cursorPgUp__"
     },
     "cursorPgDown": {
-      "description": "__MSG_cmd_cursorPgDown__",
-      "suggested_key": { "default": "Alt+PageDown" }
+      "description": "__MSG_cmd_cursorPgDown__"
     },
     "cursorHome": {
       "description": "__MSG_cmd_cursorHome__"
     },
     "cursorEnd": {
-      "description": "__MSG_cmd_cursorEnd__",
-      "suggested_key": { "default": "Alt+End" }
+      "description": "__MSG_cmd_cursorEnd__"
     },
     "loadNode": {
       "description": "__MSG_cmd_loadNode__",
       "suggested_key": { "default": "Alt+L" }
     },
     "unloadNode": {
-      "description": "__MSG_cmd_unloadNode__",
-      "suggested_key": { "default": "Shift+Alt+U" }
+      "description": "__MSG_cmd_unloadNode__"
     },
     "toggleExpanded": {
-      "description": "__MSG_cmd_toggleExpanded__",
-      "suggested_key": { "default": "Alt+Space" }
+      "description": "__MSG_cmd_toggleExpanded__"
     },
     "toggleMarked": {
-      "description": "__MSG_cmd_toggleMarked__",
-      "suggested_key": { "default": "Alt+M" }
+      "description": "__MSG_cmd_toggleMarked__"
     },
     "unmarkAll": {
-      "description": "__MSG_cmd_unmarkAll__",
-      "suggested_key": { "default": "Shift+Alt+M" }
+      "description": "__MSG_cmd_unmarkAll__"
     },
     "pasteMarked": {
-      "description": "__MSG_cmd_pasteMarked__",
-      "suggested_key": { "default": "Alt+P" }
+      "description": "__MSG_cmd_pasteMarked__"
     },
     "pasteMarkedBefore": {
-      "description": "__MSG_cmd_pasteMarkedBefore__",
-      "suggested_key": { "default": "Shift+Alt+P" }
+      "description": "__MSG_cmd_pasteMarkedBefore__"
     },
     "moveNodeUp": {
-      "description": "__MSG_cmd_moveNodeUp__",
-      "suggested_key": { "default": "Shift+Alt+Up" }
+      "description": "__MSG_cmd_moveNodeUp__"
     },
     "moveNodeDown": {
-      "description": "__MSG_cmd_moveNodeDown__",
-      "suggested_key": { "default": "Shift+Alt+Down" }
+      "description": "__MSG_cmd_moveNodeDown__"
     },
     "moveNodeLeft": {
-      "description": "__MSG_cmd_moveNodeLeft__",
-      "suggested_key": { "default": "Shift+Alt+Left" }
+      "description": "__MSG_cmd_moveNodeLeft__"
     },
     "moveNodeRight": {
-      "description": "__MSG_cmd_moveNodeRight__",
-      "suggested_key": { "default": "Shift+Alt+Right" }
+      "description": "__MSG_cmd_moveNodeRight__"
     },
     "moveNodeHome": {
-      "description": "__MSG_cmd_moveNodeHome__",
-      "suggested_key": { "default": "Shift+Alt+Home" }
+      "description": "__MSG_cmd_moveNodeHome__"
     },
     "moveNodeEnd": {
-      "description": "__MSG_cmd_moveNodeEnd__",
-      "suggested_key": { "default": "Shift+Alt+End" }
+      "description": "__MSG_cmd_moveNodeEnd__"
     },
     "prevTab": {
       "description": "__MSG_cmd_prevTab__"
