@@ -7,6 +7,7 @@ import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug, emit, fmtDate } from '/common/common.js';
 import { Node } from '/common/node.js';
+import { getMessage } from '/common/i18n.js';
 
 
 export class NodeView extends Node {
@@ -320,26 +321,24 @@ export class NodeView extends Node {
       $noTitle.className = 'node-notitle';
       if (this.isWindow()) {
         const windowIdMaybe = this.windowId ? ' ' + this.windowId : '';
-        $noTitle.textContent = `Window${windowIdMaybe}`;
+        $noTitle.textContent = `${getMessage('detail_window')}${windowIdMaybe}`;
       }
       else if (this.isRoot())
-        $noTitle.textContent = 'Session';
+        $noTitle.textContent = getMessage('btn_viewScope_session');
       else
-        $noTitle.textContent = `node ${this.id}`;
+        $noTitle.textContent = `${getMessage('detail_node')} ${this.id}`;
 
       $rowTitle.append($noTitle);
     }
 
     // note closed windows
     if (this.isWindow() && (! this.isLoaded())) {
-      // TODO: show when windows was last open
-      // (but ctime / mtime / atime aren't quite right)
-      $rowTitle.append(' (closed)');
+      $rowTitle.append(' ' + getMessage('node_window_closed'));
     }
 
     // note incognito windows
     if (this.isWindow() && this.isIncognito()) {
-      $rowTitle.append(' (private)');
+      $rowTitle.append(' ' + getMessage('node_window_private'));
     }
 
     // whatever the row "title" was, add it
@@ -423,7 +422,7 @@ export class NodeView extends Node {
     const wasLoaded = (!!this.wasLoaded) && (! this.loaded);
     let $wasLoaded = getOrCreate('detail-was-loaded', 'div');
     if (mode <= 1) hide($wasLoaded);
-    else setOrHide($wasLoaded, wasLoaded, null, 'Was Loaded');
+    else setOrHide($wasLoaded, wasLoaded, null, getMessage('detail_wasLoaded'));
 
     // long note
     let $note = getOrCreate('detail-note', 'div');
@@ -432,33 +431,27 @@ export class NodeView extends Node {
     // link title
     let $title = getOrCreate('detail-title', 'div');
     if (mode <= 1) hide($title);
-    else setOrHide($title, this.title, '', 'Title', this.title);
+    else setOrHide($title, this.title, '', getMessage('detail_title'), this.title);
 
     // link URL
     let $url = getOrCreate('detail-url', 'div');
     if (mode <= 1) hide($url);
-    else setOrHide($url, this.url, '', 'URL', this.url);
+    else setOrHide($url, this.url, '', getMessage('detail_url'), this.url);
 
     // node ID
     let $nodeId = getOrCreate('detail-node-id', 'div');
     if (mode <= 1) hide($nodeId);
-    else setOrHide($nodeId, this.id, null, 'ID', `${this.id}`);
-
-    // parent ID
-    //let $parentId = getOrCreate('detail-parent-id', 'div');
-    //if (mode <= 1) hide($parentId);
-    //else setOrHide($parentId, this.parent.id, null,
-    //  'Parent', `${this.parent.id}`);
+    else setOrHide($nodeId, this.id, null, getMessage('detail_id'), `${this.id}`);
 
     // tab ID
     let $tabId = getOrCreate('detail-node-tabid', 'div');
     if (mode <= 1) hide($tabId);
-    else setOrHide($tabId, this.tabId, null, 'Tab', `${this.tabId}`);
+    else setOrHide($tabId, this.tabId, null, getMessage('detail_tab'), `${this.tabId}`);
 
     // window ID
     let $windowId = getOrCreate('detail-node-windowid', 'div');
     if (mode <= 1) hide($windowId);
-    else setOrHide($windowId, this.windowId, null, 'Window',
+    else setOrHide($windowId, this.windowId, null, getMessage('detail_window'),
       `${this.windowId}`);
 
     // ctime, mtime, atime, ...

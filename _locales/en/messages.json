@@ -1,9 +1,1112 @@
 {
-  "extName": { "message":
-    "TK Tree Style Tab Outliner"
+  "extName": {
+    "message": "TK Tree Style Tab Outliner"
   },
-  "extDescription": { "message":
-    "TKTSTO is an outliner with tree-style tabs, bookmarks, and notes all in one"
-  }
+  "extDescription": {
+    "message": "TKTSTO is an outliner with tree-style tabs, bookmarks, and notes all in one"
+  },
+  "action_defaultTitle": {
+    "message": "TKTSTO Sidebar"
+  },
+  "cmd_toggleSidePanel": {
+    "message": "Toggle Side Panel"
+  },
+  "cmd_backupSession": {
+    "message": "Back up session now"
+  },
+  "cmd_unloadCurrentTab": {
+    "message": "Unload current tab"
+  },
+  "cmd_bookmarkCurrentTab": {
+    "message": "Bookmark current tab"
+  },
+  "cmd_addNoteToCurrentTab": {
+    "message": "Add highlighted text to current tab's notes"
+  },
+  "cmd_cursorUp": {
+    "message": "Move cursor up"
+  },
+  "cmd_cursorDown": {
+    "message": "Move cursor down"
+  },
+  "cmd_cursorLeft": {
+    "message": "Move cursor left (to parent)"
+  },
+  "cmd_cursorRight": {
+    "message": "Move cursor right (to 1st child)"
+  },
+  "cmd_cursorPgUp": {
+    "message": "Move cursor up 1 page"
+  },
+  "cmd_cursorPgDown": {
+    "message": "Move cursor down 1 page"
+  },
+  "cmd_cursorHome": {
+    "message": "Move cursor home (up to first sibling)"
+  },
+  "cmd_cursorEnd": {
+    "message": "Move cursor end (down to last sibling)"
+  },
+  "cmd_loadNode": {
+    "message": "Load or switch to highlighted node"
+  },
+  "cmd_unloadNode": {
+    "message": "Unload highlighted node"
+  },
+  "cmd_toggleExpanded": {
+    "message": "Expand/Collapse highlighted node"
+  },
+  "cmd_toggleMarked": {
+    "message": "Mark or unmark the current node"
+  },
+  "cmd_unmarkAll": {
+    "message": "Unmark all nodes"
+  },
+  "cmd_pasteMarked": {
+    "message": "Move marked nodes to after cursor"
+  },
+  "cmd_pasteMarkedBefore": {
+    "message": "Move marked nodes to before cursor"
+  },
+  "cmd_moveNodeUp": {
+    "message": "Move highlighted node up"
+  },
+  "cmd_moveNodeDown": {
+    "message": "Move highlighted node down"
+  },
+  "cmd_moveNodeLeft": {
+    "message": "Move highlighted node left (toward parent)"
+  },
+  "cmd_moveNodeRight": {
+    "message": "Move highlighted node right (child of prev sibling)"
+  },
+  "cmd_moveNodeHome": {
+    "message": "Move highlighted node home (up to first sibling)"
+  },
+  "cmd_moveNodeEnd": {
+    "message": "Move highlighted node end (down to last sibling)"
+  },
+  "cmd_prevTab": {
+    "message": "Focus the previous tab"
+  },
+  "cmd_nextTab": {
+    "message": "Focus the next tab"
+  },
+  "btn_ok": {
+    "message": "OK"
+  },
+  "btn_cancel": {
+    "message": "Cancel"
+  },
+  "btn_one": {
+    "message": "One"
+  },
+  "btn_all": {
+    "message": "All"
+  },
+  "label_oldValue": {
+    "message": "Old value:"
+  },
+  "label_newValue": {
+    "message": "New value: "
+  },
+  "hint_clickOrType": {
+    "message": "(click or type letter)"
+  },
+  "label_nodeLabel": {
+    "message": "Label"
+  },
+  "label_notes": {
+    "message": "Notes"
+  },
+  "label_bookmark": {
+    "message": "Bookmark?"
+  },
+  "label_pageTitle": {
+    "message": "Page Title"
+  },
+  "label_url": {
+    "message": "URL"
+  },
+  "label_window": {
+    "message": "Window?"
+  },
+  "label_incognito": {
+    "message": "Incognito?"
+  },
+  "label_none": {
+    "message": "None"
+  },
+  "options_title": {
+    "message": "TK Tree Style Tab Outliner Options"
+  },
+  "options_heading_clientId": {
+    "message": "Client ID"
+  },
+  "options_desc_clientId": {
+    "message": "Each browser you use needs its own unique identifier. Use something <b>very short with no spaces or punctuation</b>, ideally 3 letters or less, because it will become part of the ID for each tree node and transaction created by that browser. For example:"
+  },
+  "options_client_pc": {
+    "message": "Your desktop computer."
+  },
+  "options_client_nb": {
+    "message": "Your notebook computer."
+  },
+  "options_client_w": {
+    "message": "Your work computer."
+  },
+  "options_label_idForBrowser": {
+    "message": "ID for this browser: (a-z and 0-9 only)"
+  },
+  "options_heading_appearance": {
+    "message": "Appearance"
+  },
+  "options_label_theme": {
+    "message": "Theme"
+  },
+  "options_label_expandedRowPrefix": {
+    "message": "Draw a + before expanded branches?"
+  },
+  "options_label_alwaysShowNodeStats": {
+    "message": "Show node stats before expanded branches?"
+  },
+  "options_label_wasLoadedNodeStats": {
+    "message": "Show wasLoaded in node stats?"
+  },
+  "options_label_hideTreeLines": {
+    "message": "Hide tree lines?"
+  },
+  "options_label_hideCursorTreeLines": {
+    "message": "Hide cursor branch tree lines?"
+  },
+  "options_label_hideWindowTreeLines": {
+    "message": "Hide window tree lines?"
+  },
+  "options_label_fontFamily": {
+    "message": "Font family:"
+  },
+  "options_label_indentMargin": {
+    "message": "Indent margin"
+  },
+  "options_label_indentMarginWindow": {
+    "message": "Indent margin (window nodes)"
+  },
+  "options_label_indentPadding": {
+    "message": "Indent padding:"
+  },
+  "options_label_indentPaddingWindow": {
+    "message": "Indent padding (window nodes)"
+  },
+  "options_label_expandedBranchBottomPadding": {
+    "message": "Expanded branch bottom padding"
+  },
+  "options_label_leafToBranchSpacing": {
+    "message": "Space between leaf (or collapsed branch) and branch"
+  },
+  "options_label_windowTopLevelNodeSpacing": {
+    "message": "Space between top-level nodes in a window"
+  },
+  "options_label_detailsBoxHeight": {
+    "message": "Details box height:"
+  },
+  "options_label_detailsBoxHeightNotesOnly": {
+    "message": "Details box height (in notes mode):"
+  },
+  "options_label_userStyles": {
+    "message": "User stylesheet (add any CSS you like):"
+  },
+  "options_doc_link": {
+    "message": "(documentation)"
+  },
+  "options_placeholder_userStyles": {
+    "message": "see /themes/tk-night.css for an example"
+  },
+  "options_heading_treeBehavior": {
+    "message": "Tree View behavior"
+  },
+  "options_label_cursorFollowsActiveTab": {
+    "message": "Tree view cursor follows active (focused) tab?"
+  },
+  "options_label_activeTabExpandsItsParents": {
+    "message": "While following active tab, expand the tab's parents?"
+  },
+  "options_label_pinnedTabsOpenNewTabsPinnedToo": {
+    "message": "When a pinned tab is active and a new tab is opened, pin the new tab too?"
+  },
+  "options_label_convertFromWindowWhenDroppedIntoWindow": {
+    "message": "Convert loaded window into a heading when moved into another window?"
+  },
+  "options_label_hideTopButtonsDuringSearch": {
+    "message": "Hide Top bar buttons during a search?"
+  },
+  "options_label_hideCollapsedTabs": {
+    "message": "Hide tabs in browser's tab bar when those tabs are in a collapsed branch? (Firefox-based browsers only)"
+  },
+  "options_branch_ask": {
+    "message": "Ask what to do"
+  },
+  "options_branch_load_one": {
+    "message": "Load parent only"
+  },
+  "options_branch_load_all": {
+    "message": "Load entire branch without asking"
+  },
+  "options_branch_unload_one": {
+    "message": "Unload parent only"
+  },
+  "options_branch_unload_all": {
+    "message": "Unload entire branch without asking"
+  },
+  "options_branch_delete_one": {
+    "message": "Delete parent and promote all children"
+  },
+  "options_branch_delete_all": {
+    "message": "Delete entire branch without asking"
+  },
+  "options_label_loadExpanded": {
+    "message": "When loading an expanded parent node with saved tabs"
+  },
+  "options_label_loadCollapsed": {
+    "message": "When loading a collapsed parent node with saved tabs"
+  },
+  "options_label_unloadExpanded": {
+    "message": "When unloading an expanded parent node"
+  },
+  "options_label_unloadCollapsed": {
+    "message": "When unloading a collapsed parent node"
+  },
+  "options_label_deleteExpanded": {
+    "message": "When deleting an expanded parent node"
+  },
+  "options_heading_backups": {
+    "message": "Backups"
+  },
+  "options_desc_backups": {
+    "message": "Backup files can either be human friendly (easier to view in a text editor) or not (smaller files)."
+  },
+  "options_label_humanFriendlyBackups": {
+    "message": "Human readable backup files (larger, \"pretty printed\" json)"
+  },
+  "options_desc_localBackup": {
+    "message": "Automatic local backups are saved to your \"Downloads\" folder if enabled. Set to 0 to disable this. 1 day = 24, 1 week = 168, 1 month = 720. (recommended: 1 to 24 hours)"
+  },
+  "options_label_localBackupHours": {
+    "message": "Back up locally every N hours"
+  },
+  "options_heading_import": {
+    "message": "Import Session Files"
+  },
+  "options_desc_import1": {
+    "message": "Old session backup files can be imported here. Note that imported sessions will add to your current session, not replace your session. If you have sessions from a few different browsers and want to merge them into one, import each session and they'll all get added to one big tree. Be prepared to do some manual re-organization and de-duplication afterward though, because the import process does not attempt to de-duplicate for you."
+  },
+  "options_desc_import2": {
+    "message": "To restore old session backups from this extension, unzip them first and then put them here."
+  },
+  "options_desc_import3": {
+    "message": "File decompression is not directly supported by the browser, so if the backup file is compressed, unzip it first. If it uses gzip (a .gz extension), unzip it with a command like gzip -d myfile.json.gz or gunzip myfile.json.gz. If the file is compressed with zstd (uses a .zst or .zstd extension), unzip it with zstd -d myfile.json.zst or unzstd myfile.json.zst."
+  },
+  "options_heading_tktstoFiles": {
+    "message": "TKTSTO files"
+  },
+  "options_btn_restore": {
+    "message": "Restore"
+  },
+  "options_heading_tabsOutlinerFiles": {
+    "message": "Tabs Outliner files"
+  },
+  "options_desc_tabsOutliner": {
+    "message": "If you used Tabs Outliner and have session file backups, import those here."
+  },
+  "options_btn_import": {
+    "message": "Import"
+  },
+  "alert_selectFile": {
+    "message": "Please select a file first."
+  },
+  "alert_unsupportedFileType": {
+    "message": "Unsupported file type \"$TYPE$\", must be \"application/json\".",
+    "placeholders": {
+      "type": {
+        "content": "$1"
+      }
+    }
+  },
+  "alert_fileLoadFailed": {
+    "message": "file load failed"
+  },
+  "alert_nodesImported": {
+    "message": "$TOTAL$ nodes imported from: \"$FILENAME$\"",
+    "placeholders": {
+      "total": {
+        "content": "$1"
+      },
+      "filename": {
+        "content": "$2"
+      }
+    }
+  },
+  "alert_invalidJson": {
+    "message": "The file is not valid JSON: \"$FILENAME$\"",
+    "placeholders": {
+      "filename": {
+        "content": "$1"
+      }
+    }
+  },
+  "btn_loading": {
+    "message": "... Loading ..."
+  },
+  "btn_viewScope_session": {
+    "message": "Session"
+  },
+  "btn_viewScope_window": {
+    "message": "Window"
+  },
+  "btn_tab": {
+    "message": "Tab"
+  },
+  "btn_undo": {
+    "message": "Undo"
+  },
+  "btn_details": {
+    "message": "Details"
+  },
+  "btn_notes": {
+    "message": "Notes"
+  },
+  "btn_backup": {
+    "message": "Backup"
+  },
+  "btn_options": {
+    "message": "Options"
+  },
+  "btn_donate": {
+    "message": "Donate"
+  },
+  "btn_help": {
+    "message": "Help"
+  },
+  "placeholder_search": {
+    "message": "search"
+  },
+  "dialog_title_addNode": {
+    "message": "Add Node"
+  },
+  "dialog_title_editNode": {
+    "message": "Edit Node"
+  },
+  "dialog_title_deleteNodes": {
+    "message": "Delete Nodes"
+  },
+  "dialog_desc_deleteNodes_one_all": {
+    "message": "Delete one node or all $COUNT$ nodes?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dialog_desc_deleteNodes_confirm": {
+    "message": "Really delete $COUNT$ nodes?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dialog_title_unloadTabs": {
+    "message": "Unload Tabs"
+  },
+  "dialog_desc_unloadTabs_one": {
+    "message": "Unload one (cursor) tab or all $COUNT$ tabs?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dialog_desc_unloadTabs_all": {
+    "message": "Unload all $COUNT$ tabs?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "dialog_title_loadTabs": {
+    "message": "Load Tabs"
+  },
+  "dialog_desc_loadTabs_one": {
+    "message": "Load one (cursor) or all $COUNT$ $STYLE$ tabs?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "style": {
+        "content": "$2"
+      }
+    }
+  },
+  "dialog_desc_loadTabs_all": {
+    "message": "Load all $COUNT$ $STYLE$ tabs?",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      },
+      "style": {
+        "content": "$2"
+      }
+    }
+  },
+  "status_nothingToLoad": {
+    "message": "nothing to load"
+  },
+  "status_loaded_nodes": {
+    "message": "loaded $COUNT$ nodes",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_unloaded_nodes": {
+    "message": "unloaded $COUNT$ nodes",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_deleted_nodes": {
+    "message": "deleted $COUNT$ nodes",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_viewScope": {
+    "message": "View scope: $SCOPE$",
+    "placeholders": {
+      "scope": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_zoom": {
+    "message": "Zoom: $LEVEL$%",
+    "placeholders": {
+      "level": {
+        "content": "$1"
+      }
+    }
+  },
+  "status_editNode_cancelled": {
+    "message": "editNode: cancelled"
+  },
+  "status_cant_change_incognito": {
+    "message": "editNode: Can't change incognito on loaded window"
+  },
+  "status_edited": {
+    "message": "Edited $LINE$",
+    "placeholders": {
+      "line": {
+        "content": "$1"
+      }
+    }
+  },
+  "node_window_closed": {
+    "message": "(closed)"
+  },
+  "node_window_private": {
+    "message": "(private)"
+  },
+  "detail_wasLoaded": {
+    "message": "Was Loaded"
+  },
+  "detail_title": {
+    "message": "Title"
+  },
+  "detail_url": {
+    "message": "URL"
+  },
+  "detail_id": {
+    "message": "ID"
+  },
+  "detail_tab": {
+    "message": "Tab"
+  },
+  "detail_window": {
+    "message": "Window"
+  },
+  "tutorial_welcome": {
+    "message": "Welcome, new user!"
+  },
+  "tutorial_click_panel": {
+    "message": "Click in this panel to focus it"
+  },
+  "tutorial_arrow_keys": {
+    "message": "Then use arrow keys to move the cursor"
+  },
+  "tutorial_space_expand": {
+    "message": "... and Space to expand branches"
+  },
+  "tutorial_just_like_that": {
+    "message": "Just like that!"
+  },
+  "tutorial_click_left_row": {
+    "message": "Or click the left end of a row"
+  },
+  "tutorial_longer_notes": {
+    "message": "Longer notes can be seen below"
+  },
+  "tutorial_longer_notes_detail": {
+    "message": "Right here. Be sure to check this area any time you see an \"attachment\" icon on the cursor row."
+  },
+  "tutorial_key_bindings": {
+    "message": "Here are the other key bindings"
+  },
+  "tutorial_key_bindings_detail": {
+    "message": "Don't worry about the details yet, these are here for later reference."
+  },
+  "tutorial_green_label": {
+    "message": "Green text is a \"label\""
+  },
+  "tutorial_green_label_detail": {
+    "message": "To edit it, hover the mouse over a row and click the \"E\" button in the \"hover menu\". Or press the \"E\" key on the keyboard.\n\nTry editing thsis to fffix my typooooz."
+  },
+  "tutorial_grey_text": {
+    "message": "Grey text is an unloaded tab"
+  },
+  "tutorial_grey_text_detail": {
+    "message": "To open it, double click it or press Enter while the cursor is on it.\n\nThink of it like a \"bookmark\" which knows which window it goes in, and where it belongs in the tab bar. It uses no RAM or CPU while it is unloaded."
+  },
+  "tutorial_window": {
+    "message": "Tutorial Window"
+  },
+  "tutorial_window_detail": {
+    "message": "This is a saved window. Double click it to open it!"
+  },
+  "tutorial_pink_tabs": {
+    "message": "Pink tabs auto-open when the saved window is restored"
+  },
+  "tutorial_nest_windows": {
+    "message": "You may have also noticed..."
+  },
+  "tutorial_nest_windows_detail": {
+    "message": "... that you can nest \"window\" nodes. This window node is inside of another, and it still works. It allows you to group related windows together if you want... but you don't have to."
+  },
+  "tutorial_moving_nodes": {
+    "message": "Moving nodes is easy"
+  },
+  "tutorial_moving_nodes_detail": {
+    "message": "Open this tab to find out how\n\nYou remember how to open an unloaded tab, right?\n\n... right??"
+  },
+  "tutorial_checkboxes": {
+    "message": "Checkboxes"
+  },
+  "tutorial_groceries": {
+    "message": "Groceries"
+  },
+  "tutorial_unsorted": {
+    "message": "Unsorted"
+  },
+  "tutorial_ice_cream": {
+    "message": "Ice cream"
+  },
+  "tutorial_soup": {
+    "message": "Soup"
+  },
+  "tutorial_popsicles": {
+    "message": "Popsicles"
+  },
+  "tutorial_milk": {
+    "message": "Milk"
+  },
+  "tutorial_crackers": {
+    "message": "Crackers"
+  },
+  "tutorial_dry_canned": {
+    "message": "Dry / Canned"
+  },
+  "tutorial_cereal": {
+    "message": "Cereal"
+  },
+  "tutorial_cold_aisle": {
+    "message": "Cold aisle"
+  },
+  "tutorial_cheese": {
+    "message": "Cheese"
+  },
+  "tutorial_frozen": {
+    "message": "Frozen"
+  },
+  "tutorial_pizzas": {
+    "message": "Pizzas"
+  },
+  "tutorial_check_options": {
+    "message": "Be sure to check the"
+  },
+  "tutorial_options_detail": {
+    "message": "to choose a theme, set your host name, and configure everything else to your liking."
+  },
+  "tutorial_ready": {
+    "message": "You're probably ready"
+  },
+  "tutorial_ready_detail": {
+    "message": "to start organizing your REAL tabs and windows now. As a first step, try giving a name to each of your windows. Then maybe organize related tabs together, add some category labels, etc. Tips and tricks are in the full documentation."
+  },
+  "tutorial_rest_doc": {
+    "message": "The rest of the documentation..."
+  },
+  "tutorial_rest_doc_detail": {
+    "message": "... is in the \"Help\" button at the bottom of the sidepanel."
+  },
+  "tutorial_donate": {
+    "message": "Also if you're REALLY cool, maybe try the \"Donate\" button"
+  },
+  "tutorial_donate_detail": {
+    "message": "... if you like this free/open-source project and want to ensure it keeps getting updated.\n\n'cause, like, I need food and stuff.\n\nBut I understand if you don't donate; that's cool too. Times are rough, and not all of us have spare cash. But I gotta at least ask.\n\nPolitely.\n\nIn the hidden dark nethers of a tutorial you probably didn't even read. If you got this far, you're already a hoopier frood than most."
+  },
+  "tutorial_discord": {
+    "message": "Or join the Discord"
+  },
+  "tutorial_discord_detail": {
+    "message": "Where tech-savvy folks chat about how to fight our corporate overlords, share useful tools for productivity, and generally just hang out to talk about whatever."
+  },
+  "tutorial_github": {
+    "message": "There's also GitHub"
+  },
+  "tutorial_github_detail": {
+    "message": "for github-y type stuff. You know the drill."
+  },
+  "tutorial_done": {
+    "message": "When you're done with this tutorial..."
+  },
+  "tutorial_done_detail": {
+    "message": "... feel free to delete it. First collapse it, then press the red \"D\" button in the hover menu, or type the letter \"D\".\n\nYou can generate the tutorial again by pressing \"?\" on the keyboard.\n\nNote: Deleting the branch will also close and delete any tabs or windows remaining inside the tutorial branch. Move those first if you want to keep anything."
+  },
+  "tutorial_zen_browser": {
+    "message": "If you use Zen Browser..."
+  },
+  "tutorial_zen_disable_sync": {
+    "message": "... you MUST disable Window Sync."
+  },
+  "tutorial_zen_disable_sync_detail": {
+    "message": "Open a tab to \"about:config\" and search for \"window-sync\" and set it as \"false\", then restart Zen. Otherwise things will break every time you open a window."
+  },
+  "detail_node": {
+    "message": "node"
+  },
+  "hover_unload_label": {
+    "message": "U"
+  },
+  "hover_unload_tooltip": {
+    "message": "Unload node (U)"
+  },
+  "hover_load_label": {
+    "message": "L"
+  },
+  "hover_load_tooltip": {
+    "message": "Load node (L)"
+  },
+  "hover_task_label": {
+    "message": "T"
+  },
+  "hover_task_tooltip": {
+    "message": "Task status (T)"
+  },
+  "hover_edit_label": {
+    "message": "E"
+  },
+  "hover_edit_tooltip": {
+    "message": "Edit node (E)"
+  },
+  "hover_mark_label": {
+    "message": "M"
+  },
+  "hover_mark_tooltip": {
+    "message": "Mark / unmark node (M)"
+  },
+  "hover_delete_label": {
+    "message": "D"
+  },
+  "hover_delete_tooltip": {
+    "message": "Delete node (D)"
+  },
+  "docs_title": {
+    "message": "TKTSTO Documentation"
+  },
+  "docs_heading": {
+    "message": "Documentation for TKTSTO"
+  },
+  "docs_quickstart_heading": {
+    "message": "Quick Start / Tutorial"
+  },
+  "docs_quickstart_text": {
+    "message": "To start an interactive tutorial, click in the tree view panel to focus it, then press ? on the keyboard. It should generate a bunch of new nodes at the top of your active window branch, and the rest should be self-explanatory."
+  },
+  "docs_help_pages": {
+    "message": "Help Pages"
+  },
+  "docs_getting_started": {
+    "message": "Getting started:"
+  },
+  "docs_first_steps": {
+    "message": "First Steps"
+  },
+  "docs_migrating_to_to": {
+    "message": "Migrating From Tabs Outliner"
+  },
+  "docs_tutorial_pages": {
+    "message": "Tutorial pages:"
+  },
+  "docs_tutorial_note": {
+    "message": "(these pages assume you are viewing them from the tutorial, so they may be a little weird when viewed outside of that context)"
+  },
+  "docs_grey_text": {
+    "message": "Grey Text is a Tab"
+  },
+  "docs_pink_tabs": {
+    "message": "Pink \"Was Loaded\" Tabs"
+  },
+  "docs_moving_nodes": {
+    "message": "Moving Nodes"
+  },
+  "docs_checkboxes": {
+    "message": "Checkboxes"
+  },
+  "docs_general_reference": {
+    "message": "General reference topics:"
+  },
+  "docs_node_types": {
+    "message": "Node Types"
+  },
+  "docs_session_window_mode": {
+    "message": "Session / Window mode"
+  },
+  "docs_searching_tree": {
+    "message": "Searching the tree"
+  },
+  "docs_hover_menu": {
+    "message": "Hover Menu"
+  },
+  "docs_pinned_tabs": {
+    "message": "Pinned Tabs"
+  },
+  "docs_bookmarks": {
+    "message": "Bookmarks"
+  },
+  "docs_tab_groups": {
+    "message": "Tab Groups"
+  },
+  "docs_user_styles": {
+    "message": "User Styles"
+  },
+  "docs_about_heading": {
+    "message": "About TKTSTO"
+  },
+  "docs_readme_link": {
+    "message": "readme.md from source repo"
+  },
+  "docs_change_log": {
+    "message": "Change Log"
+  },
+  "docs_browser_support": {
+    "message": "Browser support status / known issues"
+  },
+  "docs_project_links": {
+    "message": "Project Links"
+  },
+  "docs_short_urls_text": {
+    "message": "Full URLS are long and hard to remember, so I made short redirect links for the relevant project pages:"
+  },
+  "docs_link_code": {
+    "message": "(Code / Development / GitHub Project)"
+  },
+  "docs_link_releases": {
+    "message": "(Source Code Releases)"
+  },
+  "docs_link_chat": {
+    "message": "(Chat / Discord Invite)"
+  },
+  "docs_link_donate": {
+    "message": "(Donate / Patreon)"
+  },
+  "docs_install_stores": {
+    "message": "Installing from browser extension stores:"
+  },
+  "docs_chrome_store": {
+    "message": "(Chrome Web Store)"
+  },
+  "docs_firefox_store": {
+    "message": "(Firefox Add-Ons Store)"
+  },
+  "docs_edge_store": {
+    "message": "(Edge Add-Ons Store)"
+  },
+  "status_mouse": {
+    "message": "mouse: $1$",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "status_key": {
+    "message": "key: $1$",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "status_keydown": {
+    "message": "keydown: $1$",
+    "placeholders": {
+      "1": { "content": "$1" }
+    }
+  },
+  "bm_title": { "message": "Bookmarks" },
+  "bm_heading": { "message": "Bookmarks" },
+  "bm_p1": { "message": "Bookmarks are usually not necessary when you can just Alt+U an unloaded tab you want to come back to later." },
+  "bm_p2": { "message": "However, sometimes a bookmark can still be useful. Bookmarks provide a consistent starting point which does not change if you navigate to another page. You open it, navigate however you like, and the bookmark stays the same so you can start from the same page next time." },
+  "bm_p3": { "message": "This is helpful when a site requires you to log in every day, so you can bookmark the login page and then immediately navigate away to some other page. Or if you frequently check a news site, and want to always start on the front page, but also want to go to other pages without opening new tabs. Or if you otherwise want to lock a saved tab so the URL and title won't change while you're browsing." },
+  "bm_p4": { "message": "Bookmarks in TKTSTO are essentially the same as an unloaded tab, except for a few small differences:" },
+  "bm_li1": { "message": "It has a bookmark icon." },
+  "bm_li2": { "message": "When loaded, it opens as a new node, leaving the bookmark itself unchanged. The new node will be the first child of the bookmark node." },
+  "bm_make_heading": { "message": "There are two ways to make a bookmark:" },
+  "bm_make_li1": { "message": "Press Alt+B (or Alt+K in Firefox) to bookmark the current tab. This will create a new bookmark node and make it the parent of the current tab's node." },
+  "bm_make_li2": { "message": "Press E or click E in the hover menu to Edit Node on an unloaded tab in the Tree View, then set its \"Bookmark?\" checkbox and save the changes. This converts an unloaded tab into a bookmark." },
+  "bm_tip1": { "message": "Tip: If you want a tab to open next to the current tab instead of opening as a child of a bookmark node, just middle click the node. This works for any tab node, not just bookmarks. Because tab nodes are links. You can middle click any tab node, whether loaded or unloaded, to open that node's URL in a new tab, and it will be placed the same as if you middle-clicked a link in the current page. So every tab node can be used like a native browser bookmark, even if it doesn't have a bookmark icon in the Tree View." },
+  "bm_tip2": { "message": "Another tip: When you open a bookmark in the Tree View, the bookmark's mtime gets updated. It also gets updated when you close-and-delete the clone it spawned. This provides an easy way to automatically track when you last used a bookmark. Just enable the Details panel in the Tree View and check the mtime. Pretty handy if you have a news site bookmarked, and you want to know how far back to read before you'll get to articles you've already seen. Just be sure to check the mtime before you open the bookmark." },
+  "bm_examples": { "message": "Examples" },
+  "bm_ex_p1": { "message": "Bookmark usage is pretty simple. For example, let's say you have a page open and you hit Alt+B (or Alt+K in Firefox) to bookmark the current page:" },
+  "bm_ex_p2": { "message": "A new bookmark node is created as a clone of the page you currently have focused. Then the focused page node is moved to become the bookmark's first child." },
+  "bm_ex_p3": { "message": "Note: It does not matter where the Tree View cursor is. The Alt+B action applies to the page you have focused in the browser, not the tree view cursor node." },
+  "bm_ex_p4": { "message": "Let's say you then decide to bookmark \"Hacker News\" too. But it isn't currently open. So use a different method:" },
+  "bm_ex_p5": { "message": "Put the Tree View cursor on it and press E, or click E in the hover menu to Edit Node. Then click the \"Bookmark?\" checkbox and save your changes." },
+  "bm_ex_p6": { "message": "Afterward, double click it or press Enter on it to open the bookmark. Here's how the TreeView looks after each step:" },
+  "bm_ex_p7": { "message": "The \"Hacker News\" saved tab was first converted to a bookmark, then opened. The new page opens as its first child, and is Bold because it is now the focused page." },
+  "bm_ex_p8": { "message": "One other detail to note: The bookmark icon changes color depending on whether there are any loaded tabs in the branch. This makes it easier to find open tabs, even if the bookmark branch is collapsed." },
+  "bm_native_heading": { "message": "Native Browser bookmarks" },
+  "bm_native_p1": { "message": "The browser's built-in bookmarks are not supported yet. TKTSTO provides a separate, alternate bookmark system, so you can more easily take your bookmarks with you if/when you change browsers, and not have to rely on a \"Sign in to Chrome\" type feature to sync between browsers." },
+  "bm_native_p2": { "message": "However, a future version of TKTSTO may add some type of support for native bookmarks... at least enough to import them into the session tree." },
+  "bm_native_p3": { "message": "A future version may also potentially add support for the \"omnibar\", to suggest TKTSTO bookmarks related to the current window." },
+  "cb_title": { "message": "Checkboxes" },
+  "cb_heading": { "message": "Checkboxes let you make \"ToDo\" lists." },
+  "cb_p1": { "message": "Expand the \"Checkboxes\" branch if you haven't already. Looks like somebody is doing some grocery shopping... but they didn't organize their list yet! Let's help them out, and try 3 different ways of moving nodes around." },
+  "cb_li1": { "message": "First, try using the mouse to drag the \"Milk\" item into the \"Cold aisle\" branch." },
+  "cb_li2": { "message": "Second, press the Up arrow a few times to move the cursor to \"Crackers\". Then press Shift+Down to move it down a row or two. It should now be in the \"Dry / Canned\" branch." },
+  "cb_li3": { "message": "Third, mark the nodes for \"Ice cream\" and \"Popsicles\", since they both need to be frozen. You can mark them by pressing the M button in the hover menu, or by pressing the M key while the cursor is on those rows. Then move the cursor down to \"Frozen\" and press P to paste. Then press Shift+M to unmark them." },
+  "cb_p2": { "message": "That just leaves \"Soup\" remaining to be sorted. Use whatever method you like." },
+  "cb_p3": { "message": "Then you remember you also need butter. Put the cursor somewhere in the \"Cold aisle\" branch and press the o key to open a new node on a new row. It'll ask you for a label, so type in \"Butter\" and press Enter. (the o and Shift+O keys are mapped by default to \"addNodeAsNextVisibleRow\" and \"addNodeAsPrevVisibleRow\", which match the keys used in Vim, a popular editor)" },
+  "cb_p4": { "message": "But \"Butter\" doesn't have a checkbox like all the other items." },
+  "cb_p5": { "message": "To add a checkbox, you can either press the T key or click the T button in the hover menu. This brings up the \"taskEdit\" dialog." },
+  "cb_p6": { "message": "Next, either click on the style of checkbox you want, or press a key on the keyboard with a printable letter on it. It can be any letter or symbol, so you can assign your own meanings to different symbols. For a simple \"todo\" checkbox, just press Space." },
+  "cb_quick_heading": { "message": "Quick Task Edits" },
+  "cb_quick_p1": { "message": "For quick edits, put the cursor on a row and then press a short key sequence, like t and then Space to add a \"todo\" checkbox... or tx to mark a task as \"done\". Or t then Backspace to remove the checkbox. (t then Delete also works)" },
+  "cb_quick_p2": { "message": "Maybe you already have cheese, for example. Everyone should have cheese, which is why it is marked as \"important\". But you're a hoopy frood who already has some. So move the cursor to \"Cheese\" and type tx to mark it as \"done\". Note how the percent boxes change in response to this." },
+  "cb_types_heading": { "message": "Other Task Types" },
+  "cb_types_p1": { "message": "There are a few other types of tasks pre-defined..." },
+  "cb_types_li1": { "message": "The \"percent\" checkboxes calculate their own number if they have any children with checkboxes. Otherwise, you can set the value manually by typing something like t42 for 42% or t07 for 7%." },
+  "cb_types_li2": { "message": "To set a priority of 1 to 9 instead, try t3 then press Enter to set a task to priority 3." },
+  "cb_types_li3": { "message": "A \"ratio\" checkbox works a lot like a \"percent\" checkbox, except it displays a count of completed vs total child tasks, like 3/7 if you had 3 tasks done out of 7 total. Sometimes it's nice to have a counter instead of a percent." },
+  "cb_ex_text": { "message": "Here is an example tree with a variety of checkbox types in it:" },
+  "cb_footer": { "message": "But you can use any printable character as the checkbox type. You can also get a lower-case task status by holding Shift when typing a letter." },
+  "tgt_title": { "message": "Grey text is an unloaded tab" },
+  "tgt_heading": { "message": "Grey text is an unloaded tab." },
+  "tgt_p1": { "message": "But now that you've opened it, the text probably changed color and became bold, because it is open and \"active\". Open tabs are shown in a brighter color than saved tabs, and the browser's current tab is shown in bold." },
+  "tgt_p2": { "message": "And the sidepanel's cursor probably greyed out too, to show that the panel no longer has keyboard focus." },
+  "tgt_p3": { "message": "Try clicking between this page and the sidepanel a few times to see how the colors change as focus moves." },
+  "tgt_p4": { "message": "Then try unloading this page. There are a few ways to do this:" },
+  "tgt_li1": { "message": "Press Alt+U to unload the current page." },
+  "tgt_li2": { "message": "Hover the mouse over a node in the sidepanel and click the U button in the \"hover menu\"." },
+  "tgt_li3": { "message": "Put the treeView (sidepanel) cursor on a node and press the U key on the keyboard." },
+  "tgt_li4": { "message": "Or just close the page normally. It has a note attached, so it is \"interesting\" and will be saved automatically. Any node with a label, note, or checkbox is considered \"interesting\", and is kept in the tree when its browser tab is closed." },
+  "tgt_p5": { "message": "Any time you unload a tab, it will be kept in the tree session in the sidepanel. You can open it again later to continue where you left off." },
+  "tgt_p6": { "message": "For reference, when you close a tab, using regular browser actions like Ctrl+W or by clicking the tab's \"X\" button in the tab bar, the result depends on that tab's metadata in the tree session:" },
+  "tgt_li5": { "message": "If the tab has any metadata attached, like a label or note or checkbox, it will be saved. That means the tab is \"interesting\", and won't be deleted when you close the tab." },
+  "tgt_li6": { "message": "If the tab has any interesting children, the tab will be saved. So if any child node has a label, note, or checkbox... the parent will be saved when closed. This applies to direct children only, not grandkids." },
+  "tgt_li7": { "message": "If the tab is \"boring\" and it has no \"interesting\" children, it will be deleted from the tree session when the tab is closed. And if it has any children, they will be promoted to the parent's position in the tree." },
+  "wlt_title": { "message": "Pink text is a \"wasLoaded\" tab" },
+  "wlt_heading": { "message": "Pink text is a \"wasLoaded\" tab." },
+  "wlt_p1": { "message": "It means the tab was loaded when your session was saved, or when a window was last closed. When you open a saved window, all the pink wasLoaded tabs will be opened automatically and become loaded tabs. The regular grey unloaded tabs (like bookmarks) will not be opened automatically." },
+  "wlt_p2": { "message": "So if you didn't change anything, this window should have only one tab open. The \"Pink text ...\" tab should be open, while the \"Grey text ...\" tab is not." },
+  "wlt_p3": { "message": "This means you can save and restore windows (close and re-open) with just a click or two. I think that's pretty neat." },
+  "wlt_p4": { "message": "By the way, this would be a good time to try clicking the button in the upper left corner of the sidepanel. It should say \"Session\" or \"Window\"." },
+  "wlt_p5": { "message": "That's the \"viewScope\" button, or the \"Session / Window\" button. It changes how much of the tree is visible in the current window's sidepanel. I keep most of my windows in \"Window\" mode so I can focus on one window at a time. But sometimes it's useful to switch to a full session view, for larger session management tasks, like moving windows around or re-opening saved windows." },
+  "wlt_p6": { "message": "Anyway, when you're done reading this, try closing this window. There are a few ways to do it:" },
+  "wlt_li1": { "message": "Click the \"X\" button on the top right corner of the browser window. Depending on your computing environment, this button may or may not exist. Just close it like you would close any other window. Another popular method is Alt+F4." },
+  "wlt_li2": { "message": "Some browsers have a hotkey to close a window, like Shift+Ctrl+W." },
+  "wlt_li3": { "message": "Hover the mouse over the window row in the tree view, and click the U button (Unload) in the hover menu." },
+  "wlt_li4": { "message": "With the sidepanel focused, and the cursor on the tree row, press the U key on the keyboard." },
+  "wlt_li5": { "message": "With the cursor on the tree row, press the Alt+U key on the keyboard. This works even if the sidepanel isn't focused, using the browser's extension shortcuts feature." },
+  "wlt_p7": { "message": "When you close a browser window, it is always saved in the tree unless it's \"boring\" (has no metadata) and completely empty. So don't be shy about closing windows when you're not using them. You can get them back later." },
+  "wlt_p8": { "message": "Oh, and if you want to change a tab between \"unloaded\" and \"wasLoaded\" states, just keep pressing the U button. This lets you manually set which tabs will be auto-loaded when you open the window." },
+  "wlt_example_heading": { "message": "Example" },
+  "nt_title": { "message": "Node Types" },
+  "nt_heading": { "message": "Node Types" },
+  "nt_intro": { "message": "Nodes come in several flavors:" },
+  "nt_props": { "message": "Every node can have a label, note, checkbox, and children." },
+  "nt_branch_def": { "message": "A branch is simply a node with children. It can be any node type." },
+  "nt_leaf_def": { "message": "A leaf is a node with no children." },
+  "nt_states": { "message": "Every branch can be expanded or collapsed, and every node can be marked and/or have the cursor on it." },
+  "nt_dividers_def": { "message": "A blank row is just a label with a Space inside. A divider is just a label with a - or = inside." },
+  "nt_explain_intro": { "message": "Some types may require additional explanation:" },
+  "nt_wasloaded_explain": { "message": "wasLoaded tabs are documented in more detail in the dedicated wasLoaded help page." },
+  "nt_discarded_explain": { "message": "Discarded tabs are tabs that the browser has partially unloaded (suspended/hibernated). They still appear in the browser's tab bar. Focusing one reloads it." },
+  "nt_hidden_explain": { "message": "Hidden tabs exist in Firefox-based browsers. They are not displayed in the browser's tab bar, but behave like regular tabs." },
+  "nt_empty_explain": { "message": "An empty node is a label node with no label text. It shows the node ID instead." },
+  "nt_org_heading": { "message": "Organization" },
+  "nt_org_intro": { "message": "The session tree can mostly be organized however you want, but there are a few restrictions:" },
+  "nt_org_li1": { "message": "The root node cannot be moved or deleted." },
+  "nt_org_li2": { "message": "Loaded tabs must be inside a window node." },
+  "nt_org_li3": { "message": "Loaded tabs cannot be moved between a regular window and an incognito window." },
+  "nt_org_li4": { "message": "A loaded window node cannot be converted into a non-window node unless it is nested inside another window node with the same incognito status." },
+  "nt_org_li5": { "message": "The Pinned branch is special and cannot be moved while it contains any loaded tabs." },
+  "nt_org_li6": { "message": "Native browser tab groups cannot contain other tab groups (nesting tab groups is not allowed by the browser)." },
+  "us_title": { "message": "User Styles" },
+  "us_heading": { "message": "User Styles" },
+  "us_p1": { "message": "In the \"user styles\" config option, you can enter any CSS you want, to change the appearance of the Tree Views and other TKTSTO pages." },
+  "us_p2": { "message": "For example, this is what someone might write there to modify a few relatively simple things..." },
+  "us_li1": { "message": "make rows light up purple when the mouse passes over them" },
+  "us_li2": { "message": "hide the hover menu" },
+  "us_li3": { "message": "increase the spacing between rows a little bit" },
+  "us_li4": { "message": "make stuff move around less during a drag-n-drop" },
+  "us_p3": { "message": "To see what specific stylings might be useful to override, take a look at the default theme base, the night theme, and the day theme. Particularly the parts at the bottom, inside of :root { ... } because those variables are relatively easy to modify." },
+  "us_p4": { "message": "... and if you make a cool theme, send it in so it can be included for everyone else to use! <3" },
+  "pt_title": { "message": "Pinned Tabs" },
+  "pt_heading": { "message": "Pinned Tabs" },
+  "pt_intro": { "message": "Pinned tabs are supported, and get pinned (or unpinned) by moving them into (or out of) a special branch called \"Pinned\" at the top of a window." },
+  "pt_how_heading": { "message": "To pin or unpin a tab:" },
+  "pt_method1": { "message": "Use the browser's native functions: Right click a tab in the browser's tab bar. In the pop-up menu, click the \"Pin\" or \"Unpin\" option. The tab should become pinned (or unpinned), along with all its child tabs." },
+  "pt_method2": { "message": "Move nodes in the Tree View: Use TKTSTO's sidepanel to move nodes or branches into or out of the Pinned branch. The browser's internal pinned state will update accordingly." },
+  "pt_recommendation": { "message": "The TKTSTO Tree View will generally be more reliable than the browser's native functions, so I recommend doing it that way in most cases." },
+  "pt_native_heading": { "message": "Browser's native Pin / Unpin functions" },
+  "pt_native_p1": { "message": "Let's say you want to pin a tab called \"Pin Me!\". Right click on that tab in the browser's native tab bar, then click \"Pin\"." },
+  "pt_anchor_explain": { "message": "Note how a new node was created, called Pinned. This node is special. It cannot be moved while it has loaded tabs, so it has an anchor icon next to it. It is locked in place at the top of the window." },
+  "pt_children_pinned": { "message": "All the children of \"Pin Me!\" got pinned too. The nested branch structure is preserved." },
+  "pt_unpin_intro": { "message": "If you change your mind and want to unpin it, right click on the \"Pin Me!\" tab again and click \"Unpin\":" },
+  "pt_unpin_explain": { "message": "The entire branch gets unpinned. And since the \"Pinned\" branch no longer has loaded tabs inside, its icon changes to a thumbtack icon." },
+  "pt_tktsto_heading": { "message": "Pin/Unpin using TKTSTO" },
+  "pt_tktsto_p1": { "message": "If you have no \"Pinned\" branch yet, make one. Put the cursor on the window node, expand it, then press o to add a new node and set its label to \"Pinned\"." },
+  "pt_tktsto_p2": { "message": "Then move nodes or branches into or out of the Pinned branch. The browser's internal pinned state and tab bar will update accordingly." },
+  "pt_unpin_all": { "message": "If you want to unpin everything, simply delete the \"Pinned\" node while it is expanded, or change its name." },
+  "pt_caveats_heading": { "message": "Caveats / Known Issues" },
+  "pt_vivaldi_issue": { "message": "Vivaldi has special behavior when closing windows with pinned tabs. Using TKTSTO's Unload button to close windows in Vivaldi avoids losing pinned tab metadata." },
+  "src_title": { "message": "Search" },
+  "src_heading": { "message": "Search" },
+  "src_intro": { "message": "To search the tree, a few commands are available:" },
+  "src_cmd1": { "message": "/ : Start a search, or re-focus the search bar during a search." },
+  "src_cmd2": { "message": "Shift+* : Start a search for anything matching the current node's label, title, url, or note. Returns focus to the tree view immediately." },
+  "src_cmd3": { "message": "Enter while the search bar is focused: Give focus back to the TreeView, and keep the search active. Can also just click in the TreeView to focus it." },
+  "src_cmd4": { "message": "N / Shift+N : Go to the next (or previous) match." },
+  "src_cmd5": { "message": "M / Shift+M / P : Mark the current node, unmark all nodes, or paste all marked nodes." },
+  "src_cmd6": { "message": "Escape : End or cancel the search." },
+  "src_cmd7": { "message": "Escape (again): Close any branches which were temporarily expanded to show hidden nodes." },
+  "src_workflow": { "message": "One common workflow is to find everything matching a given query, then pull them all together into one place. To do this, type /foo to do a search for \"foo\", then press Enter to go back to the TreeView. Press n and m repeatedly to go to the next match and mark it. Then move the cursor to the place where you want all those nodes to be, and press p to paste everything. Finally, Shift+M to unmark everything, and Escape once or twice to cancel the search." },
+  "src_terms_heading": { "message": "Search Terms" },
+  "src_terms_p1": { "message": "Searches look through all of a node's attached data. In particular, it checks the label, title, url, and note. If you don't see why a particular node was included as a match, open the details box to see more of the data it searched through." },
+  "src_terms_p2": { "message": "Searches are made of one or more search terms, separated by spaces. Results only include nodes which match all search terms. Searches are not case sensitive. Each individual term is a regular expression." },
+  "src_terms_p3": { "message": "The full scope of what regular expressions can do is way more than we can cover here, but here are a few simple tricks:" },
+  "src_regex1": { "message": ". matches any single character." },
+  "src_regex2": { "message": "\\. matches a literal . character, and also works to escape other special symbols." },
+  "src_regex3": { "message": "x* matches any number of x characters, like ab*c matches abc, abbbbbbc, and ac." },
+  "src_regex4": { "message": "x+ matches one or more x characters." },
+  "src_regex5": { "message": "x? matches zero or one of x, making it optional." },
+  "src_regex6": { "message": "x{n,m} matches at least n instances of \"x\", and up to m." },
+  "src_regex7": { "message": "^foo matches \"foo\" at the beginning of a string." },
+  "src_regex8": { "message": "foo$ matches \"foo\" at the end of a string." },
+  "src_regex9": { "message": "[abc] matches any of the characters inside brackets (e.g. [a-z])." },
+  "src_regex10": { "message": "[^abc] matches anything except the characters inside brackets." },
+  "src_regex11": { "message": "(abc) groups characters together." },
+  "src_regex12": { "message": "x|y matches \"x\" OR \"y\"." },
+  "src_regex13": { "message": "\\x matches a predefined character class (\\d for digits, \\w for word chars, \\s for whitespace)." },
+  "src_ex_heading": { "message": "Examples" },
+  "src_ex1": { "message": "face.*mess matches anything containing \"face\" and then \"mess\", such as \"Facebook Messenger\"." },
+  "src_ex2": { "message": "(www\\.)?(foo|bar|baz)\\.(com|net|org) matches domains like \"www.foo.com\", \"foo.org\", \"www.bar.net\"." },
+  "src_ex3": { "message": "(\\d{3}-)?\\d{3}-\\d{4} matches phone numbers like \"123-4567\" and \"123-456-7890\"." },
+  "src_footer": { "message": "But most of the time, you probably won't need more than just a simple word or two, to find what you're looking for." },
+  "fto_title": { "message": "For Tabs Outliner Users" },
+  "fto_intro": { "message": "If you're migrating from Tabs Outliner, there are a few things which would be helpful to know." },
+  "fto_dt_heading": { "message": "Data transfer" },
+  "fto_dt_p1": { "message": "Back up your data in Tabs Outliner first. Do an export or backup if you can... and if not, at least do an \"expand all nodes\" and then Ctrl+S to save the page." },
+  "fto_dt_p2": { "message": "The backup files are in .json format, and can be imported into TKTSTO directly. However, you may need to rename the backup file extension from .tree to .json before importing it." },
+  "fto_dt_p3": { "message": "Saved session view pages can be converted to a usable format using an extra script called bin/tabs-outliner-html-to-tktsto-json.py in the TKTSTO repository." },
+  "fto_dt_p4": { "message": "Once you have a backup file in .json format, import it into TKTSTO via the Options page -> Import section." },
+  "fto_free_heading": { "message": "Doing a Tabs Outliner backup when you have the free version" },
+  "fto_free_intro": { "message": "Daniel contributed this handy tip for exporting backups without paying for Premium Mode in Tabs Outliner:" },
+  "fto_free_step1": { "message": "open the options page in Tabs Outliner" },
+  "fto_free_step2": { "message": "go to the \"Backup\" tab" },
+  "fto_free_step3": { "message": "right click in the whitespace somewhere on the page and select \"Inspect\"." },
+  "fto_free_step4": { "message": "the developer tools will open on the \"Elements\" tab." },
+  "fto_free_step5": { "message": "find the element with id \"licenseKeyPresentBackupTabBlock\" (which has style=\"display: none;\")." },
+  "fto_free_step6": { "message": "double click display: none to edit and delete that text." },
+  "fto_free_step7": { "message": "The backup options will now appear on the page." },
+  "fto_free_step8": { "message": "Click \"Export Tree to File\" to create your backup." },
+  "fto_free_step9": { "message": "Rename the file ending .tree to .json." },
+  "fto_free_step10": { "message": "Now you can import the backup into TKTSTO." },
+  "fto_sv_heading": { "message": "Session View Window" },
+  "fto_sv_p1": { "message": "Tabs Outliner forced users to keep a separate window open for the session tree. TKTSTO can work that way, but provides a better built-in sidepanel workflow." },
+  "fto_sv_p2": { "message": "Instead of keeping a separate window open for the session view, reclaim that space and use TKTSTO's sidepanel (Alt+T in Chrome, F1 in Firefox). In \"Window\" mode, it automatically displays only the active window's tabs." },
+  "fto_sv_p3": { "message": "To move items between windows, use \"mark and paste\" (M to mark, P to paste), which is much faster and easier than drag-and-drop between separate windows." },
+  "fto_mk_heading": { "message": "Mouse / Keyboard support" },
+  "fto_mk_p1": { "message": "Unlike Tabs Outliner, TKTSTO keyboard shortcuts are 100% free and not locked behind a paywall. Using the keyboard for tree management is strongly recommended." },
+  "fto_hm_heading": { "message": "Hover menu" },
+  "fto_hm_p1": { "message": "TKTSTO has a hover menu similar to Tabs Outliner, but rearranged to prevent accidental deletion. It automatically hides when using the keyboard." },
+  "mn_title": { "message": "Moving nodes is easy" },
+  "mn_heading": { "message": "Moving nodes is easy." },
+  "mn_p1": { "message": "There are three ways to move nodes or branches around:" },
+  "mn_dnd_p1": { "message": "Drag & Drop: Grab a node with the mouse, press and hold the left mouse button, then move the mouse cursor around. Drag to the right side of a node to place it as a child. Drag to the left side to place it as a next sibling." },
+  "mn_hk_p1": { "message": "Hotkeys: Put the cursor on a node in the sidepanel, then hold Shift and press the Arrow keys to move the node around. Use Shift+Left twice to promote a node out of a branch. (Requires Session view mode to move across windows)." },
+  "mn_mp_p1": { "message": "Mark & Paste: Press M on the keyboard or click the M button to mark a node. Mark as many nodes as you like. Then move to the destination and press P to paste them. Press Shift+M to unmark everything when done." },
+  "mn_dnd_heading": { "message": "Drag-n-drop Examples" },
+  "mn_dnd_explain1": { "message": "This is how things look when doing a drag-n-drop to the right side of a branch (becomes a child):" },
+  "mn_dnd_explain2": { "message": "Or drag-n-drop on the left side of a branch to make it a sibling of the target node:" },
+  "mn_mp_heading": { "message": "Mark-n-paste Examples" },
+  "mn_mp_explain1": { "message": "Here's how it looks when doing a mark (M) and paste (P) instead..." },
+  "mn_mp_explain2": { "message": "To paste after a branch instead of inside it, collapse the target first (Space or click arrow). To paste before, press Shift+P." },
+  "mn_reorder_heading": { "message": "Change node order" },
+  "mn_reorder_p1": { "message": "Mark and paste is also a quick way to reorder nodes: mark them in the order you want them to appear, then paste." },
+  "fs_title": { "message": "First Steps with TKTSTO" },
+  "fs_heading": { "message": "First Steps with TKTSTO" },
+  "fs_p1": { "message": "Welcome to TK's Tree Style Tab Outliner (TKTSTO)! This page covers the basic concepts to help you get started quickly." },
+  "fs_panel_heading": { "message": "1. Opening the Side Panel" },
+  "fs_panel_p1": { "message": "TKTSTO operates primarily from your browser's side panel:" },
+  "fs_panel_chrome": { "message": "Chrome / Chromium / Edge / Brave: Press Alt+T or click the extension icon in your toolbar to toggle the side panel." },
+  "fs_panel_ff": { "message": "Firefox / Floorp / Zen: Press F1 to open the sidebar." },
+  "fs_tutorial_heading": { "message": "2. Interactive Tutorial" },
+  "fs_tutorial_p1": { "message": "To start the built-in interactive tutorial at any time:" },
+  "fs_tutorial_step": { "message": "Focus the TKTSTO side panel by clicking inside it, then press the ? key on your keyboard." },
+  "fs_tutorial_p2": { "message": "This will generate interactive tutorial nodes at the top of your session tree to guide you through basic tree manipulation." },
+  "fs_basic_heading": { "message": "3. Basic Concepts" },
+  "fs_basic_unload": { "message": "Unloading Tabs: Press Alt+U (or U when panel is focused) to unload an active tab. It stays saved in your tree so you can re-open it later without using RAM." },
+  "fs_basic_add": { "message": "Adding Nodes: Press o to add a new label node below the cursor. Use labels, notes, and checkboxes to organize your workflow." },
+  "fs_basic_move": { "message": "Moving Nodes: Use Shift+Arrow keys or click M to mark nodes and P to paste them into another location or window." },
+  "fs_basic_modes": { "message": "Window vs Session Mode: Toggle between viewing only the current window or your entire multi-window session using the button at the top-left of the panel." },
+  "fs_footer": { "message": "Explore the other help pages for more details on bookmarks, checkboxes, user styles, and migration!" },
+  "md_title": { "message": "Markdown Viewer" },
+  "md_loading": { "message": "Loading..." },
+  "btn_ok": { "message": "OK" },
+  "btn_cancel": { "message": "Cancel" },
+  "btn_delete": { "message": "Delete" },
+  "dialog_title_edit_task": { "message": "Edit Task" },
+  "dialog_title_edit_node": { "message": "Edit Node" },
+  "dialog_title_add_node": { "message": "Add Node" },
+  "cbox_todo": { "message": "todo" },
+  "cbox_half_done": { "message": "half-done" },
+  "cbox_percent": { "message": "percent" },
+  "cbox_ratio": { "message": "ratio" },
+  "cbox_done": { "message": "done" },
+  "cbox_fail": { "message": "fail" },
+  "cbox_skip": { "message": "skip" },
+  "cbox_other": { "message": "other" },
+  "cbox_important": { "message": "important" },
+  "cbox_unknown": { "message": "unknown" },
+  "cbox_n1": { "message": "n1" },
+  "cbox_n2": { "message": "n2" },
+  "cbox_n3": { "message": "n3" },
+  "cbox_n4": { "message": "n4" },
+  "cbox_n5": { "message": "n5" },
+  "cbox_n6": { "message": "n6" },
+  "cbox_n7": { "message": "n7" },
+  "cbox_n8": { "message": "n8" },
+  "cbox_n9": { "message": "n9" }
 }
-

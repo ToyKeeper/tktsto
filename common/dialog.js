@@ -7,6 +7,40 @@ import { api, isChrome, isFirefox } from '/api.js';
 
 import { log, debug } from '/common/common.js';
 import { buildEventName } from '/common/events.js';
+import { getMessage } from '/common/i18n.js';
+
+
+function resolveTitleText(title) {
+  if (!title) return '';
+  const direct = getMessage(title);
+  if (direct && direct !== title) return direct;
+  const formatted = title.toLowerCase().replace(/\s+/g, '_');
+  const key1 = 'dialog_title_' + formatted;
+  const msg1 = getMessage(key1);
+  if (msg1 && msg1 !== key1) return msg1;
+  const key2 = 'dialog_title_' + title.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const msg2 = getMessage(key2);
+  if (msg2 && msg2 !== key2) return msg2;
+  return title;
+}
+
+function resolveButtonText(label) {
+  if (!label) return '';
+  const direct = getMessage(label);
+  if (direct && direct !== label) return direct;
+  const key = 'btn_' + label.toLowerCase().replace(/\s+/g, '_');
+  const msg = getMessage(key);
+  if (msg && msg !== key) return msg;
+  return label;
+}
+
+function resolveCboxClassText(cboxClass) {
+  if (!cboxClass) return '';
+  const key = 'cbox_' + cboxClass.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  const msg = getMessage(key);
+  if (msg && msg !== key) return msg;
+  return cboxClass;
+}
 
 
 class Dialog {
@@ -22,7 +56,7 @@ class Dialog {
     textArea = false,
     textAreaLabel = '',
     textAreaValue = '',
-    buttons = ['OK', 'Cancel']
+    buttons = [getMessage('btn_ok'), getMessage('btn_cancel')]
   }={}) {
     const promise = new Promise((resolve) => {
       const $dialog = doc.createElement('dialog');
@@ -33,7 +67,7 @@ class Dialog {
       if (title) {
         const $title = doc.createElement('div');
         $title.id = 'dialogTitle';
-        $title.innerText = title;
+        $title.innerText = resolveTitleText(title);
         $dialog.appendChild($title);
       }
 
@@ -83,7 +117,7 @@ class Dialog {
         let first = true;
         for (const label of buttons) {
           const $btn = doc.createElement('button');
-          $btn.innerText = label;
+          $btn.innerText = resolveButtonText(label);
           //$btn.id = `dialogButton${label}`;  // FIXME: unsafe
           // first button is the 'submit' button
           // and emits its own special event when clicked
@@ -179,7 +213,7 @@ class Dialog {
       if (title) {
         const $title = doc.createElement('div');
         $title.id = 'dialogTitle';
-        $title.innerText = title;
+        $title.innerText = resolveTitleText(title);
         $dialog.appendChild($title);
       }
 
@@ -195,7 +229,7 @@ class Dialog {
       function labelledCheckbox (val) {
         if (! val) {
           const $elem = doc.createElement('span');
-          $elem.textContent = 'None';
+          $elem.textContent = getMessage('label_none');
           return $elem;
         }
         let cboxClass = classes.get(val);
@@ -211,7 +245,7 @@ class Dialog {
         $div.appendChild($ckbox);
 
         const $span = doc.createElement('span');
-        $span.textContent = cboxClass;
+        $span.textContent = resolveCboxClassText(cboxClass);
         $div.appendChild($span);
 
         $div.addEventListener('click', (ev) => {
@@ -231,7 +265,7 @@ class Dialog {
       // checkbox current value
       const $oldLabel = doc.createElement('span');
       $oldLabel.id = 'oldValue';
-      $oldLabel.textContent = 'Old value:';
+      $oldLabel.textContent = getMessage('label_oldValue');
       $form.appendChild($oldLabel);
 
       const $nodeCkbox = labelledCheckbox(value);
@@ -241,9 +275,9 @@ class Dialog {
       const $newLabel = doc.createElement('span');
       $newLabel.id = 'newValue';
       //$newLabel.innerHTML = 'New value: <small>(click or type letter)</small>';
-      $newLabel.append('New value: ');
+      $newLabel.append(getMessage('label_newValue'));
       const $newLabelSmall = doc.createElement('small');
-      $newLabelSmall.textContent = '(click or type letter)';
+      $newLabelSmall.textContent = getMessage('hint_clickOrType');
       $newLabel.append($newLabelSmall);
       $form.appendChild($newLabel);
 
@@ -264,7 +298,7 @@ class Dialog {
         let first = true;
         for (const label of buttons) {
           const $btn = doc.createElement('button');
-          $btn.innerText = label;
+          $btn.innerText = resolveButtonText(label);
           // first button is the 'submit' button
           // and emits its own special event when clicked
           if (first) $btn.type = 'submit';
@@ -377,7 +411,7 @@ class Dialog {
       if (title) {
         const $title = doc.createElement('div');
         $title.id = 'dialogTitle';
-        $title.innerText = title;
+        $title.innerText = resolveTitleText(title);
         $dialog.appendChild($title);
       }
 
@@ -409,7 +443,7 @@ class Dialog {
       if (show.label) {
         const $labelLabel = doc.createElement('div');
         $labelLabel.id = 'dialogLabelLabel';
-        $labelLabel.textContent = 'Label';
+        $labelLabel.textContent = getMessage('label_nodeLabel');
         $form.appendChild($labelLabel);
 
         $label = doc.createElement('input');
@@ -426,7 +460,7 @@ class Dialog {
       if (show.note) {
         const $noteLabel = doc.createElement('div');
         $noteLabel.id = 'dialogNoteLabel';
-        $noteLabel.textContent = 'Notes';
+        $noteLabel.textContent = getMessage('label_notes');
         $form.appendChild($noteLabel);
 
         $note = doc.createElement('textarea');
@@ -450,7 +484,7 @@ class Dialog {
         $isBookmark.id = 'dialogisBookmarkInput';
         $isBookmark.checked = node.isBookmark();
         $isBookmarkLabel.appendChild($isBookmark);
-        $isBookmarkLabel.appendChild(doc.createTextNode("Bookmark?"));
+        $isBookmarkLabel.appendChild(doc.createTextNode(getMessage('label_bookmark')));
         $form.appendChild($isBookmarkDiv);
 
         if (node.isLoaded()) {
@@ -465,7 +499,7 @@ class Dialog {
       if (show.title) {
         const $titleLabel = doc.createElement('div');
         $titleLabel.id = 'dialogTitleLabel';
-        $titleLabel.textContent = 'Page Title';
+        $titleLabel.textContent = getMessage('label_pageTitle');
         $form.appendChild($titleLabel);
 
         $title = doc.createElement('input');
@@ -485,7 +519,7 @@ class Dialog {
       if (show.url) {
         const $urlLabel = doc.createElement('div');
         $urlLabel.id = 'dialogURLLabel';
-        $urlLabel.textContent = 'URL';
+        $urlLabel.textContent = getMessage('label_url');
         $form.appendChild($urlLabel);
 
         $url = doc.createElement('input');
@@ -514,7 +548,7 @@ class Dialog {
         $isWindow.id = 'dialogisWindowInput';
         $isWindow.checked = node.isWindow();
         $isWindowLabel.appendChild($isWindow);
-        $isWindowLabel.appendChild(doc.createTextNode("Window?"));
+        $isWindowLabel.appendChild(doc.createTextNode(getMessage('label_window')));
         $form.appendChild($isWindowDiv);
 
         if (node.isWindow() && (! node.canBeConvertedFromWindow())) {
@@ -540,7 +574,7 @@ class Dialog {
         $incognito.checked = !!node.incognito;
         $incognito.disabled = node.isLoaded();
         $iLabel.appendChild($incognito);
-        $iLabel.appendChild(doc.createTextNode("Incognito?"));
+        $iLabel.appendChild(doc.createTextNode(getMessage('label_incognito')));
         $form.appendChild($iDiv);
         // can't change incognito state of an open window
         if (node.isLoaded()) {
@@ -568,7 +602,7 @@ class Dialog {
         let first = true;
         for (const buttonLabel of buttons) {
           const $btn = doc.createElement('button');
-          $btn.innerText = buttonLabel;
+          $btn.innerText = resolveButtonText(buttonLabel);
           // first button is the 'submit' button
           // and emits its own special event when clicked
           if (first) $btn.type = 'submit';

@@ -6,95 +6,56 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>Pink text is a "wasLoaded" tab</title>
+  <title data-i18n="wlt_title">Pink text is a "wasLoaded" tab</title>
 </head>
 <body class="docs">
 
-  <h2>
-    Pink text is a "<b class="row was-loaded"><span
-        class="url-title">wasLoaded</span></b>" tab.
+  <h2 data-i18n="wlt_heading">
+    Pink text is a "wasLoaded" tab.
   </h2>
 
-  <p>
-  It means the tab <i>was</i> loaded when your session was saved, or when
-  a window was last closed.  <b>When you open a saved window, all the pink
-  <b class="row was-loaded"><span class="url-title">wasLoaded</span></b>
-  tabs will be opened</b> automatically and become
-  <b class="row loaded"><span class="url-title">loaded</span></b>
-  tabs.  The regular grey
-  <b class="row"><span class="url-title">unloaded</span></b>
-  tabs (like bookmarks) will <i>not</i> be opened automatically.
+  <p data-i18n="wlt_p1">
+  It means the tab was loaded when your session was saved, or when a window was last closed. When you open a saved window, all the pink wasLoaded tabs will be opened automatically and become loaded tabs. The regular grey unloaded tabs (like bookmarks) will not be opened automatically.
   </p>
 
-  <p>
-  So if you didn't change anything, this window should have only one tab open.
-  The "Pink text ..." tab should be open, while the "Grey text ..." tab is not.
+  <p data-i18n="wlt_p2">
+  So if you didn't change anything, this window should have only one tab open. The "Pink text ..." tab should be open, while the "Grey text ..." tab is not.
   </p>
 
-  <p>
-  This means you can <b>save and restore windows</b> (close and re-open) with
-  just a click or two.  I think that's pretty neat.
+  <p data-i18n="wlt_p3">
+  This means you can save and restore windows (close and re-open) with just a click or two. I think that's pretty neat.
   </p>
 
-  <p>
-  By the way, this would be a good time to try clicking the button in the upper
-  left corner of the sidepanel.  It should say "<b>Session</b>" or
-  "<b>Window</b>".
+  <p data-i18n="wlt_p4">
+  By the way, this would be a good time to try clicking the button in the upper left corner of the sidepanel. It should say "Session" or "Window".
   </p>
 
-  <p>
-  That's the "<b>viewScope</b>" button, or the "Session / Window" button.  It
-  changes how much of the tree is visible in the current window's sidepanel.
-  I keep most of my windows in "<b>Window</b>" mode so I can focus on one
-  window at a time.  But sometimes it's useful to switch to a <b>full session
-  view</b>, for larger session management tasks, like moving windows around or
-  re-opening saved windows.
+  <p data-i18n="wlt_p5">
+  That's the "viewScope" button, or the "Session / Window" button. It changes how much of the tree is visible in the current window's sidepanel. I keep most of my windows in "Window" mode so I can focus on one window at a time. But sometimes it's useful to switch to a full session view, for larger session management tasks, like moving windows around or re-opening saved windows.
   </p>
 
-  <p>
-  Anyway, when you're done reading this, try closing this window.  There are
-  a few ways to do it:
+  <p data-i18n="wlt_p6">
+  Anyway, when you're done reading this, try closing this window. There are a few ways to do it:
+  </p>
   <ul>
-    <li>Click the "<b>X</b>" button on the top right corner of the browser
-      window.  Depending on your computing environment, this button may or may
-      not exist.  Just close it like you would close any other window.  Another
-      popular method is <code>Alt+F4</code> .</li>
-    <li>Some browsers have a hotkey to close a window, like
-      <code>Shift+Ctrl+W</code> .</li>
-    <li>Hover the mouse over the window row in the tree view, and click the
-      <span class="hover-menu-button unload-button">U</span>
-      button (<b>U</b>nload) in the hover menu.</li>
-    <li>With the sidepanel focused, and the cursor on the tree row, press the
-      <code>U</code> key on the keyboard.</li>
-    <li>With the cursor on the tree row, press the
-      <code>Alt+U</code> key on the keyboard.  This works even if the
-      sidepanel isn't focused, using the browser's <b>extension shortcuts</b>
-      feature.</li>
+    <li data-i18n="wlt_li1">Click the "X" button on the top right corner of the browser window. Depending on your computing environment, this button may or may not exist. Just close it like you would close any other window. Another popular method is Alt+F4.</li>
+    <li data-i18n="wlt_li2">Some browsers have a hotkey to close a window, like Shift+Ctrl+W.</li>
+    <li data-i18n="wlt_li3">Hover the mouse over the window row in the tree view, and click the U button (Unload) in the hover menu.</li>
+    <li data-i18n="wlt_li4">With the sidepanel focused, and the cursor on the tree row, press the U key on the keyboard.</li>
+    <li data-i18n="wlt_li5">With the cursor on the tree row, press the Alt+U key on the keyboard. This works even if the sidepanel isn't focused, using the browser's extension shortcuts feature.</li>
   </ul>
+
+  <p data-i18n="wlt_p7">
+  When you close a browser window, it is always saved in the tree unless it's "boring" (has no metadata) and completely empty. So don't be shy about closing windows when you're not using them. You can get them back later.
   </p>
 
-  <p>
-  When you close a browser window, it is <i>always</i> saved in the tree unless
-  it's "<b>boring</b>" (has no metadata) <i>and</i> <b>completely empty</b>.
-  So don't be shy about closing windows when you're not using them.  You can
-  get them back later.
+  <p data-i18n="wlt_p8">
+  Oh, and if you want to change a tab between "unloaded" and "wasLoaded" states, just keep pressing the U button. This lets you manually set which tabs will be auto-loaded when you open the window.
   </p>
 
-  <p>
-  Oh, and if you want to change a tab between
-  "<b class="row"><span class="url-title">unloaded</span></b>"
-  and
-  "<b class="row was-loaded"><span class="url-title">wasLoaded</span></b>"
-  states, just keep pressing the
-  <span class="hover-menu-button unload-button">U</span>
-  or
-  <span class="hover-menu-button unload-button unloaded">U</span>
-  button.  This lets you manually set which tabs will
-  be auto-loaded when you open the window.
-  </p>
-
-  <h2>Example</h2>
+  <h2 data-i18n="wlt_example_heading">Example</h2>
 
   <script class="tree" type="application/json">{
     "opts": {},
@@ -142,4 +103,3 @@
 
 </body>
 </html>
-

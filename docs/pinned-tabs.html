@@ -6,75 +6,82 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>Pinned Tabs</title>
+  <title data-i18n="pt_title">Pinned Tabs</title>
 </head>
 <body class="docs">
 
-<h2> Pinned Tabs </h2>
+<h2 data-i18n="pt_heading">Pinned Tabs</h2>
 
-<p>
-
-Pinned tabs are supported, and get pinned (or unpinned) by moving them into
-(or out of) a special branch called "<b>Pinned</b>" at the top of a window.
-
-</p><p>
-
-<b>To pin or unpin a tab</b>:
-
+<p data-i18n="pt_intro">
+Pinned tabs are supported, and get pinned (or unpinned) by moving them into (or out of) a special branch called "Pinned" at the top of a window.
 </p>
+
+<p data-i18n="pt_how_heading">
+<b>To pin or unpin a tab</b>:
+</p>
+
 <ul>
-  <li><p><b>Use the browser's native functions</b>:
-
-    Right click a tab in the browser's tab bar.  In the pop-up menu, click
-    the "Pin" or "Unpin" option.  The tab should become pinned (or unpinned),
-    along with all its child tabs.  The branch should move into (or out of)
-    the special "Pinned" branch in TKTSTO.  If you have no "Pinned" branch,
-    it should create one automatically.
-
-    </p>
-  </li>
-  <li><p><b>Move nodes in the Tree View</b>:
-
-    Use TKTSTO's sidepanel or other Tree View to move nodes or branches into
-    or out of the <b>Pinned</b> branch.  The browser's internal "pinned"
-    state and tab bar should update accordingly.
-
-    </p>
-  </li>
+  <li><p data-i18n="pt_method1">
+    <b>Use the browser's native functions</b>: Right click a tab in the browser's tab bar. In the pop-up menu, click the "Pin" or "Unpin" option. The tab should become pinned (or unpinned), along with all its child tabs.
+  </p></li>
+  <li><p data-i18n="pt_method2">
+    <b>Move nodes in the Tree View</b>: Use TKTSTO's sidepanel to move nodes or branches into or out of the Pinned branch. The browser's internal pinned state will update accordingly.
+  </p></li>
 </ul>
 
-<p>
-
-The TKTSTO Tree View will generally be more reliable than the browser's
-native functions, so I recommend doing it that way in most cases.
-
+<p data-i18n="pt_recommendation">
+The TKTSTO Tree View will generally be more reliable than the browser's native functions, so I recommend doing it that way in most cases.
 </p>
 
-<h2>Browser's native Pin / Unpin functions</h2>
+<h2 data-i18n="pt_native_heading">Browser's native Pin / Unpin functions</h2>
 
-  <p>
+<p data-i18n="pt_native_p1">
+Let's say you want to pin a tab called "Pin Me!". Right click on that tab in the browser's native tab bar, then click "Pin".
+</p>
 
-  Let's say you want to <b>pin a tab</b>.  It's called "Pin Me!".
-  Right click on that tab in the browser's native tab bar.  Then click "Pin"
-  in the pop-up menu.  Below is how the tree should look before and after:
+<table class="fit"><tr><td>
 
-  </p>
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Before",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things" }
+          ]},
+          { "url": "index.html", "loaded": true, "title": "Pin Me!",
+            "nodes": [
+              { "url": "index.html", "loaded": true, "title": "Details",
+                "nodes": [
+                  { "url": "index.html", "loaded": false,
+                    "title": "Another Page" }
+                ]
+              }
+            ]
+          },
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  <table class="fit"><tr><td>
+</td><td>
 
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "Before",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things" }
-            ]},
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "After",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned", "nodes": [
             { "url": "index.html", "loaded": true, "title": "Pin Me!",
               "nodes": [
                 { "url": "index.html", "loaded": true, "title": "Details",
@@ -84,118 +91,44 @@ native functions, so I recommend doing it that way in most cases.
                   ]
                 }
               ]
-            },
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
+            }
+          ]},
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things"}
+          ]},
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  </td><td>
+</td></tr></table>
 
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "After",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned", "nodes": [
-              { "url": "index.html", "loaded": true, "title": "Pin Me!",
-                "nodes": [
-                  { "url": "index.html", "loaded": true, "title": "Details",
-                    "nodes": [
-                      { "url": "index.html", "loaded": false,
-                        "title": "Another Page" }
-                    ]
-                  }
-                ]
-              }
-            ]},
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
-            ]},
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
+<p data-i18n="pt_anchor_explain">
+Note how a new node was created, called Pinned. This node is special. It cannot be moved while it has loaded tabs, so it has an anchor icon next to it. It is locked in place at the top of the window.
+</p>
 
-  </td></tr></table>
+<p data-i18n="pt_children_pinned">
+All the children of "Pin Me!" got pinned too. The nested branch structure is preserved.
+</p>
 
-  <p>
+<p data-i18n="pt_unpin_intro">
+If you change your mind and want to unpin it, right click on the "Pin Me!" tab again and click "Unpin":
+</p>
 
-  Note how a new node was created, called <b>Pinned</b>.  This node is
-  special.  It cannot be moved while it has loaded tabs, so it has an
+<table class="fit"><tr><td>
 
-  "<span class="row loaded"><span class="node-label">
-      <span class="icon pinned-branch-anchored"> </span>
-      anchor</span></span>"
-
-  icon next to it.  It is locked in place at the top of the window...
-  because that is what it means to be pinned.
-
-  </p><p>
-
-  All the children of "Pin Me!" got pinned too.  The nested branch structure
-  is preserved, so the branch and all its children get pinned or unpinned as
-  a group.
-
-  </p><p>
-
-  But then you change your mind, and want to unpin it.  Right click on the
-  "Pin Me!" tab again in the browser's native tab bar.  Then click "Unpin".
-  This is what happens:
-
-  </p>
-
-  <table class="fit"><tr><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "Before",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned", "nodes": [
-              { "url": "index.html", "loaded": true, "title": "Pin Me!",
-                "nodes": [
-                  { "url": "index.html", "loaded": true, "title": "Details",
-                    "nodes": [
-                      { "url": "index.html", "loaded": false,
-                        "title": "Another Page" }
-                    ]
-                  }
-                ]
-              }
-            ]},
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
-            ]},
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "After",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned" },
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Before",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned", "nodes": [
             { "url": "index.html", "loaded": true, "title": "Pin Me!",
               "nodes": [
                 { "url": "index.html", "loaded": true, "title": "Details",
@@ -205,199 +138,124 @@ native functions, so I recommend doing it that way in most cases.
                   ]
                 }
               ]
-            },
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
-            ]},
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
+            }
+          ]},
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things"}
+          ]},
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  </td></tr></table>
+</td><td>
 
-  <p>
-
-  The entire branch gets unpinned.  And since the "<b>Pinned</b>" branch no
-  longer has any loaded tabs inside, it is no longer locked in place.  It
-  changes from an
-
-  "<span class="row loaded"><span class="node-label">
-      <span class="icon pinned-branch-anchored"> </span>
-      anchor</span></span>"
-
-  to a
-
-  "<span class="row"><span class="node-label">
-      <span class="icon pinned-branch"> </span>
-      thumbtack</span></span>"
-
-  icon.  In this state, it can be moved, but it'll lose its magic (and its
-  thumbtack icon).  It is only special when it is the first node in a window.
-
-  </p>
-
-
-<h2>Pin/Unpin using TKTSTO</h2>
-
-  <p>
-
-  If you have no "Pinned" branch yet, make one.  Put the cursor on the window
-  node, expand it, then press <code>o</code>
-  (<code>addNodeAsNextVisibleRow</code>) to add a new node.  Set the label to
-  "<b>Pinned</b>".
-
-  </p><p>
-
-  Then use whatever method you want, to move nodes or branches into or out
-  of the <b>Pinned</b> branch.  The browser's internal "pinned" state and
-  tab bar should update accordingly.
-
-  </p>
-
-  <table class="fit"><tr><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "Pin by drag-n-drop",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned",
-              "rowClasses": ["drop-target-right"],
-              "pointer": 0.78, "pointerImg": "pointer-dragging.svg"
-            },
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "pointer": 0.75, "pointerImg": "pointer-dragging.svg",
-              "pointerOpacity": 0.7, "pointerSize": 0.92,
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff",
-                  "pointer": 0.67, "pointerImg": "pointer-dragging.svg",
-                  "pointerOpacity": 0.6, "pointerSize": 0.85
-                },
-                { "url": "index.html", "loaded": true, "title": "And Things",
-                  "pointer": 0.60, "pointerImg": "pointer-dragging.svg",
-                  "pointerOpacity": 0.5, "pointerSize": 0.77
-                }
-            ]},
-            { "url": "index.html", "loaded": true, "title": "Drag Me!",
-              "nodeClasses": ["cursor", "dragging"],
-              "rowClasses": ["cursor"],
-              "pointer": 0.55, "pointerOpacity": 0.5, "pointerSize": 0.71,
-              "nodes": [
-                { "url": "index.html", "loaded": true, "title": "Details",
-                  "nodes": [
-                    { "url": "index.html", "loaded": false,
-                      "title": "Another Page" }
-                  ]
-                }
-              ]
-            },
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
-
-  </td><td>
-
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "After",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned", "nodes": [
-              { "url": "index.html", "loaded": true, "title": "Drag Me!",
-                "nodeClasses": ["cursor"],
-                "rowClasses": ["cursor"],
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "After",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned" },
+          { "url": "index.html", "loaded": true, "title": "Pin Me!",
+            "nodes": [
+              { "url": "index.html", "loaded": true, "title": "Details",
                 "nodes": [
-                  { "url": "index.html", "loaded": true, "title": "Details",
-                    "nodes": [
-                      { "url": "index.html", "loaded": false,
-                        "title": "Another Page" }
-                    ]
-                  }
+                  { "url": "index.html", "loaded": false,
+                    "title": "Another Page" }
                 ]
               }
-            ]},
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
-            ]},
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
+            ]
+          },
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things"}
+          ]},
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  </td><td>
+</td></tr></table>
 
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "Then drag it back",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned", "nodes": [
-              { "url": "index.html", "loaded": true, "title": "Drag Me!",
-                "nodeClasses": ["cursor", "dragging"],
-                "rowClasses": ["cursor"],
-                "pointer": 0.65, "pointerOpacity": 0.7, "pointerSize": 0.73,
+<p data-i18n="pt_unpin_explain">
+The entire branch gets unpinned. And since the "Pinned" branch no longer has loaded tabs inside, its icon changes to a thumbtack icon.
+</p>
+
+<h2 data-i18n="pt_tktsto_heading">Pin/Unpin using TKTSTO</h2>
+
+<p data-i18n="pt_tktsto_p1">
+If you have no "Pinned" branch yet, make one. Put the cursor on the window node, expand it, then press o to add a new node and set its label to "Pinned".
+</p>
+
+<p data-i18n="pt_tktsto_p2">
+Then move nodes or branches into or out of the Pinned branch. The browser's internal pinned state and tab bar will update accordingly.
+</p>
+
+<table class="fit"><tr><td>
+
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Pin by drag-n-drop",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned",
+            "rowClasses": ["drop-target-right"],
+            "pointer": 0.78, "pointerImg": "pointer-dragging.svg"
+          },
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "pointer": 0.75, "pointerImg": "pointer-dragging.svg",
+            "pointerOpacity": 0.7, "pointerSize": 0.92,
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff",
+                "pointer": 0.67, "pointerImg": "pointer-dragging.svg",
+                "pointerOpacity": 0.6, "pointerSize": 0.85
+              },
+              { "url": "index.html", "loaded": true, "title": "And Things",
+                "pointer": 0.60, "pointerImg": "pointer-dragging.svg",
+                "pointerOpacity": 0.5, "pointerSize": 0.77
+              }
+          ]},
+          { "url": "index.html", "loaded": true, "title": "Drag Me!",
+            "nodeClasses": ["cursor", "dragging"],
+            "rowClasses": ["cursor"],
+            "pointer": 0.55, "pointerOpacity": 0.5, "pointerSize": 0.71,
+            "nodes": [
+              { "url": "index.html", "loaded": true, "title": "Details",
                 "nodes": [
-                  { "url": "index.html", "loaded": true, "title": "Details",
-                    "pointer": 0.55, "pointerImg": "pointer-dragging.svg",
-                    "pointerOpacity": 0.9, "pointerSize": 0.81,
-                    "nodes": [
-                      { "url": "index.html", "loaded": false,
-                        "title": "Another Page",
-                        "pointer": 0.3, "pointerImg": "pointer-dragging.svg",
-                        "pointerOpacity": 1.0, "pointerSize": 0.9
-                        }
-                    ]
-                  }
+                  { "url": "index.html", "loaded": false,
+                    "title": "Another Page" }
                 ]
               }
-            ]},
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodeClasses": ["drop-target-left"],
-              "pointer": 0.05, "pointerImg": "pointer-dragging.svg",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
-            ]},
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
+            ]
+          },
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  </td><td>
+</td><td>
 
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "After",
-      "nodes": [
-        { "label": "My Window", "type": "window", "active": true,
-          "loaded": true,
-          "nodes": [
-            { "label": "Pinned" },
-            { "url": "index.html", "loaded": true, "title": "A Page",
-              "nodes": [
-                { "url": "index.html", "loaded": false, "title": "With Stuff" },
-                { "url": "index.html", "loaded": true, "title": "And Things"}
-            ]},
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "After",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned", "nodes": [
             { "url": "index.html", "loaded": true, "title": "Drag Me!",
               "nodeClasses": ["cursor"],
               "rowClasses": ["cursor"],
@@ -409,63 +267,110 @@ native functions, so I recommend doing it that way in most cases.
                   ]
                 }
               ]
-            },
-            { "label": "Foo" }
-          ]
-        }
-      ]
-    }
-  }</script>
+            }
+          ]},
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things"}
+          ]},
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  </td></tr></table>
+</td><td>
 
-  <p>
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "Then drag it back",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned", "nodes": [
+            { "url": "index.html", "loaded": true, "title": "Drag Me!",
+              "nodeClasses": ["cursor", "dragging"],
+              "rowClasses": ["cursor"],
+              "pointer": 0.65, "pointerOpacity": 0.7, "pointerSize": 0.73,
+              "nodes": [
+                { "url": "index.html", "loaded": true, "title": "Details",
+                  "pointer": 0.55, "pointerImg": "pointer-dragging.svg",
+                  "pointerOpacity": 0.9, "pointerSize": 0.81,
+                  "nodes": [
+                    { "url": "index.html", "loaded": false,
+                      "title": "Another Page",
+                      "pointer": 0.3, "pointerImg": "pointer-dragging.svg",
+                      "pointerOpacity": 1.0, "pointerSize": 0.9
+                      }
+                  ]
+                }
+              ]
+            }
+          ]},
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodeClasses": ["drop-target-left"],
+            "pointer": 0.05, "pointerImg": "pointer-dragging.svg",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things"}
+          ]},
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  If you want to unpin everything, simply delete the "<b>Pinned</b>" node
-  while it is expanded.  Or change its name, since "Pinned" is a magic word
-  and changing the name removes the magic.  Or you could move all its
-  children somewhere else.
+</td><td>
 
-  </p><p>
+<script class="tree" type="application/json">{
+  "opts": {},
+  "tree": { "id": "root", "label": "After",
+    "nodes": [
+      { "label": "My Window", "type": "window", "active": true,
+        "loaded": true,
+        "nodes": [
+          { "label": "Pinned" },
+          { "url": "index.html", "loaded": true, "title": "A Page",
+            "nodes": [
+              { "url": "index.html", "loaded": false, "title": "With Stuff" },
+              { "url": "index.html", "loaded": true, "title": "And Things"}
+          ]},
+          { "url": "index.html", "loaded": true, "title": "Drag Me!",
+            "nodeClasses": ["cursor"],
+            "rowClasses": ["cursor"],
+            "nodes": [
+              { "url": "index.html", "loaded": true, "title": "Details",
+                "nodes": [
+                  { "url": "index.html", "loaded": false,
+                    "title": "Another Page" }
+                ]
+              }
+            ]
+          },
+          { "label": "Foo" }
+        ]
+      }
+    ]
+  }
+}</script>
 
-  Don't delete it while it's collapsed though, since that will also delete
-  everything inside it.  (unless, of course, you <i>want</i> to delete the
-  entire branch)
+</td></tr></table>
 
-  </p>
+<p data-i18n="pt_unpin_all">
+If you want to unpin everything, simply delete the "Pinned" node while it is expanded, or change its name.
+</p>
 
-<h2>Caveats / Known Issues</h2>
+<h2 data-i18n="pt_caveats_heading">Caveats / Known Issues</h2>
 
-  <ul>
-
-    <li><p>
-
-  <b>Vivaldi</b> is weird.  If you close a window with pinned tabs in
-  Vivaldi, and you use the browser's native functions to close the window
-  (like clicking on the "X" in the upper right corner of a window), Vivaldi
-  moves all the pinned tabs to a different window before closing it.
-
-  </p><p>
-
-  I don't know why.  No other browser seems to do this.  It's weird.
-
-  </p><p>
-
-  The problem is... it removes those tabs before TKTSTO can save the window.
-  So the pinned tabs won't be in the saved window, and they won't be restored
-  when you re-open the window again later.
-
-  </p><p>
-
-  So you should probably use TKTSTO's
-  <b><span class="hover-menu-button unload-button">U</span>nload button</b>
-  to close the window instead.  Then it will be saved correctly, and
-  can be fully restored later without any missing tabs.
-
+<ul>
+  <li><p data-i18n="pt_vivaldi_issue">
+    <b>Vivaldi</b> has special behavior when closing windows with pinned tabs. Using TKTSTO's Unload button to close windows in Vivaldi avoids losing pinned tab metadata.
   </p></li>
-
-  </ul>
+</ul>
 
 </body>
 </html>
-

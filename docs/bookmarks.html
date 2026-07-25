@@ -6,107 +6,56 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>Bookmarks</title>
+  <title data-i18n="bm_title">Bookmarks</title>
 </head>
 <body class="docs">
 
-<h2> Bookmarks </h2>
+<h2 data-i18n="bm_heading">Bookmarks</h2>
 
-  <p>
-
-  Bookmarks are usually not necessary when you can just <code>Alt+U</code>
-  <b><span class="hover-menu-button unload-button">U</span></b>
-  <b class="row"><span class="url-title">unload</span></b>
-  a tab you want to come back to later.
-
-  </p><p>
-
-  However, sometimes a
-  <span class="row loaded"><span class="node-title">
-    <span class="icon bookmark"> </span>bookmark</span></span>
-  can still be useful.  Bookmarks provide a consistent starting point which
-  does not change if you navigate to another page.  You open it, navigate
-  however you like, and the bookmark stays the same so you can start from the
-  same page next time.
-
-  </p><p>
-
-  This is helpful when a site requires you to log in every day, so you can
-  bookmark the login page and then immediately navigate away to some other
-  page.  Or if you frequently check a news site, and want to always start on
-  the front page, but also want to go to other pages without opening new
-  tabs.  Or if you otherwise want to lock a saved tab so the URL and title
-  won't change while you're browsing.
-
-  </p><p>
-
-  Bookmarks in TKTSTO are essentially the same as an
-  <b class="row"><span class="url-title">unloaded tab</span></b>,
-  except for a few small differences:
-
+  <p data-i18n="bm_p1">
+  Bookmarks are usually not necessary when you can just <code>Alt+U</code> a tab you want to come back to later.
   </p>
+
+  <p data-i18n="bm_p2">
+  However, sometimes a bookmark can still be useful. Bookmarks provide a consistent starting point which does not change if you navigate to another page. You open it, navigate however you like, and the bookmark stays the same so you can start from the same page next time.
+  </p>
+
+  <p data-i18n="bm_p3">
+  This is helpful when a site requires you to log in every day, so you can bookmark the login page and then immediately navigate away to some other page. Or if you frequently check a news site, and want to always start on the front page, but also want to go to other pages without opening new tabs. Or if you otherwise want to lock a saved tab so the URL and title won't change while you're browsing.
+  </p>
+
+  <p data-i18n="bm_p4">
+  Bookmarks in TKTSTO are essentially the same as an unloaded tab, except for a few small differences:
+  </p>
+
   <ul>
-    <li><p>It has a
-      <span class="loaded"><span class="icon bookmark"> </span></span>bookmark
-      icon.</p>
-    </li>
-    <li><p>When loaded, <b>it opens as a new node</b>, leaving the bookmark
-      itself unchanged.  The new node will be the first child of the bookmark
-      node.</p>
-    </li>
+    <li data-i18n="bm_li1">It has a bookmark icon.</li>
+    <li data-i18n="bm_li2">When loaded, it opens as a new node, leaving the bookmark itself unchanged. The new node will be the first child of the bookmark node.</li>
   </ul>
 
-  <p>
+  <p data-i18n="bm_make_heading">
   There are two ways <b>to make a bookmark</b>:
   </p>
 
   <ul>
-    <li><p>Press <code>Alt+B</code> (or <code>Alt+K</code> in Firefox) to
-      bookmark the current tab.  This will create a new bookmark node and
-      make it the parent of the current tab's node.</p>
-    </li>
-    <li><p>Press <code>E</code> or click
-      <span class="hover-menu-button edit-button">E</span>
-      to <b>Edit Node</b> on an
-      <b class="row"><span class="url-title">unloaded tab</span></b>
-      in the <b>Tree View</b>,
-      then set its "Bookmark?" checkbox and save the changes.  This converts
-      an unloaded tab into a bookmark.</p>
-    </li>
+    <li data-i18n="bm_make_li1">Press <code>Alt+B</code> (or <code>Alt+K</code> in Firefox) to bookmark the current tab. This will create a new bookmark node and make it the parent of the current tab's node.</li>
+    <li data-i18n="bm_make_li2">Press <code>E</code> or click <b>E</b> to <b>Edit Node</b> on an unloaded tab in the Tree View, then set its "Bookmark?" checkbox and save the changes. This converts an unloaded tab into a bookmark.</li>
   </ul>
 
-  <p>
-  <b>Tip:</b> If you want a tab to <b>open next to the current tab</b>
-  instead of opening as a child of a bookmark node, just <code>middle
-  click</code> the node.  This works for any tab node, not just bookmarks.
-  Because <b>tab nodes are links</b>.  You can middle click any tab node,
-  whether loaded or unloaded, to open that node's URL in a new tab, and it
-  will be placed the same as if you middle-clicked a link in the current
-  page.  So <b>every tab node can be used like a native browser bookmark</b>,
-  even if it doesn't have a bookmark icon in the Tree View.
+  <p data-i18n="bm_tip1">
+  <b>Tip:</b> If you want a tab to open next to the current tab instead of opening as a child of a bookmark node, just <code>middle click</code> the node. This works for any tab node, not just bookmarks. Because <b>tab nodes are links</b>. You can middle click any tab node, whether loaded or unloaded, to open that node's URL in a new tab, and it will be placed the same as if you middle-clicked a link in the current page. So <b>every tab node can be used like a native browser bookmark</b>, even if it doesn't have a bookmark icon in the Tree View.
   </p>
 
-  <p>
-  <b>Another tip:</b> When you open a
-  <span class="loaded"><span class="icon bookmark"> </span></span>bookmark
-  in the Tree View, the bookmark's <b>mtime</b> gets updated.  It also gets
-  updated when you close-and-delete the clone it spawned.  This provides an
-  easy way to automatically track <b>when you last used a bookmark</b>.  Just
-  enable the <b>Details panel</b> in the Tree View and check the mtime.
-  Pretty handy if you have a news site bookmarked, and you want to know how
-  far back to read before you'll get to articles you've already seen.  Just
-  be sure to check the mtime <i>before</i> you open the bookmark.
+  <p data-i18n="bm_tip2">
+  <b>Another tip:</b> When you open a bookmark in the Tree View, the bookmark's <b>mtime</b> gets updated. It also gets updated when you close-and-delete the clone it spawned. This provides an easy way to automatically track <b>when you last used a bookmark</b>. Just enable the <b>Details panel</b> in the Tree View and check the mtime. Pretty handy if you have a news site bookmarked, and you want to know how far back to read before you'll get to articles you've already seen. Just be sure to check the mtime <i>before</i> you open the bookmark.
   </p>
 
-<h2>Examples</h2>
+<h2 data-i18n="bm_examples">Examples</h2>
 
-  <p>
-
-  Bookmark usage is pretty simple.  For example, let's say you have a page
-  open and you hit <code>Alt+B</code> (or <code>Alt+K</code> in Firefox) to
-  bookmark the current page:
-
+  <p data-i18n="bm_ex_p1">
+  Bookmark usage is pretty simple. For example, let's say you have a page open and you hit <code>Alt+B</code> (or <code>Alt+K</code> in Firefox) to bookmark the current page:
   </p>
 
   <table class="fit"><tr><td>
@@ -156,36 +105,24 @@
 
   </td></tr></table>
 
-  <p>
+  <p data-i18n="bm_ex_p2">
+  A new bookmark node is created as a clone of the page you currently have focused. Then the focused page node is moved to become the bookmark's first child.
+  </p>
 
-  A new
-  <span class="loaded"><span class="icon bookmark"> </span></span>bookmark
-  node is created as a clone of the page you currently have focused.  Then
-  the focused page node is moved to become the bookmark's first child.
+  <p data-i18n="bm_ex_p3">
+  Note: It does not matter where the Tree View cursor is. The Alt+B action applies to the page you have focused in the browser, not the tree view cursor node.
+  </p>
 
-  </p><p>
+  <p data-i18n="bm_ex_p4">
+  Let's say you then decide to bookmark "Hacker News" too. But it isn't currently open. So use a different method:
+  </p>
 
-  Note: It does not matter where the <b>Tree View cursor</b> is.  The
-  <code>Alt+B</code> action applies to the page you have focused in the
-  browser, not the tree view cursor node.
+  <p data-i18n="bm_ex_p5">
+  Put the Tree View cursor on it and press E, or click E in the hover menu to Edit Node. Then click the "Bookmark?" checkbox and save your changes.
+  </p>
 
-  </p><p>
-
-  Let's say you then decide to bookmark "Hacker News" too.  But it isn't
-  currently open.  So use a different method:
-
-  </p><p>
-
-  Put the Tree View cursor on it and press <code>E</code>, or click
-  <span class="hover-menu-button edit-button">E</span>
-  in the <b>hoverMenu</b> to <b>Edit Node</b>.  Then click the "Bookmark?"
-  checkbox and save your changes.
-
-  </p><p>
-
-  Afterward, <code>double click</code> it or press <code>Enter</code> on it
-  to open the bookmark.  Here's how the TreeView looks after each step:
-
+  <p data-i18n="bm_ex_p6">
+  Afterward, double click it or press Enter on it to open the bookmark. Here's how the TreeView looks after each step:
   </p>
 
   <table class="fit"><tr><td>
@@ -275,58 +212,21 @@
 
   </td></tr></table>
 
-  <p>
-
-  The
-  "<span class="row"><span class="url-title">Hacker News</span></span>"
-  saved tab was first converted to a
-  <span class="row loaded"><span class="icon bookmark"> </span></span>bookmark,
-  then opened.  The new page opens as its first child, and is
-  <b class="row loaded"><span class="url-title">Bold</span></b>
-  because it is now the focused page.
-
+  <p data-i18n="bm_ex_p7">
+  The "Hacker News" saved tab was first converted to a bookmark, then opened. The new page opens as its first child, and is Bold because it is now the focused page.
   </p>
 
-  <p>
-  One other detail to note: The bookmark icon changes color depending on
-  whether there are any loaded tabs in the branch.  This makes it easier to
-  find open tabs, even if the bookmark branch is collapsed.
+  <p data-i18n="bm_ex_p8">
+  One other detail to note: The bookmark icon changes color depending on whether there are any loaded tabs in the branch. This makes it easier to find open tabs, even if the bookmark branch is collapsed.
   </p>
 
-  <script class="tree" type="application/json">{
-    "opts": {},
-    "tree": { "id": "root", "label": "Bookmark Icon Colors",
-      "nodes": [
-        { "label": "Browser Setup", "type": "window", "active": true,
-          "loaded": true, "nodes": [
-            { "bookmark": true, "url": "chrome://settings" },
-            { "bookmark": true, "url": "chrome://flags" },
-            { "bookmark": true, "url": "chrome://extensions", "nodes": [
-              { "url": "chrome://extensions", "title": "Extensions",
-                "loaded": true }
-            ]},
-            { "bookmark": true, "url": "chrome://extensions/shortcuts" }
-          ]
-        }
-      ]
-    }
-  }</script>
+<h2 data-i18n="bm_native_heading">Native Browser bookmarks</h2>
 
-<h2>Native Browser bookmarks</h2>
+  <p data-i18n="bm_native_p1">The browser's built-in bookmarks are not supported yet. TKTSTO provides a separate, alternate bookmark system, so you can more easily take your bookmarks with you if/when you change browsers, and not have to rely on a "Sign in to Chrome" type feature to sync between browsers.</p>
 
-  <p>The browser's built-in bookmarks are not supported yet.  TKTSTO provides
-  a separate, alternate bookmark system, so you can more easily take your
-  bookmarks with you if/when you change browsers, and not have to rely on
-  a "Sign in to Chrome" type feature to sync between browsers.</p>
+  <p data-i18n="bm_native_p2">However, a future version of TKTSTO may add some type of support for native bookmarks... at least enough to import them into the session tree.</p>
 
-  <p>However, a future version of TKTSTO may add some type of support for
-  native bookmarks... at least enough to import them into the session
-  tree.</p>
-
-  <p>A future version may also potentially add support for the "omnibar", to
-  suggest TKTSTO bookmarks related to the current window.</p>
-
+  <p data-i18n="bm_native_p3">A future version may also potentially add support for the "omnibar", to suggest TKTSTO bookmarks related to the current window.</p>
 
 </body>
 </html>
-

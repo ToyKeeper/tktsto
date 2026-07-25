@@ -6,150 +6,87 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <script type="module" src="/common/i18n.js"></script>
   <script type="module" src="./docs.js"></script>
-  <title>Checkboxes</title>
+  <title data-i18n="cb_title">Checkboxes</title>
 </head>
 <body class="docs">
 
-  <h2>
+  <h2 data-i18n="cb_heading">
   Checkboxes let you make "ToDo" lists.
   </h2>
 
-  <p>
-  Expand the "<b>Checkboxes</b>" branch if you haven't already.  Looks like
-  somebody is doing some grocery shopping... but they didn't organize their
-  list yet!  Let's help them out, and try 3 different ways of moving nodes
-  around.
+  <p data-i18n="cb_p1">
+  Expand the "Checkboxes" branch if you haven't already. Looks like somebody is doing some grocery shopping... but they didn't organize their list yet! Let's help them out, and try 3 different ways of moving nodes around.
   </p>
 
   <ol>
 
-  <li>
-    First, try using the mouse to <b>drag</b> the "<b>Milk</b>" item into the
-    "<b>Cold aisle</b>" branch.
+  <li data-i18n="cb_li1">
+    First, try using the mouse to drag the "Milk" item into the "Cold aisle" branch.
   </li>
 
-  <li>
-    Second, press the <code>Up arrow</code> a few times to move the cursor to
-    "<b>Crackers</b>".  Then press <code>Shift+Down</code> to move it down a
-    row or two.  It should now be in the "<b>Dry / Canned</b>" branch.
+  <li data-i18n="cb_li2">
+    Second, press the Up arrow a few times to move the cursor to "Crackers". Then press Shift+Down to move it down a row or two. It should now be in the "Dry / Canned" branch.
   </li>
 
-  <li>
-    Third, <b class="row marked">mark</b> the nodes for "<b>Ice cream</b>" and
-    "<b>Popsicles</b>", since they both need to be frozen.  You can
-    <b class="row marked">mark</b>
-    them by pressing the
-    <span class="hover-menu-button mark-button">M</span>
-    button in the hover menu, or by pressing the <code>M</code> key while the
-    cursor is on those rows.  Then move the cursor down to "<b>Frozen</b>" and
-    press <code>P</code> to paste.  Then press <code>Shift+M</code> to
-    <b>unmark</b> them.
+  <li data-i18n="cb_li3">
+    Third, mark the nodes for "Ice cream" and "Popsicles", since they both need to be frozen. You can mark them by pressing the M button in the hover menu, or by pressing the M key while the cursor is on those rows. Then move the cursor down to "Frozen" and press P to paste. Then press Shift+M to unmark them.
   </li>
 
   </ol>
 
-  <p>
-  That just leaves "<b>Soup</b>" remaining to be sorted.  Use whatever method
-  you like.
+  <p data-i18n="cb_p2">
+  That just leaves "Soup" remaining to be sorted. Use whatever method you like.
   </p>
 
-  <p>
-  Then you remember you also need butter.  Put the cursor somewhere in the
-  "<b>Cold aisle</b>" branch and press the <code>o</code> key to <b>o</b>pen
-  a new n<b>o</b>de on a new r<b>o</b>w.  It'll ask you for a label, so type in
-  "<code>Butter</code>" and press <code>Enter</code>.
-  <small><i>(the <code>o</code> and <code>Shift+O</code> keys are mapped by
-      default to "addNodeAsNextVisibleRow" and "addNodeAsPrevVisibleRow", which
-      match the keys used in Vim, a popular editor)</i></small>
+  <p data-i18n="cb_p3">
+  Then you remember you also need butter. Put the cursor somewhere in the "Cold aisle" branch and press the o key to open a new node on a new row. It'll ask you for a label, so type in "Butter" and press Enter. (the o and Shift+O keys are mapped by default to "addNodeAsNextVisibleRow" and "addNodeAsPrevVisibleRow", which match the keys used in Vim, a popular editor)
   </p>
 
-  <p>
-  But "<b>Butter</b>" doesn't have a
-  <span class="node-checkbox"> </span>checkbox like all the other items.
+  <p data-i18n="cb_p4">
+  But "Butter" doesn't have a checkbox like all the other items.
   </p>
 
-  <p>
-  To add a checkbox, you can either press the <code>T</code> key or click the
-  <span class="hover-menu-button task-button">T</span> button
-  in the hover menu.  This brings up the "<b>taskEdit</b>" dialog.
+  <p data-i18n="cb_p5">
+  To add a checkbox, you can either press the T key or click the T button in the hover menu. This brings up the "taskEdit" dialog.
   </p>
 
-  <p>
-  Next, either click on the style of checkbox you want, or press a key on the
-  keyboard with a printable letter on it.  It can be <code>any letter or
-  symbol</code>, so you can assign your own meanings to different symbols.
-  For a simple "<span class="node-checkbox"> </span>todo"
-  checkbox, just press <code>Space</code>.
+  <p data-i18n="cb_p6">
+  Next, either click on the style of checkbox you want, or press a key on the keyboard with a printable letter on it. It can be any letter or symbol, so you can assign your own meanings to different symbols. For a simple "todo" checkbox, just press Space.
   </p>
 
-  <h3>Quick Task Edits</h3>
+  <h3 data-i18n="cb_quick_heading">Quick Task Edits</h3>
 
-  <p>
-  For <b>quick edits</b>, put the cursor on a row and then press a
-  <b>short key sequence</b>, like <code>t</code> and then <code>Space</code> to
-  add a
-  "<span class="node-checkbox"> </span>todo"
-  checkbox...  or <code>tx</code> to mark a task as
-  "<span class="node-checkbox done">X</span>done".  Or <code>t</code> then
-  <code>Backspace</code> to remove the checkbox.  (<code>t</code> then
-  <code>Delete</code> also works)
+  <p data-i18n="cb_quick_p1">
+  For quick edits, put the cursor on a row and then press a short key sequence, like t and then Space to add a "todo" checkbox... or tx to mark a task as "done". Or t then Backspace to remove the checkbox. (t then Delete also works)
   </p>
 
-  <p>
-  Maybe you already have cheese, for example.
-  <b>Everyone should have cheese</b>, which is why it is marked as
-  "<span class="node-checkbox important">!</span>important".
-  But you're a <i>hoopy frood</i> who already has some.  So move the cursor
-  to "<b>Cheese</b>" and type
-  <code>tx</code> to mark it as
-  "<span class="node-checkbox done">X</span>done".
-  Note how the percent boxes change in response to this.
+  <p data-i18n="cb_quick_p2">
+  Maybe you already have cheese, for example. Everyone should have cheese, which is why it is marked as "important". But you're a hoopy frood who already has some. So move the cursor to "Cheese" and type tx to mark it as "done". Note how the percent boxes change in response to this.
   </p>
 
-  <h3>Other Task Types</h3>
+  <h3 data-i18n="cb_types_heading">Other Task Types</h3>
 
-  <p>There are a few other types of tasks pre-defined...</p>
+  <p data-i18n="cb_types_p1">There are a few other types of tasks pre-defined...</p>
 
   <ul>
 
-    <li>
-    <p>
-    The "<span class="node-checkbox percent">%</span><b>percent</b>"
-    checkboxes calculate their own number if they have any children
-    with checkboxes.  Otherwise, you can set the value manually by typing
-    something like <code>t42</code> for
-    <span class="node-checkbox percent">42%</span>
-    or <code>t07</code> for
-    <span class="node-checkbox percent">7%</span>.
-    </p>
+    <li data-i18n="cb_types_li1">
+    The "percent" checkboxes calculate their own number if they have any children with checkboxes. Otherwise, you can set the value manually by typing something like t42 for 42% or t07 for 7%.
     </li>
 
-    <li>
-    <p>
-    To set a <b>priority</b> of
-    <span class="node-checkbox n1">1</span> to
-    <span class="node-checkbox n9">9</span>
-    instead, try <code>t3</code> then press
-    <code>Enter</code> to set a task to priority
-    <span class="node-checkbox n3">3</span>.
-    </p>
+    <li data-i18n="cb_types_li2">
+    To set a priority of 1 to 9 instead, try t3 then press Enter to set a task to priority 3.
     </li>
 
-    <li>
-    <p>
-    A "<span class="node-checkbox ratio">/</span><b>ratio</b>"
-    checkbox works a lot like a "<b>percent</b>" checkbox,
-    except it displays a count of completed vs total child tasks, like
-    <span class="node-checkbox ratio">3/7</span>
-    if you had 3 tasks done out of 7 total.
-    Sometimes it's nice to have a counter instead of a percent.
-    </p>
+    <li data-i18n="cb_types_li3">
+    A "ratio" checkbox works a lot like a "percent" checkbox, except it displays a count of completed vs total child tasks, like 3/7 if you had 3 tasks done out of 7 total. Sometimes it's nice to have a counter instead of a percent.
     </li>
 
   </ul>
 
-  <p>Here is an example tree with a variety of checkbox types in it:</p>
+  <p data-i18n="cb_ex_text">Here is an example tree with a variety of checkbox types in it:</p>
 
   <script class="tree" type="application/json">{
     "opts": {},
@@ -211,12 +148,8 @@
     }
   }</script>
 
-  <p>
-
-  But you can use any printable character as the checkbox type.  You can also
-  get a lower-case task status by holding <code>Shift</code> when typing
-  a letter.
-
+  <p data-i18n="cb_footer">
+  But you can use any printable character as the checkbox type. You can also get a lower-case task status by holding Shift when typing a letter.
   </p>
 
 </body>
