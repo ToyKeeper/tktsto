@@ -494,7 +494,12 @@
     }
   },
   "status_zoom": {
-    "message": "Масштаб: $LEVEL$%"
+    "message": "Масштаб: $LEVEL$%",
+    "placeholders": {
+      "level": {
+        "content": "$1"
+      }
+    }
   },
   "status_editNode_cancelled": {
     "message": "редактирование отменено"
