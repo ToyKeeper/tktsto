@@ -75,8 +75,7 @@
       "suggested_key": { "default": "Alt+T" }
     },
     "_execute_sidebar_action": {
-      "description": "__MSG_cmd_toggleSidePanel__",
-      "suggested_key": { "default": "F1" }
+      "description": "__MSG_cmd_toggleSidePanel__"
     },
     "backupSession": {
       "description": "__MSG_cmd_backupSession__"
